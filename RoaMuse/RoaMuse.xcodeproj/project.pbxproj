@@ -7,15 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AC27ACAC2C91E14500B73485 /* GoogleService-Info (1).plist in Resources */ = {isa = PBXBuildFile; fileRef = AC27ACAB2C91E14500B73485 /* GoogleService-Info (1).plist */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
 		AC27ACB72C91E26900B73485 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB62C91E26900B73485 /* FirebaseFirestore */; };
 		AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB82C91E26900B73485 /* FirebaseStorage */; };
+		AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */; };
+		AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */; };
+		AC27ACBF2C92FDB900B73485 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC27ACBE2C92FDB900B73485 /* GoogleService-Info.plist */; };
+		AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */; };
+		AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */; };
+		AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC42C93006A00B73485 /* UserViewController.swift */; };
+		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
+		AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */; };
+		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
+		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
+		AC7A2A4B2C943874003FA811 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A4A2C943874003FA811 /* DataManager.swift */; };
+		AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A4C2C943958003FA811 /* PlaceData.json */; };
+		AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A4E2C949386003FA811 /* PopUpView.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
-		ACFCA3552C916C8F00643A2E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* ViewController.swift */; };
+		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
 		ACFCA3582C916C8F00643A2E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = ACFCA3572C916C8F00643A2E /* Base */; };
 		ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */; };
 		ACFCA35D2C916C9000643A2E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ACFCA35C2C916C9000643A2E /* Assets.xcassets */; };
@@ -43,11 +55,23 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AC27ACAB2C91E14500B73485 /* GoogleService-Info (1).plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info (1).plist"; sourceTree = "<group>"; };
+		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
+		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
+		AC27ACBE2C92FDB900B73485 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
+		AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsFeedViewController.swift; sourceTree = "<group>"; };
+		AC27ACC42C93006A00B73485 /* UserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewController.swift; sourceTree = "<group>"; };
+		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
+		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
+		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
+		AC7A2A4A2C943874003FA811 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
+		AC7A2A4C2C943958003FA811 /* PlaceData.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PlaceData.json; sourceTree = "<group>"; };
+		AC7A2A4E2C949386003FA811 /* PopUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopUpView.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		ACFCA3542C916C8F00643A2E /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		ACFCA3542C916C8F00643A2E /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		ACFCA3572C916C8F00643A2E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		ACFCA35A2C916C8F00643A2E /* RoaMuse.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = RoaMuse.xcdatamodel; sourceTree = "<group>"; };
 		ACFCA35C2C916C9000643A2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -113,14 +137,26 @@
 		ACFCA34F2C916C8F00643A2E /* RoaMuse */ = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
 				ACFCA3502C916C8F00643A2E /* AppDelegate.swift */,
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
-				ACFCA3542C916C8F00643A2E /* ViewController.swift */,
+				AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */,
+				ACFCA3542C916C8F00643A2E /* HomeViewController.swift */,
+				AC7A2A4C2C943958003FA811 /* PlaceData.json */,
+				AC7A2A462C943808003FA811 /* data.json */,
+				AC7A2A482C94384D003FA811 /* DataModel.swift */,
+				AC7A2A4A2C943874003FA811 /* DataManager.swift */,
+				AC7A2A422C93EA0A003FA811 /* LocationManager.swift */,
+				AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */,
+				AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */,
+				AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */,
+				AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */,
+				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
 				ACFCA3562C916C8F00643A2E /* Main.storyboard */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
 				ACFCA35E2C916C9000643A2E /* LaunchScreen.storyboard */,
 				ACFCA3612C916C9000643A2E /* Info.plist */,
-				AC27ACAB2C91E14500B73485 /* GoogleService-Info (1).plist */,
+				AC27ACBE2C92FDB900B73485 /* GoogleService-Info.plist */,
 				ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */,
 			);
 			path = RoaMuse;
@@ -260,9 +296,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACFCA35D2C916C9000643A2E /* Assets.xcassets in Resources */,
+				AC27ACBF2C92FDB900B73485 /* GoogleService-Info.plist in Resources */,
 				ACFCA3602C916C9000643A2E /* Base in Resources */,
+				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
-				AC27ACAC2C91E14500B73485 /* GoogleService-Info (1).plist in Resources */,
+				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -287,10 +325,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
+				AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */,
+				AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */,
+				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
-				ACFCA3552C916C8F00643A2E /* ViewController.swift in Sources */,
+				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
+				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
+				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
+				AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
+				AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
+				AC7A2A4B2C943874003FA811 /* DataManager.swift in Sources */,
+				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
