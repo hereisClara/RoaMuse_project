@@ -66,10 +66,13 @@ class HomeViewController: UIViewController {
         
 //        指定奇險
         let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
-        
         guard let randomTrip = filteredTrips.randomElement() else { return }
-        self.randomTrip = randomTrip
+        
+//        隨機旅程
 //        guard let randomTrip = dataManager.trips.randomElement() else { return }
+        
+        self.randomTrip = randomTrip
+
         
         PopUpView.shared.showPopup(on: self.view, with: randomTrip, and: dataManager.places)
     }
