@@ -21,10 +21,18 @@ class HomeViewController: UIViewController {
     
     private var randomTrip: Trip?
     
+//    var onTripReceivedFromHome: ((Trip) -> Void)?
+    
+//    var isPopupVisible = false // 用來記錄彈出視窗的狀態
+//    var popupTripData: Trip?   // 用來保存彈窗的資料
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)
+        
+        PopUpView.shared.delegate = self
         
         dataManager.loadJSONData()
         dataManager.loadPlacesJSONData()
@@ -56,13 +64,17 @@ class HomeViewController: UIViewController {
 //        print("======",dataManager.trips.randomElement())
 //        randomTrip = dataManager.trips.randomElement()
         
-//        指定浪漫派
+//        指定奇險
         let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
         
         guard let randomTrip = filteredTrips.randomElement() else { return }
+        self.randomTrip = randomTrip
+//        guard let randomTrip = dataManager.trips.randomElement() else { return }
         
-        PopUpView.shared.showPopup(on: self.view, with: randomTrip)
+        PopUpView.shared.showPopup(on: self.view, with: randomTrip, and: dataManager.places)
     }
+    
+    
     
     private func fetchWeather(for location: CLLocation) {
         weatherManager.fetchWeather(for: location) { [weak self] weather in
@@ -80,6 +92,21 @@ class HomeViewController: UIViewController {
     private func updateWeatherInfo(weather: CurrentWeather) {
         print("天氣狀況：\(weather.condition.description)")
         print("溫度：\(weather.temperature.formatted())")
+        
+    }
+    
+}
+
+extension HomeViewController: PopupViewDelegate {
+    
+    func navigateToTripDetailPage() {
+        
+        let tripDetailVC = TripDetailViewController()
+        
+        tripDetailVC.trip = randomTrip
+        
+        navigationController?.pushViewController(tripDetailVC, animated: true)
+
         
     }
     

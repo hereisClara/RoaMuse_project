@@ -17,6 +17,7 @@ class TabBarController: UITabBarController {
         tabBar.unselectedItemTintColor = UIColor.lightGray
 
         let homeVC = HomeViewController()
+        let homeNavController = UINavigationController(rootViewController: homeVC)
         homeVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "house"), tag: 0)
         
 
@@ -32,6 +33,6 @@ class TabBarController: UITabBarController {
         let userVC = UserViewController()
         userVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "person"), tag: 4)
 
-        self.viewControllers = [homeVC, collectionsVC, establishVC, newsFeedVC, userVC]
+        self.viewControllers = [homeNavController, collectionsVC, establishVC, newsFeedVC, userVC]
     }
 }

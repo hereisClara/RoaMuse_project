@@ -9,7 +9,13 @@ import Foundation
 import UIKit
 import SnapKit
 
+protocol PopupViewDelegate: AnyObject {
+    func navigateToTripDetailPage()
+}
+
 class PopUpView {
+    
+    weak var delegate: PopupViewDelegate?
     
     // 保存彈出視窗和背景視圖
     private var popupView = UIView()
@@ -18,17 +24,23 @@ class PopUpView {
     let titleLabel = UILabel()
     let poetryLabel = UILabel()
     let tripStyleLabel = UILabel()
+    
     let versesStackView = UIStackView()
+    let placesStackView = UIStackView()
+    let collectButton = UIButton(type: .system)
+    let startButton = UIButton(type: .system)
+    private var placeName = [String]()
     
     // 單例模式 (可選)
     static let shared = PopUpView()
     
     private init() {}
     
-    func showPopup(on view: UIView, with trip: Trip) {
+    func showPopup(on view: UIView, with trip: Trip, and places: [Place]) {
         
         let styleArray = ["奇險派", "浪漫派", "田園派"]
         versesStackView.removeAllArrangedSubviews()
+        placesStackView.removeAllArrangedSubviews()
         
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let keyWindow = windowScene.windows.first(where: { $0.isKeyWindow }) else {
@@ -53,9 +65,8 @@ class PopUpView {
         popupView.backgroundColor = UIColor(resource: .deepBlue)
         popupView.layer.cornerRadius = 12
         
-        
         setupConstraints()
-        print(trip.tag)
+        
         titleLabel.text = trip.poem.title
         poetryLabel.text = trip.poem.poetry
         tripStyleLabel.text = styleArray[trip.tag]
@@ -86,8 +97,30 @@ class PopUpView {
             
         }
         
+        for tripPlace in trip.places {
+            
+            for place in places {
+                
+                if place.id == tripPlace {
+                    
+                    let placeLabel = UILabel()
+                    placeLabel.text = place.name
+                    placeLabel.textColor = .white
+                    placesStackView.addArrangedSubview(placeLabel)
+                    
+                    
+                }
+                
+            }
+            
+        }
         
+        collectButton.setImage(UIImage(systemName: "heart"), for: .normal)
+        collectButton.tintColor = .white
         
+        startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        startButton.tintColor = .white
+        startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
     }
     
     func setupConstraints() {
@@ -96,30 +129,54 @@ class PopUpView {
         popupView.addSubview(poetryLabel)
         popupView.addSubview(tripStyleLabel)
         popupView.addSubview(versesStackView)
+        popupView.addSubview(placesStackView)
+        popupView.addSubview(collectButton)
+        popupView.addSubview(startButton)
         
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(popupView).offset(80)
+            make.top.equalTo(popupView).offset(60)
             make.centerX.equalTo(popupView)
         }
         
         poetryLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel).offset(40)
+            make.top.equalTo(titleLabel.snp.bottom).offset(10)
             make.centerX.equalTo(popupView)
         }
         
         tripStyleLabel.snp.makeConstraints { make in
-            make.top.equalTo(poetryLabel).offset(40)
+            make.top.equalTo(poetryLabel.snp.bottom).offset(10)
             make.centerX.equalTo(popupView)
         }
         
         versesStackView.snp.makeConstraints { make in
-            make.top.equalTo(tripStyleLabel).offset(50)
+            make.top.equalTo(tripStyleLabel.snp.bottom).offset(30)
             make.centerX.equalTo(popupView)
         }
         
         versesStackView.axis = .vertical
-        versesStackView.spacing = 20
+        versesStackView.spacing = 10
         versesStackView.alignment = .center
+        
+        placesStackView.snp.makeConstraints { make in
+            make.top.equalTo(versesStackView.snp.bottom).offset(30)
+            make.centerX.equalTo(popupView)
+        }
+        
+        placesStackView.axis = .vertical
+        placesStackView.spacing = 10
+        placesStackView.alignment = .center
+        
+        collectButton.snp.makeConstraints { make in
+            make.bottom.equalTo(popupView).offset(-50)
+            make.centerX.equalTo(popupView).offset(40)
+            make.width.height.equalTo(30)
+        }
+        
+        startButton.snp.makeConstraints { make in
+            make.bottom.equalTo(popupView).offset(-50)
+            make.centerX.equalTo(popupView).offset(-40)
+            make.width.height.equalTo(30)
+        }
         
     }
     
@@ -136,6 +193,13 @@ class PopUpView {
             self.backgroundView.removeFromSuperview()
             
         }
+    }
+    
+    @objc func didTapStartButton() {
+        
+        popupView.removeFromSuperview()
+        self.backgroundView.removeFromSuperview()
+        delegate?.navigateToTripDetailPage()
     }
     
 }

@@ -10,6 +10,7 @@ import Foundation
 class DataManager {
     
     var trips: [Trip] = []
+    var places: [Place] = []
     
     // 定義一個方法來讀取本地 JSON 檔案
     func loadJSONData() {
@@ -21,7 +22,7 @@ class DataManager {
                 
                 // 在解析前，打印 JSON 原始內容以確認讀取是否正確
                 if let jsonString = String(data: data, encoding: .utf8) {
-                    print("讀取到的 JSON: \(jsonString)")
+//                    print("讀取到的 JSON: \(jsonString)")
                 }
                 
                 // 使用 JSONDecoder 將資料解析為 Trip 結構
@@ -49,7 +50,7 @@ class DataManager {
                 
                 // 在解析前，打印 JSON 原始內容以確認讀取是否正確
                 if let jsonString = String(data: data, encoding: .utf8) {
-                    print("讀取到的 JSON: \(jsonString)")
+//                    print("讀取到的 JSON: \(jsonString)")
                 }
                 
                 // 使用 JSONDecoder 將資料解析為 Trip 結構
@@ -58,7 +59,9 @@ class DataManager {
                 
                 // 在這裡可以使用 trip 資料
                 for place in json.places {
-                    print("成功解析 Trip: \(place)")
+//                    print("成功解析 Trip: \(place)")
+//                    print(place)
+                    places.append(place)
                 }
             } catch {
                 print("讀取或解析 JSON 時發生錯誤: \(error)")
