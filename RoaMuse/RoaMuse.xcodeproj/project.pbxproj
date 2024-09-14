@@ -25,6 +25,7 @@
 		AC7A2A4B2C943874003FA811 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A4A2C943874003FA811 /* DataManager.swift */; };
 		AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A4C2C943958003FA811 /* PlaceData.json */; };
 		AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A4E2C949386003FA811 /* PopUpView.swift */; };
+		AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -68,6 +69,7 @@
 		AC7A2A4A2C943874003FA811 /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		AC7A2A4C2C943958003FA811 /* PlaceData.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PlaceData.json; sourceTree = "<group>"; };
 		AC7A2A4E2C949386003FA811 /* PopUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopUpView.swift; sourceTree = "<group>"; };
+		AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UIStackView.swift"; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -117,6 +119,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
 				ACFCA34F2C916C8F00643A2E /* RoaMuse */,
 				ACFCA3692C916C9000643A2E /* RoaMuseTests */,
 				ACFCA3732C916C9000643A2E /* RoaMuseUITests */,
@@ -328,6 +331,7 @@
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
 				AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */,
 				AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */,
+				AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */,
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,

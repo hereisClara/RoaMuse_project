@@ -54,7 +54,14 @@ class HomeViewController: UIViewController {
     @objc func randomTripEntryButtonDidTapped() {
         
 //        print("======",dataManager.trips.randomElement())
-        randomTrip = dataManager.trips.randomElement()
+//        randomTrip = dataManager.trips.randomElement()
+        
+//        指定浪漫派
+        let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
+        
+        guard let randomTrip = filteredTrips.randomElement() else { return }
+        
+        PopUpView.shared.showPopup(on: self.view, with: randomTrip)
     }
     
     private func fetchWeather(for location: CLLocation) {

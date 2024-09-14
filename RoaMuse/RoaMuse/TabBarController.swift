@@ -12,21 +12,25 @@ class TabBarController: UITabBarController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        tabBar.tintColor = UIColor(resource: .deepBlue)
+        tabBar.unselectedItemTintColor = UIColor.lightGray
 
         let homeVC = HomeViewController()
-        homeVC.tabBarItem = UITabBarItem(title: "首頁", image: UIImage(systemName: "house"), tag: 0)
+        homeVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "house"), tag: 0)
+        
 
         let collectionsVC = CollectionsViewController()
-        collectionsVC.tabBarItem = UITabBarItem(title: "收藏", image: UIImage(systemName: "heart"), tag: 1)
+        collectionsVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "heart"), tag: 1)
         
         let establishVC = EstablishViewController()
-        establishVC.tabBarItem = UITabBarItem(title: "建立", image: UIImage(systemName: "plus"), tag: 2)
+        establishVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "plus"), tag: 2)
         
         let newsFeedVC = NewsFeedViewController()
-        newsFeedVC.tabBarItem = UITabBarItem(title: "動態", image: UIImage(systemName: "globe"), tag: 3)
+        newsFeedVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "globe"), tag: 3)
         
         let userVC = UserViewController()
-        userVC.tabBarItem = UITabBarItem(title: "個人", image: UIImage(systemName: "person"), tag: 4)
+        userVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "person"), tag: 4)
 
         self.viewControllers = [homeVC, collectionsVC, establishVC, newsFeedVC, userVC]
     }
