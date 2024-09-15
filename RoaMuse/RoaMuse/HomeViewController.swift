@@ -21,8 +21,6 @@ class HomeViewController: UIViewController {
     
     private var randomTrip: Trip?
     
-//    var onTripReceivedFromHome: ((Trip) -> Void)?
-    
 //    var isPopupVisible = false // 用來記錄彈出視窗的狀態
 //    var popupTripData: Trip?   // 用來保存彈窗的資料
     
@@ -39,9 +37,20 @@ class HomeViewController: UIViewController {
         
         setupRandomTripEntryUI()
         
-        locationManager.onLocationUpdate = { [weak self] location in
-            self?.fetchWeather(for: location)
-        }
+//        locationManager.onLocationUpdate = { [weak self] location in
+//            self?.fetchWeather(for: location)
+//        }
+        
+//        locationManager.onLocationUpdate = { [weak self] currentLocation in
+//            guard let self = self else { return }
+//            
+//            // 假設你的目標地點是台北101
+//            let targetLocation = CLLocation(latitude: 25.033964, longitude: 121.564468)
+//            
+//            // 計算距離
+//            let distance = currentLocation.distance(from: targetLocation)
+//            print("距離台北101: \(distance) 公尺")
+//        }
         
     }
     
@@ -61,8 +70,9 @@ class HomeViewController: UIViewController {
     
     @objc func randomTripEntryButtonDidTapped() {
         
-//        print("======",dataManager.trips.randomElement())
-//        randomTrip = dataManager.trips.randomElement()
+//        TODO: 判斷季節，並按照指定季節篩選行程
+        
+        
         
 //        指定奇險
         let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
@@ -73,11 +83,8 @@ class HomeViewController: UIViewController {
         
         self.randomTrip = randomTrip
 
-        
         PopUpView.shared.showPopup(on: self.view, with: randomTrip, and: dataManager.places)
     }
-    
-    
     
     private func fetchWeather(for location: CLLocation) {
         weatherManager.fetchWeather(for: location) { [weak self] weather in
@@ -86,7 +93,6 @@ class HomeViewController: UIViewController {
                     self?.updateWeatherInfo(weather: weather)
                 } else {
                     print("無法獲取天氣資訊")
-                    
                 }
             }
         }

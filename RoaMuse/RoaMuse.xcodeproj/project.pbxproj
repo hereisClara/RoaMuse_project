@@ -27,6 +27,8 @@
 		AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A4E2C949386003FA811 /* PopUpView.swift */; };
 		AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */; };
 		AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */; };
+		AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A542C9725AE003FA811 /* LoginViewController.swift */; };
+		AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A562C97A606003FA811 /* FirstViewController.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -72,6 +74,8 @@
 		AC7A2A4E2C949386003FA811 /* PopUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopUpView.swift; sourceTree = "<group>"; };
 		AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UIStackView.swift"; sourceTree = "<group>"; };
 		AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDetailViewController.swift; sourceTree = "<group>"; };
+		AC7A2A542C9725AE003FA811 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
+		AC7A2A562C97A606003FA811 /* FirstViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstViewController.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -121,6 +125,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A542C9725AE003FA811 /* LoginViewController.swift */,
+				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
 				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
 				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
 				ACFCA34F2C916C8F00643A2E /* RoaMuse */,
@@ -340,10 +346,12 @@
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
 				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
 				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
+				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
 				AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
 				AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */,
+				AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
 				AC7A2A4B2C943874003FA811 /* DataManager.swift in Sources */,
 				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
