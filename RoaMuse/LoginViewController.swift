@@ -22,7 +22,7 @@ class LoginViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
+        setupUI()
     }
     
     func setupUI() {
@@ -36,7 +36,7 @@ class LoginViewController: UIViewController {
         
         accountLabel.snp.makeConstraints { make in
             make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY).offset(-40)
+            make.centerY.equalTo(view.snp.centerY).offset(-60)
         }
         
         passwordLabel.snp.makeConstraints { make in
@@ -46,26 +46,33 @@ class LoginViewController: UIViewController {
         
         userNameLabel.snp.makeConstraints { make in
             make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY).offset(40)
+            make.centerY.equalTo(view.snp.centerY).offset(60)
         }
         
         accountTextField.snp.makeConstraints { make in
-            make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY).offset(-40)
-            make.width.equalTo(view).multipliedBy(0.3)
+            make.leading.equalTo(view.snp.centerX).offset(20)
+            make.centerY.equalTo(view.snp.centerY).offset(-60)
+            make.width.equalTo(view).multipliedBy(0.4)
+            make.height.equalTo(40)
         }
         
         passwordTextField.snp.makeConstraints { make in
-            make.trailing.equalTo(view.snp.centerX).offset(-20)
+            make.leading.equalTo(view.snp.centerX).offset(20)
             make.centerY.equalTo(view.snp.centerY)
-            make.width.equalTo(view).multipliedBy(0.3)
+            make.width.equalTo(view).multipliedBy(0.4)
+            make.height.equalTo(40)
         }
         
         userNameTextField.snp.makeConstraints { make in
-            make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY).offset(40)
-            make.width.equalTo(view).multipliedBy(0.3)
+            make.leading.equalTo(view.snp.centerX).offset(20)
+            make.centerY.equalTo(view.snp.centerY).offset(60)
+            make.width.equalTo(view).multipliedBy(0.4)
+            make.height.equalTo(40)
         }
+        
+        accountLabel.text = "account"
+        passwordLabel.text = "password"
+        userNameLabel.text = "username"
         
         accountTextField.layer.borderWidth = 1
         passwordTextField.layer.borderWidth = 1
