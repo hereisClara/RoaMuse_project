@@ -147,9 +147,6 @@ extension HomeViewController: PopupViewDelegate {
         tripDetailVC.trip = randomTrip
         
         navigationController?.pushViewController(tripDetailVC, animated: true)
-
-        
     }
-    
 }
 

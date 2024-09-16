@@ -27,10 +27,20 @@ class NewsFeedViewController: UIViewController {
         view.backgroundColor = UIColor(resource: .backgroundGray)
         setupPostButton()
         setupPostsTableView()
-        getData()
         
+        FirebaseManager.shared.loadPosts { postsArray in
+            self.postsArray = postsArray
+            self.postsTableView.reloadData()
+        }
+
         postViewController.postButtonAction = { [weak self] in
-            self?.getNewData()
+            
+            guard let self = self else { return }
+            
+            FirebaseManager.shared.loadNewPosts(existingPosts: self.postsArray) { newPosts in
+                self.postsArray.append(contentsOf: newPosts)
+                self.postsTableView.reloadData()
+            }
         }
     }
     
