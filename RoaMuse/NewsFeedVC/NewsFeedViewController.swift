@@ -38,10 +38,12 @@ class NewsFeedViewController: UIViewController {
             guard let self = self else { return }
             
             FirebaseManager.shared.loadNewPosts(existingPosts: self.postsArray) { newPosts in
-                self.postsArray.append(contentsOf: newPosts)
+                self.postsArray.insert(contentsOf: newPosts, at: 0)
                 self.postsTableView.reloadData()
             }
         }
+        
+        
     }
     
     func setupPostButton() {
@@ -62,21 +64,6 @@ class NewsFeedViewController: UIViewController {
         
         navigationController?.pushViewController(postViewController, animated: true)
         
-    }
-    
-    func getData() {
-        
-        db.collection("posts").order(by: "createdAt", descending: true).getDocuments { querySnapshot, error in
-            if error != nil {
-                print("錯錯錯")
-            } else {
-                for document in querySnapshot!.documents {
-                    self.postsArray.append(document.data())
-                }
-                print(self.postsArray)
-                self.postsTableView.reloadData()
-            }
-        }
     }
     
     func getNewData() {
@@ -141,6 +128,11 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         cell.selectionStyle = .none
         
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+        
+        FirebaseManager.shared.isPostBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", postId: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+            cell.collectButton.isSelected = isBookmarked
+        }
+        
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         return cell
     }
