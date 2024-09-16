@@ -20,10 +20,11 @@ class FirstViewController: UIViewController {
         if shouldLogin {
             
             let loginVC = LoginViewController()
-            addChild(loginVC)
-            view.addSubview(loginVC.view)
-            loginVC.view.frame = view.bounds
-            loginVC.didMove(toParent: self)
+            let navController = UINavigationController(rootViewController: loginVC)
+            addChild(navController)
+            view.addSubview(navController.view)
+            navController.view.frame = view.bounds
+            navController.didMove(toParent: self)
             
         } else {
             
@@ -36,6 +37,5 @@ class FirstViewController: UIViewController {
         }
         
     }
-    
     
 }

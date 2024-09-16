@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 import WeatherKit
 import CoreLocation
+import FirebaseFirestore
 
 class HomeViewController: UIViewController {
     
@@ -72,8 +73,6 @@ class HomeViewController: UIViewController {
         
 //        TODO: 判斷季節，並按照指定季節篩選行程
         
-        
-        
 //        指定奇險
         let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
         guard let randomTrip = filteredTrips.randomElement() else { return }
@@ -84,6 +83,39 @@ class HomeViewController: UIViewController {
         self.randomTrip = randomTrip
 
         PopUpView.shared.showPopup(on: self.view, with: randomTrip, and: dataManager.places)
+        
+        PopUpView.shared.tapCollectButton = { [weak self] in
+            
+            self?.updateUserCollections(userId: "qluFSSg8P1fGmWfXjOx6", tripId: randomTrip.id)
+            
+        }
+    }
+    
+    func updateUserCollections(userId: String, tripId: String) {
+        // 獲取 Firestore 的引用
+        let db = Firestore.firestore()
+        
+        // 指定用戶文檔的路徑
+        let userRef = db.collection("users").document(userId)
+        
+        // 使用 `updateData` 方法只更新 followersCount 字段
+        userRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                // 如果文檔存在，則更新收藏
+                userRef.updateData([
+                    "bookmarkTrip": FieldValue.arrayUnion([self.randomTrip?.id])
+                ]) { error in
+                    if let error = error {
+                        print("更新收藏旅程失敗：\(error.localizedDescription)")
+                    } else {
+                        print("收藏旅程更新成功！")
+                    }
+                }
+            } else {
+                // 如果文檔不存在，提示錯誤或創建新文檔
+                print("文檔不存在，無法更新")
+            }
+        }
     }
     
     private func fetchWeather(for location: CLLocation) {

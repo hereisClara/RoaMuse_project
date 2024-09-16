@@ -60,7 +60,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 }
 
-
 //import Foundation
 //import CoreLocation
 //

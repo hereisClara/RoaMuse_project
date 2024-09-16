@@ -21,9 +21,6 @@ class TripDetailViewController: UIViewController {
     let distanceThreshold: Double = 3600
     var canTapCompleteButton: Bool? = nil
     
-    
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         locationManager.startUpdatingLocation()

@@ -7,15 +7,14 @@
 
 import Foundation
 import UIKit
+import SnapKit
 
 class EstablishViewController: UIViewController {
-
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.backgroundColor = UIColor(resource: .backgroundGray)
         
     }
-
-
+    
 }

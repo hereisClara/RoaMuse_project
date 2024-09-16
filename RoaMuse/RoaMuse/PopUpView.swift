@@ -31,6 +31,8 @@ class PopUpView {
     let startButton = UIButton(type: .system)
     private var placeName = [String]()
     
+    var tapCollectButton: (() -> Void)?
+    
     // 單例模式 (可選)
     static let shared = PopUpView()
     
@@ -53,7 +55,6 @@ class PopUpView {
         }
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
-        
         
         keyWindow.addSubview(popupView)
         popupView.snp.makeConstraints { make in
@@ -85,7 +86,6 @@ class PopUpView {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
         backgroundView.addGestureRecognizer(tapGesture)
         
-        
 //        TODO:  詩句的label跟地點的label因為數量不確定無法直接寫死，可以參考stylish顏色選擇button的for loop作法
         
         for verse in trip.poem.original {
@@ -108,7 +108,6 @@ class PopUpView {
                     placeLabel.textColor = .white
                     placesStackView.addArrangedSubview(placeLabel)
                     
-                    
                 }
                 
             }
@@ -117,6 +116,7 @@ class PopUpView {
         
         collectButton.setImage(UIImage(systemName: "heart"), for: .normal)
         collectButton.tintColor = .white
+        collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
         
         startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
         startButton.tintColor = .white
@@ -201,5 +201,13 @@ class PopUpView {
         self.backgroundView.removeFromSuperview()
         delegate?.navigateToTripDetailPage()
     }
+    
+    @objc func didTapCollectButton() {
+        
+        tapCollectButton?()
+        
+    }
+    
+    
     
 }

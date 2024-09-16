@@ -8,76 +8,73 @@
 import Foundation
 import UIKit
 import SnapKit
+import FirebaseFirestore
 
 class LoginViewController: UIViewController {
     
-    
-    let accountLabel = UILabel()
-    let passwordLabel = UILabel()
-    let userNameLabel = UILabel()
-    let accountTextField = UITextField()
-    let passwordTextField = UITextField()
-    let userNameTextField = UITextField()
+    let loginButton = UIButton(type: .system)
+    let db = Firestore.firestore()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        self.navigationController?.navigationBar.isHidden = true
         setupUI()
     }
     
     func setupUI() {
         
-        view.addSubview(accountLabel)
-        view.addSubview(passwordLabel)
-        view.addSubview(userNameLabel)
-        view.addSubview(accountTextField)
-        view.addSubview(passwordTextField)
-        view.addSubview(userNameTextField)
+        view.addSubview(loginButton)
         
-        accountLabel.snp.makeConstraints { make in
-            make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY).offset(-60)
+        loginButton.snp.makeConstraints { make in
+            make.center.equalTo(view)
+            make.width.height.equalTo(60)
         }
         
-        passwordLabel.snp.makeConstraints { make in
-            make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY)
-        }
+        loginButton.backgroundColor = .darkGray
         
-        userNameLabel.snp.makeConstraints { make in
-            make.trailing.equalTo(view.snp.centerX).offset(-20)
-            make.centerY.equalTo(view.snp.centerY).offset(60)
-        }
+        loginButton.setTitle("登入", for: .normal)
         
-        accountTextField.snp.makeConstraints { make in
-            make.leading.equalTo(view.snp.centerX).offset(20)
-            make.centerY.equalTo(view.snp.centerY).offset(-60)
-            make.width.equalTo(view).multipliedBy(0.4)
-            make.height.equalTo(40)
-        }
-        
-        passwordTextField.snp.makeConstraints { make in
-            make.leading.equalTo(view.snp.centerX).offset(20)
-            make.centerY.equalTo(view.snp.centerY)
-            make.width.equalTo(view).multipliedBy(0.4)
-            make.height.equalTo(40)
-        }
-        
-        userNameTextField.snp.makeConstraints { make in
-            make.leading.equalTo(view.snp.centerX).offset(20)
-            make.centerY.equalTo(view.snp.centerY).offset(60)
-            make.width.equalTo(view).multipliedBy(0.4)
-            make.height.equalTo(40)
-        }
-        
-        accountLabel.text = "account"
-        passwordLabel.text = "password"
-        userNameLabel.text = "username"
-        
-        accountTextField.layer.borderWidth = 1
-        passwordTextField.layer.borderWidth = 1
-        userNameTextField.layer.borderWidth = 1
+        loginButton.addTarget(self, action: #selector(didTapLoginButton), for: .touchUpInside)
         
     }
     
+    @objc func didTapLoginButton() {
+        
+        saveUserData(userName: "@yen")
+        navigationController?.pushViewController(TabBarController(), animated: true)
+        
+    }
+    
+    func saveUserData(userName: String) {
+        let usersCollection = Firestore.firestore().collection("users")
+        
+        // 查詢是否已存在相同的 userName
+        usersCollection.whereField("userName", isEqualTo: userName).getDocuments { (querySnapshot, error) in
+            if let error = error {
+                print("查詢失敗: \(error.localizedDescription)")
+                return
+            }
+            
+            if let snapshot = querySnapshot, !snapshot.isEmpty {
+                // 已經存在相同的 userName
+                print("userName 已存在，不能新增")
+            } else {
+                // userName 不存在，可以新增資料
+                let newDocument = usersCollection.document()  // 自動生成 ID
+                let data = [
+                    "id": newDocument.documentID,
+                    "userName": userName,
+                    "email": "@900623"
+                ]
+                
+                newDocument.setData(data) { error in
+                    if let error = error {
+                        print("資料上傳失敗：\(error.localizedDescription)")
+                    } else {
+                        print("資料上傳成功！")
+                    }
+                }
+            }
+        }
+    }
 }
