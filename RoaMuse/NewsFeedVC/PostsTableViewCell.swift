@@ -43,7 +43,7 @@ class PostsTableViewCell: UITableViewCell {
         collectButton.snp.makeConstraints { make in
             make.leading.equalTo(titleLabel)
             make.top.equalTo(self.snp.centerY).offset(20)
-            make.width.height.equalTo(45)
+            make.width.height.equalTo(35)
         }
         
         titleLabel.font = UIFont.systemFont(ofSize: 20)
@@ -60,24 +60,14 @@ class PostsTableViewCell: UITableViewCell {
         collectButton.tintColor = UIColor(resource: .accent)
         
     }
-    
-    @objc func didTapCollectButton() {
-        
-        collectButton.isSelected.toggle()
-        
-        }
-        
-        //        updateUserCollections(userId: "qluFSSg8P1fGmWfXjOx6")
     }
 
 //  儲存文章收藏
     func updateUserCollections(userId: String) {
         // 獲取 Firestore 的引用
         let db = Firestore.firestore()
-        
         // 指定用戶文檔的路徑
         let userRef = db.collection("user").document(userId)
-        
         // 使用 `updateData` 方法只更新 followersCount 字段
         userRef.updateData([
             "bookmarkPost": [""]

@@ -129,7 +129,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
         
-        FirebaseManager.shared.isPostBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", postId: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+        FirebaseManager.shared.isContentBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
         
@@ -139,45 +139,33 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
-        // 將按鈕點擊的位置轉換為 UITableView 中的點
+        // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: postsTableView)
         
-        // 通過這個點查詢對應的 indexPath
         if let indexPath = postsTableView.indexPathForRow(at: point) {
-            // 獲取該行的數據
             let postData = postsArray[indexPath.row]
-            
-            print("點擊了第 \(indexPath.row) 行的愛心按鈕")
-            print("該行的資料: \(postData)")
-            
-            // 在這裡進行進一步處理，比如更新數據源或 UI
-            updateUserCollections(userId: "qluFSSg8P1fGmWfXjOx6", postId: postData["id"] as? String ?? "")
-        }
-    }
-    
-    func updateUserCollections(userId: String, postId: String) {
-        // 獲取 Firestore 的引用
-        let db = Firestore.firestore()
-        
-        // 指定用戶文檔的路徑
-        let userRef = db.collection("users").document(userId)
-        
-        // 使用 `updateData` 方法只更新 followersCount 字段
-        userRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                // 如果文檔存在，則更新收藏
-                userRef.updateData([
-                    "bookmarkPost": FieldValue.arrayUnion([postId])
-                ]) { error in
-                    if let error = error {
-                        print("更新收藏失敗：\(error.localizedDescription)")
+            let postId = postData["id"] as? String ?? ""
+            let userId = "qluFSSg8P1fGmWfXjOx6" // 假設為當前使用者ID
+
+            if sender.isSelected {
+                // 收藏文章
+                FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
+                    if success {
+                        print("收藏成功")
                     } else {
-                        print("收藏更新成功！")
+                        print("收藏失敗")
                     }
                 }
+
             } else {
-                // 如果文檔不存在，提示錯誤或創建新文檔
-                print("文檔不存在，無法更新")
+                // 取消收藏
+                FirebaseManager.shared.removePostBookmark(forUserId: userId, id: postId) { success in
+                    if success {
+                        print("取消收藏成功")
+                    } else {
+                        print("取消收藏失敗")
+                    }
+                }
             }
         }
     }

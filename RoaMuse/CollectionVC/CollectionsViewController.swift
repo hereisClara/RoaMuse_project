@@ -124,7 +124,7 @@ class CollectionsViewController: UIViewController {
 extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 120
+        return 150
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -141,10 +141,66 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         
         if segmentIndex == 0 {
             cell?.titleLabel.text = tripsArray[indexPath.row].poem.title
+            FirebaseManager.shared.isContentBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", id: tripsArray[indexPath.row].id) { isBookmarked in
+                cell?.collectButton.isSelected = isBookmarked
+            }
         } else {
             cell?.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+            FirebaseManager.shared.isContentBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+                cell?.collectButton.isSelected = isBookmarked
+            }
         }
         
+        cell?.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        
         return cell ?? UITableViewCell()
+    }
+    
+    @objc func didTapCollectButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        // 獲取按鈕點擊所在的行
+        let point = sender.convert(CGPoint.zero, to: collectionsTableView)
+        
+        if let indexPath = collectionsTableView.indexPathForRow(at: point) {
+            
+            var id = String()
+            
+            let userId = "qluFSSg8P1fGmWfXjOx6" // 假設為當前使用者ID
+            
+            if segmentIndex == 0 {
+                
+                let tripData = tripsArray[indexPath.row]
+                let tripId = tripData.id
+                id = tripId
+                
+            } else {
+                
+                let postData = postsArray[indexPath.row]
+                let postId = postData["id"] as? String ?? ""
+                id = postId
+            }
+
+            if sender.isSelected {
+                // 收藏文章
+                
+                FirebaseManager.shared.updateUserCollections(userId: userId, id: id) { success in
+                    if success {
+                        print("收藏成功")
+                    } else {
+                        print("收藏失敗")
+                    }
+                }
+
+            } else {
+                // 取消收藏
+                FirebaseManager.shared.removePostBookmark(forUserId: userId, id: id) { success in
+                    if success {
+                        print("取消收藏成功")
+                    } else {
+                        print("取消收藏失敗")
+                    }
+                }
+            }
+        }
     }
 }
