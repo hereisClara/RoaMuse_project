@@ -11,6 +11,7 @@ class DataManager {
     
     var trips: [Trip] = []
     var places: [Place] = []
+    static let shared = DataManager()
     
     // 定義一個方法來讀取本地 JSON 檔案
     func loadJSONData() {

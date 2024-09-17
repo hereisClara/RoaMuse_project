@@ -38,21 +38,6 @@ class HomeViewController: UIViewController {
         
         setupRandomTripEntryUI()
         
-//        locationManager.onLocationUpdate = { [weak self] location in
-//            self?.fetchWeather(for: location)
-//        }
-        
-//        locationManager.onLocationUpdate = { [weak self] currentLocation in
-//            guard let self = self else { return }
-//            
-//            // 假設你的目標地點是台北101
-//            let targetLocation = CLLocation(latitude: 25.033964, longitude: 121.564468)
-//            
-//            // 計算距離
-//            let distance = currentLocation.distance(from: targetLocation)
-//            print("距離台北101: \(distance) 公尺")
-//        }
-        
     }
     
     func setupRandomTripEntryUI() {
@@ -74,11 +59,11 @@ class HomeViewController: UIViewController {
 //        TODO: 判斷季節，並按照指定季節篩選行程
         
 //        指定奇險
-        let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
-        guard let randomTrip = filteredTrips.randomElement() else { return }
+//        let filteredTrips = dataManager.trips.filter { $0.tag == 0 }
+//        guard let randomTrip = filteredTrips.randomElement() else { return }
         
 //        隨機旅程
-//        guard let randomTrip = dataManager.trips.randomElement() else { return }
+        guard let randomTrip = dataManager.trips.randomElement() else { return }
         
         self.randomTrip = randomTrip
 
@@ -86,7 +71,7 @@ class HomeViewController: UIViewController {
         
         PopUpView.shared.tapCollectButton = { [weak self] in
             
-            self?.updateUserCollections(userId: "qluFSSg8P1fGmWfXjOx6", tripId: randomTrip.id)
+            self?.updateUserCollections(userId: "Am5Jsa1tA0IpyXMLuilm", tripId: randomTrip.id)
             
         }
     }
@@ -149,4 +134,3 @@ extension HomeViewController: PopupViewDelegate {
         navigationController?.pushViewController(tripDetailVC, animated: true)
     }
 }
-

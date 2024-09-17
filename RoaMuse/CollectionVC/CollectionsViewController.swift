@@ -69,7 +69,7 @@ class CollectionsViewController: UIViewController {
     
     func loadInitialData() {
         if segmentIndex == 0 {
-            loadTripsData(userId: "qluFSSg8P1fGmWfXjOx6")
+            loadTripsData(userId: "Am5Jsa1tA0IpyXMLuilm")
         } else {
             loadPostsData()
         }
@@ -95,13 +95,12 @@ class CollectionsViewController: UIViewController {
         }
     }
 
-    
     func loadPostsData() {
         // Clear existing posts data to ensure fresh loading
         self.postsArray.removeAll()
         
         // Using FirebaseManager to load bookmarked posts
-        FirebaseManager.shared.loadBookmarkPostIDs(forUserId: "qluFSSg8P1fGmWfXjOx6") { [weak self] postIds in
+        FirebaseManager.shared.loadBookmarkPostIDs(forUserId: "Am5Jsa1tA0IpyXMLuilm") { [weak self] postIds in
             guard let self = self else { return }
             self.bookmarkPostIdArray = postIds
             print("Bookmarked Post IDs: \(postIds)") // Debugging print
@@ -141,12 +140,14 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         
         if segmentIndex == 0 {
             cell?.titleLabel.text = tripsArray[indexPath.row].poem.title
-            FirebaseManager.shared.isContentBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", id: tripsArray[indexPath.row].id) { isBookmarked in
-                cell?.collectButton.isSelected = isBookmarked
+            FirebaseManager.shared.isTripBookmarked(tripId: tripsArray[indexPath.row].id) { isBookmarked in
+                DispatchQueue.main.async {
+                    cell?.collectButton.isSelected = isBookmarked
+                }
             }
         } else {
             cell?.titleLabel.text = postsArray[indexPath.row]["title"] as? String
-            FirebaseManager.shared.isContentBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+            FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
                 cell?.collectButton.isSelected = isBookmarked
             }
         }
@@ -158,49 +159,78 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
+        
         // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: collectionsTableView)
         
         if let indexPath = collectionsTableView.indexPathForRow(at: point) {
             
             var id = String()
-            
-            let userId = "qluFSSg8P1fGmWfXjOx6" // 假設為當前使用者ID
+            let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
             
             if segmentIndex == 0 {
-                
+                // 行程
                 let tripData = tripsArray[indexPath.row]
                 let tripId = tripData.id
                 id = tripId
                 
-            } else {
+                if sender.isSelected {
+                    // 收藏行程
+                    FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: tripId) { [weak self] success in
+                        if success {
+                            print("行程收藏成功")
+                            
+                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
+                        } else {
+                            print("行程收藏失敗")
+                        }
+                    }
+                } else {
+                    // 取消收藏行程
+                    FirebaseManager.shared.removeTripBookmark(forUserId: userId, tripId: tripId) { [weak self] success in
+                        if success {
+                            print("取消行程收藏成功")
+                            
+                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
+                        } else {
+                            print("取消行程收藏失敗")
+                        }
+                    }
+                }
                 
+            } else {
+                // 貼文
                 let postData = postsArray[indexPath.row]
                 let postId = postData["id"] as? String ?? ""
                 id = postId
-            }
-
-            if sender.isSelected {
-                // 收藏文章
                 
-                FirebaseManager.shared.updateUserCollections(userId: userId, id: id) { success in
-                    if success {
-                        print("收藏成功")
-                    } else {
-                        print("收藏失敗")
+                if sender.isSelected {
+                    // 收藏貼文
+                    FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { [weak self] success in
+                        if success {
+                            print("收藏貼文成功")
+                            // 更新本地數據源
+                            self?.postsArray[indexPath.row]["isBookmarked"] = true
+                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
+                        } else {
+                            print("收藏貼文失敗")
+                        }
                     }
-                }
-
-            } else {
-                // 取消收藏
-                FirebaseManager.shared.removePostBookmark(forUserId: userId, id: id) { success in
-                    if success {
-                        print("取消收藏成功")
-                    } else {
-                        print("取消收藏失敗")
+                } else {
+                    // 取消收藏貼文
+                    FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { [weak self] success in
+                        if success {
+                            print("取消收藏貼文成功")
+                            // 更新本地數據源
+                            self?.postsArray[indexPath.row]["isBookmarked"] = false
+                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
+                        } else {
+                            print("取消收藏貼文失敗")
+                        }
                     }
                 }
             }
         }
     }
+
 }

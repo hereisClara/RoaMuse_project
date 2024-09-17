@@ -42,8 +42,6 @@ class NewsFeedViewController: UIViewController {
                 self.postsTableView.reloadData()
             }
         }
-        
-        
     }
     
     func setupPostButton() {
@@ -129,7 +127,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
         
-        FirebaseManager.shared.isContentBookmarked(forUserId: "qluFSSg8P1fGmWfXjOx6", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+        FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
         
@@ -145,7 +143,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         if let indexPath = postsTableView.indexPathForRow(at: point) {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
-            let userId = "qluFSSg8P1fGmWfXjOx6" // 假設為當前使用者ID
+            let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
 
             if sender.isSelected {
                 // 收藏文章
@@ -159,7 +157,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
 
             } else {
                 // 取消收藏
-                FirebaseManager.shared.removePostBookmark(forUserId: userId, id: postId) { success in
+                FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
                         print("取消收藏成功")
                     } else {
