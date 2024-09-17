@@ -1,4 +1,3 @@
-
 //
 //  CollectionsViewController.swift
 //  RoaMuse
@@ -140,13 +139,13 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         
         if segmentIndex == 0 {
             cell?.titleLabel.text = tripsArray[indexPath.row].poem.title
-            FirebaseManager.shared.isTripBookmarked(tripId: tripsArray[indexPath.row].id) { isBookmarked in
-                DispatchQueue.main.async {
-                    cell?.collectButton.isSelected = isBookmarked
-                }
+            
+            FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: tripsArray[indexPath.row].id) { isBookmarked in
+                cell?.collectButton.isSelected = isBookmarked
             }
         } else {
             cell?.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+            
             FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
                 cell?.collectButton.isSelected = isBookmarked
             }
@@ -159,78 +158,62 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
-        
         // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: collectionsTableView)
         
         if let indexPath = collectionsTableView.indexPathForRow(at: point) {
             
             var id = String()
+            
             let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
             
             if segmentIndex == 0 {
-                // 行程
                 let tripData = tripsArray[indexPath.row]
                 let tripId = tripData.id
                 id = tripId
                 
-                if sender.isSelected {
-                    // 收藏行程
-                    FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: tripId) { [weak self] success in
-                        if success {
-                            print("行程收藏成功")
-                            
-                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
-                        } else {
-                            print("行程收藏失敗")
-                        }
-                    }
-                } else {
-                    // 取消收藏行程
-                    FirebaseManager.shared.removeTripBookmark(forUserId: userId, tripId: tripId) { [weak self] success in
-                        if success {
-                            print("取消行程收藏成功")
-                            
-                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
-                        } else {
-                            print("取消行程收藏失敗")
-                        }
-                    }
-                }
-                
             } else {
-                // 貼文
                 let postData = postsArray[indexPath.row]
                 let postId = postData["id"] as? String ?? ""
                 id = postId
-                
-                if sender.isSelected {
-                    // 收藏貼文
-                    FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { [weak self] success in
+            }
+            
+            if sender.isSelected {
+                // 收藏文章
+                FirebaseManager.shared.updateUserCollections(userId: userId, id: id) { success in
+                    if success {
+                        print("收藏成功")
+                    } else {
+                        print("收藏失敗")
+                    }
+                }
+            } else {
+                if segmentIndex == 0 {
+                    // 取消收藏行程
+                    FirebaseManager.shared.removeTripBookmark(forUserId: userId, tripId: id) { success in
                         if success {
-                            print("收藏貼文成功")
-                            // 更新本地數據源
-                            self?.postsArray[indexPath.row]["isBookmarked"] = true
-                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
+                            print("取消行程收藏成功")
+                            self.bookmarkTripIdArray.removeAll { $0 == id }
+                            self.tripsArray.remove(at: indexPath.row)  // 同時從本地 tripsArray 中移除行程
+                            self.collectionsTableView.reloadData()
                         } else {
-                            print("收藏貼文失敗")
+                            print("取消收藏失敗")
                         }
                     }
                 } else {
                     // 取消收藏貼文
-                    FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { [weak self] success in
+                    FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: id) { success in
                         if success {
-                            print("取消收藏貼文成功")
-                            // 更新本地數據源
-                            self?.postsArray[indexPath.row]["isBookmarked"] = false
-                            self?.collectionsTableView.reloadRows(at: [indexPath], with: .none)  // 局部刷新
+                            print("取消收藏成功")
+                            self.bookmarkPostIdArray.removeAll { $0 == id }
+                            self.postsArray.remove(at: indexPath.row)  // 同時從本地 postsArray 中移除貼文
+                            self.collectionsTableView.reloadData()
                         } else {
-                            print("取消收藏貼文失敗")
+                            print("取消收藏失敗")
                         }
                     }
                 }
             }
         }
     }
-
 }

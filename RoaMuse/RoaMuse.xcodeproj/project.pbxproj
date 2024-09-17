@@ -34,6 +34,7 @@
 		AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A652C97D28E003FA811 /* PostsTableViewCell.swift */; };
 		AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A692C9821E6003FA811 /* CollectionsTableViewCell.swift */; };
 		AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A6B2C984853003FA811 /* firebaseManager.swift */; };
+		AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A732C99DEED003FA811 /* MJRefresh */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -108,6 +109,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */,
+				AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */,
 				AC27ACB72C91E26900B73485 /* FirebaseFirestore in Frameworks */,
 				AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */,
 				AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */,
@@ -285,6 +287,7 @@
 				AC27ACB42C91E26900B73485 /* FirebaseAuth */,
 				AC27ACB62C91E26900B73485 /* FirebaseFirestore */,
 				AC27ACB82C91E26900B73485 /* FirebaseStorage */,
+				AC7A2A732C99DEED003FA811 /* MJRefresh */,
 			);
 			productName = RoaMuse;
 			productReference = ACFCA34D2C916C8F00643A2E /* RoaMuse.app */;
@@ -362,6 +365,7 @@
 				AC27ACAD2C91E16B00B73485 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				AC27ACB02C91E17400B73485 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				AC27ACB32C91E26900B73485 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */,
 			);
 			productRefGroup = ACFCA34E2C916C8F00643A2E /* Products */;
 			projectDirPath = "";
@@ -828,6 +832,14 @@
 				minimumVersion = 11.2.0;
 			};
 		};
+		AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/CoderMJLee/MJRefresh.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.7.9;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -855,6 +867,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC27ACB32C91E26900B73485 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		AC7A2A732C99DEED003FA811 /* MJRefresh */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */;
+			productName = MJRefresh;
 		};
 /* End XCSwiftPackageProductDependency section */
 
