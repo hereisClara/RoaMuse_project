@@ -14,7 +14,6 @@ class TripDetailViewController: UIViewController {
     var trip: Trip?  // 存儲傳遞過來的資料
     var onTripReceivedFromHome: ((Trip) -> Void)?
     let placesStackView = UIStackView()
-    private let dataManager = DataManager()
     private let locationManager = LocationManager()
     private var places = [Place]()
     private var placeName = [String]()
@@ -25,61 +24,62 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
         locationManager.startUpdatingLocation()
         locationManager.onLocationUpdate = { [weak self] currentLocation in
-                    self?.checkDistances(from: currentLocation)
-                }
+            self?.checkDistances(from: currentLocation)
+        }
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        dataManager.loadPlacesJSONData()
-        getPlaceNameByPlaceId()
         setupUI()
-        
+        loadPlacesDataFromFirebase() // 從 Firebase 獲取 Places 資料
     }
     
-    func getPlaceNameByPlaceId() {
-        
-//        print(dataManager.places)
-        
+    // 從 Firebase 加載 Places 資料
+    func loadPlacesDataFromFirebase() {
         guard let trip = trip else { return }
         
-        for tripPlace in trip.places {
-            
-            for place in dataManager.places {
-                
-                if place.id == tripPlace {
-                    
-                    places.append(place)
-                    placeName.append(place.name)
-                    
+        // 獲取該行程中的所有 place ID
+        let placeIds = trip.places.map { $0.id }
+        
+        // 使用 FirebaseManager 從 Firebase 加載 places 資料
+        FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] (placesArray) in
+            guard let self = self else { return }
+            self.places = placesArray.compactMap { data in
+                if let id = data.id as? String,
+                   let name = data.name as? String,
+                   let latitude = data.latitude as? Double,
+                   let longitude = data.longitude as? Double {
+                    return Place(id: id, name: name, latitude: latitude, longitude: longitude)
                 }
-                
+                return nil
             }
             
+            // 更新地點名稱
+            self.placeName = self.places.map { $0.name }
+            
+            // 更新 UI
+            self.setupUI()
         }
-        
     }
     
     func checkDistances(from currentLocation: CLLocation) {
-            for (index, place) in places.enumerated() {
-                let targetLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
-                let distance = currentLocation.distance(from: targetLocation)
-                print("距離 \(place.name): \(distance) 公尺")
-                
-                // 獲取對應的 completeButton 並根據距離設置狀態
-                if let horizontalStackView = placesStackView.arrangedSubviews[index] as? UIStackView,
-                   let completeButton = horizontalStackView.arrangedSubviews.last as? UIButton {
-                    if distance <= distanceThreshold {
-                        print("距離小於或等於 \(distanceThreshold) 公尺，按鈕可用")
-                        completeButton.isEnabled = true
-                    } else {
-                        print("距離大於 \(distanceThreshold) 公尺，按鈕不可用")
-                        completeButton.isEnabled = false
-                    }
+        for (index, place) in places.enumerated() {
+            let targetLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+            let distance = currentLocation.distance(from: targetLocation)
+            print("距離 \(place.name): \(distance) 公尺")
+            
+            // 獲取對應的 completeButton 並根據距離設置狀態
+            if let horizontalStackView = placesStackView.arrangedSubviews[index] as? UIStackView,
+               let completeButton = horizontalStackView.arrangedSubviews.last as? UIButton {
+                if distance <= distanceThreshold {
+                    print("距離小於或等於 \(distanceThreshold) 公尺，按鈕可用")
+                    completeButton.isEnabled = true
+                } else {
+                    print("距離大於 \(distanceThreshold) 公尺，按鈕不可用")
+                    completeButton.isEnabled = false
                 }
             }
         }
+    }
 
-    
     func setupUI() {
-        
         view.addSubview(placesStackView)
         
         placesStackView.snp.makeConstraints { make in
@@ -112,14 +112,15 @@ class TripDetailViewController: UIViewController {
             
             completeButton.setTitle("完成", for: .normal)
             completeButton.setTitle("無法點選", for: .disabled)
+            completeButton.isEnabled = false // 初始狀態設為不可用
             
-            if canTapCompleteButton == true {
-                completeButton.isEnabled = true
-            } else {
-                completeButton.isEnabled = false
-            }
+            completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
         }
-        
     }
     
+    @objc func didTapCompleteButton(_ sender: UIButton) {
+        sender.isEnabled = false
+        // 處理按鈕點擊事件
+        // 更新 Firebase 上的行程狀態
+    }
 }

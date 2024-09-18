@@ -29,7 +29,6 @@ class PopUpView {
     let placesStackView = UIStackView()
     let collectButton = UIButton(type: .system)
     let startButton = UIButton(type: .system)
-    private var placeName = [String]()
     
     var tapCollectButton: (() -> Void)?
     
@@ -38,7 +37,7 @@ class PopUpView {
     
     private init() {}
     
-    func showPopup(on view: UIView, with trip: Trip, and places: [Place]) {
+    func showPopup(on view: UIView, with trip: Trip) {
         
         let styleArray = ["奇險派", "浪漫派", "田園派"]
         versesStackView.removeAllArrangedSubviews()
@@ -86,32 +85,26 @@ class PopUpView {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
         backgroundView.addGestureRecognizer(tapGesture)
         
-//        TODO:  詩句的label跟地點的label因為數量不確定無法直接寫死，可以參考stylish顏色選擇button的for loop作法
-        
+        // 添加詩句
         for verse in trip.poem.original {
-            
             let verseLabel = UILabel()
             verseLabel.text = verse
             verseLabel.textColor = .white
             versesStackView.addArrangedSubview(verseLabel)
-            
         }
         
-        for tripPlace in trip.places {
-            
-            for place in places {
-                
-                if place.id == tripPlace {
-                    
+        // 从 Firebase 加载地點详情并更新 placesStackView
+        let placeIds = trip.places.map { $0.id }
+        FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] places in
+            guard let self = self else { return }
+            for tripPlace in trip.places {
+                if let place = places.first(where: { $0.id == tripPlace.id }) {
                     let placeLabel = UILabel()
                     placeLabel.text = place.name
                     placeLabel.textColor = .white
-                    placesStackView.addArrangedSubview(placeLabel)
-                    
+                    self.placesStackView.addArrangedSubview(placeLabel)
                 }
-                
             }
-            
         }
         
         collectButton.setImage(UIImage(systemName: "heart"), for: .normal)
@@ -208,6 +201,6 @@ class PopUpView {
         
     }
     
-    
-    
 }
+
+

@@ -11,20 +11,17 @@ import SnapKit
 
 class CollectionsViewController: UIViewController {
     
-    let dataManager = DataManager()
     let segmentedControl = UISegmentedControl(items: ["行程", "日記"])
     let collectionsTableView = UITableView()
     var bookmarkPostIdArray = [String]()
     var bookmarkTripIdArray = [String]()
     var postsArray = [[String: Any]]()
-    var tripsArray = [Trip]()
+    var tripsArray = [Trip]() // 更新為存儲從 Firebase 獲取的行程
     var segmentIndex = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        dataManager.loadJSONData()
-        dataManager.loadPlacesJSONData()
         setupUI()
         setupTableView()
         setupSegmentedControl()
@@ -74,46 +71,49 @@ class CollectionsViewController: UIViewController {
         }
     }
     
+    // 加載收藏的行程
     func loadTripsData(userId: String) {
         self.tripsArray.removeAll()
 
-        // 使用 FirebaseManager 來載入收藏的行程
-        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
+        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] (tripIds: [String]) in
             guard let self = self else { return }
             self.bookmarkTripIdArray = tripIds
-            print("Bookmarked Trip IDs: \(tripIds)") // 偵錯列印
+            print("Bookmarked Trip IDs: \(tripIds)") // Debugging
 
             if !tripIds.isEmpty {
-                // 根據 tripIds 過濾本地行程資料
-                self.tripsArray = self.dataManager.trips.filter { tripIds.contains($0.id) }
-                self.collectionsTableView.reloadData()
+                // 根據 tripIds 從 Firebase 中加載收藏的行程
+                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { [weak self] (trips: [Trip]) in
+                    guard let self = self else { return }
+                    self.tripsArray = trips
+                    self.collectionsTableView.reloadData()
+                }
             } else {
-                print("No trips found in bookmarks.") // 偵錯列印
+                print("No trips found in bookmarks.") // Debugging
                 self.collectionsTableView.reloadData() // 確保即使沒有數據也更新 UI
             }
         }
     }
 
+    // 加載收藏的文章
     func loadPostsData() {
-        // Clear existing posts data to ensure fresh loading
         self.postsArray.removeAll()
         
-        // Using FirebaseManager to load bookmarked posts
+        // 使用 FirebaseManager 載入收藏的貼文
         FirebaseManager.shared.loadBookmarkPostIDs(forUserId: "Am5Jsa1tA0IpyXMLuilm") { [weak self] postIds in
             guard let self = self else { return }
             self.bookmarkPostIdArray = postIds
-            print("Bookmarked Post IDs: \(postIds)") // Debugging print
+            print("Bookmarked Post IDs: \(postIds)") // Debugging
             
             if !postIds.isEmpty {
-                // Load posts and filter those that match the bookmarked IDs
-                FirebaseManager.shared.loadPosts { posts in
+                // 加載所有文章並過濾出已收藏的文章
+                FirebaseManager.shared.loadPosts { [weak self] posts in
+                    guard let self = self else { return }
                     self.postsArray = posts.filter { postIds.contains($0["id"] as? String ?? "") }
-                    print("Loaded Posts: \(self.postsArray)") // Debugging print
                     self.collectionsTableView.reloadData()
                 }
             } else {
-                print("No posts found in bookmarks.") // Debugging print
-                self.collectionsTableView.reloadData() // Ensure UI updates even if no data
+                print("No posts found in bookmarks.") // Debugging
+                self.collectionsTableView.reloadData() // 確保即使沒有數據也更新 UI
             }
         }
     }
@@ -138,14 +138,16 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         cell?.selectionStyle = .none
         
         if segmentIndex == 0 {
-            cell?.titleLabel.text = tripsArray[indexPath.row].poem.title
+            cell?.titleLabel.text = tripsArray[indexPath.row].poem.title as? String ?? "Unknown Trip"
             
-            FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: tripsArray[indexPath.row].id) { isBookmarked in
+            // 檢查行程是否已收藏
+            FirebaseManager.shared.isTripBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", tripId: tripsArray[indexPath.row].id as? String ?? "") { isBookmarked in
                 cell?.collectButton.isSelected = isBookmarked
             }
         } else {
             cell?.titleLabel.text = postsArray[indexPath.row]["title"] as? String
             
+            // 檢查貼文是否已收藏
             FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
                 cell?.collectButton.isSelected = isBookmarked
             }
@@ -158,28 +160,20 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
-        // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: collectionsTableView)
         
         if let indexPath = collectionsTableView.indexPathForRow(at: point) {
-            
             var id = String()
-            
-            let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
+            let userId = "Am5Jsa1tA0IpyXMLuilm"
             
             if segmentIndex == 0 {
-                let tripData = tripsArray[indexPath.row]
-                let tripId = tripData.id
-                id = tripId
-                
+                id = tripsArray[indexPath.row].id as? String ?? ""
             } else {
-                let postData = postsArray[indexPath.row]
-                let postId = postData["id"] as? String ?? ""
-                id = postId
+                id = postsArray[indexPath.row]["id"] as? String ?? ""
             }
             
             if sender.isSelected {
-                // 收藏文章
+                // 收藏操作
                 FirebaseManager.shared.updateUserCollections(userId: userId, id: id) { success in
                     if success {
                         print("收藏成功")
@@ -194,7 +188,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                         if success {
                             print("取消行程收藏成功")
                             self.bookmarkTripIdArray.removeAll { $0 == id }
-                            self.tripsArray.remove(at: indexPath.row)  // 同時從本地 tripsArray 中移除行程
+                            self.tripsArray.remove(at: indexPath.row)
                             self.collectionsTableView.reloadData()
                         } else {
                             print("取消收藏失敗")
@@ -206,7 +200,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                         if success {
                             print("取消收藏成功")
                             self.bookmarkPostIdArray.removeAll { $0 == id }
-                            self.postsArray.remove(at: indexPath.row)  // 同時從本地 postsArray 中移除貼文
+                            self.postsArray.remove(at: indexPath.row)
                             self.collectionsTableView.reloadData()
                         } else {
                             print("取消收藏失敗")

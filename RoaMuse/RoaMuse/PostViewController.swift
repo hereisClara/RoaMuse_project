@@ -31,8 +31,6 @@ class PostViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        DataManager.shared.loadJSONData()
-        DataManager.shared.loadPlacesJSONData()
         setupUI()
         setupDropdownTableView()
         loadTripsData(userId: "Am5Jsa1tA0IpyXMLuilm")
