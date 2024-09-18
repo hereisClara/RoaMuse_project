@@ -7,15 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AC27ACAC2C91E14500B73485 /* GoogleService-Info (1).plist in Resources */ = {isa = PBXBuildFile; fileRef = AC27ACAB2C91E14500B73485 /* GoogleService-Info (1).plist */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
 		AC27ACB72C91E26900B73485 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB62C91E26900B73485 /* FirebaseFirestore */; };
 		AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB82C91E26900B73485 /* FirebaseStorage */; };
+		AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */; };
+		AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */; };
+		AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */; };
+		AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */; };
+		AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC42C93006A00B73485 /* UserViewController.swift */; };
+		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
+		AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */; };
+		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
+		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
+		AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A4C2C943958003FA811 /* PlaceData.json */; };
+		AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A4E2C949386003FA811 /* PopUpView.swift */; };
+		AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */; };
+		AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */; };
+		AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A542C9725AE003FA811 /* LoginViewController.swift */; };
+		AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A562C97A606003FA811 /* FirstViewController.swift */; };
+		AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A582C97AF17003FA811 /* Extension+String.swift */; };
+		AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */; };
+		AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A652C97D28E003FA811 /* PostsTableViewCell.swift */; };
+		AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A692C9821E6003FA811 /* CollectionsTableViewCell.swift */; };
+		AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A6B2C984853003FA811 /* firebaseManager.swift */; };
+		AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A732C99DEED003FA811 /* MJRefresh */; };
+		AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */; };
+		AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A772C9A6ACE003FA811 /* TestFile.swift */; };
+		AC7A2A7A2C9A6FF2003FA811 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A792C9A6FF2003FA811 /* GoogleService-Info.plist */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
-		ACFCA3552C916C8F00643A2E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* ViewController.swift */; };
+		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
 		ACFCA3582C916C8F00643A2E /* Base in Resources */ = {isa = PBXBuildFile; fileRef = ACFCA3572C916C8F00643A2E /* Base */; };
 		ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */; };
 		ACFCA35D2C916C9000643A2E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ACFCA35C2C916C9000643A2E /* Assets.xcassets */; };
@@ -43,11 +66,33 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AC27ACAB2C91E14500B73485 /* GoogleService-Info (1).plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info (1).plist"; sourceTree = "<group>"; };
+		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
+		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
+		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
+		AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsFeedViewController.swift; sourceTree = "<group>"; };
+		AC27ACC42C93006A00B73485 /* UserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewController.swift; sourceTree = "<group>"; };
+		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
+		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
+		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
+		AC7A2A4C2C943958003FA811 /* PlaceData.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PlaceData.json; sourceTree = "<group>"; };
+		AC7A2A4E2C949386003FA811 /* PopUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopUpView.swift; sourceTree = "<group>"; };
+		AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UIStackView.swift"; sourceTree = "<group>"; };
+		AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDetailViewController.swift; sourceTree = "<group>"; };
+		AC7A2A542C9725AE003FA811 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
+		AC7A2A562C97A606003FA811 /* FirstViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstViewController.swift; sourceTree = "<group>"; };
+		AC7A2A582C97AF17003FA811 /* Extension+String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+String.swift"; sourceTree = "<group>"; };
+		AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostViewController.swift; sourceTree = "<group>"; };
+		AC7A2A652C97D28E003FA811 /* PostsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostsTableViewCell.swift; sourceTree = "<group>"; };
+		AC7A2A692C9821E6003FA811 /* CollectionsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsTableViewCell.swift; sourceTree = "<group>"; };
+		AC7A2A6B2C984853003FA811 /* firebaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = firebaseManager.swift; path = ../../../Downloads/firebaseManager.swift; sourceTree = "<group>"; };
+		AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleViewController.swift; sourceTree = "<group>"; };
+		AC7A2A772C9A6ACE003FA811 /* TestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFile.swift; sourceTree = "<group>"; };
+		AC7A2A792C9A6FF2003FA811 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		ACFCA3542C916C8F00643A2E /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		ACFCA3542C916C8F00643A2E /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		ACFCA3572C916C8F00643A2E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		ACFCA35A2C916C8F00643A2E /* RoaMuse.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = RoaMuse.xcdatamodel; sourceTree = "<group>"; };
 		ACFCA35C2C916C9000643A2E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -66,6 +111,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */,
+				AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */,
 				AC27ACB72C91E26900B73485 /* FirebaseFirestore in Frameworks */,
 				AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */,
 				AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */,
@@ -90,9 +136,86 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AC7A2A5D2C97C5A7003FA811 /* HomeVC */ = {
+			isa = PBXGroup;
+			children = (
+				ACFCA3542C916C8F00643A2E /* HomeViewController.swift */,
+			);
+			path = HomeVC;
+			sourceTree = "<group>";
+		};
+		AC7A2A5F2C97C5E9003FA811 /* CollectionVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC7A2A692C9821E6003FA811 /* CollectionsTableViewCell.swift */,
+				AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */,
+			);
+			path = CollectionVC;
+			sourceTree = "<group>";
+		};
+		AC7A2A602C97C607003FA811 /* EstablishVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */,
+			);
+			path = EstablishVC;
+			sourceTree = "<group>";
+		};
+		AC7A2A612C97C610003FA811 /* NewsFeedVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */,
+				AC7A2A652C97D28E003FA811 /* PostsTableViewCell.swift */,
+				AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */,
+			);
+			path = NewsFeedVC;
+			sourceTree = "<group>";
+		};
+		AC7A2A622C97C635003FA811 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				AC7A2A482C94384D003FA811 /* DataModel.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		AC7A2A632C97C63D003FA811 /* Manager */ = {
+			isa = PBXGroup;
+			children = (
+				AC7A2A6B2C984853003FA811 /* firebaseManager.swift */,
+				AC7A2A422C93EA0A003FA811 /* LocationManager.swift */,
+				AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */,
+				AC7A2A4C2C943958003FA811 /* PlaceData.json */,
+				AC7A2A462C943808003FA811 /* data.json */,
+				AC7A2A772C9A6ACE003FA811 /* TestFile.swift */,
+			);
+			path = Manager;
+			sourceTree = "<group>";
+		};
+		AC7A2A642C97C667003FA811 /* UserVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
+			);
+			path = UserVC;
+			sourceTree = "<group>";
+		};
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
+				AC7A2A642C97C667003FA811 /* UserVC */,
+				AC7A2A632C97C63D003FA811 /* Manager */,
+				AC7A2A622C97C635003FA811 /* Model */,
+				AC7A2A612C97C610003FA811 /* NewsFeedVC */,
+				AC7A2A602C97C607003FA811 /* EstablishVC */,
+				AC7A2A542C9725AE003FA811 /* LoginViewController.swift */,
+				AC7A2A582C97AF17003FA811 /* Extension+String.swift */,
+				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
+				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
+				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
+				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
+				AC7A2A5D2C97C5A7003FA811 /* HomeVC */,
 				ACFCA34F2C916C8F00643A2E /* RoaMuse */,
 				ACFCA3692C916C9000643A2E /* RoaMuseTests */,
 				ACFCA3732C916C9000643A2E /* RoaMuseUITests */,
@@ -113,14 +236,15 @@
 		ACFCA34F2C916C8F00643A2E /* RoaMuse */ = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
 				ACFCA3502C916C8F00643A2E /* AppDelegate.swift */,
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
-				ACFCA3542C916C8F00643A2E /* ViewController.swift */,
+				AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */,
+				AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */,
 				ACFCA3562C916C8F00643A2E /* Main.storyboard */,
-				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
 				ACFCA35E2C916C9000643A2E /* LaunchScreen.storyboard */,
 				ACFCA3612C916C9000643A2E /* Info.plist */,
-				AC27ACAB2C91E14500B73485 /* GoogleService-Info (1).plist */,
+				AC7A2A792C9A6FF2003FA811 /* GoogleService-Info.plist */,
 				ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */,
 			);
 			path = RoaMuse;
@@ -153,6 +277,7 @@
 				ACFCA3492C916C8F00643A2E /* Sources */,
 				ACFCA34A2C916C8F00643A2E /* Frameworks */,
 				ACFCA34B2C916C8F00643A2E /* Resources */,
+				AC7A2A5A2C97BDC6003FA811 /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -165,6 +290,7 @@
 				AC27ACB42C91E26900B73485 /* FirebaseAuth */,
 				AC27ACB62C91E26900B73485 /* FirebaseFirestore */,
 				AC27ACB82C91E26900B73485 /* FirebaseStorage */,
+				AC7A2A732C99DEED003FA811 /* MJRefresh */,
 			);
 			productName = RoaMuse;
 			productReference = ACFCA34D2C916C8F00643A2E /* RoaMuse.app */;
@@ -242,6 +368,7 @@
 				AC27ACAD2C91E16B00B73485 /* XCRemoteSwiftPackageReference "Alamofire" */,
 				AC27ACB02C91E17400B73485 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				AC27ACB32C91E26900B73485 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */,
 			);
 			productRefGroup = ACFCA34E2C916C8F00643A2E /* Products */;
 			projectDirPath = "";
@@ -261,8 +388,10 @@
 			files = (
 				ACFCA35D2C916C9000643A2E /* Assets.xcassets in Resources */,
 				ACFCA3602C916C9000643A2E /* Base in Resources */,
+				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
-				AC27ACAC2C91E14500B73485 /* GoogleService-Info (1).plist in Resources */,
+				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
+				AC7A2A7A2C9A6FF2003FA811 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -282,15 +411,57 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		AC7A2A5A2C97BDC6003FA811 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nif [[ \"$(uname -m)\" == arm64 ]]; then\n    export PATH=\"/opt/homebrew/bin:$PATH\"\nfi\n\nif which swiftlint > /dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		ACFCA3492C916C8F00643A2E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
+				AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */,
+				AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */,
+				AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */,
+				AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */,
+				AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */,
+				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
+				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
+				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
-				ACFCA3552C916C8F00643A2E /* ViewController.swift in Sources */,
+				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
+				AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */,
+				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
+				AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */,
+				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
+				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
+				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
+				AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */,
+				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
+				AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */,
+				AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
+				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,7 +554,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -446,7 +617,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -470,13 +641,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要使用您的位置來提供資訊";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -488,9 +661,11 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tzuyencheng.RoaMuse;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -499,13 +674,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要使用您的位置來提供資訊";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -517,9 +694,11 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tzuyencheng.RoaMuse;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -665,6 +844,14 @@
 				minimumVersion = 11.2.0;
 			};
 		};
+		AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/CoderMJLee/MJRefresh.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.7.9;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -692,6 +879,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC27ACB32C91E26900B73485 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		AC7A2A732C99DEED003FA811 /* MJRefresh */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */;
+			productName = MJRefresh;
 		};
 /* End XCSwiftPackageProductDependency section */
 
