@@ -30,9 +30,18 @@
       },
       "id": "trip01",
       "places": [
-        "001",
-        "002",
-        "003"
+        {
+          "id": "001",
+          "isComplete": false
+        },
+        {
+          "id": "002",
+          "isComplete": false
+        },
+        {
+          "id": "003",
+          "isComplete": false
+        }
       ],
       "tag": 0,
       "season": 2,

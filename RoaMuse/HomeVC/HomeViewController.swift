@@ -33,7 +33,7 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        test()
         self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)
         homeTableView.register(PostsTableViewCell.self, forCellReuseIdentifier: "postCell")
@@ -238,5 +238,53 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 }
             }
         }
+    }
+    
+    func test() {
+        
+        let db = Firestore.firestore()
+        let trips = Firestore.firestore().collection("trips")
+        let document = trips.document()
+        let tripData: [String: Any] = [
+            "poem": [
+                        "title": "〈夜宿山寺〉",
+                        "poetry": "李白",
+                        "original": [
+                            "危樓高百尺，手可摘星辰。",
+                            "不敢高聲語，恐驚天上人。"
+                        ],
+                        "translation": [
+                            "山上寺院的高樓真高啊，好像有一百尺的樣子，人在樓上好像一伸手就可以摘下天上的星星。",
+                            "站在這裡，我不敢大聲說話，唯恐驚動天上的神仙。"
+                        ],
+                        "secretTexts": [
+                            "李白自號「青蓮居士」，源於《維摩詰經》的「青蓮」，展現他對佛教的崇敬和對維摩詘生活方式的嚮往。他不僅在詩中多次引用「青蓮」，還將維摩詘視為自己的精神榜樣，特別推崇《維摩詰經》中的「入諸酒肆，能立其志」的教義。"
+                        ],
+                        "situationText": [
+                            "台北101的觀景台是城市中最高的地方，從這裡俯瞰整個台北，感受到與天空接近的高度。站在這樣的高處，彷彿一個輕聲細語就能驚擾天上的人，體會詩中的敬畏與謙卑之感。"
+                        ]
+                    ],
+                    "id": document.documentID,gi
+                    "places": [
+                        ["id": "004", "isComplete": false]
+                    ],
+                    "tag": 1,
+                    "season": 4,
+                    "weather": 2,
+                    "startTime": 2,
+                    "isComplete": false
+                ]
+
+        // 將資料寫入 Firestore
+        db.collection("trips").addDocument(data: tripData) { error in
+            if let error = error {
+                print("Error adding document: \(error)")
+            } else {
+                print("Document added successfully!")
+            }
+        }
+    
+        
+        
     }
 }
