@@ -1,5 +1,5 @@
 {
-  "originHash" : "d042b67042e100e46c9dda5b1cc06650fc2efa2ebbbff6e37201a51f599f9c6c",
+  "originHash" : "a58fb45bf908713665649c22562ee78507c8d4447de8d28efb25aa527e226bcf",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -98,6 +98,15 @@
       "state" : {
         "revision" : "a0bc79961d7be727d258d33d5a6b2f1023270ba1",
         "version" : "1.22.5"
+      }
+    },
+    {
+      "identity" : "mjrefresh",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/CoderMJLee/MJRefresh.git",
+      "state" : {
+        "revision" : "535d39c86e592d73f8b8e75f9bf1eda62ca4a4ce",
+        "version" : "3.7.9"
       }
     },
     {
