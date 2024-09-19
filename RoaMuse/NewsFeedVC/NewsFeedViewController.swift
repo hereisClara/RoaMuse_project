@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import SnapKit
 import FirebaseFirestore
+import MJRefresh
 
 class NewsFeedViewController: UIViewController {
     
@@ -27,7 +28,7 @@ class NewsFeedViewController: UIViewController {
         view.backgroundColor = UIColor(resource: .backgroundGray)
         setupPostButton()
         setupPostsTableView()
-        
+        setupRefreshControl()
         FirebaseManager.shared.loadPosts { postsArray in
             self.postsArray = postsArray
             self.postsTableView.reloadData()
@@ -86,10 +87,19 @@ class NewsFeedViewController: UIViewController {
                 }
                 
                 self.postsTableView.reloadData()
+                self.postsTableView.mj_header?.endRefreshing()
             }
         }
     }
     
+    func setupRefreshControl() {
+        // 使用 MJRefreshNormalHeader，當下拉時觸發的刷新動作
+        postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
+            guard let self = self else { return }
+            self.getNewData() // 在刷新時重新加載數據
+        })
+    }
+
 }
 
 extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
@@ -136,7 +146,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func didTapCollectButton(_ sender: UIButton) {
-        sender.isSelected.toggle()
         // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: postsTableView)
         
@@ -145,26 +154,52 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             let postId = postData["id"] as? String ?? ""
             let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
 
-            if sender.isSelected {
-                // 收藏文章
-                FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
-                    if success {
-                        print("收藏成功")
-                    } else {
-                        print("收藏失敗")
-                    }
-                }
+            // 獲取當前的 bookmarkAccount
+            var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
 
-            } else {
-                // 取消收藏
+            if sender.isSelected {
+                // 如果按鈕已選中，取消收藏並移除 userId
+                bookmarkAccount.removeAll { $0 == userId }
+
                 FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
-                        print("取消收藏成功")
+                        // 更新 Firestore 中的 bookmarkAccount 字段
+                        self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                            if let error = error {
+                                print("Failed to update bookmarkAccount: \(error)")
+                            } else {
+                                print("取消收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+                            }
+                        }
                     } else {
                         print("取消收藏失敗")
                     }
                 }
+            } else {
+                // 如果按鈕未選中，進行收藏並加入 userId
+                if !bookmarkAccount.contains(userId) {
+                    bookmarkAccount.append(userId)
+                }
+
+                FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
+                    if success {
+                        // 更新 Firestore 中的 bookmarkAccount 字段
+                        self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                            if let error = error {
+                                print("Failed to update bookmarkAccount: \(error)")
+                            } else {
+                                print("收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+                            }
+                        }
+                    } else {
+                        print("收藏失敗")
+                    }
+                }
             }
+
+            // 更新按鈕選中狀態
+            sender.isSelected.toggle()
         }
     }
+
 }

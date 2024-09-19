@@ -32,17 +32,17 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func setTargetLocation(latitude: Double, longitude: Double) {
         targetLocation = CLLocation(latitude: latitude, longitude: longitude)
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
-                print("獲取到位置: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-                onLocationUpdate?(location)
-                stopUpdatingLocation()
-            } else {
-                print("未獲取到有效位置數據")
-            }
+            print("獲取到位置: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            onLocationUpdate?(location)
+            stopUpdatingLocation()
+        } else {
+            print("未獲取到有效位置數據")
+        }
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
@@ -54,7 +54,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             break
         }
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("位置獲取失敗: \(error.localizedDescription)")
     }
@@ -64,7 +64,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 //import CoreLocation
 //
 //class LocationManager: NSObject, CLLocationManagerDelegate {
-//    
+//
 //    let locationManager = CLLocationManager()
 //    var onLocationUpdate: ((CLLocation) -> Void)?
 //    var targetLocation: CLLocation?
@@ -75,11 +75,11 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 //        locationManager.requestWhenInUseAuthorization()
 //        locationManager.startUpdatingLocation()
 //    }
-//    
+//
 //    func setTargetLocation(latitude: Double, longitude: Double) {
 //        targetLocation = CLLocation(latitude: latitude, longitude: longitude)
 //    }
-//    
+//
 //    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
 //        if let location = locations.first, let targetLocation = targetLocation {
 //            let distance = location.distance(from: targetLocation)
@@ -88,7 +88,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 //            locationManager.stopUpdatingLocation()
 //        }
 //    }
-//    
+//
 //    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
 //        print("Error getting location: \(error.localizedDescription)")
 //    }

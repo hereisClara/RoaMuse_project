@@ -1,5 +1,5 @@
 {
-  "originHash" : "bafa429d12b4f4705ddbcdc3f979e2319770b16b036a071a17bbc8aefaa8946f",
+  "originHash" : "c9f7893546f6d8f6c347cd427c9a0d17fa4df7620684ebf1586819d307b68d18",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -89,6 +89,15 @@
       "state" : {
         "revision" : "2d12673670417654f08f5f90fdd62926dc3a2648",
         "version" : "100.0.0"
+      }
+    },
+    {
+      "identity" : "iqkeyboardmanager",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hackiftekhar/IQKeyboardManager.git",
+      "state" : {
+        "revision" : "fa9b2bac94b3fabe2d6ca7c74b269d4e8c355111",
+        "version" : "7.1.1"
       }
     },
     {

@@ -22,7 +22,6 @@ class PostViewController: UIViewController {
     let dropdownTableView = UITableView()
     var isDropdownVisible = false // 用來記錄下拉選單的狀態
     var dropdownHeightConstraint: Constraint?
-    var dropdownOptions = ["Option 1", "Option 2", "Option 3", "Option 4"] // 下拉選單的選項
     var tripsArray = [Trip]()
     var tripId = String()
     
@@ -31,8 +30,6 @@ class PostViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        DataManager.shared.loadJSONData()
-        DataManager.shared.loadPlacesJSONData()
         setupUI()
         setupDropdownTableView()
         loadTripsData(userId: "Am5Jsa1tA0IpyXMLuilm")
@@ -100,7 +97,7 @@ class PostViewController: UIViewController {
             "content": content,
             "photoUrl": "photo",
             "createdAt": Date(),
-            "bookmarkCount": 5,
+            "bookmarkAccount": [String](),
             "tripId": tripId
         ] as [String : Any]
         
@@ -118,7 +115,7 @@ class PostViewController: UIViewController {
         
         if isDropdownVisible {
             dropdownTableView.isHidden = false
-            dropdownHeightConstraint?.update(offset: CGFloat(dropdownOptions.count * 44))
+            dropdownHeightConstraint?.update(offset: CGFloat(tripsArray.count * 44))
         } else {
             dropdownHeightConstraint?.update(offset: 0)
         }
