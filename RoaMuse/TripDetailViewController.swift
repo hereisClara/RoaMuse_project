@@ -149,6 +149,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 cell?.completeButton.isEnabled = isButtonEnabled
                 cell?.completeButton.accessibilityIdentifier = places[dataIndex].id
                 cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
+                
+                // 根據 Firebase 中的 isComplete 狀態設置按鈕選中狀態
+                let isComplete = trip?.places[dataIndex].isComplete ?? false
+                cell?.completeButton.isSelected = isComplete  // 設置選中狀態
+                cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
+                
+                
                 // 設定按鈕的標題樣式一致
                 cell?.completeButton.setTitle(isButtonEnabled ? "完成" : "無法點選", for: .normal)
                 cell?.completeButton.setTitle("已完成", for: .selected)
