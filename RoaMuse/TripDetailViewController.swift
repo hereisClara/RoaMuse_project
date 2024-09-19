@@ -21,6 +21,8 @@ class TripDetailViewController: UIViewController {
     private var placeName = [String]()
     let distanceThreshold: Double = 5000
     private var buttonState = [Bool]()
+    var selectedIndexPath: IndexPath?
+
     
     let tableView = UITableView()
     
@@ -150,6 +152,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 cell?.completeButton.accessibilityIdentifier = places[dataIndex].id
                 cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
                 
+                if selectedIndexPath == indexPath {
+                    cell?.moreInfoLabel.isHidden = false
+                    cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
+                } else {
+                    cell?.moreInfoLabel.isHidden = true
+                }
+                
                 // 根據 Firebase 中的 isComplete 狀態設置按鈕選中狀態
                 let isComplete = trip?.places[dataIndex].isComplete ?? false
                 cell?.completeButton.isSelected = isComplete  // 設置選中狀態
@@ -165,8 +174,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 cell?.completeButton.isEnabled = isButtonEnabled
             }
         } else {
+            let dataIndex = indexPath.row / 2
             cell?.placeLabel.text = nil // 對於其他行，你可以設定為 nil 或隱藏這個 label
             cell?.completeButton.isHidden = true
+//            cell?.moreInfoLabel.isHidden = false
+//            cell?.moreInfoLabel.text = trip?.poem.situationText[dataIndex - 1]
         }
         
         return cell ?? UITableViewCell()
@@ -255,6 +267,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                             }
                         }
                     }
+                    
+                    self.selectedIndexPath = indexPath
                     
                     // 刷新表格
                     DispatchQueue.main.async {
