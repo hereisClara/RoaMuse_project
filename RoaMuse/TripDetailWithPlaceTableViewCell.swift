@@ -35,12 +35,12 @@ class TripDetailWithPlaceTableViewCell: UITableViewCell {
         
         verseLabel.snp.makeConstraints { make in
             make.leading.equalTo(self).offset(20)
-            make.bottom.equalTo(self.snp.centerY).offset(-20)
+            make.bottom.equalTo(self.snp.centerY).offset(-50)
         }
         
         placeLabel.snp.makeConstraints { make in
             make.leading.equalTo(verseLabel)
-            make.top.equalTo(self.snp.centerY).offset(20)
+            make.top.equalTo(verseLabel.snp.bottom).offset(20)
         }
         
         completeButton.snp.makeConstraints { make in
@@ -49,7 +49,7 @@ class TripDetailWithPlaceTableViewCell: UITableViewCell {
         }
         
         moreInfoLabel.snp.makeConstraints { make in
-            make.top.equalTo(placeLabel.snp.bottom).offset(30)
+            make.top.equalTo(verseLabel.snp.bottom).offset(70)
             make.width.equalTo(self).multipliedBy(0.9)
             make.centerX.equalTo(self)
             make.bottom.equalTo(self).offset(-15) // 確保與底部有間距

@@ -32,6 +32,7 @@ class TripDetailViewController: UIViewController {
         
         setupTableView()
         loadPlacesDataFromFirebase()
+        print(trip?.poem.situationText)
     }
     
     // 從 Firebase 加載 Places 資料
@@ -58,10 +59,6 @@ class TripDetailViewController: UIViewController {
             self.placeName = self.places.map { $0.name }
             
             print("Updated placeName:", self.placeName)
-            
-            // 更新 UI，並且在加載完成後才開始設置 UI
-            //                        self.setupUI()
-            //            self.tableView.reloadData()
             
             DispatchQueue.main.async {
                 print("Places data loaded, refreshing table view")
@@ -112,7 +109,7 @@ class TripDetailViewController: UIViewController {
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        200
+        250
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -164,6 +161,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 cell?.completeButton.isSelected = isComplete  // 設置選中狀態
                 cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
                 
+                if isComplete {
+                                cell?.moreInfoLabel.isHidden = false
+                                cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
+                            } else {
+                                cell?.moreInfoLabel.isHidden = true
+                            }
                 
                 // 設定按鈕的標題樣式一致
                 cell?.completeButton.setTitle(isButtonEnabled ? "完成" : "無法點選", for: .normal)
@@ -174,11 +177,20 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 cell?.completeButton.isEnabled = isButtonEnabled
             }
         } else {
-            let dataIndex = indexPath.row / 2
+            let dataIndex = (indexPath.row - 1) / 2
+                    
+                    if let situationTexts = trip?.poem.situationText, dataIndex < situationTexts.count {
+                        cell?.moreInfoLabel.text = situationTexts[dataIndex]
+                        cell?.moreInfoLabel.isHidden = false
+                    } else {
+                        cell?.moreInfoLabel.text = nil
+                        cell?.moreInfoLabel.isHidden = true
+                    }
+            
             cell?.placeLabel.text = nil // 對於其他行，你可以設定為 nil 或隱藏這個 label
             cell?.completeButton.isHidden = true
 //            cell?.moreInfoLabel.isHidden = false
-//            cell?.moreInfoLabel.text = trip?.poem.situationText[dataIndex - 1]
+//            cell?.moreInfoLabel.text = trip?.poem.situationText[indexPath.row / 2 - 1]
         }
         
         return cell ?? UITableViewCell()
@@ -278,5 +290,4 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
     }
-
 }
