@@ -229,53 +229,72 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func didTapCompleteButton(_ sender: UIButton) {
-        guard let placeId = sender.accessibilityIdentifier else {
-            print("無法獲取 placeId")
-            return
-        }
-
-        // 更新本地 UI
-        sender.isEnabled = false
+        
         sender.isSelected = true
-
-        // 獲取 tripId，假設 tripId 已經存在
-        guard let trip = trip else {
-            print("無法獲取 trip 資訊")
-            return
-        }
-        let tripId = trip.id
-
-        // 根據 placeId 找到對應的地點索引
-        let placeIndex = places.firstIndex { $0.id == placeId }
-        guard let dataIndex = placeIndex else {
-            print("無法找到對應的地點")
-            return
-        }
+        // 獲取按鈕點擊所在的行
+        let point = sender.convert(CGPoint.zero, to: tableView)
         
-        // 獲取當前地點資料，並更新 isComplete 狀態
-        let currentPlace = places[dataIndex]
-        let updatedPlace = [
-            "id": currentPlace.id,
-            "isComplete": true
-        ] as [String: Any]
-        
-        // 更新 Firestore 中嵌套字段的 isComplete 狀態，並保持原有地點結構
-        let placePath = "trips/\(tripId)"
-        let db = Firestore.firestore()
-        db.document(placePath).updateData([
-            "places.\(dataIndex)": updatedPlace
-        ]) { error in
-            if let error = error {
-                print("更新失敗: \(error)")
-            } else {
-                print("地點 \(placeId) 已完成")
-                
-                DispatchQueue.main.async {
-                    self.tableView.reloadData() // 刷新表格
+        if let indexPath = tableView.indexPathForRow(at: point) {
+            guard let trip = trip else {
+                print("無法獲取行程資訊")
+                return
+            }
+            
+            // 根據 indexPath 尋找地點
+            let placeIndex = indexPath.row / 2  // 詩句與地點交替出現
+            
+            guard placeIndex < trip.places.count else {
+                print("地點索引超出範圍")
+                return
+            }
+
+            // 獲取對應的地點 ID 和當前完成狀態
+            let placeId = trip.places[placeIndex].id
+            let tripId = trip.id
+            
+            // 確保保留所有的地點資料
+            var updatedPlaces = trip.places.map { place -> [String: Any] in
+                return ["id": place.id, "isComplete": place.isComplete]
+            }
+            
+            // 更新指定的地點的 `isComplete` 狀態
+            updatedPlaces[placeIndex]["isComplete"] = true
+            
+            // 更新 Firestore 中的地點字段
+            let db = Firestore.firestore()
+            db.collection("trips").document(tripId).updateData(["places": updatedPlaces]) { error in
+                if let error = error {
+                    print("更新失敗: \(error.localizedDescription)")
+                } else {
+                    print("地點 \(placeId) 的 isComplete 成功更新為 true")
+
+                    // 更新本地資料結構，避免重載時丟失
+                    self.trip?.places[placeIndex].isComplete = true
+                    
+                    // 檢查是否所有地點的 isComplete 都為 true
+                    let allCompleted = updatedPlaces.allSatisfy { place in
+                        return place["isComplete"] as? Bool == true
+                    }
+                    
+                    if allCompleted {
+                        // 如果所有地點都完成，更新外層 isComplete
+                        db.collection("trips").document(tripId).updateData(["isComplete": true]) { error in
+                            if let error = error {
+                                print("更新行程 isComplete 失敗: \(error.localizedDescription)")
+                            } else {
+                                print("行程的 isComplete 已設置為 true")
+                                self.trip?.isComplete = true
+                            }
+                        }
+                    }
+                    
+                    // 刷新表格
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
                 }
             }
         }
     }
-
 
 }

@@ -35,7 +35,7 @@ class HomeViewController: UIViewController {
         setupUI()
         setupTableView()
         setupPullToRefresh()
-//        uploadTripData()
+        uploadTripData()
         // 从 Firebase 加载 posts
         FirebaseManager.shared.loadPosts { postsArray in
             self.postsArray = postsArray
@@ -208,53 +208,69 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-    
-    
+
     func uploadTripData() {
         let db = Firestore.firestore()
-            
-            // 构建 trip 数据
-            let tripData: [String: Any] = [
-                "id": "SKnCdn2SK9D4HjYnE9ll",
-                "isComplete": false,
-                "places": [
-                    [
-                        "id": "f9E9Xc0p7aQaDBmqgv2K",
-                        "isComplete": false
-                    ]
+        
+        // 构建 trip 数据
+        let tripData: [String: Any] = [
+            "id": "u9QgkOcQsZZh90D6SAfc",
+            "isComplete": false,
+            "places": [
+                [
+                    "id": "CbCsS208lUh4OVNXedcB",
+                    "isComplete": false
                 ],
-                "poem": [
-                    "original": [
-                        "危樓高百尺，手可摘星辰。",
-                        "不敢高聲語，恐驚天上人。"
-                    ],
-                    "poetry": "李白",
-                    "secretTexts": [
-                        "李白自號「青蓮居士」，源於《維摩詰經》的「青蓮」，展現他對佛教的崇敬和對維摩詘生活方式的嚮往。他不僅在詩中多次引用「青蓮」，還將維摩詘視為自己的精神榜樣，特別推崇《維摩詰經》中的「入諸酒肆，能立其志」的教義。"
-                    ],
-                    "situationText": [
-                        "台北101的觀景台是城市中最高的地方，從這裡俯瞰整個台北，感受到與天空接近的高度。站在這樣的高處，彷彿一個輕聲細語就能驚擾天上的人，體會詩中的敬畏與謙卑之感。"
-                    ],
-                    "title": "〈夜宿山寺〉",
-                    "translation": [
-                        "山上寺院的高樓真高啊，好像有一百尺的樣子，人在樓上好像一伸手就可以摘下天上的星星。",
-                        "站在這裡，我不敢大聲說話，唯恐驚動天上的神仙。"
-                    ]
+                [
+                    "id": "NsqhxJyJxtv0SPnbDUqi",
+                    "isComplete": false
                 ],
-                "season": 4,
-                "startTime": 2,
-                "tag": 1,
-                "weather": 2
-            ]
-            
-            // 上传到 Firestore trips 集合中
-            db.collection("trips").document("SKnCdn2SK9D4HjYnE9ll").setData(tripData) { error in
-                if let error = error {
-                    print("上传数据失败: \(error.localizedDescription)")
-                } else {
-                    print("数据上传成功")
-                }
+                [
+                    "id": "Q4yAOM6yUTOru6YqExsJ",
+                    "isComplete": false
+                ]
+            ],
+            "poem": [
+                "original": [
+                    "南山何其悲，鬼雨灑空草！",
+                    "長安夜半秋，風前幾人老？",
+                    "低迷黃昏徑，裊裊青櫟道；",
+                    "月午樹無影，一山唯白曉，",
+                    "漆炬迎新人，幽壙螢擾擾。"
+                ],
+                "poetry": "李賀",
+                "secretTexts": [
+                    "李賀經常騎著一匹瘦馬，帶著小童子邊走邊思索，一旦有了好句子或是來了靈感，便把所想到的靈感急速記錄下來，投進小童子背著的小錦囊裡。",
+                    "李賀的詩想像力豐富，意境詭異華麗，常用些險韻奇字。",
+                    "李賀只活了短短二十七歲。他經歷了安史之亂帶來的巨大衝擊。"
+                ],
+                "situationText": [
+                    "當細雨輕灑於廣袤的草地上，水霧繚繞，彷彿鬼雨隨風飄落，帶來一種淒美的氛圍。",
+                    "夕陽西下，餘暉灑在蜿蜒的山徑間，步道旁的樹木枝葉隨風輕搖。"
+                ],
+                "title": "〈感諷五首．其三〉",
+                "translation": [
+                    "南山是多麼的悲涼，鬼雨灑落在空曠的草地上。",
+                    "長安的深夜已是秋天，在風中不知多少人已經變老。",
+                    "黃昏的路徑彷彿籠罩著一層迷霧，青櫟樹的道路上飄著悠長的微風。",
+                    "夜半的月亮高懸，樹木卻無影，整座山上只有白色的晨曦。",
+                    "漆黑的火炬迎接著新來的人，幽暗的墓穴中螢火蟲在四處飛舞。"
+                ]
+            ],
+            "season": 2,
+            "startTime": 1,
+            "tag": 0,
+            "weather": 1
+        ]
+        
+        // 上传到 Firestore trips 集合中
+        db.collection("trips").document("u9QgkOcQsZZh90D6SAfc").setData(tripData) { error in
+            if let error = error {
+                print("上传数据失败: \(error.localizedDescription)")
+            } else {
+                print("数据上传成功")
             }
+        }
     }
 
 }

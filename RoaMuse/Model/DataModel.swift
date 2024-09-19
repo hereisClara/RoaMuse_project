@@ -31,7 +31,7 @@ let styles: [Style] = [
 
 struct PlaceId: Codable {
     let id: String
-    let isComplete: Bool
+    var isComplete: Bool
 }
 
 // 定義 Poem 結構
@@ -48,12 +48,12 @@ struct Poem: Codable {
 struct Trip: Codable {
     let poem: Poem
     let id: String
-    let places: [PlaceId]  // 保存地點的 id 和完成狀態
+    var places: [PlaceId]  // 保存地點的 id 和完成狀態
     let tag: Int
     let season: Int
     let weather: Int
     let startTime: Int
-    let isComplete: Bool
+    var isComplete: Bool
 }
 
 // 定義 Place 結構，存放地點詳細資料
