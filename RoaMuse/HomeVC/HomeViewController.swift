@@ -35,7 +35,7 @@ class HomeViewController: UIViewController {
         setupUI()
         setupTableView()
         setupPullToRefresh()
-        
+//        uploadTripData()
         // 从 Firebase 加载 posts
         FirebaseManager.shared.loadPosts { postsArray in
             self.postsArray = postsArray
@@ -208,4 +208,53 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
+    
+    
+    func uploadTripData() {
+        let db = Firestore.firestore()
+            
+            // 构建 trip 数据
+            let tripData: [String: Any] = [
+                "id": "SKnCdn2SK9D4HjYnE9ll",
+                "isComplete": false,
+                "places": [
+                    [
+                        "id": "f9E9Xc0p7aQaDBmqgv2K",
+                        "isComplete": false
+                    ]
+                ],
+                "poem": [
+                    "original": [
+                        "危樓高百尺，手可摘星辰。",
+                        "不敢高聲語，恐驚天上人。"
+                    ],
+                    "poetry": "李白",
+                    "secretTexts": [
+                        "李白自號「青蓮居士」，源於《維摩詰經》的「青蓮」，展現他對佛教的崇敬和對維摩詘生活方式的嚮往。他不僅在詩中多次引用「青蓮」，還將維摩詘視為自己的精神榜樣，特別推崇《維摩詰經》中的「入諸酒肆，能立其志」的教義。"
+                    ],
+                    "situationText": [
+                        "台北101的觀景台是城市中最高的地方，從這裡俯瞰整個台北，感受到與天空接近的高度。站在這樣的高處，彷彿一個輕聲細語就能驚擾天上的人，體會詩中的敬畏與謙卑之感。"
+                    ],
+                    "title": "〈夜宿山寺〉",
+                    "translation": [
+                        "山上寺院的高樓真高啊，好像有一百尺的樣子，人在樓上好像一伸手就可以摘下天上的星星。",
+                        "站在這裡，我不敢大聲說話，唯恐驚動天上的神仙。"
+                    ]
+                ],
+                "season": 4,
+                "startTime": 2,
+                "tag": 1,
+                "weather": 2
+            ]
+            
+            // 上传到 Firestore trips 集合中
+            db.collection("trips").document("SKnCdn2SK9D4HjYnE9ll").setData(tripData) { error in
+                if let error = error {
+                    print("上传数据失败: \(error.localizedDescription)")
+                } else {
+                    print("数据上传成功")
+                }
+            }
+    }
+
 }

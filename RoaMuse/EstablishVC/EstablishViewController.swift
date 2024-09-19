@@ -194,6 +194,4 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-
-    
 }
