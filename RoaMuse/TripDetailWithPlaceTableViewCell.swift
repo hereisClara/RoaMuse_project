@@ -51,9 +51,9 @@ class TripDetailWithPlaceTableViewCell: UITableViewCell {
         verseLabel.numberOfLines = 0
         
         completeButton.isEnabled = true
-        completeButton.setTitle("完成", for: .normal)
-        completeButton.setTitle("無法點選", for: .disabled)
-        completeButton.setTitle("已完成", for: .selected)
+//        completeButton.setTitle("完成", for: .normal)
+//        completeButton.setTitle("無法點選", for: .disabled)
+//        completeButton.setTitle("已完成", for: .selected)
         completeButton.tintColor = UIColor(resource: .accent)
     }
 }

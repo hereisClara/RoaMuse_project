@@ -105,52 +105,6 @@ class TripDetailViewController: UIViewController {
             }
         }
     }
-    
-    
-    
-    func setupUI() {
-        // 確保在主執行緒上更新 UI
-        DispatchQueue.main.async {
-            self.view.addSubview(self.placesStackView)
-            
-            self.placesStackView.snp.makeConstraints { make in
-                make.center.equalTo(self.view)
-                make.width.equalTo(self.view).multipliedBy(0.8)
-            }
-            
-            self.placesStackView.axis = .vertical
-            self.placesStackView.spacing = 30
-            self.placesStackView.distribution = .fillProportionally
-            
-            guard let trip = self.trip else { return }
-            
-            for place in self.placeName {
-                let placeLabel = UILabel()
-                let completeButton = UIButton(type: .system)
-                
-                let horizontalStackView = UIStackView()
-                horizontalStackView.axis = .horizontal
-                horizontalStackView.spacing = 10
-                horizontalStackView.distribution = .fillProportionally
-                
-                horizontalStackView.addArrangedSubview(placeLabel)
-                horizontalStackView.addArrangedSubview(completeButton)
-                
-                self.placesStackView.addArrangedSubview(horizontalStackView)
-                
-                placeLabel.textColor = .black
-                placeLabel.text = place
-                
-                completeButton.isEnabled = false
-                completeButton.setTitle("完成", for: .normal)
-                completeButton.setTitle("無法點選", for: .disabled)
-                completeButton.setTitle("已完成", for: .selected)
-                // 初始狀態設為不可用
-                
-                completeButton.addTarget(self, action: #selector(self.didTapCompleteButton(_:)), for: .touchUpInside)
-            }
-        }
-    }
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -195,6 +149,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 cell?.completeButton.isEnabled = isButtonEnabled
                 cell?.completeButton.accessibilityIdentifier = places[dataIndex].id
                 cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
+                // 設定按鈕的標題樣式一致
+                cell?.completeButton.setTitle(isButtonEnabled ? "完成" : "無法點選", for: .normal)
+                cell?.completeButton.setTitle("已完成", for: .selected)
             } else {
                 cell?.placeLabel.text = "無資料"
                 cell?.completeButton.isHidden = true
@@ -231,6 +188,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func didTapCompleteButton(_ sender: UIButton) {
         
         sender.isSelected = true
+        sender.isEnabled = false
+        
         // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: tableView)
         
@@ -251,6 +210,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             // 獲取對應的地點 ID 和當前完成狀態
             let placeId = trip.places[placeIndex].id
             let tripId = trip.id
+            
+           
             
             // 確保保留所有的地點資料
             var updatedPlaces = trip.places.map { place -> [String: Any] in
@@ -290,7 +251,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     
                     // 刷新表格
                     DispatchQueue.main.async {
-                        self.tableView.reloadData()
+                        self.tableView.reloadRows(at: [indexPath], with: .none)
                     }
                 }
             }

@@ -210,7 +210,6 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
-				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
 				AC7A2A642C97C667003FA811 /* UserVC */,
 				AC7A2A632C97C63D003FA811 /* Manager */,
@@ -220,6 +219,7 @@
 				AC7A2A542C9725AE003FA811 /* LoginViewController.swift */,
 				AC7A2A582C97AF17003FA811 /* Extension+String.swift */,
 				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
+				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
 				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
 				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
 				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
