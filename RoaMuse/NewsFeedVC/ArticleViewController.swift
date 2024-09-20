@@ -39,9 +39,7 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         setupCommentInput()
         updateLikesData()
         updateBookmarkData()
-//        FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postId) { isBookmarked in
-//            self.likeButton.isSelected = isBookmarked
-//        }
+
     }
     
     // 設置 TableView
@@ -365,12 +363,12 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         
     }
     
-    
     func saveBookmarkData(postId: String, userId: String, isBookmarked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
+        let userRef = Firestore.firestore().collection("users").document(userId)
         
         if isBookmarked {
-            // 使用 arrayUnion 將 userId 添加到 bookmarkAccounts 列表中
+            // 使用 arrayUnion 將 userId 添加到 posts 集合中的 bookmarkAccounts
             postRef.updateData([
                 "bookmarkAccounts": FieldValue.arrayUnion([userId])
             ]) { error in
@@ -378,12 +376,22 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
                     print("收藏失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
-                    print("收藏成功，已更新資料")
-                    completion(true)
+                    // 同時更新 users 集合中的 bookmarkPost
+                    userRef.updateData([
+                        "bookmarkPost": FieldValue.arrayUnion([postId])
+                    ]) { error in
+                        if let error = error {
+                            print("用戶收藏更新失敗: \(error.localizedDescription)")
+                            completion(false)
+                        } else {
+                            print("收藏成功，已更新資料")
+                            completion(true)
+                        }
+                    }
                 }
             }
         } else {
-            // 使用 arrayRemove 將 userId 從 bookmarkAccounts 列表中移除
+            // 使用 arrayRemove 將 userId 從 posts 集合中的 bookmarkAccounts 中移除
             postRef.updateData([
                 "bookmarkAccounts": FieldValue.arrayRemove([userId])
             ]) { error in
@@ -391,8 +399,18 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
                     print("取消收藏失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
-                    print("取消收藏成功，已更新資料")
-                    completion(true)
+                    // 從 users 集合中移除 bookmarkPost
+                    userRef.updateData([
+                        "bookmarkPost": FieldValue.arrayRemove([postId])
+                    ]) { error in
+                        if let error = error {
+                            print("取消用戶收藏更新失敗: \(error.localizedDescription)")
+                            completion(false)
+                        } else {
+                            print("取消收藏成功，已更新資料")
+                            completion(true)
+                        }
+                    }
                 }
             }
         }
