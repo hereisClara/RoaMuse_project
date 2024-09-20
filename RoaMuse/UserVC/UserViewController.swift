@@ -18,8 +18,7 @@ class UserViewController: UIViewController, UITableViewDelegate, UITableViewData
     var userName = String()
     var awards = Int()
     var posts: [[String: Any]] = []
-
-    
+ 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -109,7 +108,33 @@ class UserViewController: UIViewController, UITableViewDelegate, UITableViewData
         cell.selectionStyle = .none
         return cell
     }
-
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let post = posts[indexPath.row]
+        
+        let articleVC = ArticleViewController()
+        
+        FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
+            if let userName = userName {
+                print("找到的 userName: \(userName)")
+                articleVC.articleAuthor = userName
+                articleVC.articleTitle = post["title"] as? String ?? "無標題"
+                articleVC.articleContent = post["content"] as? String ?? "無內容"
+                if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+                    let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                    articleVC.articleDate = createdAtString
+                }
+                
+                articleVC.authorId = post["userId"] as? String ?? ""
+                articleVC.postId = post["id"] as? String ?? ""
+                articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
+                
+                self.navigationController?.pushViewController(articleVC, animated: true)
+            } else {
+                print("未找到對應的 userName")
+            }
+        }
+    }
     
     // UITableViewDelegate - 設定 cell 高度
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

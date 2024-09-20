@@ -43,8 +43,8 @@ class CollectionsTableViewCell: UITableViewCell {
         let heartImage = UIImage(named: "heart")
         let heartFillImage = UIImage(named: "heart.fill")
         
-        collectButton.setImage(heartImage, for: .normal)
-        collectButton.setImage(heartFillImage, for: .selected)
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
         
         collectButton.tintColor = UIColor(resource: .accent)
         

@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import SnapKit
 import MJRefresh
+import FirebaseCore
 
 class CollectionsViewController: UIViewController {
     
@@ -170,6 +171,39 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         cell?.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         
         return cell ?? UITableViewCell()
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        if segmentIndex == 0 {
+            
+            
+        } else {
+            let post = postsArray[indexPath.row]
+            
+            let articleVC = ArticleViewController()
+            
+            FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
+                if let userName = userName {
+                    print("找到的 userName: \(userName)")
+                    articleVC.articleAuthor = userName
+                    articleVC.articleTitle = post["title"] as? String ?? "無標題"
+                    articleVC.articleContent = post["content"] as? String ?? "無內容"
+                    if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+                        let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                        articleVC.articleDate = createdAtString
+                    }
+                    
+                    articleVC.authorId = post["userId"] as? String ?? ""
+                    articleVC.postId = post["id"] as? String ?? ""
+                    articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
+                    
+                    self.navigationController?.pushViewController(articleVC, animated: true)
+                } else {
+                    print("未找到對應的 userName")
+                }
+            }
+        }
     }
     
     @objc func didTapCollectButton(_ sender: UIButton) {

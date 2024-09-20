@@ -41,6 +41,7 @@
 		AC7A2A832C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */; };
 		AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */; };
 		AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A882C9D1C92003FA811 /* DateManager.swift */; };
+		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -98,6 +99,7 @@
 		AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDetailWithPlaceTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A882C9D1C92003FA811 /* DateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateManager.swift; sourceTree = "<group>"; };
+		AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentTableViewCell.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 				AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */,
 				AC7A2A652C97D28E003FA811 /* PostsTableViewCell.swift */,
 				AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */,
+				AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */,
 			);
 			path = NewsFeedVC;
 			sourceTree = "<group>";
@@ -474,6 +477,7 @@
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
 				AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */,
+				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,

@@ -24,7 +24,8 @@ class TabBarController: UITabBarController {
         
 
         let collectionsVC = CollectionsViewController()
-        collectionsVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "heart"), tag: 1)
+        let collectionsNavController = UINavigationController(rootViewController: collectionsVC)
+        collectionsVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "bookmark"), tag: 1)
         
         let establishVC = EstablishViewController()
         let establishNavController = UINavigationController(rootViewController: establishVC)
@@ -35,8 +36,9 @@ class TabBarController: UITabBarController {
         newsFeedVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "globe"), tag: 3)
         
         let userVC = UserViewController()
+        let userNavController = UINavigationController(rootViewController: userVC)
         userVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "person"), tag: 4)
 
-        self.viewControllers = [homeNavController, collectionsVC, establishNavController, newsFeedNavController, userVC]
+        self.viewControllers = [homeNavController, collectionsNavController, establishNavController, newsFeedNavController, userNavController]
     }
 }

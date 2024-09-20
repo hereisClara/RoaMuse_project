@@ -97,15 +97,26 @@ class PostViewController: UIViewController {
             "content": content,
             "photoUrl": "photo",
             "createdAt": Date(),
-            "bookmarkAccount": [String](),
+            "bookmarkAccount": [String](),  // 收藏者帳號列表
+            "likesAccount": [String](),     // 按讚者帳號列表
+            "comments": [                   // 留言列表，包含每條留言的 id
+                [
+                    "id": UUID().uuidString,  // 每個 comment 的唯一 id
+                    "userId": "",             // 留言者 id
+                    "content": "",            // 留言內容
+                    "createdAt": Date()       // 留言時間
+                ]
+            ],
             "tripId": tripId
         ] as [String : Any]
         
         document.setData(data)
     }
+
     
     @objc func backToLastPage() {
-        
+        titleTextField.text = ""
+        contentTextView.text = ""
         postButtonAction?()
         navigationController?.popViewController(animated: true)
     }

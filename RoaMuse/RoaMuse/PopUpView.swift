@@ -108,7 +108,7 @@ class PopUpView {
             }
         }
         
-        collectButton.setImage(UIImage(systemName: "heart"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
         collectButton.tintColor = .white
         collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
         

@@ -15,11 +15,15 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
     var articleAuthor = "作者名稱"
     var articleContent = "這是一篇測試文章的內容，這裡是比較長的測試文章，用來測試表格和表頭自適應大小的效果。這是一篇測試文章的內容，這裡是比較長的測試文章，用來測試表格和表頭自適應大小的效果。"
     var articleDate = "2024年9月20日"
-    var comments = ["留言1", "這是一個比較長的留言，用來測試表格內容自適應行高的效果。這是一個比較長的留言，用來測試表格內容自適應行高的效果。", "留言3", "留言4", "留言5"]
-
+    var comments = [
+        ["username": "使用者1", "content": "這是第一則留言", "createdAt": "2024-09-20"],
+        ["username": "使用者2", "content": "這是第二則留言", "createdAt": "2024-09-21"]
+    ]
     
     var isBookmarked = false
     let collectButton = UIButton(type: .system)
+    let likeButton = UIButton(type: .system)
+    let commentButton = UIButton(type: .system)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -53,7 +57,9 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         tableView.tableHeaderView = headerView
         
         // 註冊 cell
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "commentCell")
+        tableView.register(CommentTableViewCell.self, forCellReuseIdentifier: "CommentCell")
+        tableView.estimatedRowHeight = 100  // 預估行高
+        tableView.rowHeight = UITableView.automaticDimension  // 自適應行高
         
         // 使用 SnapKit 設置 TableView
         tableView.snp.makeConstraints { make in
@@ -90,18 +96,28 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         dateLabel.numberOfLines = 0
         headerView.addSubview(dateLabel)
         
-        // 收藏按鈕的設置
-        let heartImage = UIImage(named: "heart")
-        let heartFillImage = UIImage(named: "heart.fill")
-        collectButton.setImage(heartImage, for: .normal)
-        collectButton.setImage(heartFillImage, for: .selected)
+        // 設置按讚按鈕
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
+        likeButton.tintColor = UIColor.systemBlue
+        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        headerView.addSubview(likeButton)
+        
+        // 設置留言按鈕
+        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
+        commentButton.tintColor = UIColor.systemGreen
+        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
+        headerView.addSubview(commentButton)
+        
+        // 設置收藏按鈕
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
         collectButton.tintColor = UIColor.systemPink
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         headerView.addSubview(collectButton)
         
         let bookmarkCountLabel = UILabel()
         bookmarkCountLabel.text = String(bookmarkAccounts.count)
-        print(bookmarkAccounts.count)
         bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
         headerView.addSubview(bookmarkCountLabel)
         
@@ -129,9 +145,22 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
             make.leading.equalTo(titleLabel)
         }
         
-        collectButton.snp.makeConstraints { make in
+        // 設置按鈕們的佈局
+        likeButton.snp.makeConstraints { make in
             make.top.equalTo(dateLabel.snp.bottom).offset(16)
             make.leading.equalTo(titleLabel)
+            make.width.height.equalTo(30)
+        }
+        
+        commentButton.snp.makeConstraints { make in
+            make.leading.equalTo(likeButton.snp.trailing).offset(40)
+            make.centerY.equalTo(likeButton)
+            make.width.height.equalTo(30)
+        }
+        
+        collectButton.snp.makeConstraints { make in
+            make.leading.equalTo(commentButton.snp.trailing).offset(40)
+            make.centerY.equalTo(likeButton)
             make.width.height.equalTo(30)
             make.bottom.equalTo(headerView).offset(-16) // 確保 header 自適應大小
         }
@@ -152,24 +181,23 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         }
     }
     
-    // UITableViewDataSource - 設定 cell 的數量
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return comments.count  // 返回留言數量
+    // 按讚按鈕事件處理
+    @objc func didTapLikeButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        if sender.isSelected {
+            print("按讚成功")
+        } else {
+            print("取消按讚")
+        }
     }
     
-    // UITableViewDataSource - 設定每個 cell 的樣式
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "commentCell", for: indexPath)
-        cell.textLabel?.text = comments[indexPath.row]  // 設置留言內容
-        cell.textLabel?.numberOfLines = 0  // 設置為自適應行數
-        return cell
+    // 留言按鈕事件處理
+    @objc func didTapCommentButton(_ sender: UIButton) {
+        print("跳轉到留言區")
+        // 可在此處跳轉到留言區
     }
     
-    // UITableViewDelegate - 設定自動調整行高
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
+    // 收藏按鈕事件處理
     @objc func didTapCollectButton(_ sender: UIButton) {
         let userId = authorId  // 假設為當前使用者ID
         let postId = postId    // 假設文章的ID
@@ -201,5 +229,31 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
                 }
             }
         }
+    }
+    
+    // UITableViewDataSource - 設定 cell 的數量
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return comments.count  // 返回留言數量
+    }
+    
+    // UITableViewDataSource - 設定每個 cell 的樣式
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as? CommentTableViewCell else {
+            return UITableViewCell()
+        }
+        
+        let comment = comments[indexPath.row]
+        let username = comment["username"] as? String ?? "未知使用者"
+        let content = comment["content"] as? String ?? "無內容"
+        let createdAt = comment["createdAt"] as? String ?? "未知時間"
+        
+        cell.configure(username: username, content: content, createdAt: createdAt)
+        return cell
+    }
+
+    
+    // UITableViewDelegate - 設定自動調整行高
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
 }
