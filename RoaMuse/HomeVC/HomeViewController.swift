@@ -181,8 +181,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        
-        
         let post = postsArray[indexPath.row]
         
         // 初始化 ArticleViewController
@@ -196,6 +194,9 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
+                
+                articleVC.likeAccounts = post["likeAccount"] as? [String] ?? []
+                
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                     articleVC.articleDate = createdAtString

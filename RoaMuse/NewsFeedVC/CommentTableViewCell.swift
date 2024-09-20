@@ -62,16 +62,14 @@ class CommentTableViewCell: UITableViewCell {
             make.trailing.equalTo(contentView).offset(-16)
             make.bottom.equalTo(contentView).offset(-8) // 確保自適應
         }
+        
+        usernameLabel.text = "username"
+        contentLabel.text = "content"
+        createdAtLabel.text = "createdAt"
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // 設置 cell 的數據
-    func configure(username: String, content: String, createdAt: String) {
-        usernameLabel.text = username
-        contentLabel.text = content
-        createdAtLabel.text = createdAt
-    }
 }
