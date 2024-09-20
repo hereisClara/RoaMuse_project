@@ -22,7 +22,8 @@ class TripDetailViewController: UIViewController {
     let distanceThreshold: Double = 5000
     private var buttonState = [Bool]()
     var selectedIndexPath: IndexPath?
-
+    var completedPlaceIds: [String] = []
+    
     
     let tableView = UITableView()
     
@@ -32,7 +33,11 @@ class TripDetailViewController: UIViewController {
         
         setupTableView()
         loadPlacesDataFromFirebase()
-        print(trip?.poem.situationText)
+        FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] placeIds in
+            self?.completedPlaceIds = placeIds
+            print("獲取的 completedPlaceIds: \(self?.completedPlaceIds)")
+            self?.tableView.reloadData()
+        }
     }
     
     // 從 Firebase 加載 Places 資料
@@ -156,19 +161,31 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     cell?.moreInfoLabel.isHidden = true
                 }
                 
+                let placeId = places[dataIndex].id
+                
                 // 根據 Firebase 中的 isComplete 狀態設置按鈕選中狀態
-                let isComplete = trip?.places[dataIndex].isComplete ?? false
-                cell?.completeButton.isSelected = isComplete  // 設置選中狀態
-                cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
+                let isComplete = completedPlaceIds.contains(placeId)
                 
+                // 根據 isComplete 設置按鈕和狀態
                 if isComplete {
-                                cell?.moreInfoLabel.isHidden = false
-                                cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
-                            } else {
-                                cell?.moreInfoLabel.isHidden = true
-                            }
+                    cell?.completeButton.isSelected = true
+                    cell?.completeButton.setTitle("已完成", for: .selected)
+                    cell?.moreInfoLabel.isHidden = false
+                    cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
+                } else {
+                    print("未包含")
+                    cell?.completeButton.isSelected = false
+                    cell?.completeButton.setTitle("完成", for: .normal)
+                    cell?.moreInfoLabel.isHidden = true
+                }
                 
-                // 設定按鈕的標題樣式一致
+                if cell?.completeButton.isSelected == true {
+                    cell?.moreInfoLabel.isHidden = false
+                    cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
+                } else {
+                    cell?.moreInfoLabel.isHidden = true
+                }
+                
                 cell?.completeButton.setTitle(isButtonEnabled ? "完成" : "無法點選", for: .normal)
                 cell?.completeButton.setTitle("已完成", for: .selected)
             } else {
@@ -178,19 +195,17 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         } else {
             let dataIndex = (indexPath.row - 1) / 2
-                    
-                    if let situationTexts = trip?.poem.situationText, dataIndex < situationTexts.count {
-                        cell?.moreInfoLabel.text = situationTexts[dataIndex]
-                        cell?.moreInfoLabel.isHidden = false
-                    } else {
-                        cell?.moreInfoLabel.text = nil
-                        cell?.moreInfoLabel.isHidden = true
-                    }
+            
+            if let situationTexts = trip?.poem.situationText, dataIndex < situationTexts.count {
+                cell?.moreInfoLabel.text = situationTexts[dataIndex]
+                cell?.moreInfoLabel.isHidden = false
+            } else {
+                cell?.moreInfoLabel.text = nil
+                cell?.moreInfoLabel.isHidden = true
+            }
             
             cell?.placeLabel.text = nil // 對於其他行，你可以設定為 nil 或隱藏這個 label
             cell?.completeButton.isHidden = true
-//            cell?.moreInfoLabel.isHidden = false
-//            cell?.moreInfoLabel.text = trip?.poem.situationText[indexPath.row / 2 - 1]
         }
         
         return cell ?? UITableViewCell()
@@ -220,39 +235,29 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         sender.isSelected = true
         sender.isEnabled = false
-        
-        // 獲取按鈕點擊所在的行
+
         let point = sender.convert(CGPoint.zero, to: tableView)
-        
+
         if let indexPath = tableView.indexPathForRow(at: point) {
             guard let trip = trip else {
                 print("無法獲取行程資訊")
                 return
             }
-            
-            // 根據 indexPath 尋找地點
-            let placeIndex = indexPath.row / 2  // 詩句與地點交替出現
-            
+
+            let placeIndex = indexPath.row / 2
             guard placeIndex < trip.places.count else {
                 print("地點索引超出範圍")
                 return
             }
 
-            // 獲取對應的地點 ID 和當前完成狀態
             let placeId = trip.places[placeIndex].id
             let tripId = trip.id
-            
-           
-            
-            // 確保保留所有的地點資料
+
             var updatedPlaces = trip.places.map { place -> [String: Any] in
                 return ["id": place.id, "isComplete": place.isComplete]
             }
-            
-            // 更新指定的地點的 `isComplete` 狀態
             updatedPlaces[placeIndex]["isComplete"] = true
-            
-            // 更新 Firestore 中的地點字段
+
             let db = Firestore.firestore()
             db.collection("trips").document(tripId).updateData(["places": updatedPlaces]) { error in
                 if let error = error {
@@ -260,29 +265,30 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 } else {
                     print("地點 \(placeId) 的 isComplete 成功更新為 true")
 
-                    // 更新本地資料結構，避免重載時丟失
                     self.trip?.places[placeIndex].isComplete = true
-                    
-                    // 檢查是否所有地點的 isComplete 都為 true
+
+                    // 上傳地點到 users 的 completedPlace
+                    FirebaseManager.shared.addPlaceToCompleted(userId: userId, tripId: tripId, placeId: placeId)
+
                     let allCompleted = updatedPlaces.allSatisfy { place in
                         return place["isComplete"] as? Bool == true
                     }
-                    
+
                     if allCompleted {
-                        // 如果所有地點都完成，更新外層 isComplete
                         db.collection("trips").document(tripId).updateData(["isComplete": true]) { error in
                             if let error = error {
                                 print("更新行程 isComplete 失敗: \(error.localizedDescription)")
                             } else {
                                 print("行程的 isComplete 已設置為 true")
                                 self.trip?.isComplete = true
+                                
+                                // 上傳行程到 users 的 completedTrip
+                                FirebaseManager.shared.addTripToCompleted(userId: userId, tripId: tripId)
                             }
                         }
                     }
-                    
+
                     self.selectedIndexPath = indexPath
-                    
-                    // 刷新表格
                     DispatchQueue.main.async {
                         self.tableView.reloadRows(at: [indexPath], with: .none)
                     }

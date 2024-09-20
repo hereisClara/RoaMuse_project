@@ -60,9 +60,9 @@ class LoginViewController: UIViewController {
                 print("userName 已存在，不能新增")
             } else {
                 // userName 不存在，可以新增資料
-                let newDocument = usersCollection.document()  // 自動生成 ID
+                let newDocument = usersCollection.document(userId)  // 自動生成 ID
                 let data = [
-                    "id": newDocument.documentID,
+                    "id": userId,
                     "userName": userName,
                     "email": "@900623"
                 ]

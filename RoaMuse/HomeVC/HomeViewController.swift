@@ -26,7 +26,7 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        uploadPlaces()
+        //        uploadPlaces()
         self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)
         homeTableView.register(PostsTableViewCell.self, forCellReuseIdentifier: "postCell")
@@ -110,7 +110,7 @@ class HomeViewController: UIViewController {
             }
         }
     }
-
+    
     
     private func fetchWeather(for location: CLLocation) {
         weatherManager.fetchWeather(for: location) { [weak self] weather in
@@ -179,8 +179,42 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        
+        
+        let post = postsArray[indexPath.row]
+        
+        // 初始化 ArticleViewController
+        let articleVC = ArticleViewController()
+        
+        // 傳遞貼文的資料
+        
+        FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
+            if let userName = userName {
+                print("找到的 userName: \(userName)")
+                articleVC.articleAuthor = userName
+                articleVC.articleTitle = post["title"] as? String ?? "無標題"
+                articleVC.articleContent = post["content"] as? String ?? "無內容"
+                if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+                    let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                    articleVC.articleDate = createdAtString
+                }
+                
+                articleVC.authorId = post["userId"] as? String ?? ""
+                articleVC.postId = post["id"] as? String ?? ""
+                articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
+                
+                self.navigationController?.pushViewController(articleVC, animated: true)
+            } else {
+                print("未找到對應的 userName")
+            }
+        }
+    }
+    
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
+        
         // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: homeTableView)
         
@@ -189,18 +223,45 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             let postId = postData["id"] as? String ?? ""
             let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
             
+            // 獲取當前的 bookmarkAccount
+            var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
+            
             if sender.isSelected {
+                // 收藏操作，將 userId 加入 bookmarkAccount
+                if !bookmarkAccount.contains(userId) {
+                    bookmarkAccount.append(userId)
+                }
+
+                // 更新使用者的收藏列表
                 FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
                     if success {
-                        print("收藏成功")
+                        // 更新 Firestore 中的 bookmarkAccount 字段
+                        FirebaseManager.shared.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                            if let error = error {
+                                print("Failed to update bookmarkAccount: \(error)")
+                            } else {
+                                print("收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+                            }
+                        }
                     } else {
                         print("收藏失敗")
                     }
                 }
             } else {
+                // 取消收藏操作，將 userId 從 bookmarkAccount 中移除
+                bookmarkAccount.removeAll { $0 == userId }
+
+                // 移除使用者的收藏
                 FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
-                        print("取消收藏成功")
+                        // 更新 Firestore 中的 bookmarkAccount 字段
+                        FirebaseManager.shared.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                            if let error = error {
+                                print("Failed to update bookmarkAccount: \(error)")
+                            } else {
+                                print("取消收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+                            }
+                        }
                     } else {
                         print("取消收藏失敗")
                     }
@@ -209,6 +270,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         }
     }
 
+    
     func uploadTripData() {
         let db = Firestore.firestore()
         
@@ -272,5 +334,5 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-
+    
 }

@@ -92,7 +92,7 @@ class PostViewController: UIViewController {
         
         let data = [
             "id": document.documentID,
-            "userId": "yen",
+            "userId": userId,
             "title": title,
             "content": content,
             "photoUrl": "photo",

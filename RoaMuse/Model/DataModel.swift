@@ -67,3 +67,38 @@ struct Place: Codable {
 struct Json: Codable {
     let trips: [Trip]
 }
+
+struct User: Codable {
+    var userId: String                // 用戶ID
+    var userName: String              // 用戶名稱
+    var email: String                 // 用戶郵箱
+    var bookmarkPost: [String]        // 收藏的文章IDs
+    var bookmarkTrip: [String]        // 收藏的行程IDs
+    var completedTrip: [String]       // 已完成的行程IDs
+    var completedPlace: [CompletedPlace] // 已完成的地點資料 (依據行程)
+
+    // 新增完成的行程
+    mutating func completeTrip(tripId: String) {
+        if !completedTrip.contains(tripId) {
+            completedTrip.append(tripId)
+        }
+    }
+
+    // 新增行程中已完成的地點
+    mutating func completePlace(in tripId: String, placeId: String) {
+        // 檢查是否已經有該行程的記錄
+        if let index = completedPlace.firstIndex(where: { $0.tripId == tripId }) {
+            if !completedPlace[index].placeIds.contains(placeId) {
+                completedPlace[index].placeIds.append(placeId)
+            }
+        } else {
+            // 如果尚無該行程的記錄，新增一筆
+            completedPlace.append(CompletedPlace(tripId: tripId, placeIds: [placeId]))
+        }
+    }
+}
+
+struct CompletedPlace: Codable {
+    let tripId: String                // 行程ID
+    var placeIds: [String]            // 行程中完成的地點IDs
+}
