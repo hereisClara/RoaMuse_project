@@ -3,16 +3,14 @@ import UIKit
 import SnapKit
 import FirebaseFirestore
 
-class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ArticleViewController: UIViewController {
     
     var authorId = String()
     var postId = String()
     var bookmarkAccounts = [String]()
     var likeAccounts = [String]()
-    
     let tableView = UITableView()
     
-    // 假資料
     var articleTitle = String()
     var articleAuthor = String()
     var articleContent = String()
@@ -32,160 +30,13 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         super.viewDidLoad()
         view.backgroundColor = .white
         
-        // 設置收藏按鈕的初始狀態
         checkBookmarkStatus()
+        updateBookmarkData()
         loadComments()
         setupTableView()
         setupCommentInput()
         updateLikesData()
-        updateBookmarkData()
-
-    }
-    
-    // 設置 TableView
-    func setupTableView() {
-        view.addSubview(tableView)
         
-        tableView.delegate = self
-        tableView.dataSource = self
-        
-        // 允許自動調整行高
-        tableView.estimatedRowHeight = 80
-        tableView.rowHeight = UITableView.automaticDimension
-        
-        // 允許表頭自動調整大小
-        let headerView = createHeaderView()
-        headerView.setNeedsLayout()
-        headerView.layoutIfNeeded()
-        let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
-        var frame = headerView.frame
-        frame.size.height = headerHeight
-        headerView.frame = frame
-        tableView.tableHeaderView = headerView
-        
-        // 註冊 cell
-        tableView.register(CommentTableViewCell.self, forCellReuseIdentifier: "CommentCell")
-        tableView.estimatedRowHeight = 120  // 預估行高
-        tableView.rowHeight = UITableView.automaticDimension  // 自適應行高
-        
-        // 使用 SnapKit 設置 TableView
-        tableView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
-        }
-    }
-    
-    // 創建表頭視圖 (header)
-    func createHeaderView() -> UIView {
-        let headerView = UIView()
-        
-        let titleLabel = UILabel()
-        titleLabel.text = articleTitle
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
-        titleLabel.numberOfLines = 0
-        headerView.addSubview(titleLabel)
-        
-        let authorLabel = UILabel()
-        authorLabel.text = "作者: \(articleAuthor)"
-        authorLabel.font = UIFont.systemFont(ofSize: 16)
-        authorLabel.numberOfLines = 0
-        headerView.addSubview(authorLabel)
-        
-        let contentLabel = UILabel()
-        contentLabel.text = articleContent
-        contentLabel.font = UIFont.systemFont(ofSize: 14)
-        contentLabel.numberOfLines = 0
-        headerView.addSubview(contentLabel)
-        
-        let dateLabel = UILabel()
-        dateLabel.text = articleDate
-        dateLabel.font = UIFont.systemFont(ofSize: 12)
-        dateLabel.textColor = .gray
-        dateLabel.numberOfLines = 0
-        headerView.addSubview(dateLabel)
-        
-        // 設置按讚按鈕
-        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
-        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
-        likeButton.tintColor = UIColor.systemBlue
-        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
-        headerView.addSubview(likeButton)
-        
-        // 設置留言按鈕
-        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
-        commentButton.tintColor = UIColor.systemGreen
-        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
-        headerView.addSubview(commentButton)
-        
-        // 設置收藏按鈕
-        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
-        collectButton.tintColor = UIColor.systemPink
-        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
-        headerView.addSubview(collectButton)
-        
-        bookmarkCountLabel.text = String(bookmarkAccounts.count)
-        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
-        headerView.addSubview(bookmarkCountLabel)
-        
-        likeCountLabel.text = "0"
-        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
-        headerView.addSubview(likeCountLabel)
-        
-        // 使用 SnapKit 進行佈局
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(headerView).offset(16)
-            make.leading.equalTo(headerView).offset(16)
-            make.trailing.equalTo(headerView).offset(-16)
-        }
-        
-        authorLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.leading.equalTo(titleLabel)
-            make.trailing.equalTo(titleLabel)
-        }
-        
-        contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(authorLabel.snp.bottom).offset(8)
-            make.leading.equalTo(titleLabel)
-            make.trailing.equalTo(titleLabel)
-        }
-        
-        dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(contentLabel.snp.bottom).offset(8)
-            make.leading.equalTo(titleLabel)
-        }
-        
-        // 設置按鈕們的佈局
-        likeButton.snp.makeConstraints { make in
-            make.top.equalTo(dateLabel.snp.bottom).offset(16)
-            make.leading.equalTo(titleLabel)
-            make.width.height.equalTo(30)
-        }
-        
-        commentButton.snp.makeConstraints { make in
-            make.leading.equalTo(likeButton.snp.trailing).offset(70)
-            make.centerY.equalTo(likeButton)
-            make.width.height.equalTo(30)
-        }
-        
-        collectButton.snp.makeConstraints { make in
-            make.leading.equalTo(commentButton.snp.trailing).offset(70)
-            make.centerY.equalTo(likeButton)
-            make.width.height.equalTo(30)
-            make.bottom.equalTo(headerView).offset(-16) // 確保 header 自適應大小
-        }
-        
-        bookmarkCountLabel.snp.makeConstraints { make in
-            make.leading.equalTo(collectButton.snp.trailing).offset(10)
-            make.centerY.equalTo(collectButton)
-        }
-        
-        likeCountLabel.snp.makeConstraints { make in
-            make.leading.equalTo(likeButton.snp.trailing).offset(10)
-            make.centerY.equalTo(likeButton)
-        }
-        
-        return headerView
     }
     
     func setupCommentInput() {
@@ -217,6 +68,7 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         FirebaseManager.shared.isContentBookmarked(forUserId: authorId, id: postId) { [weak self] isBookmarked in
             guard let self = self else { return }
             self.collectButton.isSelected = isBookmarked
+            print("~~~~~~~", self.collectButton.isSelected)
         }
     }
     
@@ -256,14 +108,12 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         }
     }
 
-    
     // 點擊送出按鈕
         @objc func didTapSendButton() {
             guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
                 print("留言內容不能為空")
                 return
             }
-            
             saveComment(userId: authorId, postId: postId, commentContent: commentContent) { success in
                 if success {
                     print("留言成功")
@@ -370,7 +220,7 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         if isBookmarked {
             // 使用 arrayUnion 將 userId 添加到 posts 集合中的 bookmarkAccounts
             postRef.updateData([
-                "bookmarkAccounts": FieldValue.arrayUnion([userId])
+                "bookmarkAccount": FieldValue.arrayUnion([userId])
             ]) { error in
                 if let error = error {
                     print("收藏失敗: \(error.localizedDescription)")
@@ -393,7 +243,7 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
         } else {
             // 使用 arrayRemove 將 userId 從 posts 集合中的 bookmarkAccounts 中移除
             postRef.updateData([
-                "bookmarkAccounts": FieldValue.arrayRemove([userId])
+                "bookmarkAccount": FieldValue.arrayRemove([userId])
             ]) { error in
                 if let error = error {
                     print("取消收藏失敗: \(error.localizedDescription)")
@@ -423,19 +273,159 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
                 return post["id"] as? String == self.postId
             }
             if let matchedPost = filteredPosts.first,
-               let bookmarkAccounts = matchedPost["bookmarkAccounts"] as? [String] {
+               let bookmarkAccounts = matchedPost["bookmarkAccount"] as? [String] {
                 // 更新收藏數量
-                self.collectButton.isSelected = bookmarkAccounts.contains(self.authorId)
                 self.bookmarkCountLabel.text = String(bookmarkAccounts.count)
+                print(bookmarkAccounts.count)
             } else {
                 // 如果沒有找到相應的貼文，或者 bookmarkAccounts 為空
-                self.collectButton.isSelected = false
                 self.bookmarkCountLabel.text = "0"
             }
         }
-        
     }
+}
 
+extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
+    
+    func setupTableView() {
+        view.addSubview(tableView)
+        
+        tableView.delegate = self
+        tableView.dataSource = self
+        
+        tableView.estimatedRowHeight = 80
+        tableView.rowHeight = UITableView.automaticDimension
+        
+        let headerView = createHeaderView()
+        headerView.setNeedsLayout()
+        headerView.layoutIfNeeded()
+        let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+        var frame = headerView.frame
+        frame.size.height = headerHeight
+        headerView.frame = frame
+        tableView.tableHeaderView = headerView
+        
+        tableView.register(CommentTableViewCell.self, forCellReuseIdentifier: "CommentCell")
+        tableView.estimatedRowHeight = 120  // 預估行高
+        tableView.rowHeight = UITableView.automaticDimension  // 自適應行高
+        
+        tableView.snp.makeConstraints { make in
+            make.edges.equalTo(view.safeAreaLayoutGuide)
+        }
+    }
+    
+    // 創建表頭視圖 (header)
+    func createHeaderView() -> UIView {
+        let headerView = UIView()
+        
+        let titleLabel = UILabel()
+        titleLabel.text = articleTitle
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
+        titleLabel.numberOfLines = 0
+        headerView.addSubview(titleLabel)
+        
+        let authorLabel = UILabel()
+        authorLabel.text = "作者: \(articleAuthor)"
+        authorLabel.font = UIFont.systemFont(ofSize: 16)
+        authorLabel.numberOfLines = 0
+        headerView.addSubview(authorLabel)
+        
+        let contentLabel = UILabel()
+        contentLabel.text = articleContent
+        contentLabel.font = UIFont.systemFont(ofSize: 14)
+        contentLabel.numberOfLines = 0
+        contentLabel.lineBreakMode = .byWordWrapping
+        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9 // 設置最大寬度
+        headerView.addSubview(contentLabel)
+        
+        let dateLabel = UILabel()
+        dateLabel.text = articleDate
+        dateLabel.font = UIFont.systemFont(ofSize: 12)
+        dateLabel.textColor = .gray
+        dateLabel.numberOfLines = 0
+        headerView.addSubview(dateLabel)
+        
+        // 設置按讚按鈕
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
+        likeButton.tintColor = UIColor.systemBlue
+        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        headerView.addSubview(likeButton)
+        
+        // 設置留言按鈕
+        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
+        commentButton.tintColor = UIColor.systemGreen
+        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
+        headerView.addSubview(commentButton)
+        
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
+        collectButton.tintColor = UIColor.systemPink
+        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        headerView.addSubview(collectButton)
+        
+        bookmarkCountLabel.text = String(bookmarkAccounts.count)
+        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
+        headerView.addSubview(bookmarkCountLabel)
+        
+        likeCountLabel.text = "0"
+        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
+        headerView.addSubview(likeCountLabel)
+        
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(headerView).offset(16)
+            make.leading.equalTo(headerView).offset(16)
+            make.trailing.equalTo(headerView).offset(-16)
+        }
+        
+        authorLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.leading.equalTo(titleLabel)
+            make.trailing.equalTo(titleLabel)
+        }
+        
+        contentLabel.snp.makeConstraints { make in
+            make.top.equalTo(authorLabel.snp.bottom).offset(8)
+            make.width.equalTo(headerView).multipliedBy(0.9)
+            make.centerX.equalTo(headerView)
+        }
+        
+        dateLabel.snp.makeConstraints { make in
+            make.top.equalTo(contentLabel.snp.bottom).offset(8)
+            make.leading.equalTo(titleLabel)
+        }
+        
+        likeButton.snp.makeConstraints { make in
+            make.top.equalTo(dateLabel.snp.bottom).offset(16)
+            make.leading.equalTo(titleLabel)
+            make.width.height.equalTo(30)
+        }
+        
+        commentButton.snp.makeConstraints { make in
+            make.leading.equalTo(likeButton.snp.trailing).offset(70)
+            make.centerY.equalTo(likeButton)
+            make.width.height.equalTo(30)
+        }
+        
+        collectButton.snp.makeConstraints { make in
+            make.leading.equalTo(commentButton.snp.trailing).offset(70)
+            make.centerY.equalTo(likeButton)
+            make.width.height.equalTo(30)
+            make.bottom.equalTo(headerView).offset(-16) // 確保 header 自適應大小
+        }
+        
+        bookmarkCountLabel.snp.makeConstraints { make in
+            make.leading.equalTo(collectButton.snp.trailing).offset(10)
+            make.centerY.equalTo(collectButton)
+        }
+        
+        likeCountLabel.snp.makeConstraints { make in
+            make.leading.equalTo(likeButton.snp.trailing).offset(10)
+            make.centerY.equalTo(likeButton)
+        }
+        
+        return headerView
+    }
     
     // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -460,16 +450,17 @@ class ArticleViewController: UIViewController, UITableViewDelegate, UITableViewD
                         let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                         cell.createdAtLabel.text = createdAtString
                     }
-                    
                 }
             }
         }
         return cell
     }
-
-    
     // UITableViewDelegate - 設定自動調整行高
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
 }
+    
+    
+    
+

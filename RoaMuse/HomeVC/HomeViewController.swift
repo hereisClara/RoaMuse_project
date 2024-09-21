@@ -335,5 +335,4 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-    
 }
