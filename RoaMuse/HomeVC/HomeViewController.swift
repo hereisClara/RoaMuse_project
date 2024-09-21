@@ -21,6 +21,10 @@ class HomeViewController: UIViewController {
     private let homeTableView = UITableView()
     private let popupView = PopUpView()
     
+    var likeCount = String()
+    var bookmarkCount = String()
+    var likeButtonIsSelected = Bool()
+    
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
@@ -98,7 +102,7 @@ class HomeViewController: UIViewController {
                     
                     self.popupView.tapCollectButton = { [weak self] in
                         guard let self = self else { return }
-                        FirebaseManager.shared.updateUserTripCollections(userId: "Am5Jsa1tA0IpyXMLuilm", tripId: randomTrip.id) { success in
+                        FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
                             if success {
                                 print("收藏成功")
                             } else {
@@ -170,9 +174,28 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         guard let cell = cell else { return UITableViewCell() }
         cell.selectionStyle = .none
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+        cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        cell.likeButton.isSelected = likeButtonIsSelected
+        cell.likeCountLabel.text = likeCount
         
-        FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+        FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
+        }
+        
+        FirebaseManager.shared.loadPosts { posts in
+            let filteredPosts = posts.filter { post in
+                return post["id"] as? String == postData["id"] as? String
+            }
+            if let matchedPost = filteredPosts.first,
+               let likesAccount = matchedPost["likesAccount"] as? [String] {
+                // 更新 likeCountLabel
+                cell.likeCountLabel.text = String(likesAccount.count)
+                self.likeButtonIsSelected = likesAccount.contains(userId)
+            } else {
+                // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                cell.likeCountLabel.text = "0"
+                self.likeButtonIsSelected = false
+            }
         }
         
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
@@ -194,7 +217,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
-                
+                articleVC.tripId = post["tripId"] as? String ?? ""
                 articleVC.likeAccounts = post["likeAccount"] as? [String] ?? []
                 
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
@@ -212,6 +235,76 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
+    
+    @objc func didTapLikeButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        
+        let point = sender.convert(CGPoint.zero, to: homeTableView)
+        
+        if let indexPath = homeTableView.indexPathForRow(at: point) {
+            let postData = postsArray[indexPath.row]
+            let postId = postData["id"] as? String ?? ""
+            
+            saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
+                if success {
+                    print("按讚成功")
+                    
+                    FirebaseManager.shared.loadPosts { posts in
+                        let filteredPosts = posts.filter { post in
+                            return post["id"] as? String == postId
+                        }
+                        if let matchedPost = filteredPosts.first,
+                           let likesAccount = matchedPost["likesAccount"] as? [String] {
+                            // 更新 likeCountLabel
+                            self.likeCount = String(likesAccount.count)
+                            self.likeButtonIsSelected = likesAccount.contains(userId)
+                        } else {
+                            // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                            self.likeCount = "0"
+                            self.likeButtonIsSelected = false
+                        }
+                    }
+                    
+                } else {
+                    print("取消按讚")
+                    sender.isSelected.toggle()
+                }
+            }
+        }
+    }
+    
+    func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
+        let postRef = Firestore.firestore().collection("posts").document(postId)
+        
+        if isLiked {
+            // 使用 arrayUnion 將 userId 添加到 likesAccount 列表中
+            postRef.updateData([
+                "likesAccount": FieldValue.arrayUnion([userId])
+            ]) { error in
+                if let error = error {
+                    print("按讚失敗: \(error.localizedDescription)")
+                    completion(false)
+                } else {
+                    print("按讚成功，已更新資料")
+                    completion(true)
+                }
+            }
+        } else {
+            // 使用 arrayRemove 將 userId 從 likesAccount 列表中移除
+            postRef.updateData([
+                "likesAccount": FieldValue.arrayRemove([userId])
+            ]) { error in
+                if let error = error {
+                    print("取消按讚失敗: \(error.localizedDescription)")
+                    completion(false)
+                } else {
+                    print("取消按讚成功，已更新資料")
+                    completion(true)
+                }
+            }
+        }
+    }
+    
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()

@@ -19,6 +19,10 @@ class NewsFeedViewController: UIViewController {
     let postsTableView = UITableView()
     let postButton = UIButton(type: .system)
     
+    var likeCount = String()
+    var bookmarkCount = String()
+    var likeButtonIsSelected = Bool()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -136,9 +140,28 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         cell.selectionStyle = .none
         
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+        cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        cell.likeButton.isSelected = likeButtonIsSelected
+        cell.likeCountLabel.text = likeCount
         
         FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
+        }
+        
+        FirebaseManager.shared.loadPosts { posts in
+            let filteredPosts = posts.filter { post in
+                return post["id"] as? String == postData["id"] as? String
+            }
+            if let matchedPost = filteredPosts.first,
+               let likesAccount = matchedPost["likesAccount"] as? [String] {
+                // 更新 likeCountLabel
+                cell.likeCountLabel.text = String(likesAccount.count)
+                self.likeButtonIsSelected = likesAccount.contains(userId)
+            } else {
+                // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                cell.likeCountLabel.text = "0"
+                self.likeButtonIsSelected = false
+            }
         }
         
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
@@ -170,6 +193,75 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                 self.navigationController?.pushViewController(articleVC, animated: true)
             } else {
                 print("未找到對應的 userName")
+            }
+        }
+    }
+    
+    @objc func didTapLikeButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        
+        let point = sender.convert(CGPoint.zero, to: postsTableView)
+        
+        if let indexPath = postsTableView.indexPathForRow(at: point) {
+            let postData = postsArray[indexPath.row]
+            let postId = postData["id"] as? String ?? ""
+            
+            saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
+                if success {
+                    print("按讚成功")
+                    
+                    FirebaseManager.shared.loadPosts { posts in
+                        let filteredPosts = posts.filter { post in
+                            return post["id"] as? String == postId
+                        }
+                        if let matchedPost = filteredPosts.first,
+                           let likesAccount = matchedPost["likesAccount"] as? [String] {
+                            // 更新 likeCountLabel
+                            self.likeCount = String(likesAccount.count)
+                            self.likeButtonIsSelected = likesAccount.contains(userId)
+                        } else {
+                            // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                            self.likeCount = "0"
+                            self.likeButtonIsSelected = false
+                        }
+                    }
+                    
+                } else {
+                    print("取消按讚")
+                    sender.isSelected.toggle()
+                }
+            }
+        }
+    }
+    
+    func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
+        let postRef = Firestore.firestore().collection("posts").document(postId)
+        
+        if isLiked {
+            // 使用 arrayUnion 將 userId 添加到 likesAccount 列表中
+            postRef.updateData([
+                "likesAccount": FieldValue.arrayUnion([userId])
+            ]) { error in
+                if let error = error {
+                    print("按讚失敗: \(error.localizedDescription)")
+                    completion(false)
+                } else {
+                    print("按讚成功，已更新資料")
+                    completion(true)
+                }
+            }
+        } else {
+            // 使用 arrayRemove 將 userId 從 likesAccount 列表中移除
+            postRef.updateData([
+                "likesAccount": FieldValue.arrayRemove([userId])
+            ]) { error in
+                if let error = error {
+                    print("取消按讚失敗: \(error.localizedDescription)")
+                    completion(false)
+                } else {
+                    print("取消按讚成功，已更新資料")
+                    completion(true)
+                }
             }
         }
     }
@@ -225,10 +317,8 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                     }
                 }
             }
-
             // 更新按鈕選中狀態
             sender.isSelected.toggle()
         }
     }
-
 }

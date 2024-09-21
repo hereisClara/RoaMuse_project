@@ -20,6 +20,9 @@ class PostsTableViewCell: UITableViewCell {
     let likeButton = UIButton(type: .system) // 新增的 likeButton
     let commentButton = UIButton(type: .system) // 新增的 commentButton
     
+    let likeCountLabel = UILabel()
+    let bookmarkCountLabel = UILabel()
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: "homeCell")
         setupUI()
@@ -34,6 +37,8 @@ class PostsTableViewCell: UITableViewCell {
         self.addSubview(authorLabel)
         self.addSubview(timeLabel)
         self.addSubview(contentLabel)
+        self.addSubview(bookmarkCountLabel)
+        self.addSubview(likeCountLabel)
         self.contentView.addSubview(collectButton)
         self.contentView.addSubview(likeButton) // 加入 likeButton
         self.contentView.addSubview(commentButton) // 加入 commentButton
@@ -69,22 +74,33 @@ class PostsTableViewCell: UITableViewCell {
         
         // 設置 likeButton 的約束
         commentButton.snp.makeConstraints { make in
-            make.leading.equalTo(likeButton.snp.trailing).offset(30)
+            make.leading.equalTo(likeButton.snp.trailing).offset(60)
             make.centerY.equalTo(likeButton)
             make.width.height.equalTo(30)
         }
         
         // 設置 commentButton 的約束
         collectButton.snp.makeConstraints { make in
-            make.leading.equalTo(commentButton.snp.trailing).offset(30)
+            make.leading.equalTo(commentButton.snp.trailing).offset(60)
             make.centerY.equalTo(likeButton)
             make.width.height.equalTo(30)
+        }
+        
+        bookmarkCountLabel.snp.makeConstraints { make in
+            make.leading.equalTo(collectButton.snp.trailing).offset(10)
+            make.centerY.equalTo(collectButton)
+        }
+        
+        likeCountLabel.snp.makeConstraints { make in
+            make.leading.equalTo(likeButton.snp.trailing).offset(10)
+            make.centerY.equalTo(likeButton)
         }
         
         // 設置按鈕圖片
         likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
         likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
         likeButton.tintColor = UIColor.systemBlue
+        
         
         commentButton.setImage(UIImage(systemName: "message"), for: .normal)
         commentButton.tintColor = UIColor.systemGreen

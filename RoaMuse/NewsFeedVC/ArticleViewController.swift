@@ -7,6 +7,7 @@ class ArticleViewController: UIViewController {
     
     var authorId = String()
     var postId = String()
+    var tripId = String()
     var bookmarkAccounts = [String]()
     var likeAccounts = [String]()
     let tableView = UITableView()
@@ -23,17 +24,21 @@ class ArticleViewController: UIViewController {
     let commentButton = UIButton(type: .system)
     let likeCountLabel = UILabel()
     let bookmarkCountLabel = UILabel()
+    let tripTitleLabel = UILabel()
     let commentTextField = UITextField()
     let sendButton = UIButton(type: .system)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        
+        setupTableView()
+        tripTitleLabel.backgroundColor = .yellow  // 暫時設置背景顏色以檢查佈局
+        tripTitleLabel.text = "~~~~~"
         checkBookmarkStatus()
         updateBookmarkData()
         loadComments()
-        setupTableView()
+        getTripData()
+        
         setupCommentInput()
         updateLikesData()
         
@@ -68,7 +73,6 @@ class ArticleViewController: UIViewController {
         FirebaseManager.shared.isContentBookmarked(forUserId: authorId, id: postId) { [weak self] isBookmarked in
             guard let self = self else { return }
             self.collectButton.isSelected = isBookmarked
-            print("~~~~~~~", self.collectButton.isSelected)
         }
     }
     
@@ -107,59 +111,59 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-
+    
     // 點擊送出按鈕
-        @objc func didTapSendButton() {
-            guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
-                print("留言內容不能為空")
-                return
-            }
-            saveComment(userId: authorId, postId: postId, commentContent: commentContent) { success in
-                if success {
-                    print("留言成功")
-                    self.loadComments()
-                    self.commentTextField.text = "" // 清空輸入框
-                } else {
-                    print("留言失敗")
-                }
+    @objc func didTapSendButton() {
+        guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
+            print("留言內容不能為空")
+            return
+        }
+        saveComment(userId: authorId, postId: postId, commentContent: commentContent) { success in
+            if success {
+                print("留言成功")
+                self.loadComments()
+                self.commentTextField.text = "" // 清空輸入框
+            } else {
+                print("留言失敗")
             }
         }
+    }
+    
+    // 保存留言
+    func saveComment(userId: String, postId: String, commentContent: String, completion: @escaping (Bool) -> Void) {
+        let postRef = Firestore.firestore().collection("posts").document(postId)
         
-        // 保存留言
-        func saveComment(userId: String, postId: String, commentContent: String, completion: @escaping (Bool) -> Void) {
-            let postRef = Firestore.firestore().collection("posts").document(postId)
-            
-            let commentId = UUID().uuidString
-            let commentData: [String: Any] = [
-                "id": commentId,
-                "userId": userId,
-                "content": commentContent,
-                "createdAt": Timestamp(date: Date())
-            ]
-            
-            postRef.updateData([
-                "comments": FieldValue.arrayUnion([commentData])
-            ]) { error in
-                if let error = error {
-                    print("保存留言失敗: \(error.localizedDescription)")
-                    completion(false)
-                } else {
-                    print("留言保存成功")
-                    completion(true)
-                }
-            }
-        }
+        let commentId = UUID().uuidString
+        let commentData: [String: Any] = [
+            "id": commentId,
+            "userId": userId,
+            "content": commentContent,
+            "createdAt": Timestamp(date: Date())
+        ]
         
-        // 加載更新後的留言
-        func loadComments() {
-            // 模擬從 Firebase 加載留言
-            Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, error in
-                if let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] {
-                    self.comments = loadedComments
-                    self.tableView.reloadData()
-                }
+        postRef.updateData([
+            "comments": FieldValue.arrayUnion([commentData])
+        ]) { error in
+            if let error = error {
+                print("保存留言失敗: \(error.localizedDescription)")
+                completion(false)
+            } else {
+                print("留言保存成功")
+                completion(true)
             }
         }
+    }
+    
+    // 加載更新後的留言
+    func loadComments() {
+        // 模擬從 Firebase 加載留言
+        Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, error in
+            if let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] {
+                self.comments = loadedComments
+                self.tableView.reloadData()
+            }
+        }
+    }
     
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
@@ -210,7 +214,6 @@ class ArticleViewController: UIViewController {
                 self.likeButton.isSelected = false
             }
         }
-        
     }
     
     func saveBookmarkData(postId: String, userId: String, isBookmarked: Bool, completion: @escaping (Bool) -> Void) {
@@ -265,7 +268,7 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-
+    
     func updateBookmarkData() {
         
         FirebaseManager.shared.loadPosts { posts in
@@ -283,6 +286,27 @@ class ArticleViewController: UIViewController {
             }
         }
     }
+    
+    func getTripData() {
+        FirebaseManager.shared.loadAllTrips { trips in
+            let filteredTrips = trips.filter { trip in
+                return trip.id == self.tripId
+            }
+            if let matchedTrip = filteredTrips.first {
+                DispatchQueue.main.async {
+                    self.tripTitleLabel.text = matchedTrip.poem.title
+                    print(self.tripTitleLabel.text ?? "No title")  // 確認是否已經更新文本
+                    
+                    // 手動更新表頭
+                    if let headerView = self.tableView.tableHeaderView {
+                        self.tableView.tableHeaderView = headerView
+                        self.tableView.reloadData()
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
@@ -318,6 +342,16 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     func createHeaderView() -> UIView {
         let headerView = UIView()
         
+        setupHeaderView(in: headerView)
+        
+        // 設置按讚和收藏等按鈕
+        setupActionButtons(in: headerView)
+        
+        return headerView
+    }
+
+    func setupHeaderView(in headerView: UIView) {
+        // 設置文章標題、作者、內容和日期
         let titleLabel = UILabel()
         titleLabel.text = articleTitle
         titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
@@ -335,7 +369,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         contentLabel.font = UIFont.systemFont(ofSize: 14)
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
-        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9 // 設置最大寬度
+        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         headerView.addSubview(contentLabel)
         
         let dateLabel = UILabel()
@@ -345,33 +379,15 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         dateLabel.numberOfLines = 0
         headerView.addSubview(dateLabel)
         
-        // 設置按讚按鈕
-        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
-        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
-        likeButton.tintColor = UIColor.systemBlue
-        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
-        headerView.addSubview(likeButton)
+        // 設置 TripView
+        let tripView = UIView()
+        tripView.backgroundColor = .red
+        headerView.addSubview(tripView)
         
-        // 設置留言按鈕
-        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
-        commentButton.tintColor = UIColor.systemGreen
-        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
-        headerView.addSubview(commentButton)
+        let tripTitleLabel = UILabel()
+        tripView.addSubview(tripTitleLabel)
         
-        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
-        collectButton.tintColor = UIColor.systemPink
-        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
-        headerView.addSubview(collectButton)
-        
-        bookmarkCountLabel.text = String(bookmarkAccounts.count)
-        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
-        headerView.addSubview(bookmarkCountLabel)
-        
-        likeCountLabel.text = "0"
-        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
-        headerView.addSubview(likeCountLabel)
-        
+        // 使用 SnapKit 設置布局
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(16)
             make.leading.equalTo(headerView).offset(16)
@@ -390,14 +406,55 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.centerX.equalTo(headerView)
         }
         
-        dateLabel.snp.makeConstraints { make in
+        tripView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(8)
+            make.width.equalTo(headerView).multipliedBy(0.9)
+            make.height.equalTo(100)
+            make.centerX.equalTo(headerView)
+        }
+        
+        tripTitleLabel.snp.makeConstraints { make in
+            make.center.equalTo(tripView)
+        }
+        
+        dateLabel.snp.makeConstraints { make in
+            make.top.equalTo(tripView.snp.bottom).offset(8)
             make.leading.equalTo(titleLabel)
         }
         
+        // 設置按讚按鈕
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
+        likeButton.tintColor = UIColor.systemBlue
+        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        headerView.addSubview(likeButton)
+        
+        // 設置留言按鈕
+        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
+        commentButton.tintColor = UIColor.systemGreen
+        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
+        headerView.addSubview(commentButton)
+        
+        // 設置收藏按鈕
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
+        collectButton.tintColor = UIColor.systemPink
+        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        headerView.addSubview(collectButton)
+        
+        // 設置收藏和按讚數量標籤
+        bookmarkCountLabel.text = String(bookmarkAccounts.count)
+        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
+        headerView.addSubview(bookmarkCountLabel)
+        
+        likeCountLabel.text = "0"
+        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
+        headerView.addSubview(likeCountLabel)
+        
+        // 使用 SnapKit 設置按鈕和標籤的佈局
         likeButton.snp.makeConstraints { make in
             make.top.equalTo(dateLabel.snp.bottom).offset(16)
-            make.leading.equalTo(titleLabel)
+            make.leading.equalTo(headerView).offset(16)
             make.width.height.equalTo(30)
         }
         
@@ -411,7 +468,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.leading.equalTo(commentButton.snp.trailing).offset(70)
             make.centerY.equalTo(likeButton)
             make.width.height.equalTo(30)
-            make.bottom.equalTo(headerView).offset(-16) // 確保 header 自適應大小
+            make.bottom.equalTo(headerView).offset(-16)
         }
         
         bookmarkCountLabel.snp.makeConstraints { make in
@@ -423,9 +480,37 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.leading.equalTo(likeButton.snp.trailing).offset(10)
             make.centerY.equalTo(likeButton)
         }
-        
-        return headerView
     }
+
+
+
+    func setupActionButtons(in headerView: UIView) {
+        // 設置按讚按鈕
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
+        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
+        likeButton.tintColor = UIColor.systemBlue
+        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        
+        // 設置留言按鈕
+        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
+        commentButton.tintColor = UIColor.systemGreen
+        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
+        
+        // 設置收藏按鈕
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
+        collectButton.tintColor = UIColor.systemPink
+        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        
+        // 設置收藏和按讚數量標籤
+        bookmarkCountLabel.text = String(bookmarkAccounts.count)
+        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        likeCountLabel.text = "0"
+        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
+        
+    }
+
     
     // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -460,7 +545,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         return UITableView.automaticDimension
     }
 }
-    
-    
-    
+
+
+
 
