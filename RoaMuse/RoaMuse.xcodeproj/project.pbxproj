@@ -42,6 +42,7 @@
 		AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */; };
 		AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A882C9D1C92003FA811 /* DateManager.swift */; };
 		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
+		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -125,6 +126,7 @@
 				AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */,
 				AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */,
 				AC27ACB72C91E26900B73485 /* FirebaseFirestore in Frameworks */,
+				AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */,
 				AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */,
 				AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */,
 				AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */,
@@ -309,6 +311,7 @@
 				AC27ACB82C91E26900B73485 /* FirebaseStorage */,
 				AC7A2A732C99DEED003FA811 /* MJRefresh */,
 				AC7A2A7E2C9A9ECF003FA811 /* IQKeyboardManagerSwift */,
+				AC7A2A8D2C9F23B1003FA811 /* Kingfisher */,
 			);
 			productName = RoaMuse;
 			productReference = ACFCA34D2C916C8F00643A2E /* RoaMuse.app */;
@@ -388,6 +391,7 @@
 				AC27ACB32C91E26900B73485 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */,
 				AC7A2A7D2C9A9ECF003FA811 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
+				AC7A2A8C2C9F23B1003FA811 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			productRefGroup = ACFCA34E2C916C8F00643A2E /* Products */;
 			projectDirPath = "";
@@ -884,6 +888,14 @@
 				minimumVersion = 7.1.1;
 			};
 		};
+		AC7A2A8C2C9F23B1003FA811 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -921,6 +933,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC7A2A7D2C9A9ECF003FA811 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */;
 			productName = IQKeyboardManagerSwift;
+		};
+		AC7A2A8D2C9F23B1003FA811 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC7A2A8C2C9F23B1003FA811 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 /* End XCSwiftPackageProductDependency section */
 

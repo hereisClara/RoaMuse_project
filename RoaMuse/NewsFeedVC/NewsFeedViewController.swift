@@ -37,7 +37,7 @@ class NewsFeedViewController: UIViewController {
             self.postsArray = postsArray
             self.postsTableView.reloadData()
         }
-
+        
         postViewController.postButtonAction = { [weak self] in
             
             guard let self = self else { return }
@@ -45,6 +45,18 @@ class NewsFeedViewController: UIViewController {
             FirebaseManager.shared.loadNewPosts(existingPosts: self.postsArray) { newPosts in
                 self.postsArray.insert(contentsOf: newPosts, at: 0)
                 self.postsTableView.reloadData()
+            }
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 每次回到這個頁面時重新加載資料
+        FirebaseManager.shared.loadPosts { [weak self] postsArray in
+            self?.postsArray = postsArray
+            DispatchQueue.main.async {
+                self?.postsTableView.reloadData() // 確保 UI 更新
             }
         }
     }
@@ -103,7 +115,7 @@ class NewsFeedViewController: UIViewController {
             self.getNewData() // 在刷新時重新加載數據
         })
     }
-
+    
 }
 
 extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
@@ -155,12 +167,17 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
                 // 更新 likeCountLabel
-                cell.likeCountLabel.text = String(likesAccount.count)
-                self.likeButtonIsSelected = likesAccount.contains(userId)
+                DispatchQueue.main.async {
+                    // 更新 likeCountLabel 和按鈕的選中狀態
+                    cell.likeCountLabel.text = String(likesAccount.count)
+                    cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
+                }
             } else {
                 // 如果沒有找到相應的貼文，或者 likesAccount 為空
-                cell.likeCountLabel.text = "0"
-                self.likeButtonIsSelected = false
+                DispatchQueue.main.async {
+                    cell.likeCountLabel.text = "0"
+                    cell.likeButton.isSelected = false // 依據狀態設置未選中
+                }
             }
         }
         
@@ -274,14 +291,14 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
             let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
-
+            
             // 獲取當前的 bookmarkAccount
             var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
-
+            
             if sender.isSelected {
                 // 如果按鈕已選中，取消收藏並移除 userId
                 bookmarkAccount.removeAll { $0 == userId }
-
+                
                 FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
                         // 更新 Firestore 中的 bookmarkAccount 字段
@@ -301,7 +318,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                 if !bookmarkAccount.contains(userId) {
                     bookmarkAccount.append(userId)
                 }
-
+                
                 FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
                     if success {
                         // 更新 Firestore 中的 bookmarkAccount 字段

@@ -23,7 +23,7 @@ class ArticleViewController: UIViewController {
     let likeButton = UIButton(type: .system)
     let commentButton = UIButton(type: .system)
     let likeCountLabel = UILabel()
-    let bookmarkCountLabel = UILabel()
+//    let bookmarkCountLabel = UILabel()
     let tripTitleLabel = UILabel()
     let commentTextField = UITextField()
     let sendButton = UIButton(type: .system)
@@ -43,6 +43,39 @@ class ArticleViewController: UIViewController {
         updateLikesData()
         
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        // 檢查收藏狀態
+        FirebaseManager.shared.isContentBookmarked(forUserId: authorId, id: postId) { [weak self] isBookmarked in
+            guard let self = self else { return }
+            self.collectButton.isSelected = isBookmarked
+        }
+
+        // 檢查按讚狀態
+        FirebaseManager.shared.loadPosts { [weak self] posts in
+            guard let self = self else { return }
+            let filteredPosts = posts.filter { post in
+                return post["id"] as? String == self.postId
+            }
+            if let matchedPost = filteredPosts.first,
+               let likesAccount = matchedPost["likesAccount"] as? [String] {
+                // 更新 likeCountLabel 和按鈕的選中狀態
+                DispatchQueue.main.async {
+                    self.likeCountLabel.text = String(likesAccount.count)
+                    self.likeButton.isSelected = likesAccount.contains(self.authorId) // 檢查是否按過讚
+                }
+            } else {
+                // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                DispatchQueue.main.async {
+                    self.likeCountLabel.text = "0"
+                    self.likeButton.isSelected = false
+                }
+            }
+        }
+    }
+
     
     func setupCommentInput() {
         commentTextField.placeholder = "輸入留言..."
@@ -278,11 +311,11 @@ class ArticleViewController: UIViewController {
             if let matchedPost = filteredPosts.first,
                let bookmarkAccounts = matchedPost["bookmarkAccount"] as? [String] {
                 // 更新收藏數量
-                self.bookmarkCountLabel.text = String(bookmarkAccounts.count)
+//                self.bookmarkCountLabel.text = String(bookmarkAccounts.count)
                 print(bookmarkAccounts.count)
             } else {
                 // 如果沒有找到相應的貼文，或者 bookmarkAccounts 為空
-                self.bookmarkCountLabel.text = "0"
+//                self.bookmarkCountLabel.text = "0"
             }
         }
     }
@@ -443,9 +476,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         headerView.addSubview(collectButton)
         
         // 設置收藏和按讚數量標籤
-        bookmarkCountLabel.text = String(bookmarkAccounts.count)
-        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
-        headerView.addSubview(bookmarkCountLabel)
+//        bookmarkCountLabel.text = String(bookmarkAccounts.count)
+//        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
+//        headerView.addSubview(bookmarkCountLabel)
         
         likeCountLabel.text = "0"
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
@@ -471,10 +504,10 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.bottom.equalTo(headerView).offset(-16)
         }
         
-        bookmarkCountLabel.snp.makeConstraints { make in
-            make.leading.equalTo(collectButton.snp.trailing).offset(10)
-            make.centerY.equalTo(collectButton)
-        }
+//        bookmarkCountLabel.snp.makeConstraints { make in
+//            make.leading.equalTo(collectButton.snp.trailing).offset(10)
+//            make.centerY.equalTo(collectButton)
+//        }
         
         likeCountLabel.snp.makeConstraints { make in
             make.leading.equalTo(likeButton.snp.trailing).offset(10)
@@ -503,8 +536,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         
         // 設置收藏和按讚數量標籤
-        bookmarkCountLabel.text = String(bookmarkAccounts.count)
-        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
+//        bookmarkCountLabel.text = String(bookmarkAccounts.count)
+//        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
         
         likeCountLabel.text = "0"
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)

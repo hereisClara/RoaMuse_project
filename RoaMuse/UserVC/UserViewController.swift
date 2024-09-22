@@ -11,6 +11,7 @@ import SnapKit
 import FirebaseCore
 import FirebaseStorage
 import FirebaseFirestore
+import Kingfisher
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UITableViewDelegate, UITableViewDataSource, UINavigationControllerDelegate {
     
@@ -35,16 +36,20 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
             switch result {
             case .success(let data):
                 if let userName = data["userName"] as? String {
-                    print(userName)
                     self?.userName = userName
                     self?.userNameLabel.text = userName
                 }
+                
+                // 顯示 avatar 圖片
+                if let avatarUrl = data["photo"] as? String {
+                    self?.loadAvatarImage(from: avatarUrl)
+                }
+                
             case .failure(let error):
                 print("Error fetching user data: \(error.localizedDescription)")
             }
             
             FirebaseManager.shared.countCompletedPlaces(userId: userId) { totalPlaces in
-                print("使用者總共完成了 \(totalPlaces) 個地點")
                 self?.awards = totalPlaces
                 self?.awardsLabel.text = "打開卡片：\(String(self?.awards ?? 0))張"
             }
@@ -53,7 +58,48 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         self.loadUserPosts()
     }
     
-    func openPhotoLibrary() {
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 每次頁面將要顯示時都重新加載資料
+        FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
+            switch result {
+            case .success(let data):
+                if let userName = data["userName"] as? String {
+                    self?.userName = userName
+                    self?.userNameLabel.text = userName
+                }
+                
+                // 顯示 avatar 圖片
+                if let avatarUrl = data["photo"] as? String {
+                    self?.loadAvatarImage(from: avatarUrl)
+                }
+                
+            case .failure(let error):
+                print("Error fetching user data: \(error.localizedDescription)")
+            }
+            
+            FirebaseManager.shared.countCompletedPlaces(userId: userId) { totalPlaces in
+                self?.awards = totalPlaces
+                self?.awardsLabel.text = "打開卡片：\(String(self?.awards ?? 0))張"
+            }
+        }
+        
+        // 重新檢查每個 cell 的收藏狀態並更新
+        for (index, post) in posts.enumerated() {
+            guard let postId = post["id"] as? String else { continue }
+            
+            FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postId) { [weak self] isBookmarked in
+                guard let cell = self?.tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? UserTableViewCell else { return }
+                cell.collectButton.isSelected = isBookmarked
+            }
+        }
+        
+        // 每次頁面顯示時重新加載貼文數據
+        loadUserPosts()
+    }
+    
+    @objc func openPhotoLibrary() {
         imagePicker.sourceType = .photoLibrary
         self.present(imagePicker, animated: true, completion: nil)
     }
@@ -103,23 +149,43 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     // 將圖片的下載 URL 保存到 Firestore
     func saveImageUrlToFirestore(_ url: String) {
         let db = Firestore.firestore()
-        let docData: [String: Any] = [
-            "imageUrl": url,
-            "uploadedAt": Timestamp(date: Date())
-        ]
-        db.collection("images").addDocument(data: docData) { error in
+        let userRef = db.collection("users").document(userId)  // 根據 userId 獲取使用者文件
+        
+        userRef.updateData([
+            "photo": url
+        ]) { error in
             if let error = error {
                 print("保存到 Firestore 失敗: \(error.localizedDescription)")
             } else {
                 print("圖片 URL 已保存到 Firestore")
+                // 保存成功後，立即加載新圖片到 avatarImageView
+                self.loadAvatarImage(from: url)
             }
         }
     }
+
     
     // 取消選擇圖片
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true, completion: nil)
     }
+    
+    func loadAvatarImage(from urlString: String) {
+            guard let url = URL(string: urlString) else { return }
+            let avatarUrl = URL(string: urlString)
+            
+            avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"), options: [
+                .transition(.fade(0.2)),
+                .cacheOriginalImage
+            ], completionHandler: { result in
+                switch result {
+                case .success(let value):
+                    print("圖片成功加載: \(value.source.url?.absoluteString ?? "")")
+                case .failure(let error):
+                    print("圖片加載失敗: \(error.localizedDescription)")
+                }
+            })
+        }
     
     // 設置 TableView
     func setupTableView() {
@@ -131,6 +197,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         // 設置代理和資料來源
         tableView.delegate = self
         tableView.dataSource = self
+        
+//        tableView.estimatedRowHeight = 150 // 預估的行高度
+//        tableView.rowHeight = UITableView.automaticDimension
+
         
         // 設置 Header
         let headerView = UIView()
@@ -146,7 +216,13 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         headerView.addSubview(awardsLabel)
         
         avatarImageView.backgroundColor = .blue
+        avatarImageView.isUserInteractionEnabled = true
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.clipsToBounds = true
         headerView.addSubview(avatarImageView)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
+        avatarImageView.addGestureRecognizer(tapGesture)  // 為 avatar 增加點擊手勢
         
         userNameLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(16)
@@ -179,18 +255,55 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     
     // UITableViewDataSource - 設定每個 cell 的樣式
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell else {
-            return UITableViewCell()
-        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell
+        
+        guard let cell = cell else { return UITableViewCell() }
         
         let post = posts[indexPath.row]
         let title = post["title"] as? String ?? "無標題"
-        
+        let content = post["content"] as? String ?? "no text"
+                
         // 設置 cell 的文章標題
-        cell.textLabel?.text = title
+        cell.titleLabel.text = title
+        cell.contentLabel.text = content
         cell.selectionStyle = .none
+        
+        // 檢查按讚狀態
+        let postId = post["id"] as? String ?? ""
+        
+        cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        
+        FirebaseManager.shared.loadPosts { posts in
+            let filteredPosts = posts.filter { post in
+                return post["id"] as? String == postId
+            }
+            if let matchedPost = filteredPosts.first,
+               let likesAccount = matchedPost["likesAccount"] as? [String] {
+                // 更新 likeCountLabel
+                DispatchQueue.main.async {
+                    // 更新 likeCountLabel 和按鈕的選中狀態
+                    cell.likeCountLabel.text = String(likesAccount.count)
+                    cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
+                    print("/////", likesAccount.contains(userId))
+                }
+            } else {
+                // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                DispatchQueue.main.async {
+                    cell.likeCountLabel.text = "0"
+                    cell.likeButton.isSelected = false // 依據狀態設置未選中
+                }
+            }
+        }
+        
+        // 檢查收藏狀態
+        FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postId) { isBookmarked in
+            cell.collectButton.isSelected = isBookmarked
+        }
+        
         return cell
     }
+
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let post = posts[indexPath.row]
@@ -221,7 +334,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     
     // UITableViewDelegate - 設定 cell 高度
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 180 // 設定 cell 高度
+        return 250 // 設定 cell 高度
     }
     
     func loadUserPosts() {
@@ -242,4 +355,81 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         }
     }
     
+    @objc func didTapLikeButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        
+        let point = sender.convert(CGPoint.zero, to: tableView)
+        if let indexPath = tableView.indexPathForRow(at: point) {
+            let post = posts[indexPath.row]
+            let postId = post["id"] as? String ?? ""
+            
+            // 更新 Firebase 中的 like 狀態
+            updateLikeStatus(postId: postId, isLiked: sender.isSelected)
+        }
+    }
+
+    func updateLikeStatus(postId: String, isLiked: Bool) {
+        let postRef = Firestore.firestore().collection("posts").document(postId)
+        
+        if isLiked {
+            postRef.updateData([
+                "likesAccount": FieldValue.arrayUnion([userId])
+            ]) { error in
+                if let error = error {
+                    print("按讚失敗: \(error.localizedDescription)")
+                } else {
+                    print("按讚成功")
+                }
+            }
+        } else {
+            postRef.updateData([
+                "likesAccount": FieldValue.arrayRemove([userId])
+            ]) { error in
+                if let error = error {
+                    print("取消按讚失敗: \(error.localizedDescription)")
+                } else {
+                    print("取消按讚成功")
+                }
+            }
+        }
+    }
+
+    @objc func didTapCollectButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        
+        let point = sender.convert(CGPoint.zero, to: tableView)
+        if let indexPath = tableView.indexPathForRow(at: point) {
+            let post = posts[indexPath.row]
+            let postId = post["id"] as? String ?? ""
+            
+            // 更新 Firebase 中的收藏狀態
+            updateBookmarkStatus(postId: postId, isBookmarked: sender.isSelected)
+        }
+    }
+
+    func updateBookmarkStatus(postId: String, isBookmarked: Bool) {
+        let postRef = Firestore.firestore().collection("posts").document(postId)
+        
+        if isBookmarked {
+            postRef.updateData([
+                "bookmarkAccount": FieldValue.arrayUnion([userId])
+            ]) { error in
+                if let error = error {
+                    print("收藏失敗: \(error.localizedDescription)")
+                } else {
+                    print("收藏成功")
+                }
+            }
+        } else {
+            postRef.updateData([
+                "bookmarkAccount": FieldValue.arrayRemove([userId])
+            ]) { error in
+                if let error = error {
+                    print("取消收藏失敗: \(error.localizedDescription)")
+                } else {
+                    print("取消收藏成功")
+                }
+            }
+        }
+    }
 }

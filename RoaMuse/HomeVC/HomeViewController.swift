@@ -47,6 +47,19 @@ class HomeViewController: UIViewController {
         }
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 每次回到這個頁面時重新加載資料
+        FirebaseManager.shared.loadPosts { [weak self] postsArray in
+            self?.postsArray = postsArray
+            DispatchQueue.main.async {
+                self?.homeTableView.reloadData() // 確保 UI 更新
+            }
+        }
+    }
+
+    
     func setupUI() {
         view.addSubview(recommendRandomTripView)
         
@@ -175,7 +188,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.selectionStyle = .none
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
-        cell.likeButton.isSelected = likeButtonIsSelected
+        //        cell.likeButton.isSelected = likeButtonIsSelected
         cell.likeCountLabel.text = likeCount
         
         FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
@@ -189,12 +202,18 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
                 // 更新 likeCountLabel
-                cell.likeCountLabel.text = String(likesAccount.count)
-                self.likeButtonIsSelected = likesAccount.contains(userId)
+                DispatchQueue.main.async {
+                    // 更新 likeCountLabel 和按鈕的選中狀態
+                    cell.likeCountLabel.text = String(likesAccount.count)
+                    cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
+                }
+                print(likesAccount.contains(userId))
             } else {
                 // 如果沒有找到相應的貼文，或者 likesAccount 為空
-                cell.likeCountLabel.text = "0"
-                self.likeButtonIsSelected = false
+                DispatchQueue.main.async {
+                    cell.likeCountLabel.text = "0"
+                    cell.likeButton.isSelected = false // 依據狀態設置未選中
+                }
             }
         }
         
@@ -325,7 +344,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 if !bookmarkAccount.contains(userId) {
                     bookmarkAccount.append(userId)
                 }
-
+                
                 // 更新使用者的收藏列表
                 FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
                     if success {
@@ -344,7 +363,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             } else {
                 // 取消收藏操作，將 userId 從 bookmarkAccount 中移除
                 bookmarkAccount.removeAll { $0 == userId }
-
+                
                 // 移除使用者的收藏
                 FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
@@ -363,7 +382,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-
+    
     
     func uploadTripData() {
         let db = Firestore.firestore()
