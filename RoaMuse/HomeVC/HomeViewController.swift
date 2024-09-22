@@ -188,7 +188,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.selectionStyle = .none
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
-        //        cell.likeButton.isSelected = likeButtonIsSelected
         cell.likeCountLabel.text = likeCount
         
         FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
