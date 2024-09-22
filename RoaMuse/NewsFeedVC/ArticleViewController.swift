@@ -47,11 +47,7 @@ class ArticleViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        // 檢查收藏狀態
-        FirebaseManager.shared.isContentBookmarked(forUserId: authorId, id: postId) { [weak self] isBookmarked in
-            guard let self = self else { return }
-            self.collectButton.isSelected = isBookmarked
-        }
+        checkBookmarkStatus()
 
         // 檢查按讚狀態
         FirebaseManager.shared.loadPosts { [weak self] posts in
@@ -303,22 +299,32 @@ class ArticleViewController: UIViewController {
     }
     
     func updateBookmarkData() {
-        
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
                 return post["id"] as? String == self.postId
             }
+            
             if let matchedPost = filteredPosts.first,
                let bookmarkAccounts = matchedPost["bookmarkAccount"] as? [String] {
+                
                 // 更新收藏數量
 //                self.bookmarkCountLabel.text = String(bookmarkAccounts.count)
-                print(bookmarkAccounts.count)
+                
+                // 檢查 userId 是否在 bookmarkAccount 中，並更新收藏按鈕的選中狀態
+                DispatchQueue.main.async {
+                    self.collectButton.isSelected = bookmarkAccounts.contains(self.authorId)
+                }
+                
             } else {
                 // 如果沒有找到相應的貼文，或者 bookmarkAccounts 為空
-//                self.bookmarkCountLabel.text = "0"
+                DispatchQueue.main.async {
+//                    self.bookmarkCountLabel.text = "0"
+                    self.collectButton.isSelected = false
+                }
             }
         }
     }
+
     
     func getTripData() {
         FirebaseManager.shared.loadAllTrips { trips in
