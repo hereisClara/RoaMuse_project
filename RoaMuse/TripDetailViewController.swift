@@ -28,6 +28,7 @@ class TripDetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         view.backgroundColor = UIColor(resource: .backgroundGray)
         
         if let trip = trip {

@@ -38,7 +38,7 @@ class ArticleViewController: UIViewController {
         view.backgroundColor = .white
         
         popupView.delegate = self
-        
+        setupTableView()
         tripTitleLabel.backgroundColor = .yellow  // 暫時設置背景顏色以檢查佈局
         checkBookmarkStatus()
         updateBookmarkData()
@@ -116,7 +116,6 @@ class ArticleViewController: UIViewController {
         
         saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
             if success {
-                print("按讚成功")
                 self.updateLikesData()
             } else {
                 print("取消按讚")
@@ -127,7 +126,6 @@ class ArticleViewController: UIViewController {
     
     // 留言按鈕事件處理
     @objc func didTapCommentButton(_ sender: UIButton) {
-        print("跳轉到留言區")
         scrollToFirstComment()
     }
     
@@ -137,10 +135,8 @@ class ArticleViewController: UIViewController {
         
         saveBookmarkData(postId: postId, userId: authorId, isBookmarked: sender.isSelected) { success in
             if success {
-                print("收藏狀態更新成功")
                 self.updateBookmarkData()
             } else {
-                print("收藏狀態更新失敗")
                 sender.isSelected.toggle() // 如果失敗，還原狀態
             }
         }
@@ -154,11 +150,10 @@ class ArticleViewController: UIViewController {
         }
         saveComment(userId: authorId, postId: postId, commentContent: commentContent) { success in
             if success {
-                print("留言成功")
                 self.loadComments()
                 self.commentTextField.text = "" // 清空輸入框
             } else {
-                print("留言失敗")
+//                print("留言失敗")
             }
         }
     }
@@ -182,7 +177,7 @@ class ArticleViewController: UIViewController {
                 print("保存留言失敗: \(error.localizedDescription)")
                 completion(false)
             } else {
-                print("留言保存成功")
+//                print("留言保存成功")
                 completion(true)
             }
         }
@@ -258,7 +253,6 @@ class ArticleViewController: UIViewController {
                     print("按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
-                    print("按讚成功，已更新資料")
                     completion(true)
                 }
             }
@@ -271,7 +265,6 @@ class ArticleViewController: UIViewController {
                     print("取消按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
-                    print("取消按讚成功，已更新資料")
                     completion(true)
                 }
             }
@@ -341,7 +334,6 @@ class ArticleViewController: UIViewController {
                             print("取消用戶收藏更新失敗: \(error.localizedDescription)")
                             completion(false)
                         } else {
-                            print("取消收藏成功，已更新資料")
                             completion(true)
                         }
                     }
@@ -618,30 +610,72 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
     
     func getTripDataById() {
-        print("----------")
+        let db = Firestore.firestore()
         
-        FirebaseManager.shared.loadAllTrips { trips in
-            let db = Firestore.firestore()
+        // 根據 tripId 查詢對應的行程
+        db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
+            if let error = error {
+                print("查詢行程時發生錯誤: \(error.localizedDescription)")
+                return
+            }
             
-            db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
-                if let error = error {
-                    print("查詢行程時發生錯誤: \(error.localizedDescription)")
-                    return
-                }
-                
-                if let documents = snapshot?.documents, !documents.isEmpty {
-                    self.trip = trips.first
-                    print(self.trip)
+            if let documents = snapshot?.documents, let document = documents.first {
+                // 將查詢結果轉換為 Trip 對象
+                let data = document.data()
+                if let poemData = data["poem"] as? [String: Any],
+                   let title = poemData["title"] as? String,
+                   let poetry = poemData["poetry"] as? String,
+                   let original = poemData["original"] as? [String],
+                   let translation = poemData["translation"] as? [String],
+                   let secretTexts = poemData["secretTexts"] as? [String],
+                   let situationText = poemData["situationText"] as? [String],
+                   let placesData = data["places"] as? [[String: Any]],
+                   let tag = data["tag"] as? Int,
+                   let season = data["season"] as? Int,
+                   let weather = data["weather"] as? Int,
+                   let startTime = data["startTime"] as? Int {
                     
-                    guard let trip = self.trip else { return }
+                    // 解析地點資料
+                    let places = placesData.compactMap { placeDict -> PlaceId? in
+                        if let placeId = placeDict["id"] as? String {
+                            return PlaceId(id: placeId)
+                        }
+                        return nil
+                    }
                     
-                    self.popupView.showPopup(on: self.view, with: trip)
-                    return
+                    // 初始化 Poem 和 Trip 對象
+                    let poem = Poem(
+                        title: title,
+                        poetry: poetry,
+                        original: original,
+                        translation: translation,
+                        secretTexts: secretTexts,
+                        situationText: situationText
+                    )
+                    
+                    self.trip = Trip(
+                        poem: poem,
+                        id: self.tripId,
+                        places: places,
+                        tag: tag,
+                        season: season,
+                        weather: weather,
+                        startTime: startTime
+                    )
+                    
+                    // 顯示 popup
+                    DispatchQueue.main.async {
+                        self.popupView.showPopup(on: self.view, with: self.trip!)
+                    }
+                } else {
+                    print("未找到對應的行程資料")
                 }
+            } else {
+                print("未找到對應的行程")
             }
         }
     }
-    
+
     func setupAvatar() {
         FirebaseManager.shared.fetchUserData(userId: userId) { result in
             switch result {
@@ -720,6 +754,11 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
 extension ArticleViewController: PopupViewDelegate {
     
     func navigateToTripDetailPage() {
+        
+        guard let trip = self.trip else {
+                    print("Error: Trip is nil!")
+                    return
+                }
         
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip

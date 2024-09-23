@@ -30,7 +30,7 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        uploadTripsToFirebase()
+//        uploadTripsToFirebase()
         //        uploadPlaces()
         self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)

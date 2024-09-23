@@ -139,7 +139,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 }
                 
                 if let downloadURL = url {
-                    print("圖片下載 URL: \(downloadURL.absoluteString)")
+//                    print("圖片下載 URL: \(downloadURL.absoluteString)")
                     self.saveImageUrlToFirestore(downloadURL.absoluteString)
                 }
             }
@@ -157,7 +157,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
             if let error = error {
                 print("保存到 Firestore 失敗: \(error.localizedDescription)")
             } else {
-                print("圖片 URL 已保存到 Firestore")
+//                print("圖片 URL 已保存到 Firestore")
                 // 保存成功後，立即加載新圖片到 avatarImageView
                 self.loadAvatarImage(from: url)
             }
@@ -179,8 +179,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 .cacheOriginalImage
             ], completionHandler: { result in
                 switch result {
-                case .success(let value):
-                    print("圖片成功加載: \(value.source.url?.absoluteString ?? "")")
+                case .success(let value): break
+//                    print("圖片成功加載: \(value.source.url?.absoluteString ?? "")")
                 case .failure(let error):
                     print("圖片加載失敗: \(error.localizedDescription)")
                 }
@@ -281,7 +281,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                     // 更新 likeCountLabel 和按鈕的選中狀態
                     cell.likeCountLabel.text = String(likesAccount.count)
                     cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
-                    print("/////", likesAccount.contains(userId))
+//                    print("/////", likesAccount.contains(userId))
                 }
             } else {
                 // 如果沒有找到相應的貼文，或者 likesAccount 為空
@@ -322,7 +322,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
             if let userName = userName {
-                print("找到的 userName: \(userName)")
+//                print("找到的 userName: \(userName)")
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
@@ -359,7 +359,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 }
                 return false
             })
-            print("加載到的文章數據: \(self.posts)")
+//            print("加載到的文章數據: \(self.posts)")
             // 重新載入表格數據
             self.tableView.reloadData()
         }
@@ -388,7 +388,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("按讚失敗: \(error.localizedDescription)")
                 } else {
-                    print("按讚成功")
+//                    print("按讚成功")
                 }
             }
         } else {
@@ -398,7 +398,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("取消按讚失敗: \(error.localizedDescription)")
                 } else {
-                    print("取消按讚成功")
+//                    print("取消按讚成功")
                 }
             }
         }
@@ -427,7 +427,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("收藏失敗: \(error.localizedDescription)")
                 } else {
-                    print("收藏成功")
+//                    print("收藏成功")
                 }
             }
         } else {
@@ -437,7 +437,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("取消收藏失敗: \(error.localizedDescription)")
                 } else {
-                    print("取消收藏成功")
+//                    print("取消收藏成功")
                 }
             }
         }

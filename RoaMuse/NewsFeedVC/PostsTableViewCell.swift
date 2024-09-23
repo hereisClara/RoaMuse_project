@@ -131,7 +131,7 @@ func updateUserCollections(userId: String) {
         if let error = error {
             print("更新收藏數量失敗：\(error.localizedDescription)")
         } else {
-            print("收藏數量更新成功！")
+//            print("收藏數量更新成功！")
         }
     }
 }

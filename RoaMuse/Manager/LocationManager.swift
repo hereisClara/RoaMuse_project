@@ -20,12 +20,12 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 
     func startUpdatingLocation() {
-        print("位置更新已啟動")
+//        print("位置更新已啟動")
         locationManager.startUpdatingLocation()
     }
 
     func stopUpdatingLocation() {
-        print("位置更新已停止")
+//        print("位置更新已停止")
         locationManager.stopUpdatingLocation()
     }
     
@@ -35,7 +35,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
-            print("獲取到位置: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+//            print("獲取到位置: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             onLocationUpdate?(location)
             stopUpdatingLocation()
         } else {
@@ -46,7 +46,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
-            print("位置授權已獲得")
             locationManager.startUpdatingLocation()
         case .denied, .restricted:
             print("位置授權被拒絕或受限")

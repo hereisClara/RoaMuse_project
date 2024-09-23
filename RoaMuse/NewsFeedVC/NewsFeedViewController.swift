@@ -87,7 +87,7 @@ class NewsFeedViewController: UIViewController {
         
         db.collection("posts").getDocuments { querySnapshot, error in
             if error != nil {
-                print("錯錯錯")
+//                print("錯錯錯")
             } else {
                 
                 for num in 0 ..< self.postsArray.count {
@@ -214,7 +214,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
             if let userName = userName {
-                print("找到的 userName: \(userName)")
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
@@ -245,7 +244,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             
             saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
                 if success {
-                    print("按讚成功")
                     
                     FirebaseManager.shared.loadPosts { posts in
                         let filteredPosts = posts.filter { post in
@@ -264,7 +262,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                     }
                     
                 } else {
-                    print("取消按讚")
                     sender.isSelected.toggle()
                 }
             }
@@ -283,7 +280,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                     print("按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
-                    print("按讚成功，已更新資料")
+//                    print("按讚成功，已更新資料")
                     completion(true)
                 }
             }
@@ -296,7 +293,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                     print("取消按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
-                    print("取消按讚成功，已更新資料")
+//                    print("取消按讚成功，已更新資料")
                     completion(true)
                 }
             }
@@ -326,7 +323,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                             if let error = error {
                                 print("Failed to update bookmarkAccount: \(error)")
                             } else {
-                                print("取消收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+//                                print("取消收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
                             }
                         }
                     } else {
@@ -346,7 +343,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                             if let error = error {
                                 print("Failed to update bookmarkAccount: \(error)")
                             } else {
-                                print("收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+//                                print("收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
                             }
                         }
                     } else {
