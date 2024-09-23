@@ -51,16 +51,16 @@ class PopUpView {
         
         keyWindow.addSubview(backgroundView)
         backgroundView.snp.makeConstraints { make in
-            make.edges.equalTo(view)
+            make.edges.equalTo(keyWindow)
         }
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         
         keyWindow.addSubview(popupView)
         popupView.snp.makeConstraints { make in
-            make.height.equalTo(view).multipliedBy(0.7)
-            make.width.equalTo(view).multipliedBy(0.85)
-            make.center.equalTo(view)
+            make.height.equalTo(keyWindow).multipliedBy(0.7)  // 修改這裡
+            make.width.equalTo(keyWindow).multipliedBy(0.85)  // 修改這裡
+            make.center.equalTo(keyWindow)  // 修改這裡
         }
         
         popupView.backgroundColor = UIColor(resource: .deepBlue)

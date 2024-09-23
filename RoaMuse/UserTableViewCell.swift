@@ -19,6 +19,7 @@ class UserTableViewCell: UITableViewCell {
     let bookmarkCountLabel = UILabel()
     let contentLabel = UILabel()
     let avatarImageView = UIImageView()
+    let dateLabel = UILabel()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -36,6 +37,7 @@ class UserTableViewCell: UITableViewCell {
         avatarImageView.backgroundColor = .blue
         
         self.addSubview(titleLabel)
+        self.addSubview(dateLabel)
         self.addSubview(contentLabel)
         self.addSubview(avatarImageView)
         self.addSubview(bookmarkCountLabel)
@@ -55,9 +57,16 @@ class UserTableViewCell: UITableViewCell {
             make.leading.equalTo(avatarImageView.snp.trailing).offset(15)
         }
         
+        dateLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(16)
+            make.leading.equalTo(titleLabel)
+        }
+        
         contentLabel.snp.makeConstraints { make in
             make.leading.equalTo(avatarImageView)
             make.top.equalTo(avatarImageView.snp.bottom).offset(10)
+            make.leading.equalTo(self).offset(16)
+            make.trailing.equalTo(self).offset(-16)
             make.height.equalTo(80)
         }
         
@@ -92,15 +101,17 @@ class UserTableViewCell: UITableViewCell {
             make.centerY.equalTo(likeButton)
         }
         
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.clipsToBounds = true
+        
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
-        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
+//        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         
         // 設置按鈕圖片
         likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
         likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
         likeButton.tintColor = UIColor.systemBlue
-        
         
         commentButton.setImage(UIImage(systemName: "message"), for: .normal)
         commentButton.tintColor = UIColor.systemGreen
@@ -108,5 +119,7 @@ class UserTableViewCell: UITableViewCell {
         collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
         collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
         collectButton.tintColor = UIColor.systemPink
+        
+        dateLabel.font = UIFont.systemFont(ofSize: 14)
     }
 }

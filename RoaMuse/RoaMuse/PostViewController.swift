@@ -80,6 +80,11 @@ class PostViewController: UIViewController {
         postButton.setTitle("發文", for: .normal)
         postButton.addTarget(self, action: #selector(saveData), for: .touchUpInside)
         postButton.addTarget(self, action: #selector(backToLastPage), for: .touchUpInside)
+        
+        postButton.isEnabled = false
+        
+        titleTextField.delegate = self
+        contentTextView.delegate = self
     }
     
     //    儲存發文
@@ -189,11 +194,39 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
         
         dropdownButton.setTitle(tripsArray[indexPath.row].poem.title, for: .normal)
         tripId = tripsArray[indexPath.row].id
-        
+        postButton.isEnabled = true
         isDropdownVisible = false
         dropdownHeightConstraint?.update(offset: 0)
         UIView.animate(withDuration: 0.3) {
             self.view.layoutIfNeeded()
         }
+        validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
 }
+
+extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
+ 
+    // 當 TextField 文字改變時觸發
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        // 獲取更新後的文字
+        let updatedText = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) ?? string
+        validateInputs(title: updatedText, content: contentTextView.text)
+        return true
+    }
+
+    // 當 TextView 文字改變時觸發
+    func textViewDidChange(_ textView: UITextView) {
+        validateInputs(title: titleTextField.text ?? "", content: textView.text)
+    }
+
+    func validateInputs(title: String, content: String) {
+        // 檢查是否標題和內容都非空且不僅僅是空格
+        let isTitleValid = !title.trimmingCharacters(in: .whitespaces).isEmpty
+        let isContentValid = !content.trimmingCharacters(in: .whitespaces).isEmpty
+        let isTripSelected = !tripId.isEmpty
+        
+        // 發文按鈕在三者都滿足條件時才啟用
+        postButton.isEnabled = isTitleValid && isContentValid && isTripSelected
+    }
+}
+

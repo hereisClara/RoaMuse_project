@@ -23,32 +23,39 @@ class ArticleViewController: UIViewController {
     let likeButton = UIButton(type: .system)
     let commentButton = UIButton(type: .system)
     let likeCountLabel = UILabel()
-//    let bookmarkCountLabel = UILabel()
     let tripTitleLabel = UILabel()
     let commentTextField = UITextField()
     let sendButton = UIButton(type: .system)
+    let tripView = UIView()
+    let avatarImageView = UIImageView()
+    
+    var trip: Trip?
+    
+    private let popupView = PopUpView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        setupTableView()
+        
+        popupView.delegate = self
+        
+//        setupTableView()
         tripTitleLabel.backgroundColor = .yellow  // 暫時設置背景顏色以檢查佈局
-        tripTitleLabel.text = "~~~~~"
         checkBookmarkStatus()
         updateBookmarkData()
-        loadComments()
+        
         getTripData()
         
         setupCommentInput()
         updateLikesData()
-        
+        setupTripViewAction()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-
+        getTripData()
         checkBookmarkStatus()
-
+        loadComments()
         // 檢查按讚狀態
         FirebaseManager.shared.loadPosts { [weak self] posts in
             guard let self = self else { return }
@@ -70,6 +77,13 @@ class ArticleViewController: UIViewController {
                 }
             }
         }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+//        loadComments()
+//        tableView.reloadData()
+//        tableView.layoutIfNeeded() // 強制刷新佈局
     }
 
     
@@ -123,7 +137,7 @@ class ArticleViewController: UIViewController {
     // 留言按鈕事件處理
     @objc func didTapCommentButton(_ sender: UIButton) {
         print("跳轉到留言區")
-        // 可在此處跳轉到留言區
+        scrollToFirstComment()
     }
     
     // 收藏按鈕事件處理
@@ -185,11 +199,15 @@ class ArticleViewController: UIViewController {
     
     // 加載更新後的留言
     func loadComments() {
+        print("load")
         // 模擬從 Firebase 加載留言
         Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, error in
             if let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] {
                 self.comments = loadedComments
-                self.tableView.reloadData()
+                
+                self.setupTableView()
+//                self.tableView.reloadData()
+//                self.tableView.layoutIfNeeded()
             }
         }
     }
@@ -307,10 +325,6 @@ class ArticleViewController: UIViewController {
             if let matchedPost = filteredPosts.first,
                let bookmarkAccounts = matchedPost["bookmarkAccount"] as? [String] {
                 
-                // 更新收藏數量
-//                self.bookmarkCountLabel.text = String(bookmarkAccounts.count)
-                
-                // 檢查 userId 是否在 bookmarkAccount 中，並更新收藏按鈕的選中狀態
                 DispatchQueue.main.async {
                     self.collectButton.isSelected = bookmarkAccounts.contains(self.authorId)
                 }
@@ -318,13 +332,12 @@ class ArticleViewController: UIViewController {
             } else {
                 // 如果沒有找到相應的貼文，或者 bookmarkAccounts 為空
                 DispatchQueue.main.async {
-//                    self.bookmarkCountLabel.text = "0"
                     self.collectButton.isSelected = false
                 }
             }
         }
     }
-
+    
     
     func getTripData() {
         FirebaseManager.shared.loadAllTrips { trips in
@@ -338,26 +351,35 @@ class ArticleViewController: UIViewController {
                     
                     // 手動更新表頭
                     if let headerView = self.tableView.tableHeaderView {
+                        // 更新表頭佈局
+                        headerView.setNeedsLayout()
+                        headerView.layoutIfNeeded()
+                        
+                        // 計算並更新表頭高度
+                        let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+                        var frame = headerView.frame
+                        frame.size.height = headerHeight
+                        headerView.frame = frame
+                        
+                        // 設置更新後的表頭
                         self.tableView.tableHeaderView = headerView
-                        self.tableView.reloadData()
                     }
+                    // 確保 UI 重新加載
+                    self.tableView.reloadData()
                 }
             }
         }
     }
-
 }
 
 extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     func setupTableView() {
+        print("撐開")
         view.addSubview(tableView)
         
         tableView.delegate = self
         tableView.dataSource = self
-        
-        tableView.estimatedRowHeight = 80
-        tableView.rowHeight = UITableView.automaticDimension
         
         let headerView = createHeaderView()
         headerView.setNeedsLayout()
@@ -367,14 +389,18 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         frame.size.height = headerHeight
         headerView.frame = frame
         tableView.tableHeaderView = headerView
+        tableView.layoutIfNeeded()
         
         tableView.register(CommentTableViewCell.self, forCellReuseIdentifier: "CommentCell")
-        tableView.estimatedRowHeight = 120  // 預估行高
+        
+        tableView.estimatedRowHeight = 180  // 預估行高
         tableView.rowHeight = UITableView.automaticDimension  // 自適應行高
         
         tableView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+            make.top.leading.trailing.equalTo(view.safeAreaLayoutGuide)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-60)
         }
+        
     }
     
     // 創建表頭視圖 (header)
@@ -388,7 +414,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         return headerView
     }
-
+    
     func setupHeaderView(in headerView: UIView) {
         // 設置文章標題、作者、內容和日期
         let titleLabel = UILabel()
@@ -418,24 +444,25 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         dateLabel.numberOfLines = 0
         headerView.addSubview(dateLabel)
         
+        setupAvatar()
+        headerView.addSubview(avatarImageView)
+        
         // 設置 TripView
-        let tripView = UIView()
         tripView.backgroundColor = .red
         headerView.addSubview(tripView)
         
-        let tripTitleLabel = UILabel()
         tripView.addSubview(tripTitleLabel)
         
         // 使用 SnapKit 設置布局
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(16)
-            make.leading.equalTo(headerView).offset(16)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
             make.trailing.equalTo(headerView).offset(-16)
         }
         
         authorLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.leading.equalTo(titleLabel)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
             make.trailing.equalTo(titleLabel)
         }
         
@@ -458,8 +485,17 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         dateLabel.snp.makeConstraints { make in
             make.top.equalTo(tripView.snp.bottom).offset(8)
-            make.leading.equalTo(titleLabel)
+            make.leading.equalTo(avatarImageView)
         }
+        
+        avatarImageView.snp.makeConstraints { make in
+            make.top.equalTo(headerView).offset(16)
+            make.leading.equalTo(headerView).offset(15)
+            make.width.height.equalTo(50)
+        }
+        
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.clipsToBounds = true
         
         // 設置按讚按鈕
         likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
@@ -480,11 +516,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         collectButton.tintColor = UIColor.systemPink
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         headerView.addSubview(collectButton)
-        
-        // 設置收藏和按讚數量標籤
-//        bookmarkCountLabel.text = String(bookmarkAccounts.count)
-//        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
-//        headerView.addSubview(bookmarkCountLabel)
         
         likeCountLabel.text = "0"
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
@@ -510,19 +541,12 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.bottom.equalTo(headerView).offset(-16)
         }
         
-//        bookmarkCountLabel.snp.makeConstraints { make in
-//            make.leading.equalTo(collectButton.snp.trailing).offset(10)
-//            make.centerY.equalTo(collectButton)
-//        }
-        
         likeCountLabel.snp.makeConstraints { make in
             make.leading.equalTo(likeButton.snp.trailing).offset(10)
             make.centerY.equalTo(likeButton)
         }
     }
-
-
-
+    
     func setupActionButtons(in headerView: UIView) {
         // 設置按讚按鈕
         likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
@@ -541,15 +565,78 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         collectButton.tintColor = UIColor.systemPink
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         
-        // 設置收藏和按讚數量標籤
-//        bookmarkCountLabel.text = String(bookmarkAccounts.count)
-//        bookmarkCountLabel.font = UIFont.systemFont(ofSize: 14)
-        
         likeCountLabel.text = "0"
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
         
     }
-
+    
+    func setupTripViewAction() {
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPopupView))
+        tripView.addGestureRecognizer(tapGesture)
+        
+    }
+    
+    @objc func openPopupView() {
+        
+        getTripDataById()
+        
+    }
+    
+    func getTripDataById() {
+        print("----------")
+        
+        FirebaseManager.shared.loadAllTrips { trips in
+            let db = Firestore.firestore()
+            
+            db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
+                if let error = error {
+                    print("查詢行程時發生錯誤: \(error.localizedDescription)")
+                    return
+                }
+                
+                if let documents = snapshot?.documents, !documents.isEmpty {
+                    self.trip = trips.first
+                    print(self.trip)
+                    
+                    guard let trip = self.trip else { return }
+                    
+                    self.popupView.showPopup(on: self.view, with: trip)
+                    return
+                }
+            }
+        }
+    }
+    
+    func setupAvatar() {
+        FirebaseManager.shared.fetchUserData(userId: userId) { result in
+            switch result {
+            case .success(let data):
+                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                    // 使用 Kingfisher 加載圖片到 avatarImageView
+                    DispatchQueue.main.async {
+                        self.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                    }
+                }
+            case .failure(let error):
+                print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func scrollToFirstComment() {
+        let firstCommentIndexPath = IndexPath(row: 0, section: 0)
+        if comments.count > 0 {
+            tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // 延遲一點時間等待滾動完成，然後讓 textField 成為第一響應者
+                self.commentTextField.becomeFirstResponder()
+            }
+        } else {
+            // 如果沒有留言，直接讓 textField 成為第一響應者
+            commentTextField.becomeFirstResponder()
+        }
+    }
     
     // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -576,13 +663,36 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                     }
                 }
             }
+            
+            FirebaseManager.shared.fetchUserData(userId: userId) { result in
+                switch result {
+                case .success(let data):
+                    if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                        // 使用 Kingfisher 加載圖片到 avatarImageView
+                        DispatchQueue.main.async {
+                            cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                        }
+                    }
+                case .failure(let error):
+                    print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+                }
+            }
         }
+        cell.setNeedsLayout()
+        cell.layoutIfNeeded()
         return cell
     }
-    // UITableViewDelegate - 設定自動調整行高
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
+}
+
+extension ArticleViewController: PopupViewDelegate {
+    
+    func navigateToTripDetailPage() {
+        
+        let tripDetailVC = TripDetailViewController()
+        tripDetailVC.trip = trip
+        navigationController?.pushViewController(tripDetailVC, animated: true)
     }
+    
 }
 
 

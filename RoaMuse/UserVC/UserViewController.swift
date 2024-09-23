@@ -198,10 +198,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         tableView.delegate = self
         tableView.dataSource = self
         
-//        tableView.estimatedRowHeight = 150 // 預估的行高度
-//        tableView.rowHeight = UITableView.automaticDimension
-
-        
         // 設置 Header
         let headerView = UIView()
         headerView.backgroundColor = .lightGray
@@ -295,6 +291,20 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 }
             }
         }
+        
+        FirebaseManager.shared.fetchUserData(userId: userId) { result in
+                    switch result {
+                    case .success(let data):
+                        if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                            // 使用 Kingfisher 加載圖片到 avatarImageView
+                            DispatchQueue.main.async {
+                                cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                            }
+                        }
+                    case .failure(let error):
+                        print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+                    }
+                }
         
         // 檢查收藏狀態
         FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postId) { isBookmarked in

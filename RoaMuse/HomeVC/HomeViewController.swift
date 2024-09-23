@@ -33,7 +33,7 @@ class HomeViewController: UIViewController {
         //        uploadPlaces()
         self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        homeTableView.register(PostsTableViewCell.self, forCellReuseIdentifier: "postCell")
+        homeTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         popupView.delegate = self
         
         setupUI()
@@ -58,7 +58,7 @@ class HomeViewController: UIViewController {
             }
         }
     }
-
+    
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
@@ -173,7 +173,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 150
+        return 250
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -181,14 +181,34 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = homeTableView.dequeueReusableCell(withIdentifier: "postCell", for: indexPath) as? PostsTableViewCell
+        let cell = homeTableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell
         let postData = postsArray[indexPath.row]
         
         guard let cell = cell else { return UITableViewCell() }
         cell.selectionStyle = .none
         cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+        cell.contentLabel.text = postData["content"] as? String
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeCountLabel.text = likeCount
+        
+        if let createdAtTimestamp = postData["createdAt"] as? Timestamp {
+            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+            cell.dateLabel.text = createdAtString
+        }
+        
+        FirebaseManager.shared.fetchUserData(userId: userId) { result in
+            switch result {
+            case .success(let data):
+                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                    // 使用 Kingfisher 加載圖片到 avatarImageView
+                    DispatchQueue.main.async {
+                        cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                    }
+                }
+            case .failure(let error):
+                print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+            }
+        }
         
         FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
@@ -200,9 +220,8 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
-                // 更新 likeCountLabel
+                
                 DispatchQueue.main.async {
-                    // 更新 likeCountLabel 和按鈕的選中狀態
                     cell.likeCountLabel.text = String(likesAccount.count)
                     cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
                 }
@@ -322,7 +341,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-    
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()

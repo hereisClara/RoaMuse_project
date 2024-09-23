@@ -26,7 +26,7 @@ class NewsFeedViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        postsTableView.register(PostsTableViewCell.self, forCellReuseIdentifier: "postCell")
+        postsTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         postsTableView.delegate = self
         postsTableView.dataSource = self
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -136,7 +136,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        150
+        250
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -145,19 +145,39 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = postsTableView.dequeueReusableCell(withIdentifier: "postCell", for: indexPath) as? PostsTableViewCell
+        let cell = postsTableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell
         let postData = postsArray[indexPath.row]
         
         guard let cell = cell else { return UITableViewCell() }
         cell.selectionStyle = .none
         
-        cell.titleLabel.text = postsArray[indexPath.row]["title"] as? String
+        cell.titleLabel.text = postData["title"] as? String
+        cell.contentLabel.text = postData["content"] as? String
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeButton.isSelected = likeButtonIsSelected
         cell.likeCountLabel.text = likeCount
         
+        if let createdAtTimestamp = postData["createdAt"] as? Timestamp {
+            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+            cell.dateLabel.text = createdAtString
+        }
+        
         FirebaseManager.shared.isContentBookmarked(forUserId: "Am5Jsa1tA0IpyXMLuilm", id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
+        }
+        
+        FirebaseManager.shared.fetchUserData(userId: userId) { result in
+            switch result {
+            case .success(let data):
+                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                    // 使用 Kingfisher 加載圖片到 avatarImageView
+                    DispatchQueue.main.async {
+                        cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                    }
+                }
+            case .failure(let error):
+                print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+            }
         }
         
         FirebaseManager.shared.loadPosts { posts in

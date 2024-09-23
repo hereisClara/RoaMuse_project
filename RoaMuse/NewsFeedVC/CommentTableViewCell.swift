@@ -23,6 +23,7 @@ class CommentTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
         label.numberOfLines = 0  // 支援多行
+        label.lineBreakMode = .byWordWrapping
         return label
     }()
     
@@ -34,6 +35,13 @@ class CommentTableViewCell: UITableViewCell {
         return label
     }()
     
+    let avatarImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+    
     // 初始化
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -42,30 +50,37 @@ class CommentTableViewCell: UITableViewCell {
         contentView.addSubview(usernameLabel)
         contentView.addSubview(contentLabel)
         contentView.addSubview(createdAtLabel)
+        contentView.addSubview(avatarImageView)
         
         // 使用 SnapKit 設置約束條件
         usernameLabel.snp.makeConstraints { make in
             make.top.equalTo(contentView).offset(8)
-            make.leading.equalTo(contentView).offset(16)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
         }
         
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(usernameLabel.snp.bottom).offset(4)
-            make.leading.equalTo(contentView).offset(16)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
+            make.bottom.equalTo(createdAtLabel).offset(-16)
         }
         
         createdAtLabel.snp.makeConstraints { make in
-            make.top.equalTo(contentLabel.snp.bottom).offset(4)
-            make.leading.equalTo(contentView).offset(16)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
             make.bottom.equalTo(contentView).offset(-8) // 確保自適應
+        }
+        
+        avatarImageView.snp.makeConstraints { make in
+            make.leading.top.equalTo(contentView).offset(12)
+            make.width.height.equalTo(30)
         }
         
         usernameLabel.text = "username"
         contentLabel.text = "content"
         createdAtLabel.text = "createdAt"
+        
     }
     
     required init?(coder: NSCoder) {
