@@ -24,12 +24,17 @@ class TripDetailViewController: UIViewController {
     var selectedIndexPath: IndexPath?
     var completedPlaceIds: [String] = []
     
-    
     let tableView = UITableView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
+        
+        if let trip = trip {
+                print("成功接收到行程數據: \(trip)")
+            } else {
+                print("未接收到行程數據")
+            }
         
         setupTableView()
         loadPlacesDataFromFirebase()
@@ -40,23 +45,38 @@ class TripDetailViewController: UIViewController {
         }
     }
     
-    // 從 Firebase 加載 Places 資料
     func loadPlacesDataFromFirebase() {
         guard let trip = trip else { return }
         
         let placeIds = trip.places.map { $0.id }
         
+        if placeIds.isEmpty {
+            print("行程中無地點資料")
+            return
+        }
+        
         FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] (placesArray) in
             guard let self = self else { return }
-            self.places = placesArray.compactMap { data in
-                if let id = data.id as? String,
-                   let name = data.name as? String,
-                   let latitude = data.latitude as? Double,
-                   let longitude = data.longitude as? Double {
-                    return Place(id: id, name: name, latitude: latitude, longitude: longitude)
-                }
-                return nil
+            
+            // 檢查是否有資料
+            if placesArray.isEmpty {
+                print("無法加載地點詳細資料")
+                return
             }
+            
+            // 重新根據 placeIds 的順序排列 placesArray
+            let sortedPlaces = placeIds.compactMap { placeId in
+                placesArray.first(where: { $0.id == placeId })
+            }
+            
+            // 檢查是否成功排序
+            if sortedPlaces.count != placeIds.count {
+                print("加載地點時發生錯誤，地點數量不匹配")
+                return
+            }
+
+            // 將資料存儲在 places 陣列中
+            self.places = sortedPlaces
             
             self.buttonState = Array(repeating: false, count: self.places.count)
             
@@ -69,6 +89,7 @@ class TripDetailViewController: UIViewController {
                 print("Places data loaded, refreshing table view")
                 self.tableView.reloadData() // 數據加載完成後刷新表格
             }
+            
             // 啟動位置更新，並確保在 UI 設置完成後才計算距離
             self.locationManager.startUpdatingLocation()
             self.locationManager.onLocationUpdate = { [weak self] currentLocation in
@@ -76,7 +97,8 @@ class TripDetailViewController: UIViewController {
             }
         }
     }
-    
+
+
     func checkDistances(from currentLocation: CLLocation) {
         
         print("開始計算距離")
@@ -253,45 +275,16 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             let placeId = trip.places[placeIndex].id
             let tripId = trip.id
 
-            var updatedPlaces = trip.places.map { place -> [String: Any] in
-                return ["id": place.id, "isComplete": place.isComplete]
-            }
-            updatedPlaces[placeIndex]["isComplete"] = true
+            // 將地點和行程的資訊上傳到 users.completedPlace 和 completedTrip
+            FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
+                if success {
+                    print("地點 \(placeId) 和行程 \(tripId) 成功更新")
 
-            let db = Firestore.firestore()
-            db.collection("trips").document(tripId).updateData(["places": updatedPlaces]) { error in
-                if let error = error {
-                    print("更新失敗: \(error.localizedDescription)")
-                } else {
-                    print("地點 \(placeId) 的 isComplete 成功更新為 true")
-
-                    self.trip?.places[placeIndex].isComplete = true
-
-                    // 上傳地點到 users 的 completedPlace
-                    FirebaseManager.shared.addPlaceToCompleted(userId: userId, tripId: tripId, placeId: placeId)
-
-                    let allCompleted = updatedPlaces.allSatisfy { place in
-                        return place["isComplete"] as? Bool == true
-                    }
-
-                    if allCompleted {
-                        db.collection("trips").document(tripId).updateData(["isComplete": true]) { error in
-                            if let error = error {
-                                print("更新行程 isComplete 失敗: \(error.localizedDescription)")
-                            } else {
-                                print("行程的 isComplete 已設置為 true")
-                                self.trip?.isComplete = true
-                                
-                                // 上傳行程到 users 的 completedTrip
-                                FirebaseManager.shared.addTripToCompleted(userId: userId, tripId: tripId)
-                            }
-                        }
-                    }
-
-                    self.selectedIndexPath = indexPath
                     DispatchQueue.main.async {
                         self.tableView.reloadRows(at: [indexPath], with: .none)
                     }
+                } else {
+                    print("更新失敗")
                 }
             }
         }

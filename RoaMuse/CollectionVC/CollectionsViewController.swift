@@ -130,8 +130,7 @@ class CollectionsViewController: UIViewController {
             }
         }
     }
-    
-    
+
     
     // 加載收藏的文章
     func loadPostsData() {
@@ -167,34 +166,6 @@ class CollectionsViewController: UIViewController {
         })
     }
     
-    //    func setupFilterButtons() {
-    //        let filterOptions = ["奇險派", "浪漫派", "田園派"]
-    //        
-    //        let buttonContainer = UIStackView()
-    //        buttonContainer.axis = .horizontal
-    //        buttonContainer.distribution = .fillEqually
-    //        buttonContainer.spacing = 8
-    //        view.addSubview(buttonContainer)
-    //        
-    //        buttonContainer.snp.makeConstraints { make in
-    //            make.bottom.equalTo(segmentedControl.snp.top).offset(-20)
-    //            make.width.equalTo(segmentedControl)
-    //            make.centerX.equalTo(view)
-    //            make.height.equalTo(50)
-    //        }
-    //        
-    //        for (index, title) in filterOptions.enumerated() {
-    //            let button = UIButton(type: .system)
-    //            button.setTitle(title, for: .normal)
-    //            button.tag = index
-    //            button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
-    //            button.backgroundColor = .clear
-    //            button.setTitleColor(.deepBlue, for: .normal)
-    //            buttonContainer.addArrangedSubview(button)
-    //            filterButtons.append(button)
-    //        }
-    //    }
-    
     func setupFilterButtons() {
         let filterOptions = ["奇險派", "浪漫派", "田園派"]
         
@@ -225,15 +196,21 @@ class CollectionsViewController: UIViewController {
     
     @objc func filterButtonTapped(_ sender: UIButton) {
         let index = sender.tag
-        
+
         if selectedFilterIndex == index {
             // 取消選擇
             sender.backgroundColor = .clear
             sender.setTitleColor(.deepBlue, for: .normal)
             selectedFilterIndex = nil
-            
-            // 取消篩選條件，重新加載所有行程數據
-            loadTripsData(userId: userId)
+
+            // 取消篩選條件，重新加載所有行程和文章數據
+            if segmentIndex == 0 {
+                // 重新加載行程數據
+                loadTripsData(userId: userId)
+            } else {
+                // 重新加載所有文章數據
+                loadPostsData()
+            }
             
         } else {
             // 取消之前選擇的按鈕
@@ -241,42 +218,63 @@ class CollectionsViewController: UIViewController {
                 filterButtons[previousIndex].backgroundColor = .clear
                 filterButtons[previousIndex].setTitleColor(.deepBlue, for: .normal)
             }
-            
+
             // 選中當前按鈕
             sender.backgroundColor = .clear
             sender.setTitleColor(.accent, for: .normal)
             selectedFilterIndex = index
-            
-            // 請求對應 tag 的行程數據並更新畫面
+
+            // 先加載所有該 tag 的行程數據
             FirebaseManager.shared.loadTripsByTag(tag: index) { [weak self] trips in
                 guard let self = self else { return }
                 
-                // 遍歷每個行程，檢查是否被收藏
-                var bookmarkedTrips: [Trip] = []
-                let group = DispatchGroup() // 用於同步處理
-                for trip in trips {
-                    group.enter()
-                    FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: trip.id) { isBookmarked in
-                        if isBookmarked {
-                            bookmarkedTrips.append(trip)
+                // 拿到所有已完成的行程 ID
+                FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { bookmarkedTrips in
+                    FirebaseManager.shared.fetchUserData(userId: userId) { result in
+                        switch result {
+                        case .success(let userData):
+                            let completedTrips = userData["completedTrip"] as? [String] ?? []
+
+                            // 更新行程數據，只保留被收藏的行程
+                            let bookmarkedTrips = trips.filter { bookmarkedTrips.contains($0.id) }
+
+                            // 更新行程列表
+                            self.incompleteTripsArray = bookmarkedTrips.filter { !completedTrips.contains($0.id) }
+                            self.completeTripsArray = bookmarkedTrips.filter { completedTrips.contains($0.id) }
+
+                            // 根據貼文中的 `tripId` 找到對應的 `trip`，篩選符合的貼文
+                            self.filterPostsByTrips(trips: bookmarkedTrips)
+                            
+                            // 更新 tableView
+                            DispatchQueue.main.async {
+                                self.collectionsTableView.reloadData()
+                            }
+                        case .failure(let error):
+                            print("Failed to fetch user data: \(error.localizedDescription)")
                         }
-                        group.leave()
                     }
                 }
-                
-                // 在所有檢查完成後更新表格
-                group.notify(queue: .main) {
-                    // 更新行程數據，只保留被收藏的行程
-                    self.tripsArray = bookmarkedTrips
-                    
-                    // 根據行程完成狀態更新 `incompleteTripsArray` 和 `completeTripsArray`
-                    self.incompleteTripsArray = bookmarkedTrips.filter { !$0.isComplete }
-                    self.completeTripsArray = bookmarkedTrips.filter { $0.isComplete }
-                    
-                    // 更新 tableView
-                    self.collectionsTableView.reloadData()
-                }
             }
+        }
+    }
+
+    func filterPostsByTrips(trips: [Trip]) {
+        // 根據行程數據中的 tripId 篩選對應的貼文
+        let tripIds = trips.map { $0.id }
+        
+        FirebaseManager.shared.loadPosts { [weak self] posts in
+            guard let self = self else { return }
+            
+            // 過濾掉沒有對應行程的貼文
+            self.postsArray = posts.filter { post in
+                if let postTripId = post["tripId"] as? String {
+                    return tripIds.contains(postTripId)
+                }
+                return false
+            }
+            
+            // 更新 tableView
+            self.collectionsTableView.reloadData()
         }
     }
 

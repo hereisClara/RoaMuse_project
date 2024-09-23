@@ -97,7 +97,7 @@ class EstablishViewController: UIViewController {
                 
                 // 更新 randomTrip 變數，供後續使用
                 self.randomTrip = randomTrip
-                
+                print("..........", randomTrip)
                 // 顯示彈出視窗，並傳入選中的行程
                 self.popupView.showPopup(on: self.view, with: randomTrip)
                 
@@ -173,24 +173,79 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         }
     }
     
-    func updatePlaceData(tripId: String, placeIndex: Int, placeId: String, isComplete: Bool) {
+    func updatePlaceData(userId: String, trip: Trip, placeId: String) {
         let db = Firestore.firestore()
+        let userRef = db.collection("users").document(userId)
         
-        // 指定 Firestore 中的文檔路徑
-        let placePath = "trips/\(tripId)"
-        
-        // 構建要更新的字段數據
-        let placeData: [String: Any] = [
-            "places.\(placeIndex).id": placeId,
-            "places.\(placeIndex).isComplete": isComplete
-        ]
-        
-        // 更新 Firestore 中指定文檔的數據
-        db.document(placePath).updateData(placeData) { error in
-            if let error = error {
-                print("更新失敗: \(error.localizedDescription)")
+        userRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                // 取得現有的 completedPlace 和 completedTrip 資料
+                if var completedPlaces = document.data()?["completedPlace"] as? [[String: Any]],
+                   var completedTrips = document.data()?["completedTrip"] as? [String] {
+                    
+                    // 查找是否已經有該行程的記錄
+                    if let index = completedPlaces.firstIndex(where: { $0["tripId"] as? String == trip.id }) {
+                        // 更新對應的 tripId 下的 placeIds
+                        var placeIds = completedPlaces[index]["placeIds"] as? [String] ?? []
+                        if !placeIds.contains(placeId) {
+                            placeIds.append(placeId)
+                            completedPlaces[index]["placeIds"] = placeIds
+                        }
+                    } else {
+                        // 如果還沒有該 tripId，則新增一筆
+                        completedPlaces.append(["tripId": trip.id, "placeIds": [placeId]])
+                    }
+                    
+                    // 更新 Firestore 中的 completedPlace
+                    userRef.updateData(["completedPlace": completedPlaces]) { error in
+                        if let error = error {
+                            print("更新 completedPlace 失敗: \(error.localizedDescription)")
+                        } else {
+                            print("成功將地點 \(placeId) 添加到行程 \(trip.id) 的 completedPlace 中")
+                        }
+                    }
+                    
+                    // 檢查該行程的所有地點是否都已完成
+                    let completedPlaceIds = completedPlaces.first(where: { $0["tripId"] as? String == trip.id })?["placeIds"] as? [String] ?? []
+                    let allPlacesCompleted = trip.places.allSatisfy { place in
+                        completedPlaceIds.contains(place.id)
+                    }
+                    
+                    if allPlacesCompleted && !completedTrips.contains(trip.id) {
+                        // 如果所有地點都已完成，將該 tripId 添加到 completedTrip
+                        completedTrips.append(trip.id)
+                        userRef.updateData(["completedTrip": completedTrips]) { error in
+                            if let error = error {
+                                print("更新 completedTrip 失敗: \(error.localizedDescription)")
+                            } else {
+                                print("成功將行程 \(trip.id) 添加到 completedTrip 中")
+                            }
+                        }
+                    }
+                    
+                } else {
+                    // 如果沒有 completedPlace，則初始化它
+                    let newCompletedPlace = [["tripId": trip.id, "placeIds": [placeId]]]
+                    
+                    // 檢查 completedTrip 是否存在，若不存在則初始化為空數組
+                    let completedTrips = document.data()?["completedTrip"] as? [String] ?? []
+                    
+                    // 如果 trip.id 已經存在於 completedTrips 中，不要重複添加
+                    let newCompletedTrip = completedTrips.contains(trip.id) ? completedTrips : completedTrips + [trip.id]
+                    
+                    userRef.updateData([
+                        "completedPlace": newCompletedPlace,
+                        "completedTrip": newCompletedTrip
+                    ]) { error in
+                        if let error = error {
+                            print("初始化 completedPlace 或 completedTrip 失敗: \(error.localizedDescription)")
+                        } else {
+                            print("成功初始化 completedPlace，並添加地點 \(placeId) 和行程 \(trip.id)")
+                        }
+                    }
+                }
             } else {
-                print("成功更新地點 \(placeId) 的資料")
+                print("無法找到用戶資料: \(error?.localizedDescription ?? "未知錯誤")")
             }
         }
     }

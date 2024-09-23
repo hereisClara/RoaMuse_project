@@ -30,6 +30,7 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        uploadTripsToFirebase()
         //        uploadPlaces()
         self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -401,25 +402,124 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     
+    func uploadTripsToFirebase() {
+        let db = Firestore.firestore()
+
+        // 第一筆資料
+        let trip1 = Trip(
+            poem: Poem(
+                title: "〈夜宿山寺〉",
+                poetry: "李白",
+                original: ["危樓高百尺，手可摘星辰。", "不敢高聲語，恐驚天上人。"],
+                translation: ["山上寺院的高樓真高啊，好像有一百尺的樣子，人在樓上好像一伸手就可以摘下天上的星星。",
+                              "站在這裡，我不敢大聲說話，唯恐驚動天上的神仙。"],
+                secretTexts: ["李白自號「青蓮居士」，源於《維摩詰經》的「青蓮」，展現他對佛教的崇敬和對維摩詘生活方式的嚮往。他不僅在詩中多次引用「青蓮」，還將維摩詘視為自己的精神榜樣，特別推崇《維摩詰經》中的「入諸酒肆，能立其志」的教義。"],
+                situationText: ["台北101的觀景台是城市中最高的地方，從這裡俯瞰整個台北，感受到與天空接近的高度。站在這樣的高處，彷彿一個輕聲細語就能驚擾天上的人，體會詩中的敬畏與謙卑之感。"]
+            ),
+            id: "SKnCdn2SK9D4HjYnE9ll",
+            places: [PlaceId(id: "f9E9Xc0p7aQaDBmqgv2K")],
+            tag: 1,
+            season: 4,
+            weather: 2,
+            startTime: 2
+        )
+
+        // 第二筆資料
+        let trip2 = Trip(
+            poem: Poem(
+                title: "〈酬張少府〉",
+                poetry: "王維",
+                original: ["晚年惟好靜，萬事不關心。", "自顧無長策，空知返舊林。", "松風吹解帶，山月照彈琴。", "君問窮通理，漁歌入浦深。"],
+                translation: ["到了晚年只喜歡清靜，對什麼事情都漠不關心。",
+                              "自思沒有高策可以報國，只要求歸隱家鄉的山林。",
+                              "寬解衣帶對著松風乘涼，山月高照正好弄弦彈琴。",
+                              "若問窮困通達的道理，請聽水浦深處漁歌聲音。"],
+                secretTexts: ["王維全家皆虔信佛法，茹素戒殺。王維母親崔氏在他很小的時候就帶發修行，一生「褐衣蔬食，持戒安禪」。",
+                              "天寶末年，安祿山攻佔長安，皇室倉皇西逃，王維不及逃出，為叛軍所俘，並遭軟禁於洛陽菩提寺。"],
+                situationText: ["步行登山：在登山途中，放慢腳步，感受山中的寧靜，聆聽松風和鳥鳴，仿佛在松風吹拂中，體驗詩中「解帶」的放鬆感。",
+                                "坐在碼頭的長椅上，看著海面，思索關於人生的困境與順遂，就像詩中的「君問窮通理」。"]
+            ),
+            id: "p8oLRKdIRenhXwJy4gs0",
+            places: [PlaceId(id: "Xyn45Kl2hyXMFQDuhyBD"), PlaceId(id: "eFqN1Bs4d8nd27GPq7dk")],
+            tag: 2,
+            season: 4,
+            weather: 2,
+            startTime: 2
+        )
+
+        // 第三筆資料
+        let trip3 = Trip(
+            poem: Poem(
+                title: "〈感諷五首．其三〉",
+                poetry: "李賀",
+                original: ["南山何其悲，鬼雨灑空草！", "長安夜半秋，風前幾人老？", "低迷黃昏徑，裊裊青櫟道；", "月午樹無影，一山唯白曉，", "漆炬迎新人，幽壙螢擾擾。"],
+                translation: ["南山是多麼的悲涼，鬼雨灑落在空曠的草地上。",
+                              "長安的深夜已是秋天，在風中不知多少人已經變老。",
+                              "黃昏的路徑彷彿籠罩著一層迷霧，青櫟樹的道路上飄著悠長的微風。",
+                              "夜半的月亮高懸，樹木卻無影，整座山上只有白色的晨曦。",
+                              "漆黑的火炬迎接著新來的人，幽暗的墓穴中螢火蟲在四處飛舞。"],
+                secretTexts: ["李賀經常騎著一匹瘦馬，帶著小童子邊走邊思索，一旦有了好句子或是來了靈感，便把所想到的靈感急速記錄下來，投進小童子背著的小錦囊裡。",
+                              "李賀的詩想像力豐富，意境詭異華麗，常用些險韻奇字。",
+                              "李賀只活了短短二十七歲。他經歷了安史之亂帶來的巨大衝擊。"],
+                situationText: ["當細雨輕灑於廣袤的草地上，水霧繚繞，彷彿鬼雨隨風飄落，帶來一種淒美的氛圍。",
+                                "夕陽西下，餘暉灑在蜿蜒的山徑間，步道旁的樹木枝葉隨風輕搖。"]
+            ),
+            id: "u9QgkOcQsZZh90D6SAfc",
+            places: [PlaceId(id: "CbCsS208lUh4OVNXedcB"), PlaceId(id: "NsqhxJyJxtv0SPnbDUqi"), PlaceId(id: "Q4yAOM6yUTOru6YqExsJ")],
+            tag: 0,
+            season: 2,
+            weather: 1,
+            startTime: 1
+        )
+
+        // 上傳資料到 Firebase
+        let trips = [trip1, trip2, trip3]
+        
+        for trip in trips {
+            let tripData: [String: Any] = [
+                "id": trip.id,
+                "places": trip.places.map { ["id": $0.id] },
+                "poem": [
+                    "title": trip.poem.title,
+                    "poetry": trip.poem.poetry,
+                    "original": trip.poem.original,
+                    "translation": trip.poem.translation,
+                    "secretTexts": trip.poem.secretTexts,
+                    "situationText": trip.poem.situationText
+                ],
+                "tag": trip.tag,
+                "season": trip.season,
+                "weather": trip.weather,
+                "startTime": trip.startTime
+            ]
+
+            // 儲存到 Firebase 中
+            db.collection("trips").document(trip.id).setData(tripData) { error in
+                if let error = error {
+                    print("Error uploading trip \(trip.id): \(error.localizedDescription)")
+                } else {
+                    print("Successfully uploaded trip \(trip.id)")
+                }
+            }
+        }
+    }
+    
+    
     func uploadTripData() {
         let db = Firestore.firestore()
         
         // 构建 trip 数据
         let tripData: [String: Any] = [
             "id": "u9QgkOcQsZZh90D6SAfc",
-            "isComplete": false,
             "places": [
                 [
-                    "id": "CbCsS208lUh4OVNXedcB",
-                    "isComplete": false
+                    "id": "CbCsS208lUh4OVNXedcB"
                 ],
                 [
-                    "id": "NsqhxJyJxtv0SPnbDUqi",
-                    "isComplete": false
+                    "id": "NsqhxJyJxtv0SPnbDUqi"
                 ],
                 [
-                    "id": "Q4yAOM6yUTOru6YqExsJ",
-                    "isComplete": false
+                    "id": "Q4yAOM6yUTOru6YqExsJ"
                 ]
             ],
             "poem": [
@@ -465,3 +565,4 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         }
     }
 }
+
