@@ -25,6 +25,9 @@ class CollectionsViewController: UIViewController {
     var incompleteTripsArray = [Trip]()
     var completeTripsArray = [Trip]()
     
+    var filterButtons: [UIButton] = []
+    var selectedFilterIndex: Int?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -34,7 +37,7 @@ class CollectionsViewController: UIViewController {
         setupTableView()
         setupSegmentedControl()
         setupRefreshControl()
-        
+        setupFilterButtons()
     }
     
     func setupUI() {
@@ -161,6 +164,56 @@ class CollectionsViewController: UIViewController {
             guard let self = self else { return }
             self.loadInitialData() // 在刷新時重新加載數據
         })
+    }
+    
+    func setupFilterButtons() {
+        let filterOptions = ["奇險派", "浪漫派", "田園派"]
+        
+        let buttonContainer = UIStackView()
+        buttonContainer.axis = .horizontal
+        buttonContainer.distribution = .fillEqually
+        buttonContainer.spacing = 8
+        view.addSubview(buttonContainer)
+        
+        buttonContainer.snp.makeConstraints { make in
+            make.bottom.equalTo(segmentedControl.snp.top).offset(-20)
+            make.width.equalTo(segmentedControl)
+            make.centerX.equalTo(view)
+            make.height.equalTo(50)
+        }
+        
+        for (index, title) in filterOptions.enumerated() {
+            let button = UIButton(type: .system)
+            button.setTitle(title, for: .normal)
+            button.tag = index
+            button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
+            button.backgroundColor = .clear
+            button.setTitleColor(.deepBlue, for: .normal)
+            buttonContainer.addArrangedSubview(button)
+            filterButtons.append(button)
+        }
+    }
+
+    @objc func filterButtonTapped(_ sender: UIButton) {
+        let index = sender.tag
+        
+        if selectedFilterIndex == index {
+            // 如果再次點擊同一個按鈕，取消選擇
+            sender.backgroundColor = .clear
+            sender.setTitleColor(.deepBlue, for: .normal)
+            selectedFilterIndex = nil
+        } else {
+            // 取消之前選擇的按鈕顏色
+            if let previousIndex = selectedFilterIndex {
+                filterButtons[previousIndex].backgroundColor = .clear
+                filterButtons[previousIndex].setTitleColor(.deepBlue, for: .normal)
+            }
+            
+            // 選中當前按鈕並變紅色
+            sender.backgroundColor = .clear
+            sender.setTitleColor(.accent, for: .normal)
+            selectedFilterIndex = index
+        }
     }
 
 }
