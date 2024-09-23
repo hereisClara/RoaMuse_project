@@ -39,7 +39,6 @@ class ArticleViewController: UIViewController {
         
         popupView.delegate = self
         
-//        setupTableView()
         tripTitleLabel.backgroundColor = .yellow  // 暫時設置背景顏色以檢查佈局
         checkBookmarkStatus()
         updateBookmarkData()
@@ -78,14 +77,6 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-//        loadComments()
-//        tableView.reloadData()
-//        tableView.layoutIfNeeded() // 強制刷新佈局
-    }
-
     
     func setupCommentInput() {
         commentTextField.placeholder = "輸入留言..."
@@ -197,20 +188,63 @@ class ArticleViewController: UIViewController {
         }
     }
     
-    // 加載更新後的留言
+    // MARK: 加載更新後的留言
     func loadComments() {
-        print("load")
-        // 模擬從 Firebase 加載留言
+        print("Loading comments...")
+        
         Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, error in
-            if let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] {
-                self.comments = loadedComments
+            if let error = error {
+                print("Error loading comments: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] else {
+                print("No comments found.")
+                return
+            }
+            
+            // 將每個 comment 進行解碼處理，儲存在 comments 數組中
+            var decodedComments: [[String: Any]] = []
+            
+            let dispatchGroup = DispatchGroup()  // 使用 DispatchGroup 確保所有的異步加載完成後再繼續
+            
+            for var comment in loadedComments {
+                dispatchGroup.enter()
                 
+                // 先解碼 userId 對應的 username
+                let userId = comment["userId"] as? String ?? ""
+                FirebaseManager.shared.fetchUserNameByUserId(userId: userId) { username in
+                    comment["username"] = username  // 將取得的 username 存入 comment 中
+                    
+                    // 同時解碼用戶大頭貼的 URL
+                    FirebaseManager.shared.fetchUserData(userId: userId) { result in
+                        switch result {
+                        case .success(let data):
+                            if let photoUrlString = data["photo"] as? String {
+                                comment["avatarUrl"] = photoUrlString  // 存入大頭貼 URL
+                            }
+                        case .failure(let error):
+                            print("Error loading user avatar: \(error.localizedDescription)")
+                        }
+                        
+                        decodedComments.append(comment)
+                        dispatchGroup.leave()  // 當這條 comment 的解碼完成後，leave group
+                    }
+                }
+            }
+            
+            // 當所有的資料解碼完成後，更新 UI
+            dispatchGroup.notify(queue: .main) {
+                self.comments = decodedComments  // 將解碼後的資料賦值給 self.comments
+                print("Decoded comments: \(self.comments)")  // 打印解碼後的資料
+                
+                // 設定 tableView 並重新整理 UI
                 self.setupTableView()
-//                self.tableView.reloadData()
-//                self.tableView.layoutIfNeeded()
+                self.tableView.reloadData()
             }
         }
     }
+
     
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
@@ -643,45 +677,44 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         return comments.count  // 返回留言數量
     }
     
-    // UITableViewDataSource - 設定每個 cell 的樣式
+    // MARK: cell for row at
+    // UITableViewDataSource - 設定 cell 的內容
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as? CommentTableViewCell else {
             return UITableViewCell()
         }
+        
         cell.selectionStyle = .none
         
         if comments.count > 0 {
             let comment = comments[indexPath.row]
-            print(comment)
-            FirebaseManager.shared.fetchUserNameByUserId(userId: comment["userId"] as? String ?? "") { username in
-                if let username = username {
-                    cell.usernameLabel.text = username
-                    cell.contentLabel.text = comment["content"] as? String
-                    if let createdAtTimestamp = comment["createdAt"] as? Timestamp {
-                        let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
-                        cell.createdAtLabel.text = createdAtString
-                    }
-                }
+            
+            // 設定留言內容
+            cell.contentLabel.text = comment["content"] as? String
+            
+            // 設定用戶名
+            cell.usernameLabel.text = comment["username"] as? String
+            
+            // 設定時間
+            if let createdAtTimestamp = comment["createdAt"] as? Timestamp {
+                let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                cell.createdAtLabel.text = createdAtString
             }
             
-            FirebaseManager.shared.fetchUserData(userId: userId) { result in
-                switch result {
-                case .success(let data):
-                    if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                        // 使用 Kingfisher 加載圖片到 avatarImageView
-                        DispatchQueue.main.async {
-                            cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
-                        }
-                    }
-                case .failure(let error):
-                    print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+            // 設定大頭貼
+            if let avatarUrlString = comment["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
+                DispatchQueue.main.async {
+                    cell.avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"))
                 }
             }
         }
+        
         cell.setNeedsLayout()
         cell.layoutIfNeeded()
+        
         return cell
     }
+
 }
 
 extension ArticleViewController: PopupViewDelegate {
@@ -694,7 +727,3 @@ extension ArticleViewController: PopupViewDelegate {
     }
     
 }
-
-
-
-
