@@ -37,6 +37,8 @@ class ArticleViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .white
         
+        self.navigationItem.largeTitleDisplayMode = .never
+        
         popupView.delegate = self
         setupTableView()
         tripTitleLabel.backgroundColor = .yellow  // 暫時設置背景顏色以檢查佈局

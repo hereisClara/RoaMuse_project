@@ -29,7 +29,7 @@ class PostViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        view.backgroundColor = .backgroundGray
         setupUI()
         setupDropdownTableView()
         loadTripsData(userId: "Am5Jsa1tA0IpyXMLuilm")

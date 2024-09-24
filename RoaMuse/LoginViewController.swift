@@ -17,7 +17,7 @@ class LoginViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationBar.isHidden = true
+        //        self.navigationController?.navigationBar.isHidden = true
         setupUI()
     }
     
@@ -26,13 +26,16 @@ class LoginViewController: UIViewController {
         view.addSubview(loginButton)
         
         loginButton.snp.makeConstraints { make in
-            make.center.equalTo(view)
-            make.width.height.equalTo(60)
+            make.centerX.equalTo(view)
+            make.centerY.equalTo(view).offset(-50)
+            make.width.height.equalTo(80)
         }
         
-        loginButton.backgroundColor = .darkGray
+        loginButton.backgroundColor = .accent
+        loginButton.layer.cornerRadius = 40
         
         loginButton.setTitle("登入", for: .normal)
+        loginButton.setTitleColor(.white, for: .normal)
         
         loginButton.addTarget(self, action: #selector(didTapLoginButton), for: .touchUpInside)
         
@@ -41,8 +44,13 @@ class LoginViewController: UIViewController {
     @objc func didTapLoginButton() {
         
         saveUserData(userName: "@yen")
-        navigationController?.pushViewController(TabBarController(), animated: true)
         
+        let tabBarController = TabBarController()
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController = tabBarController
+            window.makeKeyAndVisible()
+        }
     }
     
     func saveUserData(userName: String) {

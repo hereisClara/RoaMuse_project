@@ -12,11 +12,12 @@ import CoreLocation
 import FirebaseFirestore
 import MJRefresh
 import Alamofire
+import Kingfisher
+import FirebaseAuth
 
 class HomeViewController: UIViewController {
     
     private let locationManager = LocationManager()
-    let weatherManager = WeatherKitManager()
     private let randomTripEntryButton = UIButton(type: .system)
     private let recommendRandomTripView = UIView()
     private let homeTableView = UITableView()
@@ -31,9 +32,17 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationController?.setNavigationBarHidden(false, animated: false)
         //        uploadTripsToFirebase()
         //        uploadPlaces()
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
         self.title = "首頁"
+        
+        navigationController?.navigationBar.largeTitleTextAttributes = [
+            .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
+            ]
+        
         view.backgroundColor = UIColor(resource: .backgroundGray)
         homeTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         popupView.delegate = self
@@ -48,9 +57,61 @@ class HomeViewController: UIViewController {
             self.homeTableView.reloadData()
         }
         setupLocationUpdates()
+        setupUserProfileImage()
+        
+        getUserId()
     }
     
+    func getUserId() {
+        if let user = Auth.auth().currentUser {
+            let uid = user.uid  // 獲取當前登入者的唯一識別碼
+            print("當前使用者的 UID：\(uid)")
+        } else {
+            print("目前沒有使用者登入")
+        }
+    }
     
+    func setupUserProfileImage() {
+        // 創建 UIImageView 來作為大頭貼
+        let avatarImageView = UIImageView()
+        
+        // 設置圓形樣式
+        avatarImageView.layer.cornerRadius = 20
+        avatarImageView.layer.masksToBounds = true
+        avatarImageView.layer.borderWidth = 0.5
+        avatarImageView.layer.borderColor = UIColor.deepBlue.cgColor
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.clipsToBounds = true
+        
+        // 將 UIImageView 添加到 view 中
+        self.view.addSubview(avatarImageView)
+        
+        // 使用 SnapKit 設置位置
+        avatarImageView.snp.makeConstraints { make in
+            make.width.height.equalTo(40)
+            make.top.equalTo(self.view.safeAreaLayoutGuide).offset(-50)
+            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
+        }
+        
+        // 從 Firebase 獲取當前用戶的資料
+        let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設當前用戶 ID
+        FirebaseManager.shared.fetchUserData(userId: userId) { result in
+            switch result {
+            case .success(let data):
+                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                    // 使用 Kingfisher 加載圖片
+                    DispatchQueue.main.async {
+                        avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                    }
+                } else {
+                    print("無法獲取照片 URL")
+                }
+            case .failure(let error):
+                print("加載用戶資料失敗: \(error.localizedDescription)")
+            }
+        }
+    }
+
     func setupLocationUpdates() {
         // 設定位置更新的回調
         locationManager.onLocationUpdate = { [weak self] location in
@@ -73,21 +134,53 @@ class HomeViewController: UIViewController {
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.navigationController?.setNavigationBarHidden(false, animated: false)
+    }
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
+        
+        // 添加圓角效果
+        recommendRandomTripView.layer.cornerRadius = 20
+        recommendRandomTripView.layer.masksToBounds = true
         
         recommendRandomTripView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide)
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(150)
+            make.height.equalTo(100)
         }
         
         recommendRandomTripView.backgroundColor = .white
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
+        
+        // 在 recommendRandomTripView 裡面添加 UILabel
+        let titleLabel = UILabel()
+        titleLabel.text = "# 時令推薦"
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        titleLabel.textColor = UIColor(resource: .deepBlue)
+        recommendRandomTripView.addSubview(titleLabel)
+        
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(recommendRandomTripView).offset(20)
+            make.leading.equalTo(recommendRandomTripView).offset(15)
+        }
+        
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = "下雨的時候就是要......"
+        descriptionLabel.font = UIFont.systemFont(ofSize: 16)
+        descriptionLabel.textColor = UIColor(resource: .deepBlue)
+        recommendRandomTripView.addSubview(descriptionLabel)
+        
+        descriptionLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(10)
+            make.leading.equalTo(titleLabel)
+        }
     }
+    
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
         randomTripEntryButtonDidTapped()
@@ -141,25 +234,6 @@ class HomeViewController: UIViewController {
             }
         }
     }
-    
-    
-    //    private func fetchWeather(for location: CLLocation) {
-    //        weatherManager.fetchWeather(for: location) { [weak self] weather in
-    //            DispatchQueue.main.async {
-    //                if let weather = weather {
-    //                    self?.updateWeatherInfo(weather: weather)
-    //                    print("===============", weather)
-    //                } else {
-    //                    print("無法獲取天氣資訊")
-    //                }
-    //            }
-    //        }
-    //    }
-    //
-    private func updateWeatherInfo(weather: CurrentWeather) {
-        print("天氣狀況：\(weather.condition.description)")
-        print("溫度：\(weather.temperature.formatted())")
-    }
 }
 
 extension HomeViewController: PopupViewDelegate {
@@ -181,10 +255,15 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         homeTableView.snp.makeConstraints { make in
             make.top.equalTo(recommendRandomTripView.snp.bottom).offset(10)
             make.width.equalTo(recommendRandomTripView)
-            make.bottom.equalTo(view.safeAreaLayoutGuide)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
             make.centerX.equalTo(view)
         }
-        homeTableView.backgroundColor = .orange
+        
+        // 添加圓角效果
+        homeTableView.layer.cornerRadius = 20
+        homeTableView.layer.masksToBounds = true
+        
+        homeTableView.backgroundColor = .clear
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

@@ -30,6 +30,12 @@ class UserTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
+        avatarImageView.layer.masksToBounds = true // 確保子視圖超出範圍被裁剪
+    }
+    
     // 設置 cell 內的內容
     func setupCell() {
         
@@ -64,7 +70,7 @@ class UserTableViewCell: UITableViewCell {
         
         contentLabel.snp.makeConstraints { make in
             make.leading.equalTo(avatarImageView)
-            make.top.equalTo(avatarImageView.snp.bottom).offset(10)
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
             make.leading.equalTo(self).offset(16)
             make.trailing.equalTo(self).offset(-16)
             make.height.equalTo(80)
@@ -103,9 +109,16 @@ class UserTableViewCell: UITableViewCell {
         
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
+//        avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
         
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
+        contentLabel.textColor = .deepBlue
+        
+        titleLabel.font = .boldSystemFont(ofSize: 20)
+        titleLabel.textColor = .deepBlue
+        
+        dateLabel.textColor = .gray
 //        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         
         // 設置按鈕圖片
