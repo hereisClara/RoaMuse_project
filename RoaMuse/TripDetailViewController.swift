@@ -28,23 +28,26 @@ class TripDetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        self.navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        
+
         if let trip = trip {
-                print("成功接收到行程數據: \(trip)")
-            } else {
-                print("未接收到行程數據")
-            }
-        
+            print("成功接收到行程數據: \(trip)")
+        } else {
+            print("未接收到行程數據")
+        }
+
         setupTableView()
         loadPlacesDataFromFirebase()
+
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] placeIds in
             self?.completedPlaceIds = placeIds
             print("獲取的 completedPlaceIds: \(self?.completedPlaceIds)")
             self?.tableView.reloadData()
         }
     }
+
     
     func loadPlacesDataFromFirebase() {
         guard let trip = trip else { return }
@@ -255,7 +258,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func didTapCompleteButton(_ sender: UIButton) {
-        
         sender.isSelected = true
         sender.isEnabled = false
 
@@ -276,7 +278,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             let placeId = trip.places[placeIndex].id
             let tripId = trip.id
 
-            // 將地點和行程的資訊上傳到 users.completedPlace 和 completedTrip
+            guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     print("地點 \(placeId) 和行程 \(tripId) 成功更新")

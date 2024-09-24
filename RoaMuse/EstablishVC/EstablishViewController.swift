@@ -26,7 +26,15 @@ class EstablishViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
         self.title = "建立"
+        
+        navigationController?.navigationBar.largeTitleTextAttributes = [
+            .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
+            ]
+        
+        view.backgroundColor = UIColor(resource: .backgroundGray)
         view.backgroundColor = UIColor(resource: .backgroundGray)
         styleTableView.register(StyleTableViewCell.self, forCellReuseIdentifier: "styleCell")
         
@@ -48,6 +56,8 @@ class EstablishViewController: UIViewController {
             make.width.equalTo(view).multipliedBy(0.9)
             make.height.equalTo(150)
         }
+        
+        recommendRandomTripView.layer.cornerRadius = 20
         
         styleLabel.snp.makeConstraints { make in
             make.center.equalTo(recommendRandomTripView)
@@ -81,30 +91,27 @@ class EstablishViewController: UIViewController {
     }
     
     func randomTripEntryButtonDidTapped() {
-        // 根據選擇的 styleTag 從 Firebase 加載行程
         FirebaseManager.shared.loadTripsByTag(tag: styleTag) { [weak self] trips in
             guard let self = self else { return }
 
             print("正在查詢 tag 值: \(self.styleTag)")  // 調試用
             if !trips.isEmpty {
-                // 隨機選擇一個行程
                 guard let randomTrip = trips.randomElement() else {
                     print("無法隨機選取行程") // 調試
                     return
                 }
-                
+
                 print("成功選取行程: \(randomTrip.id)")  // 調試用
-                
-                // 更新 randomTrip 變數，供後續使用
+
                 self.randomTrip = randomTrip
                 print("..........", randomTrip)
-                // 顯示彈出視窗，並傳入選中的行程
+
                 self.popupView.showPopup(on: self.view, with: randomTrip)
-                
-                // 當點擊收藏按鈕時執行的操作
+
                 self.popupView.tapCollectButton = { [weak self] in
                     guard let self = self else { return }
-                    
+                    guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+
                     FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
                         if success {
                             print("收藏行程成功！")
@@ -135,18 +142,19 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     func setupTableView() {
         styleTableView.dataSource = self
         styleTableView.delegate = self
+        styleTableView.separatorStyle = .none
         
         view.addSubview(styleTableView)
         styleTableView.snp.makeConstraints { make in
-            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(10)
+            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(20)
             make.width.equalTo(recommendRandomTripView)
-            make.bottom.equalTo(view.safeAreaLayoutGuide)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
             make.centerX.equalTo(view)
         }
         
         styleTableView.rowHeight = UITableView.automaticDimension
         styleTableView.estimatedRowHeight = 200
-        styleTableView.backgroundColor = .orange
+        styleTableView.backgroundColor = .clear
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -159,6 +167,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         cell?.titleLabel.text = styles[indexPath.row].name
         cell?.descriptionLabel.text = styles[indexPath.row].introduction
         cell?.selectionStyle = .none
+        
         //        TODO: cell另外做
         return cell ?? UITableViewCell()
     }
@@ -169,34 +178,31 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             selectionTitle = cell.titleLabel.text ?? "" // 改變 cell 的背景顏色
             styleTag = Int(indexPath.row)
             styleLabel.text = selectionTitle
-            
+            styleLabel.textColor = .deepBlue
+            styleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         }
     }
     
     func updatePlaceData(userId: String, trip: Trip, placeId: String) {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         let db = Firestore.firestore()
         let userRef = db.collection("users").document(userId)
         
         userRef.getDocument { (document, error) in
             if let document = document, document.exists {
-                // 取得現有的 completedPlace 和 completedTrip 資料
                 if var completedPlaces = document.data()?["completedPlace"] as? [[String: Any]],
                    var completedTrips = document.data()?["completedTrip"] as? [String] {
                     
-                    // 查找是否已經有該行程的記錄
                     if let index = completedPlaces.firstIndex(where: { $0["tripId"] as? String == trip.id }) {
-                        // 更新對應的 tripId 下的 placeIds
                         var placeIds = completedPlaces[index]["placeIds"] as? [String] ?? []
                         if !placeIds.contains(placeId) {
                             placeIds.append(placeId)
                             completedPlaces[index]["placeIds"] = placeIds
                         }
                     } else {
-                        // 如果還沒有該 tripId，則新增一筆
                         completedPlaces.append(["tripId": trip.id, "placeIds": [placeId]])
                     }
                     
-                    // 更新 Firestore 中的 completedPlace
                     userRef.updateData(["completedPlace": completedPlaces]) { error in
                         if let error = error {
                             print("更新 completedPlace 失敗: \(error.localizedDescription)")
@@ -205,14 +211,12 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
                         }
                     }
                     
-                    // 檢查該行程的所有地點是否都已完成
                     let completedPlaceIds = completedPlaces.first(where: { $0["tripId"] as? String == trip.id })?["placeIds"] as? [String] ?? []
                     let allPlacesCompleted = trip.places.allSatisfy { place in
                         completedPlaceIds.contains(place.id)
                     }
                     
                     if allPlacesCompleted && !completedTrips.contains(trip.id) {
-                        // 如果所有地點都已完成，將該 tripId 添加到 completedTrip
                         completedTrips.append(trip.id)
                         userRef.updateData(["completedTrip": completedTrips]) { error in
                             if let error = error {
@@ -224,13 +228,8 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
                     }
                     
                 } else {
-                    // 如果沒有 completedPlace，則初始化它
                     let newCompletedPlace = [["tripId": trip.id, "placeIds": [placeId]]]
-                    
-                    // 檢查 completedTrip 是否存在，若不存在則初始化為空數組
                     let completedTrips = document.data()?["completedTrip"] as? [String] ?? []
-                    
-                    // 如果 trip.id 已經存在於 completedTrips 中，不要重複添加
                     let newCompletedTrip = completedTrips.contains(trip.id) ? completedTrips : completedTrips + [trip.id]
                     
                     userRef.updateData([

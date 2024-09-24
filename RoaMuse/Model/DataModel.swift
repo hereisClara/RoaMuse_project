@@ -2,8 +2,6 @@ import Foundation
 
 // 定義簡化的 PlaceIdentifier 結構，保存地點的 id 和完成狀態
 
-let userId = "Am5Jsa1tA0IpyXMLuilm"
-
 struct Style {
     let name: String
     let introduction: String

@@ -26,6 +26,7 @@ class HomeViewController: UIViewController {
     var likeCount = String()
     var bookmarkCount = String()
     var likeButtonIsSelected = Bool()
+    var isUpdatingLikeStatus = false
     
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
@@ -46,7 +47,7 @@ class HomeViewController: UIViewController {
         view.backgroundColor = UIColor(resource: .backgroundGray)
         homeTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         popupView.delegate = self
-        
+        observeLikeCountChanges()
         setupUI()
         setupTableView()
         setupPullToRefresh()
@@ -59,59 +60,102 @@ class HomeViewController: UIViewController {
         setupLocationUpdates()
         setupUserProfileImage()
         
-        getUserId()
-    }
-    
-    func getUserId() {
-        if let user = Auth.auth().currentUser {
-            let uid = user.uid  // 獲取當前登入者的唯一識別碼
-            print("當前使用者的 UID：\(uid)")
-        } else {
-            print("目前沒有使用者登入")
-        }
     }
     
     func setupUserProfileImage() {
-        // 創建 UIImageView 來作為大頭貼
         let avatarImageView = UIImageView()
-        
-        // 設置圓形樣式
+
+        // 設定頭像的樣式
         avatarImageView.layer.cornerRadius = 20
         avatarImageView.layer.masksToBounds = true
         avatarImageView.layer.borderWidth = 0.5
         avatarImageView.layer.borderColor = UIColor.deepBlue.cgColor
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
-        
-        // 將 UIImageView 添加到 view 中
+
+        // 將頭像圖片視圖添加到主視圖中
         self.view.addSubview(avatarImageView)
-        
-        // 使用 SnapKit 設置位置
+
+        // 設置位置約束
         avatarImageView.snp.makeConstraints { make in
             make.width.height.equalTo(40)
-            make.top.equalTo(self.view.safeAreaLayoutGuide).offset(-50)
+            make.top.equalTo(self.view.safeAreaLayoutGuide).offset(-50)  // 調整頂部偏移量
             make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
         }
+
+        // 確保從 UserDefaults 中獲取正確的 userId
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else {
+            print("未找到當前用戶的 userId")
+            return
+        }
+
+        // 使用 Firebase 的 addSnapshotListener 來監聽 photo 字段變化
+        let userRef = FirebaseManager.shared.db.collection("users").document(currentUserId)
         
-        // 從 Firebase 獲取當前用戶的資料
-        let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設當前用戶 ID
-        FirebaseManager.shared.fetchUserData(userId: userId) { result in
-            switch result {
-            case .success(let data):
-                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+        userRef.addSnapshotListener { documentSnapshot, error in
+            if let error = error {
+                print("監聽用戶資料失敗: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let document = documentSnapshot, document.exists, let data = document.data() else {
+                print("無法找到用戶資料")
+                return
+            }
+            
+            // 獲取 photo URL 並更新頭像
+            if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                DispatchQueue.main.async {
                     // 使用 Kingfisher 加載圖片
-                    DispatchQueue.main.async {
-                        avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
-                    }
-                } else {
-                    print("無法獲取照片 URL")
+                    avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                 }
-            case .failure(let error):
-                print("加載用戶資料失敗: \(error.localizedDescription)")
+            } else {
+                print("無法獲取照片 URL")
             }
         }
     }
 
+    func observeLikeCountChanges() {
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else {
+            print("無法獲取 userId")
+            return
+        }
+
+        // 獲取對應的貼文
+        for (index, postData) in postsArray.enumerated() {
+            let postId = postData["id"] as? String ?? ""
+            let postRef = Firestore.firestore().collection("posts").document(postId)
+            
+            // 使用 addSnapshotListener 監聽貼文的變化
+            postRef.addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if self.isUpdatingLikeStatus {
+                    return  // 如果正在更新，暫停監聽
+                }
+                
+                if let error = error {
+                    print("監聽按讚數量變化時出錯: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let data = snapshot?.data(), let likesAccount = data["likesAccount"] as? [String] else {
+                    print("無法加載按讚數據")
+                    return
+                }
+
+                // 更新 UI
+                DispatchQueue.main.async {
+                    if let cell = self.homeTableView.cellForRow(at: IndexPath(row: index, section: 0)) as? UserTableViewCell {
+                        cell.likeCountLabel.text = String(likesAccount.count)
+                        cell.likeButton.isSelected = likesAccount.contains(currentUserId)
+                    }
+                }
+            }
+        }
+    }
+
+    
     func setupLocationUpdates() {
         // 設定位置更新的回調
         locationManager.onLocationUpdate = { [weak self] location in
@@ -204,24 +248,25 @@ class HomeViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-        // 从 Firebase 加载所有的行程
         FirebaseManager.shared.loadAllTrips { [weak self] trips in
             guard let self = self else { return }
             
-            // 随机挑选一个行程
             if let randomTrip = trips.randomElement() {
                 self.randomTrip = randomTrip
                 
-                // 获取随机行程中的地點 ID
                 let placeIds = randomTrip.places.map { $0.id }
                 
-                // 从 Firebase 中加载这些地點的详细信息
                 FirebaseManager.shared.loadPlaces(placeIds: placeIds) { places in
-                    // 显示弹窗，使用从 Firebase 加载的地點信息
                     self.popupView.showPopup(on: self.view, with: randomTrip)
                     
                     self.popupView.tapCollectButton = { [weak self] in
                         guard let self = self else { return }
+                        
+                        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+                            print("未找到 userId")
+                            return
+                        }
+                        
                         FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
                             if success {
                                 print("收藏成功")
@@ -290,24 +335,36 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             cell.dateLabel.text = createdAtString
         }
         
-        FirebaseManager.shared.fetchUserData(userId: userId) { result in
-            switch result {
-            case .success(let data):
-                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                    // 使用 Kingfisher 加載圖片到 avatarImageView
-                    DispatchQueue.main.async {
-                        cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+        // 使用貼文的發布者 userId 來獲取發布者的頭像
+        if let postUserId = postData["userId"] as? String {
+            FirebaseManager.shared.fetchUserData(userId: postUserId) { result in
+                switch result {
+                case .success(let data):
+                    if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                        DispatchQueue.main.async {
+                            cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                        }
                     }
+                case .failure(let error):
+                    print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
                 }
-            case .failure(let error):
-                print("加載用戶大頭貼失敗: \(error.localizedDescription)")
             }
+        } else {
+            print("貼文缺少 userId")
         }
         
-        FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
+        // 從 UserDefaults 中獲取當前使用者的 userId
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else {
+            print("未找到當前使用者的 userId")
+            return cell
+        }
+        
+        // 檢查貼文是否已被當前用戶收藏
+        FirebaseManager.shared.isContentBookmarked(forUserId: currentUserId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
         
+        // 加載所有的貼文數據
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
                 return post["id"] as? String == postData["id"] as? String
@@ -317,14 +374,12 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 
                 DispatchQueue.main.async {
                     cell.likeCountLabel.text = String(likesAccount.count)
-                    cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
+                    cell.likeButton.isSelected = likesAccount.contains(currentUserId) // 依據是否按讚來設置狀態
                 }
-                print(likesAccount.contains(userId))
             } else {
-                // 如果沒有找到相應的貼文，或者 likesAccount 為空
                 DispatchQueue.main.async {
                     cell.likeCountLabel.text = "0"
-                    cell.likeButton.isSelected = false // 依據狀態設置未選中
+                    cell.likeButton.isSelected = false // 如果沒有找到數據，按鈕設置為未選中
                 }
             }
         }
@@ -332,6 +387,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         return cell
     }
+
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
@@ -369,41 +425,37 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     
     @objc func didTapLikeButton(_ sender: UIButton) {
         sender.isSelected.toggle()
-        
+
+        // 暫停監聽
+        isUpdatingLikeStatus = true
+
         let point = sender.convert(CGPoint.zero, to: homeTableView)
-        
+
         if let indexPath = homeTableView.indexPathForRow(at: point) {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
-            
+
+            // 使用 userId 從 UserDefaults 中獲取
+            guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+                print("未找到 userId")
+                return
+            }
+
             saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
                 if success {
                     print("按讚成功")
-                    
-                    FirebaseManager.shared.loadPosts { posts in
-                        let filteredPosts = posts.filter { post in
-                            return post["id"] as? String == postId
-                        }
-                        if let matchedPost = filteredPosts.first,
-                           let likesAccount = matchedPost["likesAccount"] as? [String] {
-                            // 更新 likeCountLabel
-                            self.likeCount = String(likesAccount.count)
-                            self.likeButtonIsSelected = likesAccount.contains(userId)
-                        } else {
-                            // 如果沒有找到相應的貼文，或者 likesAccount 為空
-                            self.likeCount = "0"
-                            self.likeButtonIsSelected = false
-                        }
-                    }
-                    
+                    self.observeLikeCountChanges()  // 恢復監聽
+
                 } else {
-                    print("取消按讚")
+                    print("取消按讚失敗")
                     sender.isSelected.toggle()
                 }
+                // 完成後恢復監聽
+                self.isUpdatingLikeStatus = false
             }
         }
     }
-    
+
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
@@ -439,32 +491,31 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
         
-        // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: homeTableView)
         
         if let indexPath = homeTableView.indexPathForRow(at: point) {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
-            let userId = "Am5Jsa1tA0IpyXMLuilm" // 假設為當前使用者ID
             
-            // 獲取當前的 bookmarkAccount
+            guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+                print("未找到 userId")
+                return
+            }
+            
             var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
             
             if sender.isSelected {
-                // 收藏操作，將 userId 加入 bookmarkAccount
                 if !bookmarkAccount.contains(userId) {
                     bookmarkAccount.append(userId)
                 }
                 
-                // 更新使用者的收藏列表
                 FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
                     if success {
-                        // 更新 Firestore 中的 bookmarkAccount 字段
                         FirebaseManager.shared.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
                             if let error = error {
                                 print("Failed to update bookmarkAccount: \(error)")
                             } else {
-                                print("收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+                                print("收藏成功")
                             }
                         }
                     } else {
@@ -472,18 +523,15 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                     }
                 }
             } else {
-                // 取消收藏操作，將 userId 從 bookmarkAccount 中移除
                 bookmarkAccount.removeAll { $0 == userId }
                 
-                // 移除使用者的收藏
                 FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
-                        // 更新 Firestore 中的 bookmarkAccount 字段
                         FirebaseManager.shared.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
                             if let error = error {
                                 print("Failed to update bookmarkAccount: \(error)")
                             } else {
-                                print("取消收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
+                                print("取消收藏成功")
                             }
                         }
                     } else {
@@ -493,7 +541,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
-    
+
     
     func uploadTripsToFirebase() {
         let db = Firestore.firestore()

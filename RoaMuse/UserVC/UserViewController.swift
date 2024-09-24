@@ -13,7 +13,7 @@ import FirebaseStorage
 import FirebaseFirestore
 import Kingfisher
 
-class UserViewController: UIViewController, UIImagePickerControllerDelegate, UITableViewDelegate, UITableViewDataSource, UINavigationControllerDelegate {
+class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     let tableView = UITableView()
     let userNameLabel = UILabel()
@@ -26,11 +26,20 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     let imagePicker = UIImagePickerController()
     var selectedImage: UIImage?
     
+    var userId: String? {
+        return UserDefaults.standard.string(forKey: "userId")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
         imagePicker.delegate = self
         setupTableView()
+        
+        guard let userId = userId else {
+            print("未找到 userId，請先登入")
+            return
+        }
         
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
@@ -56,10 +65,17 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         }
         
         self.loadUserPosts()
+        setupLogoutButton()
+        loadUserDataFromUserDefaults()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        guard let userId = userId else {
+            print("未找到 userId，請先登入")
+            return
+        }
         
         // 每次頁面將要顯示時都重新加載資料
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
@@ -97,6 +113,48 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         
         // 每次頁面顯示時重新加載貼文數據
         loadUserPosts()
+    }
+    
+    func setupLogoutButton() {
+        let logoutButton = UIBarButtonItem(title: "登出", style: .plain, target: self, action: #selector(logout))
+        self.navigationItem.rightBarButtonItem = logoutButton
+    }
+    
+    @objc func logout() {
+        // 清空 UserDefaults
+        UserDefaults.standard.removeObject(forKey: "userName")
+        UserDefaults.standard.removeObject(forKey: "userId")
+        UserDefaults.standard.removeObject(forKey: "email")
+        
+        print("已清空使用者資訊")
+        
+        // 跳轉到登入畫面
+        navigateToLoginScreen()
+    }
+    
+    func navigateToLoginScreen() {
+        let loginVC = LoginViewController()
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController = UINavigationController(rootViewController: loginVC)
+            window.makeKeyAndVisible()
+        }
+    }
+    
+    // 加載 UserDefaults 中的使用者資訊
+    func loadUserDataFromUserDefaults() {
+        if let savedUserName = UserDefaults.standard.string(forKey: "userName"),
+           let savedUserId = UserDefaults.standard.string(forKey: "userId"),
+           let savedEmail = UserDefaults.standard.string(forKey: "email") {
+            
+            self.userName = savedUserName
+            self.userNameLabel.text = savedUserName
+            // 這裡可以根據需要加載其他 UI 信息
+            
+            print("加載到的使用者資訊：\(savedUserName), \(savedUserId), \(savedEmail)")
+        } else {
+            print("沒有找到使用者資訊，請登入")
+        }
     }
     
     @objc func openPhotoLibrary() {
@@ -139,7 +197,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 }
                 
                 if let downloadURL = url {
-//                    print("圖片下載 URL: \(downloadURL.absoluteString)")
+                    //                    print("圖片下載 URL: \(downloadURL.absoluteString)")
                     self.saveImageUrlToFirestore(downloadURL.absoluteString)
                 }
             }
@@ -149,7 +207,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     // 將圖片的下載 URL 保存到 Firestore
     func saveImageUrlToFirestore(_ url: String) {
         let db = Firestore.firestore()
-        let userRef = db.collection("users").document(userId)  // 根據 userId 獲取使用者文件
+        let userRef = db.collection("users").document(userId ?? "")  // 根據 userId 獲取使用者文件
         
         userRef.updateData([
             "photo": url
@@ -157,13 +215,13 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
             if let error = error {
                 print("保存到 Firestore 失敗: \(error.localizedDescription)")
             } else {
-//                print("圖片 URL 已保存到 Firestore")
+                //                print("圖片 URL 已保存到 Firestore")
                 // 保存成功後，立即加載新圖片到 avatarImageView
                 self.loadAvatarImage(from: url)
             }
         }
     }
-
+    
     
     // 取消選擇圖片
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -171,23 +229,24 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     }
     
     func loadAvatarImage(from urlString: String) {
-            guard let url = URL(string: urlString) else { return }
-            let avatarUrl = URL(string: urlString)
-            
-            avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"), options: [
-                .transition(.fade(0.2)),
-                .cacheOriginalImage
-            ], completionHandler: { result in
-                switch result {
-                case .success(let value): break
-//                    print("圖片成功加載: \(value.source.url?.absoluteString ?? "")")
-                case .failure(let error):
-                    print("圖片加載失敗: \(error.localizedDescription)")
-                }
-            })
-        }
-    
-    // 設置 TableView
+        guard let url = URL(string: urlString) else { return }
+        let avatarUrl = URL(string: urlString)
+        
+        avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"), options: [
+            .transition(.fade(0.2)),
+            .cacheOriginalImage
+        ], completionHandler: { result in
+            switch result {
+            case .success(let value): break
+                //                    print("圖片成功加載: \(value.source.url?.absoluteString ?? "")")
+            case .failure(let error):
+                print("圖片加載失敗: \(error.localizedDescription)")
+            }
+        })
+    }
+}
+
+extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupTableView() {
         view.addSubview(tableView)
         
@@ -258,7 +317,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         let post = posts[indexPath.row]
         let title = post["title"] as? String ?? "無標題"
         let content = post["content"] as? String ?? "no text"
-                
+        
         // 設置 cell 的文章標題
         cell.titleLabel.text = title
         cell.contentLabel.text = content
@@ -280,8 +339,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 DispatchQueue.main.async {
                     // 更新 likeCountLabel 和按鈕的選中狀態
                     cell.likeCountLabel.text = String(likesAccount.count)
-                    cell.likeButton.isSelected = likesAccount.contains(userId) // 依據是否按讚來設置狀態
-//                    print("/////", likesAccount.contains(userId))
+                    cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "") // 依據是否按讚來設置狀態
+                    //                    print("/////", likesAccount.contains(userId))
                 }
             } else {
                 // 如果沒有找到相應的貼文，或者 likesAccount 為空
@@ -292,28 +351,28 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
             }
         }
         
-        FirebaseManager.shared.fetchUserData(userId: userId) { result in
-                    switch result {
-                    case .success(let data):
-                        if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                            // 使用 Kingfisher 加載圖片到 avatarImageView
-                            DispatchQueue.main.async {
-                                cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
-                            }
-                        }
-                    case .failure(let error):
-                        print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+        FirebaseManager.shared.fetchUserData(userId: self.userId ?? "") { result in
+            switch result {
+            case .success(let data):
+                if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                    // 使用 Kingfisher 加載圖片到 avatarImageView
+                    DispatchQueue.main.async {
+                        cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
                 }
+            case .failure(let error):
+                print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+            }
+        }
         
         // 檢查收藏狀態
-        FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postId) { isBookmarked in
+        FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: postId) { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
         
         return cell
     }
-
+    
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let post = posts[indexPath.row]
@@ -348,7 +407,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
     }
     
     func loadUserPosts() {
-        FirebaseManager.shared.loadSpecifyUserPost(forUserId: userId) { [weak self] postsArray in
+        FirebaseManager.shared.loadSpecifyUserPost(forUserId: userId ?? "") { [weak self] postsArray in
             guard let self = self else { return }
             
             // 根據文章的 createdAt 時間戳排序
@@ -359,7 +418,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 }
                 return false
             })
-//            print("加載到的文章數據: \(self.posts)")
+            //            print("加載到的文章數據: \(self.posts)")
             // 重新載入表格數據
             self.tableView.reloadData()
         }
@@ -377,7 +436,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
             updateLikeStatus(postId: postId, isLiked: sender.isSelected)
         }
     }
-
+    
     func updateLikeStatus(postId: String, isLiked: Bool) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
@@ -388,7 +447,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("按讚失敗: \(error.localizedDescription)")
                 } else {
-//                    print("按讚成功")
+                    //                    print("按讚成功")
                 }
             }
         } else {
@@ -398,12 +457,12 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("取消按讚失敗: \(error.localizedDescription)")
                 } else {
-//                    print("取消按讚成功")
+                    //                    print("取消按讚成功")
                 }
             }
         }
     }
-
+    
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
         
@@ -416,7 +475,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
             updateBookmarkStatus(postId: postId, isBookmarked: sender.isSelected)
         }
     }
-
+    
     func updateBookmarkStatus(postId: String, isBookmarked: Bool) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
@@ -427,7 +486,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("收藏失敗: \(error.localizedDescription)")
                 } else {
-//                    print("收藏成功")
+                    //                    print("收藏成功")
                 }
             }
         } else {
@@ -437,7 +496,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
                 if let error = error {
                     print("取消收藏失敗: \(error.localizedDescription)")
                 } else {
-//                    print("取消收藏成功")
+                    //                    print("取消收藏成功")
                 }
             }
         }

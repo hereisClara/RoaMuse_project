@@ -1,4 +1,3 @@
-//
 //  PostViewController.swift
 //  RoaMuse
 //
@@ -32,11 +31,18 @@ class PostViewController: UIViewController {
         view.backgroundColor = .backgroundGray
         setupUI()
         setupDropdownTableView()
-        loadTripsData(userId: "Am5Jsa1tA0IpyXMLuilm")
+        
+        // 從 UserDefaults 中讀取 userId
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            print("未找到 userId，請先登入")
+            return
+        }
+        
+        // 加載該 userId 對應的行程數據
+        loadTripsData(userId: userId)
     }
     
     func setupUI() {
-        
         view.addSubview(contentTextView)
         view.addSubview(titleTextField)
         view.addSubview(postButton)
@@ -87,38 +93,34 @@ class PostViewController: UIViewController {
         contentTextView.delegate = self
     }
     
-    //    儲存發文
+    // 儲存發文
     @objc func saveData() {
-        
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
+        
+        // 從 UserDefaults 中獲取 userId
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            print("未找到 userId，請先登入")
+            return
+        }
         
         let posts = Firestore.firestore().collection("posts")
         let document = posts.document()
         
         let data = [
             "id": document.documentID,
-            "userId": userId,
+            "userId": userId, // 使用從 UserDefaults 取得的 userId
             "title": title,
             "content": content,
             "photoUrl": "photo",
             "createdAt": Date(),
             "bookmarkAccount": [String](),  // 收藏者帳號列表
             "likesAccount": [String](),     // 按讚者帳號列表
-//            "comments": [                   // 留言列表，包含每條留言的 id
-//                [
-//                    "id": UUID().uuidString,  // 每個 comment 的唯一 id
-//                    "userId": "",             // 留言者 id
-//                    "content": "",            // 留言內容
-//                    "createdAt": Date()       // 留言時間
-//                ]
-//            ],
             "tripId": tripId
         ] as [String : Any]
         
         document.setData(data)
     }
 
-    
     @objc func backToLastPage() {
         titleTextField.text = ""
         contentTextView.text = ""
@@ -229,4 +231,3 @@ extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
         postButton.isEnabled = isTitleValid && isContentValid && isTripSelected
     }
 }
-

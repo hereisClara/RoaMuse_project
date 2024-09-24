@@ -11,9 +11,9 @@ import SnapKit
 
 class UserTableViewCell: UITableViewCell {
     
-    let collectButton = UIButton(type: .system)
-    let likeButton = UIButton(type: .system) // 新增的 likeButton
-    let commentButton = UIButton(type: .system) // 新增的 commentButton
+    let collectButton = UIButton()
+    let likeButton = UIButton() // 新增的 likeButton
+    let commentButton = UIButton() // 新增的 commentButton
     let titleLabel = UILabel()
     let likeCountLabel = UILabel()
     let bookmarkCountLabel = UILabel()
@@ -33,7 +33,7 @@ class UserTableViewCell: UITableViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
-        avatarImageView.layer.masksToBounds = true // 確保子視圖超出範圍被裁剪
+        avatarImageView.layer.masksToBounds = true
     }
     
     // 設置 cell 內的內容
@@ -64,7 +64,7 @@ class UserTableViewCell: UITableViewCell {
         }
         
         dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(16)
+            make.top.equalTo(titleLabel.snp.bottom).offset(10)
             make.leading.equalTo(titleLabel)
         }
         
@@ -76,25 +76,22 @@ class UserTableViewCell: UITableViewCell {
             make.height.equalTo(80)
         }
         
-        // 設置收藏按鈕的約束
         likeButton.snp.makeConstraints { make in
-            make.leading.equalTo(avatarImageView)
+            make.leading.equalTo(avatarImageView).offset(10)
             make.top.equalTo(contentLabel.snp.bottom).offset(20)
-            make.width.height.equalTo(35)
+            make.width.height.equalTo(20)
         }
         
-        // 設置 likeButton 的約束
         commentButton.snp.makeConstraints { make in
             make.leading.equalTo(likeButton.snp.trailing).offset(60)
             make.centerY.equalTo(likeButton)
-            make.width.height.equalTo(30)
+            make.width.height.equalTo(20)
         }
         
-        // 設置 commentButton 的約束
         collectButton.snp.makeConstraints { make in
             make.leading.equalTo(commentButton.snp.trailing).offset(60)
             make.centerY.equalTo(likeButton)
-            make.width.height.equalTo(30)
+            make.width.height.equalTo(20)
         }
         
         bookmarkCountLabel.snp.makeConstraints { make in
@@ -107,13 +104,16 @@ class UserTableViewCell: UITableViewCell {
             make.centerY.equalTo(likeButton)
         }
         
+        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
+        likeCountLabel.textColor = .deepBlue
+        
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
 //        avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
         
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
-        contentLabel.textColor = .deepBlue
+        contentLabel.textColor = .darkGray
         
         titleLabel.font = .boldSystemFont(ofSize: 20)
         titleLabel.textColor = .deepBlue
@@ -122,16 +122,13 @@ class UserTableViewCell: UITableViewCell {
 //        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         
         // 設置按鈕圖片
-        likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
-        likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
-        likeButton.tintColor = UIColor.systemBlue
+        likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
+        likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
         
-        commentButton.setImage(UIImage(systemName: "message"), for: .normal)
-        commentButton.tintColor = UIColor.systemGreen
-        
-        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
-        collectButton.tintColor = UIColor.systemPink
+        commentButton.setImage(UIImage(named: "normal_comment"), for: .normal)
+
+        collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
+        collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
         
         dateLabel.font = UIFont.systemFont(ofSize: 14)
     }
