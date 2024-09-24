@@ -18,7 +18,6 @@
 		AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */; };
 		AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC42C93006A00B73485 /* UserViewController.swift */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
-		AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
 		AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A4C2C943958003FA811 /* PlaceData.json */; };
@@ -43,7 +42,6 @@
 		AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A882C9D1C92003FA811 /* DateManager.swift */; };
 		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
-		AC97755A2CA1A3F900EF828A /* WeatherKitJWT.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775592CA1A3F900EF828A /* WeatherKitJWT.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -80,7 +78,6 @@
 		AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsFeedViewController.swift; sourceTree = "<group>"; };
 		AC27ACC42C93006A00B73485 /* UserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewController.swift; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
-		AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
 		AC7A2A4C2C943958003FA811 /* PlaceData.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = PlaceData.json; sourceTree = "<group>"; };
@@ -102,7 +99,6 @@
 		AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A882C9D1C92003FA811 /* DateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateManager.swift; sourceTree = "<group>"; };
 		AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentTableViewCell.swift; sourceTree = "<group>"; };
-		AC9775592CA1A3F900EF828A /* WeatherKitJWT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherKitJWT.swift; sourceTree = "<group>"; };
 		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -203,7 +199,6 @@
 			children = (
 				AC7A2A6B2C984853003FA811 /* firebaseManager.swift */,
 				AC7A2A422C93EA0A003FA811 /* LocationManager.swift */,
-				AC7A2A442C93EA6B003FA811 /* WeatherManager.swift */,
 				AC7A2A4C2C943958003FA811 /* PlaceData.json */,
 				AC7A2A462C943808003FA811 /* data.json */,
 				AC7A2A772C9A6ACE003FA811 /* TestFile.swift */,
@@ -222,7 +217,6 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
-				AC9775592CA1A3F900EF828A /* WeatherKitJWT.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
@@ -485,8 +479,6 @@
 				AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */,
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
-				AC97755A2CA1A3F900EF828A /* WeatherKitJWT.swift in Sources */,
-				AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
