@@ -240,7 +240,6 @@ class ArticleViewController: UIViewController {
         }
     }
 
-    
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
@@ -253,6 +252,8 @@ class ArticleViewController: UIViewController {
                     print("按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
+                    // 在這裡再次從 Firestore 獲取更新的資料
+                    self.updateLikesData() // 添加這行代碼以確保數據即時更新
                     completion(true)
                 }
             }
@@ -265,11 +266,14 @@ class ArticleViewController: UIViewController {
                     print("取消按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
+                    // 在這裡再次從 Firestore 獲取更新的資料
+                    self.updateLikesData() // 添加這行代碼以確保數據即時更新
                     completion(true)
                 }
             }
         }
     }
+
     
     func updateLikesData() {
         

@@ -43,6 +43,7 @@
 		AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A882C9D1C92003FA811 /* DateManager.swift */; };
 		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
+		AC97755A2CA1A3F900EF828A /* WeatherKitJWT.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775592CA1A3F900EF828A /* WeatherKitJWT.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -101,6 +102,8 @@
 		AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A882C9D1C92003FA811 /* DateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateManager.swift; sourceTree = "<group>"; };
 		AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentTableViewCell.swift; sourceTree = "<group>"; };
+		AC9775592CA1A3F900EF828A /* WeatherKitJWT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherKitJWT.swift; sourceTree = "<group>"; };
+		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -219,6 +222,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC9775592CA1A3F900EF828A /* WeatherKitJWT.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
@@ -255,6 +259,7 @@
 		ACFCA34F2C916C8F00643A2E /* RoaMuse */ = {
 			isa = PBXGroup;
 			children = (
+				AC97755E2CA2472300EF828A /* RoaMuse.entitlements */,
 				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
 				ACFCA3502C916C8F00643A2E /* AppDelegate.swift */,
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
@@ -480,6 +485,7 @@
 				AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */,
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
+				AC97755A2CA1A3F900EF828A /* WeatherKitJWT.swift in Sources */,
 				AC7A2A452C93EA6B003FA811 /* WeatherManager.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
@@ -670,6 +676,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = RoaMuse/RoaMuse.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 893UA9XLV2;
@@ -703,6 +710,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = RoaMuse/RoaMuse.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 893UA9XLV2;

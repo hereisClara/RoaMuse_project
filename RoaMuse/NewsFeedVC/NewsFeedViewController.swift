@@ -217,6 +217,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
+                articleVC.tripId = post["tripId"] as? String ?? ""
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                     articleVC.articleDate = createdAtString

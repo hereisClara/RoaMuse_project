@@ -322,10 +322,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIT
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
             if let userName = userName {
-//                print("找到的 userName: \(userName)")
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
+                articleVC.tripId = post["tripId"] as? String ?? ""
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                     articleVC.articleDate = createdAtString

@@ -137,7 +137,7 @@ class CollectionsViewController: UIViewController {
         self.postsArray.removeAll()
         
         // 使用 FirebaseManager 載入收藏的貼文
-        FirebaseManager.shared.loadBookmarkPostIDs(forUserId: "Am5Jsa1tA0IpyXMLuilm") { [weak self] postIds in
+        FirebaseManager.shared.loadBookmarkPostIDs(forUserId: userId) { [weak self] postIds in
             guard let self = self else { return }
             self.bookmarkPostIdArray = postIds
             print("Bookmarked Post IDs: \(postIds)") // Debugging
@@ -203,15 +203,9 @@ class CollectionsViewController: UIViewController {
             sender.setTitleColor(.deepBlue, for: .normal)
             selectedFilterIndex = nil
 
-            // 取消篩選條件，重新加載所有行程和文章數據
-            if segmentIndex == 0 {
-                // 重新加載行程數據
-                loadTripsData(userId: userId)
-            } else {
-                // 重新加載所有文章數據
-                loadPostsData()
-            }
-            
+            // 取消篩選條件，重新加載所有行程數據
+            loadTripsData(userId: userId)
+            loadPostsData()
         } else {
             // 取消之前選擇的按鈕
             if let previousIndex = selectedFilterIndex {
@@ -258,6 +252,7 @@ class CollectionsViewController: UIViewController {
         }
     }
 
+    
     func filterPostsByTrips(trips: [Trip]) {
         // 根據行程數據中的 tripId 篩選對應的貼文
         let tripIds = trips.map { $0.id }
@@ -265,18 +260,23 @@ class CollectionsViewController: UIViewController {
         FirebaseManager.shared.loadPosts { [weak self] posts in
             guard let self = self else { return }
             
-            // 過濾掉沒有對應行程的貼文
-            self.postsArray = posts.filter { post in
-                if let postTripId = post["tripId"] as? String {
-                    return tripIds.contains(postTripId)
+            FirebaseManager.shared.loadBookmarkPostIDs(forUserId: userId) { bookmarkedPostIds in
+                // 過濾掉沒有對應行程的貼文和未被收藏的貼文
+                self.postsArray = posts.filter { post in
+                    if let postTripId = post["tripId"] as? String, let postId = post["id"] as? String {
+                        return tripIds.contains(postTripId) && bookmarkedPostIds.contains(postId)
+                    }
+                    return false
                 }
-                return false
+                
+                // 更新 tableView
+                DispatchQueue.main.async {
+                    self.collectionsTableView.reloadData()
+                }
             }
-            
-            // 更新 tableView
-            self.collectionsTableView.reloadData()
         }
     }
+
 
     func resetFilterButtons() {
         // 取消所有篩選按鈕的選取狀態

@@ -11,11 +11,12 @@ import WeatherKit
 import CoreLocation
 import FirebaseFirestore
 import MJRefresh
+import Alamofire
 
 class HomeViewController: UIViewController {
     
     private let locationManager = LocationManager()
-    private let weatherManager = WeatherManager()
+    let weatherManager = WeatherKitManager()
     private let randomTripEntryButton = UIButton(type: .system)
     private let recommendRandomTripView = UIView()
     private let homeTableView = UITableView()
@@ -30,7 +31,7 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        uploadTripsToFirebase()
+        //        uploadTripsToFirebase()
         //        uploadPlaces()
         self.title = "首頁"
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -46,6 +47,18 @@ class HomeViewController: UIViewController {
             self.postsArray = postsArray
             self.homeTableView.reloadData()
         }
+        setupLocationUpdates()
+    }
+    
+    
+    func setupLocationUpdates() {
+        // 設定位置更新的回調
+        locationManager.onLocationUpdate = { [weak self] location in
+            guard let self = self else { return }
+            //                weatherManager.fetchWeather(for: location)
+        }
+        // 啟動位置更新
+        locationManager.startUpdatingLocation()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -130,18 +143,19 @@ class HomeViewController: UIViewController {
     }
     
     
-    private func fetchWeather(for location: CLLocation) {
-        weatherManager.fetchWeather(for: location) { [weak self] weather in
-            DispatchQueue.main.async {
-                if let weather = weather {
-                    self?.updateWeatherInfo(weather: weather)
-                } else {
-                    print("無法獲取天氣資訊")
-                }
-            }
-        }
-    }
-    
+    //    private func fetchWeather(for location: CLLocation) {
+    //        weatherManager.fetchWeather(for: location) { [weak self] weather in
+    //            DispatchQueue.main.async {
+    //                if let weather = weather {
+    //                    self?.updateWeatherInfo(weather: weather)
+    //                    print("===============", weather)
+    //                } else {
+    //                    print("無法獲取天氣資訊")
+    //                }
+    //            }
+    //        }
+    //    }
+    //
     private func updateWeatherInfo(weather: CurrentWeather) {
         print("天氣狀況：\(weather.condition.description)")
         print("溫度：\(weather.temperature.formatted())")
@@ -404,7 +418,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     
     func uploadTripsToFirebase() {
         let db = Firestore.firestore()
-
+        
         // 第一筆資料
         let trip1 = Trip(
             poem: Poem(
@@ -423,7 +437,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             weather: 2,
             startTime: 2
         )
-
+        
         // 第二筆資料
         let trip2 = Trip(
             poem: Poem(
@@ -446,7 +460,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             weather: 2,
             startTime: 2
         )
-
+        
         // 第三筆資料
         let trip3 = Trip(
             poem: Poem(
@@ -471,7 +485,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             weather: 1,
             startTime: 1
         )
-
+        
         // 上傳資料到 Firebase
         let trips = [trip1, trip2, trip3]
         
@@ -492,7 +506,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 "weather": trip.weather,
                 "startTime": trip.startTime
             ]
-
+            
             // 儲存到 Firebase 中
             db.collection("trips").document(trip.id).setData(tripData) { error in
                 if let error = error {
