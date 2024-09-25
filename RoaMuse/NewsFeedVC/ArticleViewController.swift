@@ -3,6 +3,7 @@ import UIKit
 import SnapKit
 import FirebaseFirestore
 
+
 class ArticleViewController: UIViewController {
     
     var authorId = String()
@@ -36,6 +37,7 @@ class ArticleViewController: UIViewController {
     let dateLabel = UILabel()
     
     var trip: Trip?
+    var isScrolledToFirstComment = false
     
     private let popupView = PopUpView()
     
@@ -139,65 +141,9 @@ class ArticleViewController: UIViewController {
         }
     }
 
-    
     // 按讚按鈕事件處理
-    @objc func didTapLikeButton(_ sender: UIButton) {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        
-        // 暫停監聽
-        isUpdatingLikeStatus = true
-        
-        sender.isSelected.toggle() // 切換按鈕狀態
-        
-        saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
-            if success {
-                self.updateLikesData()
-            } else {
-                print("取消按讚失敗")
-                sender.isSelected.toggle() // 還原按鈕狀態
-            }
-            
-            // 完成更新後恢復監聽
-            self.isUpdatingLikeStatus = false
-        }
-    }
     
-    // 留言按鈕事件處理
-    @objc func didTapCommentButton(_ sender: UIButton) {
-        scrollToFirstComment()
-    }
-    
-    // 收藏按鈕事件處理
-    @objc func didTapCollectButton(_ sender: UIButton) {
-        sender.isSelected.toggle()
-        
-        saveBookmarkData(postId: postId, userId: authorId, isBookmarked: sender.isSelected) { success in
-            if success {
-                self.updateBookmarkData()
-            } else {
-                sender.isSelected.toggle() // 如果失敗，還原狀態
-            }
-        }
-    }
-    
-    // 點擊送出按鈕
-    @objc func didTapSendButton() {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
-            print("留言內容不能為空")
-            return
-        }
-        saveComment(userId: userId, postId: postId, commentContent: commentContent) { success in
-            if success {
-                self.loadComments()
-                self.commentTextField.text = "" // 清空輸入框
-            } else {
-                print("留言失敗")
-            }
-        }
-    }
 
-    
     // 保存留言
     func saveComment(userId: String, postId: String, commentContent: String, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
@@ -309,8 +255,6 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-
-
     
     func updateLikesData() {
         
@@ -379,7 +323,6 @@ class ArticleViewController: UIViewController {
         }
     }
 
-    
     func updateBookmarkData() {
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
@@ -401,7 +344,6 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-    
     
     func getTripData() {
         FirebaseManager.shared.loadAllTrips { trips in
@@ -434,6 +376,91 @@ class ArticleViewController: UIViewController {
             }
         }
     }
+}
+
+extension ArticleViewController {
+    
+    @objc func didTapLikeButton(_ sender: UIButton) {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
+        // 暫停監聽
+        isUpdatingLikeStatus = true
+        
+        sender.isSelected.toggle() // 切換按鈕狀態
+        
+        saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
+            if success {
+                self.updateLikesData()
+            } else {
+                print("取消按讚失敗")
+                sender.isSelected.toggle() // 還原按鈕狀態
+            }
+            
+            // 完成更新後恢復監聽
+            self.isUpdatingLikeStatus = false
+        }
+    }
+    
+    // 留言按鈕事件處理
+    @objc func didTapCommentButton(_ sender: UIButton) {
+            if isScrolledToFirstComment {
+                // 如果已經滾動到第一則留言，則讓留言輸入框成為第一響應者，彈出鍵盤
+                commentTextField.becomeFirstResponder()
+            } else {
+                // 如果還沒有滾動到第一則留言，滾動到第一則留言
+                scrollToFirstComment()
+                isScrolledToFirstComment = true
+            }
+        }
+        
+        // 滾動到第一則留言
+    func scrollToFirstComment() {
+            let firstCommentIndexPath = IndexPath(row: 0, section: 0)
+            if comments.count > 0 {
+                // 滾動到第一則留言，將其放置在螢幕最上方
+                tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
+//                commentTextField.becomeFirstResponder()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    // 等待滾動完成，然後清除滾動狀態
+                    self.isScrolledToFirstComment = false
+                }
+            } else {
+                // 如果沒有留言，直接聚焦到留言輸入框
+                commentTextField.becomeFirstResponder()
+            }
+        }
+    
+    // 收藏按鈕事件處理
+    @objc func didTapCollectButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        
+        saveBookmarkData(postId: postId, userId: authorId, isBookmarked: sender.isSelected) { success in
+            if success {
+                self.updateBookmarkData()
+            } else {
+                sender.isSelected.toggle() // 如果失敗，還原狀態
+            }
+        }
+    }
+    
+    // 點擊送出按鈕
+    @objc func didTapSendButton() {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
+            print("留言內容不能為空")
+            return
+        }
+        saveComment(userId: userId, postId: postId, commentContent: commentContent) { success in
+            if success {
+                self.loadComments()
+                self.commentTextField.text = "" // 清空輸入框
+            } else {
+                print("留言失敗")
+            }
+        }
+    }
+    
 }
 
 extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
@@ -472,8 +499,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         let headerView = UIView()
         
         setupHeaderView(in: headerView)
-        
-        // 設置按讚和收藏等按鈕
         setupActionButtons(in: headerView)
         
         return headerView
@@ -740,19 +765,19 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
 
     
-    func scrollToFirstComment() {
-        let firstCommentIndexPath = IndexPath(row: 0, section: 0)
-        if comments.count > 0 {
-            tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // 延遲一點時間等待滾動完成，然後讓 textField 成為第一響應者
-                self.commentTextField.becomeFirstResponder()
-            }
-        } else {
-            // 如果沒有留言，直接讓 textField 成為第一響應者
-            commentTextField.becomeFirstResponder()
-        }
-    }
+//    func scrollToFirstComment() {
+//        let firstCommentIndexPath = IndexPath(row: 0, section: 0)
+//        if comments.count > 0 {
+//            tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+//                // 延遲一點時間等待滾動完成，然後讓 textField 成為第一響應者
+//                self.commentTextField.becomeFirstResponder()
+//            }
+//        } else {
+//            // 如果沒有留言，直接讓 textField 成為第一響應者
+//            commentTextField.becomeFirstResponder()
+//        }
+//    }
     
     // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
