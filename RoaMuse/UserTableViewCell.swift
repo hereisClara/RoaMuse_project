@@ -20,6 +20,7 @@ class UserTableViewCell: UITableViewCell {
     let contentLabel = UILabel()
     let avatarImageView = UIImageView()
     let dateLabel = UILabel()
+    let moreButton = UIButton()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -42,6 +43,7 @@ class UserTableViewCell: UITableViewCell {
         titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
         avatarImageView.backgroundColor = .blue
         
+        self.addSubview(moreButton)
         self.addSubview(titleLabel)
         self.addSubview(dateLabel)
         self.addSubview(contentLabel)
@@ -104,13 +106,21 @@ class UserTableViewCell: UITableViewCell {
             make.centerY.equalTo(likeButton)
         }
         
+        moreButton.snp.makeConstraints { make in
+            make.centerY.equalTo(titleLabel)
+            make.trailing.equalTo(self).offset(-16)
+            make.width.height.equalTo(20)
+        }
+        
+        moreButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
+        moreButton.tintColor = .deepBlue
+        
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
         likeCountLabel.textColor = .deepBlue
         
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
-//        avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
-        
+
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
         contentLabel.textColor = .darkGray
@@ -119,7 +129,6 @@ class UserTableViewCell: UITableViewCell {
         titleLabel.textColor = .deepBlue
         
         dateLabel.textColor = .gray
-//        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         
         // 設置按鈕圖片
         likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)

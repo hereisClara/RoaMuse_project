@@ -12,12 +12,14 @@ import FirebaseCore
 import FirebaseStorage
 import FirebaseFirestore
 import Kingfisher
+import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     let tableView = UITableView()
     let userNameLabel = UILabel()
     let awardsLabel = UILabel()
+    let fansLabel = UILabel()
     var userName = String()
     var awards = Int()
     var posts: [[String: Any]] = []
@@ -35,7 +37,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.backgroundColor = UIColor(resource: .backgroundGray)
         imagePicker.delegate = self
         setupTableView()
-        
+        setupRefreshControl()
         guard let userId = userId else {
             print("未找到 userId，請先登入")
             return
@@ -52,6 +54,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
+                }
+                
+                if let followers = data["followers"] as? [String] {
+                    self?.fansLabel.text = "粉絲人數：\(String(followers.count))"
                 }
                 
             case .failure(let error):
@@ -86,6 +92,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.userNameLabel.text = userName
                 }
                 
+                if let followers = data["followers"] as? [String] {
+                    self?.fansLabel.text = "粉絲人數：\(String(followers.count))"
+                }
+                
                 // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
@@ -113,6 +123,51 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         // 每次頁面顯示時重新加載貼文數據
         loadUserPosts()
+    }
+    
+    func setupRefreshControl() {
+        tableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
+            self?.reloadAllData()  // 在下拉刷新時重新加載所有資料
+        })
+    }
+    
+    func reloadAllData() {
+        guard let userId = userId else {
+            self.tableView.mj_header?.endRefreshing() // 保證刷新結束
+            return
+        }
+
+        // 重新加載用戶資料
+        FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
+            switch result {
+            case .success(let data):
+                if let userName = data["userName"] as? String {
+                    self?.userName = userName
+                    self?.userNameLabel.text = userName
+                }
+                
+                // 顯示 avatar 圖片
+                if let avatarUrl = data["photo"] as? String {
+                    self?.loadAvatarImage(from: avatarUrl)
+                }
+                
+            case .failure(let error):
+                print("Error fetching user data: \(error.localizedDescription)")
+            }
+            
+            FirebaseManager.shared.countCompletedPlaces(userId: userId) { totalPlaces in
+                self?.awards = totalPlaces
+                self?.awardsLabel.text = "打開卡片：\(String(self?.awards ?? 0))張"
+            }
+        }
+        
+        // 重新加載用戶貼文
+        loadUserPosts()
+        
+        // 結束刷新
+        DispatchQueue.main.async {
+            self.tableView.mj_header?.endRefreshing()
+        }
     }
     
     func setupLogoutButton() {
@@ -267,7 +322,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         headerView.addSubview(userNameLabel)
         
         awardsLabel.text = "打開卡片：\(String(self.awards))張"
-        awardsLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
+        awardsLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         headerView.addSubview(awardsLabel)
         
         avatarImageView.backgroundColor = .blue
@@ -275,6 +330,15 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         headerView.addSubview(avatarImageView)
+        
+        fansLabel.text = "粉絲人數：0"
+        fansLabel.font = UIFont.systemFont(ofSize: 16)
+        headerView.addSubview(fansLabel)
+        
+        fansLabel.snp.makeConstraints { make in
+            make.leading.equalTo(awardsLabel)
+            make.top.equalTo(awardsLabel.snp.bottom).offset(8)
+        }
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
         avatarImageView.addGestureRecognizer(tapGesture)  // 為 avatar 增加點擊手勢

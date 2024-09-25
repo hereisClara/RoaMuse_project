@@ -258,11 +258,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func didTapCompleteButton(_ sender: UIButton) {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+
         sender.isSelected = true
         sender.isEnabled = false
 
         let point = sender.convert(CGPoint.zero, to: tableView)
-
         if let indexPath = tableView.indexPathForRow(at: point) {
             guard let trip = trip else {
                 print("無法獲取行程資訊")
@@ -278,17 +279,23 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             let placeId = trip.places[placeIndex].id
             let tripId = trip.id
 
-            guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-
+            // 更新 Firebase 資料
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     print("地點 \(placeId) 和行程 \(tripId) 成功更新")
-
+                    
+                    // 在資料庫更新成功後，仍然保留 UI 已更新的狀態
                     DispatchQueue.main.async {
+                        self.completedPlaceIds.append(placeId)
                         self.tableView.reloadRows(at: [indexPath], with: .none)
                     }
                 } else {
                     print("更新失敗")
+                    DispatchQueue.main.async {
+                        // 如果更新失敗，將按鈕恢復為未完成狀態
+                        sender.isSelected = false
+                        sender.isEnabled = true
+                    }
                 }
             }
         }
