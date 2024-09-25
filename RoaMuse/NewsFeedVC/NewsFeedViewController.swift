@@ -1,10 +1,3 @@
-//
-//  NewsFeedViewController.swift
-//  RoaMuse
-//
-//  Created by 小妍寶 on 2024/9/12.
-//
-
 import Foundation
 import UIKit
 import SnapKit
@@ -367,4 +360,3 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
     }
-

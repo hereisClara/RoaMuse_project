@@ -33,6 +33,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     var selectedImages = [UIImage]() // 用來存儲選擇的圖片
     let imagesStackView = UIStackView() // StackView 用來顯示縮圖
+    var photoUrls = [String]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -55,6 +56,11 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         loadTripsData(userId: userId)
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        resetPostForm()
+    }
+    
     @objc func handlePostAction() {
         saveData()          // 執行保存操作
         backToLastPage()    // 返回上一頁
@@ -70,7 +76,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.addSubview(imagesStackView)
             
             imagesStackView.axis = .horizontal
-            imagesStackView.spacing = 4
+            imagesStackView.spacing = 8
             imagesStackView.alignment = .center
             imagesStackView.distribution = .fillEqually
             
@@ -200,8 +206,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             // 創建一個 "叉叉" 按鈕
             let removeButton = UIButton(type: .custom)
             removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-            removeButton.tintColor = .white
-            removeButton.backgroundColor = .red
+            removeButton.tintColor = .gray
+            removeButton.backgroundColor = .white
             removeButton.layer.cornerRadius = 12
             removeButton.clipsToBounds = true
             imageContainer.addSubview(removeButton)
@@ -238,7 +244,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         picker.dismiss(animated: true, completion: nil)
     }
 
-    // 移除圖片的按鈕事件
     @objc func removeSelectedImage(_ sender: UIButton) {
         let index = sender.tag
         
@@ -307,29 +312,57 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
+    // 上傳多張圖片到 Firebase 並返回 URLs
+    func uploadImagesToFirebase(completion: @escaping ([String]?) -> Void) {
+        let group = DispatchGroup() // 使用 DispatchGroup 來確保所有圖片都上傳完畢
+        var uploadedUrls = [String]()
+        
+        for image in selectedImages {
+            guard let imageData = image.jpegData(compressionQuality: 0.75) else {
+                print("無法壓縮圖片")
+                completion(nil)
+                return
+            }
+            
+            group.enter() // 開始上傳圖片
+            uploadImageToFirebase(imageData) { imageUrl in
+                if let imageUrl = imageUrl {
+                    uploadedUrls.append(imageUrl)
+                } else {
+                    print("圖片上傳失敗")
+                }
+                group.leave() // 圖片上傳結束
+            }
+        }
+        
+        group.notify(queue: .main) {
+            // 當所有圖片上傳完畢後，將 URLs 傳遞出去
+            completion(uploadedUrls)
+        }
+    }
+    
     @objc func saveData() {
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
-        
+
         // 從 UserDefaults 中獲取 userId
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             print("未找到 userId，請先登入")
             return
         }
-        
-        // 如果有選擇圖片，先上傳圖片並獲取 URL
-        if let image = selectedImage {
-            uploadImage(image) { [weak self] imageUrl in
-                guard let self = self else { return }
-                self.imageUrl = imageUrl
-                self.savePostData(userId: userId, title: title, content: content, imageUrl: imageUrl)
+
+        // 上傳所有圖片並獲取 URL
+        uploadImagesToFirebase { [weak self] urls in
+            guard let self = self, let urls = urls else {
+                print("上傳圖片失敗或取消")
+                return
             }
-        } else {
-            // 如果沒有圖片，直接儲存發文
-            savePostData(userId: userId, title: title, content: content, imageUrl: nil)
+            
+            self.photoUrls = urls // 儲存圖片 URLs
+            self.savePostData(userId: userId, title: title, content: content, photoUrls: urls)
         }
     }
 
-    func savePostData(userId: String, title: String, content: String, imageUrl: String?) {
+    func savePostData(userId: String, title: String, content: String, photoUrls: [String]) {
         let posts = Firestore.firestore().collection("posts")
         let document = posts.document()
 
@@ -338,14 +371,20 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             "userId": userId,
             "title": title,
             "content": content,
-            "photoUrl": imageUrl ?? "photo",
+            "photoUrls": photoUrls, // 儲存圖片的 URLs 到 Firestore
             "createdAt": Date(),
             "bookmarkAccount": [String](),
             "likesAccount": [String](),
             "tripId": tripId
         ] as [String : Any]
 
-        document.setData(data)
+        document.setData(data) { error in
+            if let error = error {
+                print("發文失敗: \(error.localizedDescription)")
+            } else {
+                print("發文成功")
+            }
+        }
     }
     
     @objc func backToLastPage() {
@@ -453,5 +492,24 @@ extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
 
         // 如果所有條件都滿足，啟用發文按鈕
         navigationItem.rightBarButtonItem?.isEnabled = isTitleValid && isContentValid && isTripSelected
+    }
+    
+    func resetPostForm() {
+        // 清空文本输入
+        titleTextField.text = ""
+        contentTextView.text = ""
+        // 重置按钮状态
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        // 重置选择的图片
+        selectedImages.removeAll()
+        // 移除 StackView 中的所有图片视图
+        imagesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        // 重置下拉菜单选择
+        dropdownButton.setTitle("选择行程", for: .normal)
+        tripId = ""
+        // 重置下拉菜单的显示状态
+        isDropdownVisible = false
+        dropdownHeightConstraint?.update(offset: 0)
+        dropdownTableView.reloadData()
     }
 }
