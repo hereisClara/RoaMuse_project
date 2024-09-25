@@ -1,4 +1,3 @@
-//
 //  PostViewController.swift
 //  RoaMuse
 //
@@ -22,7 +21,6 @@ class PostViewController: UIViewController {
     let dropdownTableView = UITableView()
     var isDropdownVisible = false // 用來記錄下拉選單的狀態
     var dropdownHeightConstraint: Constraint?
-    var dropdownOptions = ["Option 1", "Option 2", "Option 3", "Option 4"] // 下拉選單的選項
     var tripsArray = [Trip]()
     var tripId = String()
     
@@ -30,14 +28,21 @@ class PostViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        view.backgroundColor = .backgroundGray
         setupUI()
         setupDropdownTableView()
-        loadTripsData(userId: "Am5Jsa1tA0IpyXMLuilm")
+        
+        // 從 UserDefaults 中讀取 userId
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            print("未找到 userId，請先登入")
+            return
+        }
+        
+        // 加載該 userId 對應的行程數據
+        loadTripsData(userId: userId)
     }
     
     func setupUI() {
-        
         view.addSubview(contentTextView)
         view.addSubview(titleTextField)
         view.addSubview(postButton)
@@ -81,32 +86,44 @@ class PostViewController: UIViewController {
         postButton.setTitle("發文", for: .normal)
         postButton.addTarget(self, action: #selector(saveData), for: .touchUpInside)
         postButton.addTarget(self, action: #selector(backToLastPage), for: .touchUpInside)
+        
+        postButton.isEnabled = false
+        
+        titleTextField.delegate = self
+        contentTextView.delegate = self
     }
     
-    //    儲存發文
+    // 儲存發文
     @objc func saveData() {
-        
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
+        
+        // 從 UserDefaults 中獲取 userId
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            print("未找到 userId，請先登入")
+            return
+        }
         
         let posts = Firestore.firestore().collection("posts")
         let document = posts.document()
         
         let data = [
             "id": document.documentID,
-            "userId": "yen",
+            "userId": userId, // 使用從 UserDefaults 取得的 userId
             "title": title,
             "content": content,
             "photoUrl": "photo",
             "createdAt": Date(),
-            "bookmarkCount": 5,
+            "bookmarkAccount": [String](),  // 收藏者帳號列表
+            "likesAccount": [String](),     // 按讚者帳號列表
             "tripId": tripId
         ] as [String : Any]
         
         document.setData(data)
     }
-    
+
     @objc func backToLastPage() {
-        
+        titleTextField.text = ""
+        contentTextView.text = ""
         postButtonAction?()
         navigationController?.popViewController(animated: true)
     }
@@ -116,7 +133,7 @@ class PostViewController: UIViewController {
         
         if isDropdownVisible {
             dropdownTableView.isHidden = false
-            dropdownHeightConstraint?.update(offset: CGFloat(dropdownOptions.count * 44))
+            dropdownHeightConstraint?.update(offset: CGFloat(tripsArray.count * 44))
         } else {
             dropdownHeightConstraint?.update(offset: 0)
         }
@@ -179,11 +196,38 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
         
         dropdownButton.setTitle(tripsArray[indexPath.row].poem.title, for: .normal)
         tripId = tripsArray[indexPath.row].id
-        
+        postButton.isEnabled = true
         isDropdownVisible = false
         dropdownHeightConstraint?.update(offset: 0)
         UIView.animate(withDuration: 0.3) {
             self.view.layoutIfNeeded()
         }
+        validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
+    }
+}
+
+extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
+ 
+    // 當 TextField 文字改變時觸發
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        // 獲取更新後的文字
+        let updatedText = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) ?? string
+        validateInputs(title: updatedText, content: contentTextView.text)
+        return true
+    }
+
+    // 當 TextView 文字改變時觸發
+    func textViewDidChange(_ textView: UITextView) {
+        validateInputs(title: titleTextField.text ?? "", content: textView.text)
+    }
+
+    func validateInputs(title: String, content: String) {
+        // 檢查是否標題和內容都非空且不僅僅是空格
+        let isTitleValid = !title.trimmingCharacters(in: .whitespaces).isEmpty
+        let isContentValid = !content.trimmingCharacters(in: .whitespaces).isEmpty
+        let isTripSelected = !tripId.isEmpty
+        
+        // 發文按鈕在三者都滿足條件時才啟用
+        postButton.isEnabled = isTitleValid && isContentValid && isTripSelected
     }
 }

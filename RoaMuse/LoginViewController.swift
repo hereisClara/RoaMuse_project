@@ -1,52 +1,79 @@
-//
-//  LoginViewController.swift
-//  RoaMuse
-//
-//  Created by 小妍寶 on 2024/9/15.
-//
-
 import Foundation
 import UIKit
 import SnapKit
 import FirebaseFirestore
+import FirebaseAuth
 
 class LoginViewController: UIViewController {
     
-    let loginButton = UIButton(type: .system)
+    let orangeLoginButton = UIButton(type: .system)
+    let blueLoginButton = UIButton(type: .system)
     let db = Firestore.firestore()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationController?.navigationBar.isHidden = true
+        view.backgroundColor = .backgroundGray
         setupUI()
     }
     
     func setupUI() {
+        view.addSubview(orangeLoginButton)
+        view.addSubview(blueLoginButton)
         
-        view.addSubview(loginButton)
-        
-        loginButton.snp.makeConstraints { make in
-            make.center.equalTo(view)
-            make.width.height.equalTo(60)
+        orangeLoginButton.snp.makeConstraints { make in
+            make.centerX.equalTo(view)
+            make.centerY.equalTo(view).offset(-50)
+            make.width.height.equalTo(80)
         }
         
-        loginButton.backgroundColor = .darkGray
+        orangeLoginButton.backgroundColor = .orange
+        orangeLoginButton.layer.cornerRadius = 40
         
-        loginButton.setTitle("登入", for: .normal)
+        orangeLoginButton.setTitle("登入", for: .normal)
+        orangeLoginButton.setTitleColor(.white, for: .normal)
         
-        loginButton.addTarget(self, action: #selector(didTapLoginButton), for: .touchUpInside)
+        orangeLoginButton.addTarget(self, action: #selector(didTapOrangeLoginButton), for: .touchUpInside)
         
+        blueLoginButton.snp.makeConstraints { make in
+            make.centerX.equalTo(view)
+            make.centerY.equalTo(view).offset(50)
+            make.width.height.equalTo(80)
+        }
+        
+        blueLoginButton.backgroundColor = .blue
+        blueLoginButton.layer.cornerRadius = 40
+        
+        blueLoginButton.setTitle("登入", for: .normal)
+        blueLoginButton.setTitleColor(.white, for: .normal)
+        
+        blueLoginButton.addTarget(self, action: #selector(didTapBlueLoginButton), for: .touchUpInside)
     }
     
-    @objc func didTapLoginButton() {
-        
+    @objc func didTapOrangeLoginButton() {
         saveUserData(userName: "@yen")
-        navigationController?.pushViewController(TabBarController(), animated: true)
         
+        let tabBarController = TabBarController()
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController = tabBarController
+            window.makeKeyAndVisible()
+        }
+    }
+    
+    @objc func didTapBlueLoginButton() {
+        saveUserData2(userName: "@zann")
+        
+        let tabBarController = TabBarController()
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController = tabBarController
+            window.makeKeyAndVisible()
+        }
     }
     
     func saveUserData(userName: String) {
         let usersCollection = Firestore.firestore().collection("users")
+        let userId = "Am5Jsa1tA0IpyXMLuilm"  // 固定 ID
         
         // 查詢是否已存在相同的 userName
         usersCollection.whereField("userName", isEqualTo: userName).getDocuments { (querySnapshot, error) in
@@ -56,13 +83,18 @@ class LoginViewController: UIViewController {
             }
             
             if let snapshot = querySnapshot, !snapshot.isEmpty {
-                // 已經存在相同的 userName
-                print("userName 已存在，不能新增")
+                // 已經存在相同的 userName，但仍然將資料保存到 UserDefaults
+                print("userName 已存在，直接更新 UserDefaults")
+                UserDefaults.standard.set(userName, forKey: "userName")
+                UserDefaults.standard.set(userId, forKey: "userId")
+                UserDefaults.standard.set("@900623", forKey: "email")
+                print("資料保存到 UserDefaults")
             } else {
-                // userName 不存在，可以新增資料
-                let newDocument = usersCollection.document()  // 自動生成 ID
+                // userName 不存在，新增資料並保存到 UserDefaults
+                let newDocument = usersCollection.document(userId)
+                
                 let data = [
-                    "id": newDocument.documentID,
+                    "id": userId,
                     "userName": userName,
                     "email": "@900623"
                 ]
@@ -71,7 +103,54 @@ class LoginViewController: UIViewController {
                     if let error = error {
                         print("資料上傳失敗：\(error.localizedDescription)")
                     } else {
-                        print("資料上傳成功！")
+                        // 保存成功，將資料存入 UserDefaults
+                        UserDefaults.standard.set(userName, forKey: "userName")
+                        UserDefaults.standard.set(userId, forKey: "userId")
+                        UserDefaults.standard.set("@900623", forKey: "email")
+                        print("資料上傳成功，並保存到 UserDefaults！")
+                    }
+                }
+            }
+        }
+    }
+    
+    func saveUserData2(userName: String) {
+        let usersCollection = Firestore.firestore().collection("users")
+        let userId = "UItPd5mGpUcpxQc2nGyy"  // 固定 ID
+        
+        // 查詢是否已存在相同的 userName
+        usersCollection.whereField("userName", isEqualTo: userName).getDocuments { (querySnapshot, error) in
+            if let error = error {
+                print("查詢失敗: \(error.localizedDescription)")
+                return
+            }
+            
+            if let snapshot = querySnapshot, !snapshot.isEmpty {
+                // 已經存在相同的 userName，但仍然將資料保存到 UserDefaults
+                print("userName 已存在，直接更新 UserDefaults")
+                UserDefaults.standard.set(userName, forKey: "userName")
+                UserDefaults.standard.set(userId, forKey: "userId")
+                UserDefaults.standard.set("@900516", forKey: "email")
+                print("資料保存到 UserDefaults")
+            } else {
+                // userName 不存在，新增資料並保存到 UserDefaults
+                let newDocument = usersCollection.document(userId)
+                
+                let data = [
+                    "id": userId,
+                    "userName": userName,
+                    "email": "@900516"
+                ]
+                
+                newDocument.setData(data) { error in
+                    if let error = error {
+                        print("資料上傳失敗：\(error.localizedDescription)")
+                    } else {
+                        // 保存成功，將資料存入 UserDefaults
+                        UserDefaults.standard.set(userName, forKey: "userName")
+                        UserDefaults.standard.set(userId, forKey: "userId")
+                        UserDefaults.standard.set("@900516", forKey: "email")
+                        print("資料上傳成功，並保存到 UserDefaults！")
                     }
                 }
             }

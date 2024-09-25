@@ -31,15 +31,15 @@ class PopUpView {
     let startButton = UIButton(type: .system)
     
     var tapCollectButton: (() -> Void)?
+    var onTripSelected: ((Trip) -> Void)?
+    var fromEstablishToTripDetail: Trip?
     
-    // 單例模式 (可選)
-    static let shared = PopUpView()
     
-    private init() {}
+    init() {}
     
     func showPopup(on view: UIView, with trip: Trip) {
-        
-        let styleArray = ["奇險派", "浪漫派", "田園派"]
+  
+        fromEstablishToTripDetail = trip
         versesStackView.removeAllArrangedSubviews()
         placesStackView.removeAllArrangedSubviews()
         
@@ -50,16 +50,16 @@ class PopUpView {
         
         keyWindow.addSubview(backgroundView)
         backgroundView.snp.makeConstraints { make in
-            make.edges.equalTo(view)
+            make.edges.equalTo(keyWindow)
         }
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         
         keyWindow.addSubview(popupView)
         popupView.snp.makeConstraints { make in
-            make.height.equalTo(view).multipliedBy(0.7)
-            make.width.equalTo(view).multipliedBy(0.85)
-            make.center.equalTo(view)
+            make.height.equalTo(keyWindow).multipliedBy(0.7)  // 修改這裡
+            make.width.equalTo(keyWindow).multipliedBy(0.85)  // 修改這裡
+            make.center.equalTo(keyWindow)  // 修改這裡
         }
         
         popupView.backgroundColor = UIColor(resource: .deepBlue)
@@ -69,7 +69,7 @@ class PopUpView {
         
         titleLabel.text = trip.poem.title
         poetryLabel.text = trip.poem.poetry
-        tripStyleLabel.text = styleArray[trip.tag]
+        tripStyleLabel.text = styles[trip.tag].name
         
         titleLabel.textColor = .white
         poetryLabel.textColor = .white
@@ -107,7 +107,7 @@ class PopUpView {
             }
         }
         
-        collectButton.setImage(UIImage(systemName: "heart"), for: .normal)
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
         collectButton.tintColor = .white
         collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
         
@@ -175,7 +175,7 @@ class PopUpView {
     
     @objc func dismissPopup() {
         print("hi")
-     
+        
         // 動畫隱藏 popupView 和 backgroundView
         UIView.animate(withDuration: 0.3, animations: {
             self.popupView.alpha = 0
@@ -192,6 +192,11 @@ class PopUpView {
         
         popupView.removeFromSuperview()
         self.backgroundView.removeFromSuperview()
+        
+        if let fromEstablishToTripDetail = fromEstablishToTripDetail {
+            onTripSelected?(fromEstablishToTripDetail)
+        }
+        
         delegate?.navigateToTripDetailPage()
     }
     
