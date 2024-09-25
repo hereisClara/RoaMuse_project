@@ -304,12 +304,14 @@ class CollectionsViewController: UIViewController {
         
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
 
+        // 檢查是否點擊了相同的篩選按鈕，如果是則重置
         if selectedFilterIndex == index {
             sender.setTitleColor(.deepBlue, for: .normal)
             selectedFilterIndex = nil
             loadTripsData(userId: userId)
             loadPostsData()
         } else {
+            // 重置之前的按鈕顏色
             if let previousIndex = selectedFilterIndex {
                 if previousIndex < filterButtons.count {
                     filterButtons[previousIndex].setTitleColor(.deepBlue, for: .normal)
@@ -318,6 +320,7 @@ class CollectionsViewController: UIViewController {
             sender.setTitleColor(.accent, for: .normal)
             selectedFilterIndex = index
             
+            // 根據 tag 加載行程
             FirebaseManager.shared.loadTripsByTag(tag: index) { [weak self] trips in
                 guard let self = self else { return }
                 
@@ -326,10 +329,15 @@ class CollectionsViewController: UIViewController {
                         switch result {
                         case .success(let userData):
                             let completedTrips = userData["completedTrip"] as? [String] ?? []
+                            // 過濾出收藏並且未完成的行程
                             let bookmarkedTrips = trips.filter { bookmarkedTrips.contains($0.id) }
                             self.incompleteTripsArray = bookmarkedTrips.filter { !completedTrips.contains($0.id) }
                             self.completeTripsArray = bookmarkedTrips.filter { completedTrips.contains($0.id) }
+                            
+                            // 根據篩選出的行程過濾貼文
                             self.filterPostsByTrips(trips: bookmarkedTrips)
+                            
+                            // 更新 UI
                             DispatchQueue.main.async {
                                 self.collectionsTableView.reloadData()
                             }
@@ -341,9 +349,8 @@ class CollectionsViewController: UIViewController {
             }
         }
     }
-
+    
     func filterPostsByTrips(trips: [Trip]) {
-        // 根據行程數據中的 tripId 篩選對應的貼文
         let tripIds = trips.map { $0.id }
         
         FirebaseManager.shared.loadPosts { [weak self] posts in
@@ -352,7 +359,6 @@ class CollectionsViewController: UIViewController {
             guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
 
             FirebaseManager.shared.loadBookmarkPostIDs(forUserId: userId) { bookmarkedPostIds in
-                // 過濾掉沒有對應行程的貼文和未被收藏的貼文
                 self.postsArray = posts.filter { post in
                     if let postTripId = post["tripId"] as? String, let postId = post["id"] as? String {
                         return tripIds.contains(postTripId) && bookmarkedPostIds.contains(postId)
@@ -360,7 +366,7 @@ class CollectionsViewController: UIViewController {
                     return false
                 }
                 
-                // 更新 tableView
+                // 更新 UI
                 DispatchQueue.main.async {
                     self.collectionsTableView.reloadData()
                 }
@@ -415,20 +421,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
             return 0 // 隱藏 header
         }
     }
-    
-//    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-//            if segmentIndex == 0 {
-//                // "行程" 頁面 section 標題
-//                if section == 0 {
-//                    return "未完成"
-//                } else {
-//                    return "已完成"
-//                }
-//            } else {
-//                // "日記" 頁面沒有 section 標題
-//                return nil
-//            }
-//        }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 150

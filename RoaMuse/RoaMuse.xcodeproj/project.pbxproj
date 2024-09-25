@@ -34,7 +34,6 @@
 		AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A732C99DEED003FA811 /* MJRefresh */; };
 		AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */; };
 		AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A772C9A6ACE003FA811 /* TestFile.swift */; };
-		AC7A2A7C2C9A9E27003FA811 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A7B2C9A9E26003FA811 /* GoogleService-Info.plist */; };
 		AC7A2A7F2C9A9ECF003FA811 /* IQKeyboardManagerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A7E2C9A9ECF003FA811 /* IQKeyboardManagerSwift */; };
 		AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A802C9AB40C003FA811 /* StyleTableViewCell.swift */; };
 		AC7A2A832C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */; };
@@ -43,6 +42,7 @@
 		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
 		AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */; };
+		AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -94,7 +94,6 @@
 		AC7A2A6B2C984853003FA811 /* firebaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = firebaseManager.swift; path = ../../../Downloads/firebaseManager.swift; sourceTree = "<group>"; };
 		AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleViewController.swift; sourceTree = "<group>"; };
 		AC7A2A772C9A6ACE003FA811 /* TestFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFile.swift; sourceTree = "<group>"; };
-		AC7A2A7B2C9A9E26003FA811 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC7A2A802C9AB40C003FA811 /* StyleTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDetailWithPlaceTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTableViewCell.swift; sourceTree = "<group>"; };
@@ -102,6 +101,7 @@
 		AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentTableViewCell.swift; sourceTree = "<group>"; };
 		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewController.swift; sourceTree = "<group>"; };
+		AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -264,8 +264,8 @@
 				AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */,
 				ACFCA3562C916C8F00643A2E /* Main.storyboard */,
 				ACFCA35E2C916C9000643A2E /* LaunchScreen.storyboard */,
+				AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */,
 				ACFCA3612C916C9000643A2E /* Info.plist */,
-				AC7A2A7B2C9A9E26003FA811 /* GoogleService-Info.plist */,
 				ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */,
 			);
 			path = RoaMuse;
@@ -416,7 +416,7 @@
 				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
 				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
-				AC7A2A7C2C9A9E27003FA811 /* GoogleService-Info.plist in Resources */,
+				AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
