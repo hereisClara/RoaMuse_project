@@ -494,7 +494,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                         let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                         articleVC.articleDate = createdAtString
                     }
-                    
+                    articleVC.tripId = post["tripId"] as? String ?? ""
                     articleVC.authorId = post["userId"] as? String ?? ""
                     articleVC.postId = post["id"] as? String ?? ""
                     articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []

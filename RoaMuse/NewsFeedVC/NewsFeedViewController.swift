@@ -255,7 +255,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         postsTableView.allowsSelection = true
-        postsTableView.backgroundColor = .blue
+//        postsTableView.backgroundColor = .blue
         
     }
     
