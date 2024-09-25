@@ -43,6 +43,8 @@
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
 		AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */; };
 		AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */; };
+		AC9775662CA43B4900EF828A /* TestVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775652CA43B4900EF828A /* TestVC.swift */; };
+		AC97756A2CA4445400EF828A /* poemLocationNLP4.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = AC9775692CA4445400EF828A /* poemLocationNLP4.mlmodel */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -102,6 +104,8 @@
 		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewController.swift; sourceTree = "<group>"; };
 		AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AC9775652CA43B4900EF828A /* TestVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestVC.swift; sourceTree = "<group>"; };
+		AC9775692CA4445400EF828A /* poemLocationNLP4.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = poemLocationNLP4.mlmodel; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -219,6 +223,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC9775652CA43B4900EF828A /* TestVC.swift */,
 				AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
@@ -257,6 +262,7 @@
 			isa = PBXGroup;
 			children = (
 				AC97755E2CA2472300EF828A /* RoaMuse.entitlements */,
+				AC9775692CA4445400EF828A /* poemLocationNLP4.mlmodel */,
 				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
 				ACFCA3502C916C8F00643A2E /* AppDelegate.swift */,
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
@@ -464,6 +470,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
+				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
 				AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */,
 				AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */,
@@ -485,6 +492,7 @@
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
+				AC97756A2CA4445400EF828A /* poemLocationNLP4.mlmodel in Sources */,
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
 				AC7A2A832C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift in Sources */,

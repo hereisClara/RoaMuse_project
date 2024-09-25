@@ -386,52 +386,42 @@ extension ArticleViewController {
         // 暫停監聽
         isUpdatingLikeStatus = true
         
-        sender.isSelected.toggle() // 切換按鈕狀態
+        sender.isSelected.toggle()
         
         saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
             if success {
                 self.updateLikesData()
             } else {
                 print("取消按讚失敗")
-                sender.isSelected.toggle() // 還原按鈕狀態
+                sender.isSelected.toggle()
             }
             
-            // 完成更新後恢復監聽
             self.isUpdatingLikeStatus = false
         }
     }
     
-    // 留言按鈕事件處理
     @objc func didTapCommentButton(_ sender: UIButton) {
             if isScrolledToFirstComment {
-                // 如果已經滾動到第一則留言，則讓留言輸入框成為第一響應者，彈出鍵盤
                 commentTextField.becomeFirstResponder()
             } else {
-                // 如果還沒有滾動到第一則留言，滾動到第一則留言
                 scrollToFirstComment()
                 isScrolledToFirstComment = true
             }
         }
-        
-        // 滾動到第一則留言
+    
     func scrollToFirstComment() {
             let firstCommentIndexPath = IndexPath(row: 0, section: 0)
             if comments.count > 0 {
-                // 滾動到第一則留言，將其放置在螢幕最上方
                 tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
-//                commentTextField.becomeFirstResponder()
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    // 等待滾動完成，然後清除滾動狀態
                     self.isScrolledToFirstComment = false
                 }
             } else {
-                // 如果沒有留言，直接聚焦到留言輸入框
                 commentTextField.becomeFirstResponder()
             }
         }
     
-    // 收藏按鈕事件處理
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
         
@@ -439,12 +429,11 @@ extension ArticleViewController {
             if success {
                 self.updateBookmarkData()
             } else {
-                sender.isSelected.toggle() // 如果失敗，還原狀態
+                sender.isSelected.toggle()
             }
         }
     }
     
-    // 點擊送出按鈕
     @objc func didTapSendButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
@@ -454,7 +443,7 @@ extension ArticleViewController {
         saveComment(userId: userId, postId: postId, commentContent: commentContent) { success in
             if success {
                 self.loadComments()
-                self.commentTextField.text = "" // 清空輸入框
+                self.commentTextField.text = ""
             } else {
                 print("留言失敗")
             }
@@ -484,8 +473,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         tableView.register(CommentTableViewCell.self, forCellReuseIdentifier: "CommentCell")
         
-        tableView.estimatedRowHeight = 180  // 預估行高
-        tableView.rowHeight = UITableView.automaticDimension  // 自適應行高
+        tableView.estimatedRowHeight = 180
+        tableView.rowHeight = UITableView.automaticDimension
         
         tableView.snp.makeConstraints { make in
             make.top.leading.trailing.equalTo(view.safeAreaLayoutGuide)
@@ -494,7 +483,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
     }
     
-    // 創建表頭視圖 (header)
     func createHeaderView() -> UIView {
         let headerView = UIView()
         
@@ -505,7 +493,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
     
     func setupHeaderView(in headerView: UIView) {
-        // 設置文章標題、作者、內容和日期
+        
         titleLabel.text = articleTitle
         titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
         titleLabel.numberOfLines = 0
@@ -586,18 +574,15 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         
-        // 設置按讚按鈕
         likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
         likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
         likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         headerView.addSubview(likeButton)
         
-        // 設置留言按鈕
         commentButton.setImage(UIImage(named: "normal_comment"), for: .normal)
         commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
         headerView.addSubview(commentButton)
         
-        // 設置收藏按鈕
         collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
         collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
@@ -607,7 +592,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
         headerView.addSubview(likeCountLabel)
         
-        // 使用 SnapKit 設置按鈕和標籤的佈局
         likeButton.snp.makeConstraints { make in
             make.top.equalTo(dateLabel.snp.bottom).offset(16)
             make.leading.equalTo(headerView).offset(20)
@@ -634,16 +618,13 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
     
     func setupActionButtons(in headerView: UIView) {
-        // 設置按讚按鈕
         
         likeButton.tintColor = UIColor.systemBlue
         likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         
-        // 設置留言按鈕
         commentButton.tintColor = UIColor.systemGreen
         commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
         
-        // 設置收藏按鈕
         collectButton.tintColor = UIColor.systemPink
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         
@@ -667,7 +648,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     func getTripDataById() {
         let db = Firestore.firestore()
         
-        // 根據 tripId 查詢對應的行程
         db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
             if let error = error {
                 print("查詢行程時發生錯誤: \(error.localizedDescription)")
@@ -675,7 +655,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             }
             
             if let documents = snapshot?.documents, let document = documents.first {
-                // 將查詢結果轉換為 Trip 對象
+                
                 let data = document.data()
                 if let poemData = data["poem"] as? [String: Any],
                    let title = poemData["title"] as? String,
@@ -690,7 +670,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                    let weather = data["weather"] as? Int,
                    let startTime = data["startTime"] as? Int {
                     
-                    // 解析地點資料
                     let places = placesData.compactMap { placeDict -> PlaceId? in
                         if let placeId = placeDict["id"] as? String {
                             return PlaceId(id: placeId)
@@ -698,7 +677,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                         return nil
                     }
                     
-                    // 初始化 Poem 和 Trip 對象
                     let poem = Poem(
                         title: title,
                         poetry: poetry,
@@ -718,7 +696,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                         startTime: startTime
                     )
                     
-                    // 顯示 popup
                     DispatchQueue.main.async {
                         self.popupView.showPopup(on: self.view, with: self.trip!)
                     }
@@ -732,13 +709,13 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
 
     func setupAvatar() {
-        // 使用 `authorId` 加載貼文作者的頭像
+        
         FirebaseManager.shared.fetchUserData(userId: authorId) { result in
             switch result {
             case .success(let data):
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
                     DispatchQueue.main.async {
-                        // 使用 Kingfisher 加载图片到 avatarImageView
+                        
                         self.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
                 } else {
@@ -756,36 +733,16 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
 
     @objc func didTapAvatar() {
-        // 創建 ProfileViewController 的實例
         let userProfileVC = UserProfileViewController()
-        userProfileVC.userId = authorId // 傳遞作者的 userId
+        userProfileVC.userId = authorId
 
-        // 將頁面推入導航堆疊
         self.navigationController?.pushViewController(userProfileVC, animated: true)
     }
-
     
-//    func scrollToFirstComment() {
-//        let firstCommentIndexPath = IndexPath(row: 0, section: 0)
-//        if comments.count > 0 {
-//            tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-//                // 延遲一點時間等待滾動完成，然後讓 textField 成為第一響應者
-//                self.commentTextField.becomeFirstResponder()
-//            }
-//        } else {
-//            // 如果沒有留言，直接讓 textField 成為第一響應者
-//            commentTextField.becomeFirstResponder()
-//        }
-//    }
-    
-    // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return comments.count  // 返回留言數量
+        return comments.count
     }
     
-    // MARK: cell for row at
-    // UITableViewDataSource - 設定 cell 的內容
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as? CommentTableViewCell else {
             return UITableViewCell()
@@ -796,19 +753,15 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         if comments.count > 0 {
             let comment = comments[indexPath.row]
             
-            // 設定留言內容
             cell.contentLabel.text = comment["content"] as? String
             
-            // 設定用戶名
             cell.usernameLabel.text = comment["username"] as? String
             
-            // 設定時間
             if let createdAtTimestamp = comment["createdAt"] as? Timestamp {
                 let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                 cell.createdAtLabel.text = createdAtString
             }
             
-            // 設定大頭貼
             if let avatarUrlString = comment["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
                 DispatchQueue.main.async {
                     cell.avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"))
@@ -837,5 +790,4 @@ extension ArticleViewController: PopupViewDelegate {
         tripDetailVC.trip = trip
         navigationController?.pushViewController(tripDetailVC, animated: true)
     }
-    
 }

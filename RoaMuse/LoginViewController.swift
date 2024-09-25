@@ -9,6 +9,7 @@ class LoginViewController: UIViewController {
     let orangeLoginButton = UIButton(type: .system)
     let blueLoginButton = UIButton(type: .system)
     let db = Firestore.firestore()
+    let testButton = UIButton()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,6 +20,8 @@ class LoginViewController: UIViewController {
     func setupUI() {
         view.addSubview(orangeLoginButton)
         view.addSubview(blueLoginButton)
+        
+        view.addSubview(testButton)
         
         orangeLoginButton.snp.makeConstraints { make in
             make.centerX.equalTo(view)
@@ -40,6 +43,16 @@ class LoginViewController: UIViewController {
             make.width.height.equalTo(80)
         }
         
+        testButton.snp.makeConstraints { make in
+            make.bottom.equalTo(view).offset(-100)
+            make.width.height.equalTo(60)
+            make.centerX.equalTo(view)
+        }
+        
+        testButton.setTitle("test", for: .normal)
+        testButton.backgroundColor = .red
+        testButton.layer.cornerRadius = 20
+        
         blueLoginButton.backgroundColor = .blue
         blueLoginButton.layer.cornerRadius = 40
         
@@ -47,6 +60,13 @@ class LoginViewController: UIViewController {
         blueLoginButton.setTitleColor(.white, for: .normal)
         
         blueLoginButton.addTarget(self, action: #selector(didTapBlueLoginButton), for: .touchUpInside)
+        testButton.addTarget(self, action: #selector(tapTestBtn), for: .touchUpInside)
+    }
+    
+    @objc func tapTestBtn() {
+        let testVC = TestVC()
+//        testVC.view.backgroundColor = .blue
+        self.present(testVC, animated: true, completion: nil)
     }
     
     @objc func didTapOrangeLoginButton() {
