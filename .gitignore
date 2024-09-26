@@ -13,11 +13,13 @@ xcuserdata/
 GoogleService-Info.plist
 AuthKey_6K3SN8W924.p8
 Config.xcconfig
+Config.plist
 
 ## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
 *.xcscmblueprint
 *.xccheckout
 *.xcconfig
+
 
 
 ## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
