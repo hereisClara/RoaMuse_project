@@ -45,6 +45,8 @@
 		AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */; };
 		AC9775662CA43B4900EF828A /* TestVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775652CA43B4900EF828A /* TestVC.swift */; };
 		AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */; };
+		AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */; };
+		AC9775712CA551CB00EF828A /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775702CA551CB00EF828A /* Config.plist */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -107,6 +109,8 @@
 		AC9775652CA43B4900EF828A /* TestVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestVC.swift; sourceTree = "<group>"; };
 		AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = poemLocationNLP3.mlmodel; path = ../../../poemLocationNLP3.mlmodel; sourceTree = "<group>"; };
 		AC97756D2CA52A9300EF828A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDataManager.swift; sourceTree = "<group>"; };
+		AC9775702CA551CB00EF828A /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -224,6 +228,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
+				AC9775702CA551CB00EF828A /* Config.plist */,
 				AC97756D2CA52A9300EF828A /* Config.xcconfig */,
 				AC9775652CA43B4900EF828A /* TestVC.swift */,
 				AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */,
@@ -425,6 +431,7 @@
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
 				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
 				AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */,
+				AC9775712CA551CB00EF828A /* Config.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -482,6 +489,7 @@
 				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
+				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,

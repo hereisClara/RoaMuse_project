@@ -41,14 +41,14 @@ struct Trip: Codable {
     var placeIds: [String]
     let tag: Int
     
-    let season: Int
-    let weather: Int
-    let startTime: Int
+    let season: Int?
+    let weather: Int?
+    let startTime: Int?
 }
 
 // 定義 Place 結構，存放地點詳細資料
 struct Place: Codable {
-    let id: String
+    var id: String
     let name: String
     let latitude: Double
     let longitude: Double

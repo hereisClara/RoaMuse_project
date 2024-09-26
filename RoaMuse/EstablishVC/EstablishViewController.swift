@@ -23,6 +23,7 @@ class EstablishViewController: UIViewController {
     private var selectionTitle = String()
     private var styleTag = Int()
     private let popupView = PopUpView()
+    let locationManager = LocationManager()
     
 //    private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
@@ -74,6 +75,7 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
+        print("tap")
         randomTripEntryButtonDidTapped()
     }
     
@@ -93,46 +95,127 @@ class EstablishViewController: UIViewController {
         }
     }
     
-    func randomTripEntryButtonDidTapped() {
-        self.popupView.showPopup(on: self.view, with: <#T##Trip#>)
-    }
-    
-//    func randomTripEntryButtonDidTapped() {
-//        FirebaseManager.shared.loadTripsByTag(tag: styleTag) { [weak self] trips in
-//            guard let self = self else { return }
-//
-//            print("正在查詢 tag 值: \(self.styleTag)")  // 調試用
-//            if !trips.isEmpty {
-//                guard let randomTrip = trips.randomElement() else {
-//                    print("無法隨機選取行程") // 調試
-//                    return
-//                }
-//
-//                print("成功選取行程: \(randomTrip.id)")  // 調試用
-//
-//                self.randomTrip = randomTrip
-//                print("..........", randomTrip)
-//
-//                self.popupView.showPopup(on: self.view, with: randomTrip)
-//
-//                self.popupView.tapCollectButton = { [weak self] in
-//                    guard let self = self else { return }
-//                    guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-//
-//                    FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
-//                        if success {
-//                            print("收藏行程成功！")
-//                        } else {
-//                            print("收藏行程失敗！")
-//                        }
-//                    }
-//                }
-//            } else {
-//                print("未找到符合的行程") // 調試用
-//            }
-//        }
-//    }
+    @objc func randomTripEntryButtonDidTapped() {
+        print("random")
+//       TODO: 篩選tag
+        // 定義當位置更新時的回調
+        locationManager.onLocationUpdate = { [weak self] currentLocation in
+            guard let self = self else { return }
+            
+            // Step 2: 獲取隨機詩詞
+            FirebaseManager.shared.loadAllPoems { poems in
+                if let randomPoem = poems.randomElement() {
+                    print(randomPoem)
+                    // Step 3: 利用 NLP 模型分析詩詞關鍵字
+                    self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords in
+                        // Step 4: 基於關鍵字排出行程
+                        self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
+                            DispatchQueue.main.async {
+                                // Step 5: 顯示生成的行程，包含行程類別等資訊
+                                self.popupView.showPopup(on: self.view, with: trip)
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
+        // 啟動位置更新
+        locationManager.startUpdatingLocation()
+    }
+
+    // 基於 NLP 模型分析詩詞
+    func processPoemText(_ inputText: String, completion: @escaping ([String]) -> Void) {
+        let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+        guard let model = try? poemLocationNLP3(configuration: .init()) else {
+            print("NLP 模型加載失敗")
+            return
+        }
+
+        var allResults = [String]()
+        for segment in textSegments {
+            do {
+                let prediction = try model.prediction(text: segment)
+                let landscape = prediction.label
+                allResults.append(landscape)
+                
+            } catch {
+                print("分析失敗：\(error.localizedDescription)")
+            }
+        }
+        print(Array(Set(allResults)))
+        completion(Array(Set(allResults))) // 去重並返回關鍵字
+    }
+
+    // 基於關鍵字生成行程
+    func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip) -> Void) {
+        var matchingPlaces = [Place]()
+        
+        let dispatchGroup = DispatchGroup()
+
+        // 遍歷每個關鍵字並從 Firebase 中查找相應的地點
+        for keyword in keywords {
+            dispatchGroup.enter()
+            FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
+                if places.isEmpty {
+                    // 如果 Firebase 沒有找到地點，呼叫 Google Places API，使用當前位置
+                    PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                        print("搜尋到的地點數量：\(foundPlaces.count)") // 印出搜尋到的地點數量
+                        if let newPlace = foundPlaces.first {
+                            print("第一個地點名稱：\(newPlace.name), 經緯度：\(newPlace.latitude), \(newPlace.longitude)") // 印出第一個找到的地點
+                            // 保存新的地點到 Firebase
+                            PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
+                                if let savedPlace = savedPlace {
+                                    print("成功保存地點：\(savedPlace.name)")
+                                    matchingPlaces.append(savedPlace)
+                                }
+                                dispatchGroup.leave()
+                            }
+                        } else {
+                            print("未找到符合的地點")
+                            dispatchGroup.leave()
+                        }
+                    }
+
+                } else {
+                    matchingPlaces.append(contentsOf: places)
+                    dispatchGroup.leave()
+                }
+            }
+        }
+
+        // 當所有地點查詢完成後，生成行程
+        dispatchGroup.notify(queue: .main) {
+            if matchingPlaces.count >= 3 {
+                let trip = Trip(
+                    poemId: poem.id,
+                    id: UUID().uuidString,
+                    placeIds: matchingPlaces.map { $0.id },
+                    tag: poem.tag,
+                    season: nil,   // 暫時不處理季節
+                    weather: nil,  // 暫時不處理天氣
+                    startTime: nil // 暫時不處理開始時間
+                )
+                completion(trip)
+            } else {
+                print("沒有足夠的地點來生成行程")
+            }
+        }
+    }
+    // 根据关键词生成行程的类别标签
+    func determineTripTag(from keywords: [String]) -> Int {
+        // 这里你可以根据关键词逻辑来判断属于哪一类行程，返回对应的类别标签
+        if keywords.contains("海灘") {
+            return 1 // 例如：海灘類行程
+        } else if keywords.contains("山") {
+            return 2 // 山區類行程
+        } else {
+            return 0 // 默認類型
+        }
+    }
+
+    
 }
 
 extension EstablishViewController: PopupViewDelegate {
@@ -184,97 +267,9 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             // 在這裡執行你要對 cell 的操作
             selectionTitle = cell.titleLabel.text ?? "" // 改變 cell 的背景顏色
             styleTag = Int(indexPath.row)
-            getPoemTag(tag: styleTag)
             styleLabel.text = selectionTitle
             styleLabel.textColor = .deepBlue
             styleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-        }
-    }
-    
-//    func updatePlaceData(userId: String, trip: Trip, placeId: String) {
-//        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-//        let db = Firestore.firestore()
-//        let userRef = db.collection("users").document(userId)
-//        
-//        userRef.getDocument { (document, error) in
-//            if let document = document, document.exists {
-//                if var completedPlaces = document.data()?["completedPlace"] as? [[String: Any]],
-//                   var completedTrips = document.data()?["completedTrip"] as? [String] {
-//                    
-//                    if let index = completedPlaces.firstIndex(where: { $0["tripId"] as? String == trip.id }) {
-//                        var placeIds = completedPlaces[index]["placeIds"] as? [String] ?? []
-//                        if !placeIds.contains(placeId) {
-//                            placeIds.append(placeId)
-//                            completedPlaces[index]["placeIds"] = placeIds
-//                        }
-//                    } else {
-//                        completedPlaces.append(["tripId": trip.id, "placeIds": [placeId]])
-//                    }
-//                    
-//                    userRef.updateData(["completedPlace": completedPlaces]) { error in
-//                        if let error = error {
-//                            print("更新 completedPlace 失敗: \(error.localizedDescription)")
-//                        } else {
-//                            print("成功將地點 \(placeId) 添加到行程 \(trip.id) 的 completedPlace 中")
-//                        }
-//                    }
-//                    
-//                    let completedPlaceIds = completedPlaces.first(where: { $0["tripId"] as? String == trip.id })?["placeIds"] as? [String] ?? []
-//                    let allPlacesCompleted = trip.places.allSatisfy { place in
-//                        completedPlaceIds.contains(place.id)
-//                    }
-//                    
-//                    if allPlacesCompleted && !completedTrips.contains(trip.id) {
-//                        completedTrips.append(trip.id)
-//                        userRef.updateData(["completedTrip": completedTrips]) { error in
-//                            if let error = error {
-//                                print("更新 completedTrip 失敗: \(error.localizedDescription)")
-//                            } else {
-//                                print("成功將行程 \(trip.id) 添加到 completedTrip 中")
-//                            }
-//                        }
-//                    }
-//                    
-//                } else {
-//                    let newCompletedPlace = [["tripId": trip.id, "placeIds": [placeId]]]
-//                    let completedTrips = document.data()?["completedTrip"] as? [String] ?? []
-//                    let newCompletedTrip = completedTrips.contains(trip.id) ? completedTrips : completedTrips + [trip.id]
-//                    
-//                    userRef.updateData([
-//                        "completedPlace": newCompletedPlace,
-//                        "completedTrip": newCompletedTrip
-//                    ]) { error in
-//                        if let error = error {
-//                            print("初始化 completedPlace 或 completedTrip 失敗: \(error.localizedDescription)")
-//                        } else {
-//                            print("成功初始化 completedPlace，並添加地點 \(placeId) 和行程 \(trip.id)")
-//                        }
-//                    }
-//                }
-//            } else {
-//                print("無法找到用戶資料: \(error?.localizedDescription ?? "未知錯誤")")
-//            }
-//        }
-//    }
-    
-    func fetchPoetDataFromFirebase() {
-        let db = Firestore.firestore()
-        db.collection("poets").getDocuments { (snapshot, error) in
-            if let error = error {
-                print("從 Firebase 獲取數據失敗：\(error.localizedDescription)")
-            } else if let snapshot = snapshot {
-                self.poemsFromFirebase = snapshot.documents.map { $0.data() }
-                print("成功從 Firebase 獲取數據")
-            }
-        }
-    }
-    
-    func getPoemTag(tag: Int) {
-        
-        for poem in poemsFromFirebase {
-            if poem["tag"] as? Int ?? 0 == tag {
-                fittingPoemArray.append(poem)
-            }
         }
     }
 }

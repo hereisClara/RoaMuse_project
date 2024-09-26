@@ -452,22 +452,40 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "dropdownCell", for: indexPath)
-        cell.textLabel?.text = tripsArray[indexPath.row].poem.title
+        
+        let trip = tripsArray[indexPath.row]
+        
+        FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+            DispatchQueue.main.async {
+                cell.textLabel?.text = poem.title
+            }
+        }
+        
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        dropdownButton.setTitle(tripsArray[indexPath.row].poem.title, for: .normal)
-        tripId = tripsArray[indexPath.row].id
+        let trip = tripsArray[indexPath.row]
+        
+        FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+            DispatchQueue.main.async {
+                self.dropdownButton.setTitle(poem.title, for: .normal)
+            }
+        }
+        
+        tripId = trip.id
         postButton.isEnabled = true
         isDropdownVisible = false
         dropdownHeightConstraint?.update(offset: 0)
+        
         UIView.animate(withDuration: 0.3) {
             self.view.layoutIfNeeded()
         }
+        
         validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
+
 }
 
 extension PostViewController: UITextFieldDelegate, UITextViewDelegate {

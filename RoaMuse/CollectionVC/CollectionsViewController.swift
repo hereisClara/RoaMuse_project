@@ -447,31 +447,46 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
 
         if segmentIndex == 0 {
             if indexPath.section == 0 {
-                cell?.titleLabel.text = incompleteTripsArray[indexPath.row].poem.title as? String ?? "Unknown Trip"
-                // 檢查行程是否已收藏
-                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: incompleteTripsArray[indexPath.row].id as? String ?? "") { isBookmarked in
+                let trip = incompleteTripsArray[indexPath.row]
+                
+                // 使用 poemId 加載詩的資料
+                FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                    DispatchQueue.main.async {
+                        cell?.titleLabel.text = poem.title ?? "Unknown Trip"
+                    }
+                }
+
+                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: trip.id) { isBookmarked in
                     cell?.collectButton.isSelected = isBookmarked
                 }
+
             } else {
-                cell?.titleLabel.text = completeTripsArray[indexPath.row].poem.title as? String ?? "Unknown Trip"
-                // 檢查行程是否已收藏
-                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: completeTripsArray[indexPath.row].id as? String ?? "") { isBookmarked in
+                let trip = completeTripsArray[indexPath.row]
+                
+                // 使用 poemId 加載詩的資料
+                FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                    DispatchQueue.main.async {
+                        cell?.titleLabel.text = poem.title ?? "Unknown Trip"
+                    }
+                }
+
+                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: trip.id) { isBookmarked in
                     cell?.collectButton.isSelected = isBookmarked
                 }
             }
         } else {
             cell?.titleLabel.text = postsArray[indexPath.row]["title"] as? String
-            
-            // 檢查貼文是否已收藏
+
             FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
                 cell?.collectButton.isSelected = isBookmarked
             }
         }
-        
+
         cell?.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
-        
+
         return cell ?? UITableViewCell()
     }
+
 
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

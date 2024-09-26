@@ -38,68 +38,35 @@ class PopUpView {
     init() {}
     
     func showPopup(on view: UIView, with trip: Trip) {
-        
         fromEstablishToTripDetail = trip
         
         versesStackView.removeAllArrangedSubviews()
         placesStackView.removeAllArrangedSubviews()
-        
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let keyWindow = windowScene.windows.first(where: { $0.isKeyWindow }) else {
-            return
-        }
-        
-        keyWindow.addSubview(backgroundView)
-        backgroundView.snp.makeConstraints { make in
-            make.edges.equalTo(keyWindow)
-        }
-        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        backgroundView.translatesAutoresizingMaskIntoConstraints = false
-        
-        keyWindow.addSubview(popupView)
-        popupView.snp.makeConstraints { make in
-            make.height.equalTo(keyWindow).multipliedBy(0.7)  // 修改這裡
-            make.width.equalTo(keyWindow).multipliedBy(0.85)  // 修改這裡
-            make.center.equalTo(keyWindow)  // 修改這裡
-        }
-        
-        popupView.backgroundColor = UIColor(resource: .deepBlue)
-        popupView.layer.cornerRadius = 12
-        
-        setupConstraints()
-        
-        titleLabel.text = trip.poem.title
-        poetryLabel.text = trip.poem.poetry
-        tripStyleLabel.text = styles[trip.tag].name
-        
-        titleLabel.textColor = .white
-        poetryLabel.textColor = .white
-        tripStyleLabel.textColor = .white
-        
-        backgroundView.alpha = 0
-        popupView.alpha = 0
-        UIView.animate(withDuration: 0.3) {
-            self.backgroundView.alpha = 1
-            self.popupView.alpha = 1
-        }
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
-        backgroundView.addGestureRecognizer(tapGesture)
-        
-        // 添加詩句
-        for verse in trip.poem.original {
-            let verseLabel = UILabel()
-            verseLabel.text = verse
-            verseLabel.textColor = .white
-            versesStackView.addArrangedSubview(verseLabel)
-        }
-        
-        // 从 Firebase 加载地點详情并更新 placesStackView
-        let placeIds = trip.places.map { $0.id }
-        FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] places in
+
+        // 加載詩詞資料
+        FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
             guard let self = self else { return }
-            for tripPlace in trip.places {
-                if let place = places.first(where: { $0.id == tripPlace.id }) {
+            
+            DispatchQueue.main.async {
+                    self.titleLabel.text = poem.title
+                    self.poetryLabel.text = poem.poetry
+
+                    // 添加詩句
+                    for verse in poem.content {
+                        let verseLabel = UILabel()
+                        verseLabel.text = verse
+                        verseLabel.textColor = .white
+                        self.versesStackView.addArrangedSubview(verseLabel)
+                    }
+                }
+        }
+
+        // 加載地點資料
+        FirebaseManager.shared.loadPlaces(placeIds: trip.placeIds) { [weak self] places in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                for place in places {
                     let placeLabel = UILabel()
                     placeLabel.text = place.name
                     placeLabel.textColor = .white
@@ -107,15 +74,22 @@ class PopUpView {
                 }
             }
         }
+
+        // 設置彈出視圖的其他部分
+        tripStyleLabel.text = styles[trip.tag].name
+        titleLabel.textColor = .white
+        poetryLabel.textColor = .white
+        tripStyleLabel.textColor = .white
         
-        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        collectButton.tintColor = .white
-        collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
-        
-        startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
-        startButton.tintColor = .white
-        startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
+        // 顯示彈出視圖動畫
+        backgroundView.alpha = 0
+        popupView.alpha = 0
+        UIView.animate(withDuration: 0.3) {
+            self.backgroundView.alpha = 1
+            self.popupView.alpha = 1
+        }
     }
+
     
     func setupConstraints() {
         

@@ -13,6 +13,8 @@ import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
     
+    var loadedPoem: Poem?  // 加載到的詩詞資料
+//    var places = [Place]()  // 加載到的地點資料
     var trip: Trip?  // 存儲傳遞過來的資料
     var onTripReceivedFromHome: ((Trip) -> Void)?
     let placesStackView = UIStackView()
@@ -30,6 +32,14 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
         self.navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = UIColor(resource: .backgroundGray)
+        
+        if let poemId = trip?.poemId {
+            FirebaseManager.shared.loadPoemById(poemId) { [weak self] poem in
+                guard let self = self else { return }
+                // 獲取到的 poem 可以存到變數中供後續使用
+                self.updatePoemData(poem: poem)
+            }
+        }
 
         if let trip = trip {
             print("成功接收到行程數據: \(trip)")
@@ -39,7 +49,7 @@ class TripDetailViewController: UIViewController {
 
         setupTableView()
         loadPlacesDataFromFirebase()
-
+        loadPoemDataFromFirebase()
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] placeIds in
             self?.completedPlaceIds = placeIds
@@ -47,12 +57,34 @@ class TripDetailViewController: UIViewController {
             self?.tableView.reloadData()
         }
     }
+    
+    func loadPoemDataFromFirebase() {
+        guard let trip = trip else { return }
+        
+        // 使用 trip.poemId 來加載詩詞
+        FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
+            guard let self = self else { return }
+            
+            // 儲存加載到的詩詞資料
+            self.loadedPoem = poem
+            
+            // 更新界面
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+
+    func updatePoemData(poem: Poem) {
+        // 更新您的 UI，例如 tableView 重新加載資料
+        self.tableView.reloadData()
+    }
 
     
     func loadPlacesDataFromFirebase() {
         guard let trip = trip else { return }
         
-        let placeIds = trip.places.map { $0.id }
+        let placeIds = trip.placeIds
         
         if placeIds.isEmpty {
             print("行程中無地點資料")
@@ -144,99 +176,86 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if placeName.isEmpty {
-            print("placeName is empty, returning 0 rows") // 進一步檢查 placeName 是否為空
+        guard let poem = loadedPoem else {
+            // 如果 `Poem` 尚未加載，返回 0
             return 0
         }
-        return trip?.poem.original.count ?? 0
+        
+        // 返回 `Poem` 中 `content` 的行數
+        return poem.content.count
     }
+
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        guard let poem = trip?.poem.original, !poem.isEmpty else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "tripDetailCell", for: indexPath) as? TripDetailWithPlaceTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "tripDetailCell", for: indexPath) as? TripDetailWithPlaceTableViewCell
+        cell?.selectionStyle = .none
+
+        // 確保已加載詩詞資料
+        guard let poem = self.loadedPoem else {
             cell?.verseLabel.text = "詩句加載中"
             cell?.placeLabel.text = "地點數據加載中"
             return cell ?? UITableViewCell()
         }
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "tripDetailCell", for: indexPath) as? TripDetailWithPlaceTableViewCell
-        
-        cell?.selectionStyle = .none
-        
-        if indexPath.row < poem.count {
-            cell?.verseLabel.text = poem[indexPath.row]
+        // 顯示詩詞內容
+        if indexPath.row < poem.content.count {
+            cell?.verseLabel.text = poem.content[indexPath.row]
         } else {
             cell?.verseLabel.text = "詩句加載中"
         }
-        
+
+        // 如果是地點的行
         if indexPath.row % 2 == 0 {
             let dataIndex = indexPath.row / 2
             let isButtonEnabled = buttonState[dataIndex]
-            if !placeName.isEmpty && dataIndex < placeName.count {
-                cell?.placeLabel.text = placeName[dataIndex]
+            
+            // 確保已加載地點資料
+            if !places.isEmpty && dataIndex < places.count {
+                let place = places[dataIndex]
+                cell?.placeLabel.text = place.name
                 cell?.completeButton.isHidden = false
                 cell?.completeButton.isEnabled = isButtonEnabled
-                cell?.completeButton.accessibilityIdentifier = places[dataIndex].id
+                cell?.completeButton.accessibilityIdentifier = place.id
                 cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
-                
-                if selectedIndexPath == indexPath {
-                    cell?.moreInfoLabel.isHidden = false
-                    cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
-                } else {
-                    cell?.moreInfoLabel.isHidden = true
-                }
-                
-                let placeId = places[dataIndex].id
-                
-                // 根據 Firebase 中的 isComplete 狀態設置按鈕選中狀態
+
+                let placeId = place.id
+
+                // 檢查地點是否已完成
                 let isComplete = completedPlaceIds.contains(placeId)
-                
-                // 根據 isComplete 設置按鈕和狀態
+                cell?.completeButton.isSelected = isComplete
+                cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
+
+                // 顯示更多資訊
                 if isComplete {
-                    cell?.completeButton.isSelected = true
-                    cell?.completeButton.setTitle("已完成", for: .selected)
                     cell?.moreInfoLabel.isHidden = false
-                    cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
-                } else {
-                    print("未包含")
-                    cell?.completeButton.isSelected = false
-                    cell?.completeButton.setTitle("完成", for: .normal)
-                    cell?.moreInfoLabel.isHidden = true
-                }
-                
-                if cell?.completeButton.isSelected == true {
-                    cell?.moreInfoLabel.isHidden = false
-                    cell?.moreInfoLabel.text = trip?.poem.secretTexts[dataIndex]
+//                    cell?.moreInfoLabel.text = poem.secretTexts[dataIndex]
                 } else {
                     cell?.moreInfoLabel.isHidden = true
                 }
-                
-                cell?.completeButton.setTitle(isButtonEnabled ? "完成" : "無法點選", for: .normal)
-                cell?.completeButton.setTitle("已完成", for: .selected)
+
             } else {
                 cell?.placeLabel.text = "無資料"
                 cell?.completeButton.isHidden = true
-                cell?.completeButton.isEnabled = isButtonEnabled
             }
         } else {
             let dataIndex = (indexPath.row - 1) / 2
             
-            if let situationTexts = trip?.poem.situationText, dataIndex < situationTexts.count {
-                cell?.moreInfoLabel.text = situationTexts[dataIndex]
-                cell?.moreInfoLabel.isHidden = false
-            } else {
-                cell?.moreInfoLabel.text = nil
-                cell?.moreInfoLabel.isHidden = true
-            }
-            
-            cell?.placeLabel.text = nil // 對於其他行，你可以設定為 nil 或隱藏這個 label
+            // 顯示情境描述
+//            if dataIndex < poem.situationText.count {
+////                cell?.moreInfoLabel.text = poem.situationText[dataIndex]
+//                cell?.moreInfoLabel.isHidden = false
+//            } else {
+//                cell?.moreInfoLabel.isHidden = true
+//            }
+
+            cell?.placeLabel.text = nil
             cell?.completeButton.isHidden = true
         }
-        
+
         return cell ?? UITableViewCell()
-        
     }
+
+
     
     func setupTableView() {
         view.addSubview(tableView)
@@ -271,12 +290,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
 
             let placeIndex = indexPath.row / 2
-            guard placeIndex < trip.places.count else {
+            guard placeIndex < trip.placeIds.count else {
                 print("地點索引超出範圍")
                 return
             }
 
-            let placeId = trip.places[placeIndex].id
+            let placeId = trip.placeIds[placeIndex]
+
             let tripId = trip.id
 
             // 更新 Firebase 資料

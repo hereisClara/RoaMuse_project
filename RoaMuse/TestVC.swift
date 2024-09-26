@@ -36,7 +36,7 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
         locationManager.startUpdatingLocation()
         view.backgroundColor = .systemGray3
         setupUI()
-        uploadPoetDataToFirebase()
+//        uploadPoetDataToFirebase()
     }
     
     func setupUI() {

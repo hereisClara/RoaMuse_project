@@ -683,7 +683,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                     
                     let trip = Trip(
                         poemId: poem.id,  // 使用 poemId
-                        id: String,
+                        id: self.tripId,
                         placeIds: places, // 這裡應該是 places，類型是 [String]
                         tag: tag,
                         season: season,

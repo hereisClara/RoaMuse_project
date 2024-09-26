@@ -247,11 +247,14 @@ class HomeViewController: UIViewController {
             if let randomTrip = trips.randomElement() {
                 self.randomTrip = randomTrip
                 
-                let placeIds = randomTrip.places.map { $0.id }
+                // 使用 placeIds 來查詢地點資料
+                let placeIds = randomTrip.placeIds  // 確認是否有 placeIds
                 
                 FirebaseManager.shared.loadPlaces(placeIds: placeIds) { places in
+                    // 顯示彈出視窗
                     self.popupView.showPopup(on: self.view, with: randomTrip)
                     
+                    // 設定收藏按鈕的操作
                     self.popupView.tapCollectButton = { [weak self] in
                         guard let self = self else { return }
                         
@@ -272,6 +275,7 @@ class HomeViewController: UIViewController {
             }
         }
     }
+
 }
 
 extension HomeViewController: PopupViewDelegate {
