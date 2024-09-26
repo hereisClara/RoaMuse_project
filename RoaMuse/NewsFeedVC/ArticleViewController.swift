@@ -54,7 +54,7 @@ class ArticleViewController: UIViewController {
         checkBookmarkStatus()
         updateBookmarkData()
         
-        getTripData()
+//        getTripData()
         
         setupCommentInput()
         updateLikesData()
@@ -63,7 +63,7 @@ class ArticleViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        getTripData()
+//        getTripData()
         observeLikeCountChanges()
         checkBookmarkStatus()
         loadComments()
@@ -107,7 +107,7 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-
+    
     func setupCommentInput() {
         commentTextField.placeholder = "輸入留言..."
         commentTextField.borderStyle = .roundedRect
@@ -140,10 +140,10 @@ class ArticleViewController: UIViewController {
             self.collectButton.isSelected = isBookmarked
         }
     }
-
+    
     // 按讚按鈕事件處理
     
-
+    
     // 保存留言
     func saveComment(userId: String, postId: String, commentContent: String, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
@@ -163,7 +163,7 @@ class ArticleViewController: UIViewController {
                 print("保存留言失敗: \(error.localizedDescription)")
                 completion(false)
             } else {
-//                print("留言保存成功")
+                //                print("留言保存成功")
                 completion(true)
             }
         }
@@ -225,7 +225,7 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-
+    
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
@@ -322,7 +322,7 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-
+    
     func updateBookmarkData() {
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
@@ -351,27 +351,25 @@ class ArticleViewController: UIViewController {
                 return trip.id == self.tripId
             }
             if let matchedTrip = filteredTrips.first {
-                DispatchQueue.main.async {
-                    self.tripTitleLabel.text = matchedTrip.poem.title
-                    print(self.tripTitleLabel.text ?? "No title")  // 確認是否已經更新文本
-                    
-                    // 手動更新表頭
-                    if let headerView = self.tableView.tableHeaderView {
-                        // 更新表頭佈局
-                        headerView.setNeedsLayout()
-                        headerView.layoutIfNeeded()
+                // 根據 trip.poemId 取得對應的 Poem 資料
+                FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
+                    DispatchQueue.main.async {
+                        self.tripTitleLabel.text = poem.title  // 這裡使用 poem.title 而不是 trip.poem.title
+                        print(self.tripTitleLabel.text ?? "No title")
                         
-                        // 計算並更新表頭高度
-                        let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
-                        var frame = headerView.frame
-                        frame.size.height = headerHeight
-                        headerView.frame = frame
+                        // 手動更新表頭佈局
+                        if let headerView = self.tableView.tableHeaderView {
+                            headerView.setNeedsLayout()
+                            headerView.layoutIfNeeded()
+                            let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+                            var frame = headerView.frame
+                            frame.size.height = headerHeight
+                            headerView.frame = frame
+                            self.tableView.tableHeaderView = headerView
+                        }
                         
-                        // 設置更新後的表頭
-                        self.tableView.tableHeaderView = headerView
+                        self.tableView.reloadData()
                     }
-                    // 確保 UI 重新加載
-                    self.tableView.reloadData()
                 }
             }
         }
@@ -670,31 +668,29 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                    let weather = data["weather"] as? Int,
                    let startTime = data["startTime"] as? Int {
                     
-                    let places = placesData.compactMap { placeDict -> PlaceId? in
-                        if let placeId = placeDict["id"] as? String {
-                            return PlaceId(id: placeId)
-                        }
-                        return nil
+                    let places = placesData.compactMap { placeDict in
+                        return placeDict["id"] as? String
                     }
+
                     
                     let poem = Poem(
                         title: title,
                         poetry: poetry,
-                        original: original,
-                        translation: translation,
-                        secretTexts: secretTexts,
-                        situationText: situationText
+                        content: original, // 假設 content 是來自 original
+                        tag: tag
                     )
+
                     
-                    self.trip = Trip(
-                        poem: poem,
-                        id: self.tripId,
-                        places: places,
+                    let trip = Trip(
+                        poemId: poem.id,  // 使用 poemId
+                        id: String,
+                        placeIds: places, // 這裡應該是 places，類型是 [String]
                         tag: tag,
                         season: season,
                         weather: weather,
                         startTime: startTime
                     )
+
                     
                     DispatchQueue.main.async {
                         self.popupView.showPopup(on: self.view, with: self.trip!)

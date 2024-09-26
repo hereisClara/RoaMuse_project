@@ -26,26 +26,21 @@ let styles: [Style] = [
     """)
 ]
 
-
-struct PlaceId: Codable {
-    let id: String
-}
-
 // 定義 Poem 結構
 struct Poem: Codable {
+    var id: String = ""
     let title: String
     let poetry: String
-    let original: [String]
-    let translation: [String]
-    let secretTexts: [String]
-    let situationText: [String]
+    let content: [String]
+    let tag: Int
 }
 
 struct Trip: Codable {
-    let poem: Poem
+    let poemId: String
     let id: String
-    var places: [PlaceId]
+    var placeIds: [String]
     let tag: Int
+    
     let season: Int
     let weather: Int
     let startTime: Int

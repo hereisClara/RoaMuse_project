@@ -14,6 +14,9 @@ import MJRefresh
 
 class EstablishViewController: UIViewController {
     
+    var poemsFromFirebase: [[String: Any]] = []
+    var fittingPoemArray = [[String: Any]]()
+    
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
     private let styleLabel = UILabel()
@@ -21,7 +24,7 @@ class EstablishViewController: UIViewController {
     private var styleTag = Int()
     private let popupView = PopUpView()
     
-    private var randomTrip: Trip?
+//    private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
     override func viewDidLoad() {
@@ -91,40 +94,44 @@ class EstablishViewController: UIViewController {
     }
     
     func randomTripEntryButtonDidTapped() {
-        FirebaseManager.shared.loadTripsByTag(tag: styleTag) { [weak self] trips in
-            guard let self = self else { return }
-
-            print("正在查詢 tag 值: \(self.styleTag)")  // 調試用
-            if !trips.isEmpty {
-                guard let randomTrip = trips.randomElement() else {
-                    print("無法隨機選取行程") // 調試
-                    return
-                }
-
-                print("成功選取行程: \(randomTrip.id)")  // 調試用
-
-                self.randomTrip = randomTrip
-                print("..........", randomTrip)
-
-                self.popupView.showPopup(on: self.view, with: randomTrip)
-
-                self.popupView.tapCollectButton = { [weak self] in
-                    guard let self = self else { return }
-                    guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-
-                    FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
-                        if success {
-                            print("收藏行程成功！")
-                        } else {
-                            print("收藏行程失敗！")
-                        }
-                    }
-                }
-            } else {
-                print("未找到符合的行程") // 調試用
-            }
-        }
+        self.popupView.showPopup(on: self.view, with: <#T##Trip#>)
     }
+    
+//    func randomTripEntryButtonDidTapped() {
+//        FirebaseManager.shared.loadTripsByTag(tag: styleTag) { [weak self] trips in
+//            guard let self = self else { return }
+//
+//            print("正在查詢 tag 值: \(self.styleTag)")  // 調試用
+//            if !trips.isEmpty {
+//                guard let randomTrip = trips.randomElement() else {
+//                    print("無法隨機選取行程") // 調試
+//                    return
+//                }
+//
+//                print("成功選取行程: \(randomTrip.id)")  // 調試用
+//
+//                self.randomTrip = randomTrip
+//                print("..........", randomTrip)
+//
+//                self.popupView.showPopup(on: self.view, with: randomTrip)
+//
+//                self.popupView.tapCollectButton = { [weak self] in
+//                    guard let self = self else { return }
+//                    guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+//
+//                    FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
+//                        if success {
+//                            print("收藏行程成功！")
+//                        } else {
+//                            print("收藏行程失敗！")
+//                        }
+//                    }
+//                }
+//            } else {
+//                print("未找到符合的行程") // 調試用
+//            }
+//        }
+//    }
 
 }
 
@@ -132,7 +139,7 @@ extension EstablishViewController: PopupViewDelegate {
     
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
-        tripDetailVC.trip = randomTrip
+//        tripDetailVC.trip = randomTrip
         navigationController?.pushViewController(tripDetailVC, animated: true)
     }
 }
@@ -177,74 +184,96 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             // 在這裡執行你要對 cell 的操作
             selectionTitle = cell.titleLabel.text ?? "" // 改變 cell 的背景顏色
             styleTag = Int(indexPath.row)
+            getPoemTag(tag: styleTag)
             styleLabel.text = selectionTitle
             styleLabel.textColor = .deepBlue
             styleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         }
     }
     
-    func updatePlaceData(userId: String, trip: Trip, placeId: String) {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+//    func updatePlaceData(userId: String, trip: Trip, placeId: String) {
+//        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+//        let db = Firestore.firestore()
+//        let userRef = db.collection("users").document(userId)
+//        
+//        userRef.getDocument { (document, error) in
+//            if let document = document, document.exists {
+//                if var completedPlaces = document.data()?["completedPlace"] as? [[String: Any]],
+//                   var completedTrips = document.data()?["completedTrip"] as? [String] {
+//                    
+//                    if let index = completedPlaces.firstIndex(where: { $0["tripId"] as? String == trip.id }) {
+//                        var placeIds = completedPlaces[index]["placeIds"] as? [String] ?? []
+//                        if !placeIds.contains(placeId) {
+//                            placeIds.append(placeId)
+//                            completedPlaces[index]["placeIds"] = placeIds
+//                        }
+//                    } else {
+//                        completedPlaces.append(["tripId": trip.id, "placeIds": [placeId]])
+//                    }
+//                    
+//                    userRef.updateData(["completedPlace": completedPlaces]) { error in
+//                        if let error = error {
+//                            print("更新 completedPlace 失敗: \(error.localizedDescription)")
+//                        } else {
+//                            print("成功將地點 \(placeId) 添加到行程 \(trip.id) 的 completedPlace 中")
+//                        }
+//                    }
+//                    
+//                    let completedPlaceIds = completedPlaces.first(where: { $0["tripId"] as? String == trip.id })?["placeIds"] as? [String] ?? []
+//                    let allPlacesCompleted = trip.places.allSatisfy { place in
+//                        completedPlaceIds.contains(place.id)
+//                    }
+//                    
+//                    if allPlacesCompleted && !completedTrips.contains(trip.id) {
+//                        completedTrips.append(trip.id)
+//                        userRef.updateData(["completedTrip": completedTrips]) { error in
+//                            if let error = error {
+//                                print("更新 completedTrip 失敗: \(error.localizedDescription)")
+//                            } else {
+//                                print("成功將行程 \(trip.id) 添加到 completedTrip 中")
+//                            }
+//                        }
+//                    }
+//                    
+//                } else {
+//                    let newCompletedPlace = [["tripId": trip.id, "placeIds": [placeId]]]
+//                    let completedTrips = document.data()?["completedTrip"] as? [String] ?? []
+//                    let newCompletedTrip = completedTrips.contains(trip.id) ? completedTrips : completedTrips + [trip.id]
+//                    
+//                    userRef.updateData([
+//                        "completedPlace": newCompletedPlace,
+//                        "completedTrip": newCompletedTrip
+//                    ]) { error in
+//                        if let error = error {
+//                            print("初始化 completedPlace 或 completedTrip 失敗: \(error.localizedDescription)")
+//                        } else {
+//                            print("成功初始化 completedPlace，並添加地點 \(placeId) 和行程 \(trip.id)")
+//                        }
+//                    }
+//                }
+//            } else {
+//                print("無法找到用戶資料: \(error?.localizedDescription ?? "未知錯誤")")
+//            }
+//        }
+//    }
+    
+    func fetchPoetDataFromFirebase() {
         let db = Firestore.firestore()
-        let userRef = db.collection("users").document(userId)
+        db.collection("poets").getDocuments { (snapshot, error) in
+            if let error = error {
+                print("從 Firebase 獲取數據失敗：\(error.localizedDescription)")
+            } else if let snapshot = snapshot {
+                self.poemsFromFirebase = snapshot.documents.map { $0.data() }
+                print("成功從 Firebase 獲取數據")
+            }
+        }
+    }
+    
+    func getPoemTag(tag: Int) {
         
-        userRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                if var completedPlaces = document.data()?["completedPlace"] as? [[String: Any]],
-                   var completedTrips = document.data()?["completedTrip"] as? [String] {
-                    
-                    if let index = completedPlaces.firstIndex(where: { $0["tripId"] as? String == trip.id }) {
-                        var placeIds = completedPlaces[index]["placeIds"] as? [String] ?? []
-                        if !placeIds.contains(placeId) {
-                            placeIds.append(placeId)
-                            completedPlaces[index]["placeIds"] = placeIds
-                        }
-                    } else {
-                        completedPlaces.append(["tripId": trip.id, "placeIds": [placeId]])
-                    }
-                    
-                    userRef.updateData(["completedPlace": completedPlaces]) { error in
-                        if let error = error {
-                            print("更新 completedPlace 失敗: \(error.localizedDescription)")
-                        } else {
-                            print("成功將地點 \(placeId) 添加到行程 \(trip.id) 的 completedPlace 中")
-                        }
-                    }
-                    
-                    let completedPlaceIds = completedPlaces.first(where: { $0["tripId"] as? String == trip.id })?["placeIds"] as? [String] ?? []
-                    let allPlacesCompleted = trip.places.allSatisfy { place in
-                        completedPlaceIds.contains(place.id)
-                    }
-                    
-                    if allPlacesCompleted && !completedTrips.contains(trip.id) {
-                        completedTrips.append(trip.id)
-                        userRef.updateData(["completedTrip": completedTrips]) { error in
-                            if let error = error {
-                                print("更新 completedTrip 失敗: \(error.localizedDescription)")
-                            } else {
-                                print("成功將行程 \(trip.id) 添加到 completedTrip 中")
-                            }
-                        }
-                    }
-                    
-                } else {
-                    let newCompletedPlace = [["tripId": trip.id, "placeIds": [placeId]]]
-                    let completedTrips = document.data()?["completedTrip"] as? [String] ?? []
-                    let newCompletedTrip = completedTrips.contains(trip.id) ? completedTrips : completedTrips + [trip.id]
-                    
-                    userRef.updateData([
-                        "completedPlace": newCompletedPlace,
-                        "completedTrip": newCompletedTrip
-                    ]) { error in
-                        if let error = error {
-                            print("初始化 completedPlace 或 completedTrip 失敗: \(error.localizedDescription)")
-                        } else {
-                            print("成功初始化 completedPlace，並添加地點 \(placeId) 和行程 \(trip.id)")
-                        }
-                    }
-                }
-            } else {
-                print("無法找到用戶資料: \(error?.localizedDescription ?? "未知錯誤")")
+        for poem in poemsFromFirebase {
+            if poem["tag"] as? Int ?? 0 == tag {
+                fittingPoemArray.append(poem)
             }
         }
     }
