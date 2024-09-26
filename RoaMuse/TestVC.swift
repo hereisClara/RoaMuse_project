@@ -21,18 +21,6 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
         "河流": [.park],
         "湖泊": [.park],
         "高樓": [.park],
-//        "古蹟": [.museum],
-//        "橋梁": [.park],
-//        "塔樓": [.park],
-//        "公園": [.park],
-//        "博物館": [.museum],
-//        "美術館": [.museum],
-//        "餐廳": [.restaurant],
-//        "咖啡廳": [.cafe],
-//        "學校": [.school],
-//        "醫院": [.hospital],
-//        "警察局": [.police],
-//        "郵局": [.postOffice]
     ]
     
     override func viewDidLoad() {
@@ -111,10 +99,11 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
         func searchNextKeyword(index: Int) {
             if index >= keywords.count {
                 dispatchGroup.notify(queue: .main) {
-                    self.plotRoutes()
+                    self.plotRoutes() // 將交通細節打印到 log 中
                 }
                 return
             }
+            
             let keyword = keywords[index]
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = keyword
@@ -126,6 +115,7 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
                 request.pointOfInterestFilter = nil
             }
             let search = MKLocalSearch(request: request)
+            
             dispatchGroup.enter()
             search.start { (response, error) in
                 defer { dispatchGroup.leave() }
@@ -135,15 +125,28 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
                     searchNextKeyword(index: index + 1)
                     return
                 }
-                if let mapItems = response?.mapItems, let closestItem = mapItems.first {
-                    let name = closestItem.name ?? "無名稱"
-                    let address = closestItem.placemark.title ?? "無地址"
-                    self.addAnnotation(for: keyword, name: name, address: address, coordinate: closestItem.placemark.coordinate)
-                    self.foundLocations.append(closestItem.placemark.coordinate)
-                    currentLocation = closestItem.placemark.coordinate
-                } else {
-                    self.addAnnotation(for: keyword, name: nil, address: nil, coordinate: nil)
+                
+                if let mapItems = response?.mapItems {
+                    let filteredItems = mapItems.filter { item in
+                        let name = item.name?.lowercased() ?? ""
+                        return !name.contains("restaurant") && !name.contains("café") && !name.contains("coffee")
+                    }
+                    
+                    if let closestItem = filteredItems.first {
+                        let name = closestItem.name ?? "無名稱"
+                        let address = closestItem.placemark.title ?? "無地址"
+                        self.addAnnotation(for: keyword, name: name, address: address, coordinate: closestItem.placemark.coordinate)
+                        self.foundLocations.append(closestItem.placemark.coordinate)
+                        currentLocation = closestItem.placemark.coordinate
+                        
+                        let alertMessage = "地點名稱: \(name)\n地景關鍵詞: \(keyword)"
+                        self.showAlert(title: "地點與地景分析", message: alertMessage)
+                    } else {
+                        self.addAnnotation(for: keyword, name: nil, address: nil, coordinate: nil)
+                    }
                 }
+
+                
                 searchNextKeyword(index: index + 1)
             }
         }
@@ -168,6 +171,7 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
             showAlert(title: "路線規劃", message: "找到的地點不足以規劃路線。")
             return
         }
+        
         let dispatchGroup = DispatchGroup()
         allRouteSteps = []
         
@@ -179,21 +183,23 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
             let destinationPlacemark = MKPlacemark(coordinate: destination)
             request.source = MKMapItem(placemark: sourcePlacemark)
             request.destination = MKMapItem(placemark: destinationPlacemark)
-            request.transportType = .automobile // 可根據需要更改為 .walking 或 .transit
+            request.transportType = .automobile
+            
             let directions = MKDirections(request: request)
             dispatchGroup.enter()
             directions.calculate { (response, error) in
                 defer { dispatchGroup.leave() }
                 if let error = error {
                     print("路線規劃失敗：\(error.localizedDescription)")
-                    self.allRouteSteps.append("路線規劃失敗：\(error.localizedDescription)")
                     return
                 }
                 if let route = response?.routes.first {
                     self.mapView.addOverlay(route.polyline)
-                    self.allRouteSteps.append("從 \(self.getLocationName(coordinate: source)) 到 \(self.getLocationName(coordinate: destination))")
+                    
+                    // 將交通細節打印到 log 中
+                    print("從 \(self.getLocationName(coordinate: source)) 到 \(self.getLocationName(coordinate: destination))")
                     for step in route.steps {
-                        self.allRouteSteps.append(step.instructions)
+                        print(step.instructions)
                     }
                     
                     self.mapView.setVisibleMapRect(route.polyline.boundingMapRect, edgePadding: UIEdgeInsets(top: 100, left: 20, bottom: 100, right: 20), animated: true)
@@ -202,9 +208,10 @@ class TestVC: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
         }
         
         dispatchGroup.notify(queue: .main) {
-            self.showRouteSteps()
+            print("路線規劃完成")
         }
     }
+
     
     func getLocationName(coordinate: CLLocationCoordinate2D) -> String {
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
