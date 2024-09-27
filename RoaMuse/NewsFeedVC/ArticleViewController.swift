@@ -693,7 +693,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
 
                     
                     DispatchQueue.main.async {
-                        self.popupView.showPopup(on: self.view, with: self.trip!)
+//                        self.popupView.showPopup(on: self.view, with: self.trip!)
                     }
                 } else {
                     print("未找到對應的行程資料")

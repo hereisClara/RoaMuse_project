@@ -252,7 +252,7 @@ class HomeViewController: UIViewController {
                 
                 FirebaseManager.shared.loadPlaces(placeIds: placeIds) { places in
                     // 顯示彈出視窗
-                    self.popupView.showPopup(on: self.view, with: randomTrip)
+//                    self.popupView.showPopup(on: self.view, with: randomTrip)
                     
                     // 設定收藏按鈕的操作
                     self.popupView.tapCollectButton = { [weak self] in

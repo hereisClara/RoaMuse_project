@@ -32,6 +32,10 @@ class TripDetailViewController: UIViewController {
         self.navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = UIColor(resource: .backgroundGray)
         
+        let shareButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(shareButtonTapped))
+        self.navigationItem.rightBarButtonItem = shareButton
+        
+        
         if let poemId = trip?.poemId {
             FirebaseManager.shared.loadPoemById(poemId) { [weak self] poem in
                 guard let self = self else { return }
@@ -55,6 +59,11 @@ class TripDetailViewController: UIViewController {
             print("獲取的 completedPlaceIds: \(self?.completedPlaceIds)")
             self?.tableView.reloadData()
         }
+    }
+    
+    @objc func shareButtonTapped() {
+        let imageUploadVC = PhotoUploadViewController()
+        self.navigationController?.pushViewController(imageUploadVC, animated: true)
     }
     
     func loadPoemDataFromFirebase() {

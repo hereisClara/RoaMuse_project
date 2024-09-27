@@ -28,6 +28,8 @@ class PopUpView {
     let placesStackView = UIStackView()
     let collectButton = UIButton(type: .system)
     let startButton = UIButton(type: .system)
+    let cityLabel = UILabel()   // 用来显示城市
+    let districtsStackView = UIStackView()
     
     var tapCollectButton: (() -> Void)?
     var onTripSelected: ((Trip) -> Void)?
@@ -35,7 +37,7 @@ class PopUpView {
     
     init() {}
     
-    func showPopup(on view: UIView, with trip: Trip) {
+    func showPopup(on view: UIView, with trip: Trip, city: String, districts: [String]) {
         
         guard let window = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
                 return
@@ -45,6 +47,7 @@ class PopUpView {
         
         versesStackView.removeAllArrangedSubviews()
         placesStackView.removeAllArrangedSubviews()
+        districtsStackView.removeAllArrangedSubviews()
         
         backgroundView.frame = window.bounds
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
@@ -72,7 +75,7 @@ class PopUpView {
             DispatchQueue.main.async {
                 self.titleLabel.text = poem.title
                 self.poetryLabel.text = "\(poem.poetry)"
-                self.tripStyleLabel.text = "風格: \(poem.tag)"
+                self.tripStyleLabel.text = "\(styles[poem.tag].name)"
                 
                 self.versesStackView.removeAllArrangedSubviews()
                 for verse in poem.content {
@@ -97,7 +100,18 @@ class PopUpView {
                 }
             }
         }
-
+        
+        DispatchQueue.main.async {
+            self.cityLabel.text = "城市: \(city)"
+            self.cityLabel.textColor = .white
+            for district in districts {
+                let districtLabel = UILabel()
+                districtLabel.text = "#\(district)"
+                districtLabel.textColor = .white
+                self.districtsStackView.addArrangedSubview(districtLabel)
+            }
+        }
+        
         backgroundView.alpha = 0
         popupView.alpha = 0
         UIView.animate(withDuration: 0.3) {
@@ -115,6 +129,20 @@ class PopUpView {
         popupView.addSubview(placesStackView)
         popupView.addSubview(collectButton)
         popupView.addSubview(startButton)
+        popupView.addSubview(cityLabel)   // 添加城市标签
+        popupView.addSubview(districtsStackView)
+        
+        cityLabel.snp.makeConstraints { make in
+            make.top.equalTo(placesStackView.snp.bottom).offset(30)
+            make.centerX.equalTo(popupView)
+        }
+        
+        districtsStackView.snp.makeConstraints { make in
+            make.top.equalTo(cityLabel.snp.bottom).offset(10)
+            make.centerX.equalTo(popupView)
+        }
+        
+        districtsStackView.spacing = 10
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(40)
@@ -160,6 +188,10 @@ class PopUpView {
             make.centerX.equalTo(popupView).offset(-40)
             make.width.height.equalTo(30)
         }
+        
+        titleLabel.textColor = .white
+        poetryLabel.textColor = .white
+        tripStyleLabel.textColor = .white
         
         // 設置按鈕圖標和顏色
         collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)

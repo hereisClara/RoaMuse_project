@@ -47,6 +47,7 @@
 		AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */; };
 		AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */; };
 		AC9775712CA551CB00EF828A /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775702CA551CB00EF828A /* Config.plist */; };
+		AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -111,6 +112,7 @@
 		AC97756D2CA52A9300EF828A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDataManager.swift; sourceTree = "<group>"; };
 		AC9775702CA551CB00EF828A /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
+		AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoUploadViewController.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
 				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
 				AC9775702CA551CB00EF828A /* Config.plist */,
 				AC97756D2CA52A9300EF828A /* Config.xcconfig */,
@@ -492,6 +495,7 @@
 				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
+				AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
 				AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */,

@@ -30,6 +30,8 @@ class EstablishViewController: UIViewController {
     private let popupView = PopUpView()
     let locationManager = LocationManager()
     
+    let searchRadius: CLLocationDistance = 15000
+    
     //    private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
@@ -101,9 +103,14 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
+        // 禁用按鈕防止重複點擊
+        recommendRandomTripView.isUserInteractionEnabled = false
         
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
+            
+            self.locationManager.stopUpdatingLocation()
+            self.locationManager.onLocationUpdate = nil
             
             FirebaseManager.shared.loadAllPoems { poems in
                 let filteredPoems = poems.filter { poem in
@@ -122,27 +129,29 @@ class EstablishViewController: UIViewController {
                                         let totalMinutes = Int(totalTravelTime / 60)
                                         print("總預估交通時間：\(totalMinutes) 分鐘")
                                     }
+                                    
+                                    self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                                 }
-                            }
-                            
-                            DispatchQueue.main.async {
-                                if let trip = trip {
-                                    print("Trip is not nil, proceeding to show popup.")
-                                    self.popupView.showPopup(on: self.view, with: trip)
+                                
+                                DispatchQueue.main.async {
+                                    print("開始傳值")
                                     self.trip = trip
-                                } else {
-                                    print("Trip is nil, popup will not be shown.")
                                 }
                             }
+                            // 操作完成後重新啟用按鈕
+                            self.recommendRandomTripView.isUserInteractionEnabled = true
                         }
                     }
                 } else {
                     print("未找到符合該 styleTag 的詩詞")
+                    // 操作完成後重新啟用按鈕
+                    self.recommendRandomTripView.isUserInteractionEnabled = true
                 }
             }
         }
         locationManager.startUpdatingLocation()
     }
+
     
     
     // 基於 NLP 模型分析詩詞
@@ -169,27 +178,24 @@ class EstablishViewController: UIViewController {
         completion(Array(Set(allResults))) // 去重並返回關鍵字
     }
     
+    // 在保存行程前，檢查 Firebase 中是否已存在相同的行程
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         let dispatchGroup = DispatchGroup()
         var foundValidPlace = false
-        let searchRadius: CLLocationDistance = 15000 // 10公里
+         // 10公里
         
         self.city = "" // 清空現有的城市
         self.districts.removeAll() // 清空現有的行政區
-        
         self.matchingPlaces.removeAll()
         
         for keyword in keywords {
             dispatchGroup.enter()
-            print("正在從 Firebase 資料庫中查詢關鍵字 '\(keyword)' 的地點...")
-            
+
             FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
-                print("Firebase 回傳的地點數量：\(places.count)")
                 let nearbyPlaces = places.filter { place in
-                    print("資料庫找")
                     let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
                     let distance = currentLocation.distance(from: placeLocation)
-                    return distance <= searchRadius
+                    return distance <= self.searchRadius
                 }
                 
                 if !nearbyPlaces.isEmpty {
@@ -197,22 +203,15 @@ class EstablishViewController: UIViewController {
                         if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
                             self.matchingPlaces.append(randomPlace)
                             
-                            print("隨機選中的地點：\(randomPlace.name), matchingPlaces: \(self.matchingPlaces.map { $0.name })")
-                            
                             let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
                             
                             self.reverseGeocodeLocation(placeLocation) { city, district in
                                 if let city = city, let district = district {
-                                    print("地點: \(randomPlace.name), 縣市: \(city), 行政區: \(district)")
                                     
-                                    // 確保縣市只加入一次
                                     if self.city.isEmpty {
                                         self.city = city
-                                    } else if self.city != city {
-                                        print("不同城市資料，忽略重複") // 如果需要處理多個城市，可以擴展這裡的邏輯
                                     }
                                     
-                                    // 檢查並只保存唯一的行政區
                                     if !self.districts.contains(district) {
                                         self.districts.append(district)
                                     }
@@ -224,20 +223,15 @@ class EstablishViewController: UIViewController {
                     dispatchGroup.leave()
                 } else {
                     PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
-                        print("搜尋到的地點數量：\(foundPlaces.count)")
                         if let newPlace = foundPlaces.first {
-                            print("第一個地點名稱：\(newPlace.name), 經緯度：\(newPlace.latitude), \(newPlace.longitude)")
                             PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                                 if let savedPlace = savedPlace {
-                                    print("成功保存地點：\(savedPlace.name)")
                                     self.matchingPlaces.append(savedPlace)
                                     foundValidPlace = true
-                                    print(self.matchingPlaces)
                                 }
                                 dispatchGroup.leave()
                             }
                         } else {
-                            print("未找到符合的地點")
                             dispatchGroup.leave()
                         }
                     }
@@ -246,48 +240,64 @@ class EstablishViewController: UIViewController {
         }
         
         dispatchGroup.notify(queue: .main) {
-            // 調適輸出以查看 matchingPlaces 和 foundValidPlace 的狀態
-            print("查詢結束，foundValidPlace: \(foundValidPlace), matchingPlaces: \(self.matchingPlaces.map { $0.name })")
+            
             
             if foundValidPlace, self.matchingPlaces.count >= 1 {
-                // 准備行程數據
                 let tripData: [String: Any] = [
                     "poemId": poem.id,
                     "placeIds": self.matchingPlaces.map { $0.id },
                     "tag": poem.tag
                 ]
                 
-                let db = Firestore.firestore()
-                var documentRef: DocumentReference? = nil
-                
-                // 將行程數據保存到 Firebase
-                documentRef = db.collection("trips").addDocument(data: tripData) { error in
-                    if let error = error {
-                        print("Error saving trip to Firebase: \(error)")
-                        completion(nil)
-                    } else {
-                        guard let documentID = documentRef?.documentID else {
-                            print("未能獲取到 documentID")
-                            completion(nil)
-                            return
-                        }
-                        print("成功保存行程，ID: \(documentID)")
-                        
-                        // 建立 Trip 物件並返回
-                        let trip = Trip(
+                // 保存前先檢查是否有相同的行程
+                FirebaseManager.shared.checkTripExists(tripData) { exists in
+                    if exists {
+                        let existingTrip = Trip(
                             poemId: poem.id,
-                            id: documentID,
+                            id: "existing_trip_id",  // 可以用一個占位符表示現有行程
                             placeIds: self.matchingPlaces.map { $0.id },
                             tag: poem.tag,
-                            season: nil,   // 暫時不處理季節
-                            weather: nil,  // 暫時不處理天氣
-                            startTime: nil // 暫時不處理開始時間
+                            season: nil,
+                            weather: nil,
+                            startTime: nil
                         )
-                        completion(trip)
+                        
+                        // 調用 popup 顯示現有行程
+                        DispatchQueue.main.async {
+                            self.popupView.showPopup(on: self.view, with: existingTrip, city: self.city, districts: self.districts)
+                        }
+                        
+                        // 調用 completion 並傳回存在的行程
+                        completion(existingTrip)
+                    } else {
+                        // 行程不存在，進行保存
+                        let db = Firestore.firestore()
+                        var documentRef: DocumentReference? = nil
+                        
+                        documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                            if let error = error {
+                                completion(nil)
+                            } else {
+                                guard let documentID = documentRef?.documentID else {
+                                    completion(nil)
+                                    return
+                                }
+                                
+                                let trip = Trip(
+                                    poemId: poem.id,
+                                    id: documentID,
+                                    placeIds: self.matchingPlaces.map { $0.id },
+                                    tag: poem.tag,
+                                    season: nil,
+                                    weather: nil,
+                                    startTime: nil
+                                )
+                                completion(trip)
+                            }
+                        }
                     }
                 }
             } else {
-                print("沒有找到符合條件的有效地點，無法生成行程")
                 completion(nil)
             }
         }
