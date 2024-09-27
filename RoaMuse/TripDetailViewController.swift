@@ -13,8 +13,8 @@ import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
     
-    var loadedPoem: Poem?  // 加載到的詩詞資料
-    var trip: Trip?  // 存儲傳遞過來的資料
+    var loadedPoem: Poem?
+    var trip: Trip?  
     var onTripReceivedFromHome: ((Trip) -> Void)?
     let placesStackView = UIStackView()
     private let locationManager = LocationManager()
@@ -58,6 +58,9 @@ class TripDetailViewController: UIViewController {
     }
     
     func loadPoemDataFromFirebase() {
+        
+        self.loadedPoem = nil
+        
         guard let trip = trip else { return }
         
         // 使用 trip.poemId 來加載詩詞
@@ -81,6 +84,9 @@ class TripDetailViewController: UIViewController {
     
     
     func loadPlacesDataFromFirebase() {
+        
+        self.places.removeAll()
+        
         guard let trip = trip else { return }
         
         let placeIds = trip.placeIds
@@ -228,7 +234,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 200 
+        return 200
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

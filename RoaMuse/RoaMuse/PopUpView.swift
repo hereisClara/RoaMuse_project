@@ -37,16 +37,18 @@ class PopUpView {
     
     func showPopup(on view: UIView, with trip: Trip) {
         
-        print("showPopup")
-
+        guard let window = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
+                return
+            }
+        
         fromEstablishToTripDetail = trip
-
+        
         versesStackView.removeAllArrangedSubviews()
         placesStackView.removeAllArrangedSubviews()
-
-        backgroundView.frame = view.bounds
-        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5) // 設置背景的半透明效果
-        view.addSubview(backgroundView)
+        
+        backgroundView.frame = window.bounds
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        window.addSubview(backgroundView)
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
         backgroundView.addGestureRecognizer(tapGesture)
@@ -54,7 +56,7 @@ class PopUpView {
         popupView.backgroundColor = .deepBlue
         popupView.layer.cornerRadius = 10
         popupView.clipsToBounds = true
-        view.addSubview(popupView)
+        window.addSubview(popupView)
         
         popupView.snp.makeConstraints { make in
             make.center.equalTo(view)
@@ -72,6 +74,7 @@ class PopUpView {
                 self.poetryLabel.text = "\(poem.poetry)"
                 self.tripStyleLabel.text = "風格: \(poem.tag)"
                 
+                self.versesStackView.removeAllArrangedSubviews()
                 for verse in poem.content {
                     let verseLabel = UILabel()
                     verseLabel.text = verse
@@ -85,6 +88,7 @@ class PopUpView {
             guard let self = self else { return }
             
             DispatchQueue.main.async {
+                self.placesStackView.removeAllArrangedSubviews()
                 for place in places {
                     let placeLabel = UILabel()
                     placeLabel.text = place.name

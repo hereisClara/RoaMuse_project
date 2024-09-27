@@ -19,7 +19,8 @@ class EstablishViewController: UIViewController {
     var fittingPoemArray = [[String: Any]]()
     var matchingPlaces = [Place]()
     var trip: Trip?
-    
+    var city = String()
+    var districts = [String]()
     
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
@@ -100,10 +101,10 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-
+        
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
-
+            
             FirebaseManager.shared.loadAllPoems { poems in
                 let filteredPoems = poems.filter { poem in
                     return poem.tag == self.styleTag
@@ -142,7 +143,7 @@ class EstablishViewController: UIViewController {
         }
         locationManager.startUpdatingLocation()
     }
-
+    
     
     // 基於 NLP 模型分析詩詞
     func processPoemText(_ inputText: String, completion: @escaping ([String]) -> Void) {
@@ -173,12 +174,15 @@ class EstablishViewController: UIViewController {
         var foundValidPlace = false
         let searchRadius: CLLocationDistance = 15000 // 10公里
         
+        self.city = "" // 清空現有的城市
+        self.districts.removeAll() // 清空現有的行政區
+        
         self.matchingPlaces.removeAll()
-
+        
         for keyword in keywords {
             dispatchGroup.enter()
             print("正在從 Firebase 資料庫中查詢關鍵字 '\(keyword)' 的地點...")
-
+            
             FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
                 print("Firebase 回傳的地點數量：\(places.count)")
                 let nearbyPlaces = places.filter { place in
@@ -187,13 +191,33 @@ class EstablishViewController: UIViewController {
                     let distance = currentLocation.distance(from: placeLocation)
                     return distance <= searchRadius
                 }
-
+                
                 if !nearbyPlaces.isEmpty {
                     if let randomPlace = nearbyPlaces.randomElement() {
                         if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
                             self.matchingPlaces.append(randomPlace)
                             
                             print("隨機選中的地點：\(randomPlace.name), matchingPlaces: \(self.matchingPlaces.map { $0.name })")
+                            
+                            let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                            
+                            self.reverseGeocodeLocation(placeLocation) { city, district in
+                                if let city = city, let district = district {
+                                    print("地點: \(randomPlace.name), 縣市: \(city), 行政區: \(district)")
+                                    
+                                    // 確保縣市只加入一次
+                                    if self.city.isEmpty {
+                                        self.city = city
+                                    } else if self.city != city {
+                                        print("不同城市資料，忽略重複") // 如果需要處理多個城市，可以擴展這裡的邏輯
+                                    }
+                                    
+                                    // 檢查並只保存唯一的行政區
+                                    if !self.districts.contains(district) {
+                                        self.districts.append(district)
+                                    }
+                                }
+                            }
                         }
                     }
                     foundValidPlace = true
@@ -220,11 +244,11 @@ class EstablishViewController: UIViewController {
                 }
             }
         }
-
+        
         dispatchGroup.notify(queue: .main) {
             // 調適輸出以查看 matchingPlaces 和 foundValidPlace 的狀態
             print("查詢結束，foundValidPlace: \(foundValidPlace), matchingPlaces: \(self.matchingPlaces.map { $0.name })")
-
+            
             if foundValidPlace, self.matchingPlaces.count >= 1 {
                 // 准備行程數據
                 let tripData: [String: Any] = [
@@ -268,8 +292,8 @@ class EstablishViewController: UIViewController {
             }
         }
     }
-
-
+    
+    
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
         let request = MKDirections.Request()
         
@@ -313,7 +337,7 @@ class EstablishViewController: UIViewController {
         
         totalTime = 0
         routes.removeAll()
-
+        
         
         // Step 1: 計算從當前位置到第一個地點的時間
         if let firstPlace = places.first {
@@ -347,11 +371,29 @@ class EstablishViewController: UIViewController {
                 }
             }
         }
-
+        
         // Step 3: 返回總時間和詳細路線
         dispatchGroup.notify(queue: .main) {
             print("總交通時間：\(totalTime) 秒")
             completion(totalTime, routes)
+        }
+    }
+    
+    func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error = error {
+                print("反向地理編碼失敗: \(error.localizedDescription)")
+                completion(nil, nil)
+            } else if let placemark = placemarks?.first {
+                // 使用 administrativeArea 來獲取縣市，locality 或 subLocality 來獲取區域
+                let city = placemark.administrativeArea ?? "未知縣市"  // 縣市
+                let district = placemark.locality ?? placemark.subLocality ?? "未知區"  // 行政區
+                
+                completion(city, district)
+            } else {
+                completion(nil, nil)
+            }
         }
     }
 }
