@@ -39,7 +39,7 @@ class PlaceDataManager {
             }
             
             var keyword = keywords[index]
-            let radius = 10000  // 搜索半徑，單位為公尺
+            let radius = 15000  // 搜索半徑，單位為公尺
             var typeRestrictions = "park|natural_feature"  // 限制搜尋類型為公園或自然景點
             
             if keyword == "山" {

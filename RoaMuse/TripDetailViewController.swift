@@ -14,7 +14,6 @@ import FirebaseFirestore
 class TripDetailViewController: UIViewController {
     
     var loadedPoem: Poem?  // 加載到的詩詞資料
-//    var places = [Place]()  // 加載到的地點資料
     var trip: Trip?  // 存儲傳遞過來的資料
     var onTripReceivedFromHome: ((Trip) -> Void)?
     let placesStackView = UIStackView()
@@ -40,13 +39,13 @@ class TripDetailViewController: UIViewController {
                 self.updatePoemData(poem: poem)
             }
         }
-
+        
         if let trip = trip {
             print("成功接收到行程數據: \(trip)")
         } else {
             print("未接收到行程數據")
         }
-
+        
         setupTableView()
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
@@ -74,12 +73,12 @@ class TripDetailViewController: UIViewController {
             }
         }
     }
-
+    
     func updatePoemData(poem: Poem) {
         // 更新您的 UI，例如 tableView 重新加載資料
         self.tableView.reloadData()
     }
-
+    
     
     func loadPlacesDataFromFirebase() {
         guard let trip = trip else { return }
@@ -100,22 +99,23 @@ class TripDetailViewController: UIViewController {
                 return
             }
             
-            // 重新根據 placeIds 的順序排列 placesArray
-            let sortedPlaces = placeIds.compactMap { placeId in
-                placesArray.first(where: { $0.id == placeId })
+            if placesArray.count != self.buttonState.count {
+                self.buttonState = Array(repeating: false, count: placesArray.count)
             }
             
-            // 檢查是否成功排序
-            if sortedPlaces.count != placeIds.count {
-                print("加載地點時發生錯誤，地點數量不匹配")
-                return
-            }
-
+            //            // 重新根據 placeIds 的順序排列 placesArray
+            //            let sortedPlaces = placeIds.compactMap { placeId in
+            //                placesArray.first(where: { $0.id == placeId })
+            //            }
+            //
+            //            // 檢查是否成功排序
+            //            if sortedPlaces.count != placeIds.count {
+            //                print("加載地點時發生錯誤，地點數量不匹配")
+            //                return
+            //            }
+            
             // 將資料存儲在 places 陣列中
-            self.places = sortedPlaces
-            
-            self.buttonState = Array(repeating: false, count: self.places.count)
-            
+            self.places = placesArray
             // 更新地點名稱
             self.placeName = self.places.map { $0.name }
             
@@ -133,8 +133,7 @@ class TripDetailViewController: UIViewController {
             }
         }
     }
-
-
+    
     func checkDistances(from currentLocation: CLLocation) {
         
         print("開始計算距離")
@@ -154,7 +153,7 @@ class TripDetailViewController: UIViewController {
             // 檢查是否有足夠的地點資料
             guard index < placeName.count else {
                 print("placeName 陣列中沒有足夠的地點資料，無法檢查 index \(index)")
-                continue // 如果 placeName 中沒有相應的地點，跳過這個迭代
+                continue
             }
             
             if distance <= distanceThreshold {
@@ -171,91 +170,117 @@ class TripDetailViewController: UIViewController {
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        
+        guard let poem = loadedPoem else {
+            let headerView = UIView()
+            headerView.backgroundColor = .deepBlue
+            let label = UILabel()
+            label.text = "詩句加載中"
+            label.textAlignment = .center
+            label.font = UIFont.boldSystemFont(ofSize: 24)
+            headerView.addSubview(label)
+            label.snp.makeConstraints { make in
+                make.center.equalToSuperview()
+            }
+            return headerView
+        }
+        
+        let headerView = UIView()
+        headerView.backgroundColor = UIColor(resource: .deepBlue)
+        
+        let titleLabel = UILabel()
+        titleLabel.text = poem.title
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
+        titleLabel.textAlignment = .center
+        headerView.addSubview(titleLabel)
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(10)
+            make.centerX.equalToSuperview()
+        }
+        
+        // 詩人
+        let poetLabel = UILabel()
+        poetLabel.text = poem.poetry
+        poetLabel.font = UIFont.systemFont(ofSize: 18)
+        poetLabel.textAlignment = .center
+        headerView.addSubview(poetLabel)
+        poetLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(5)
+            make.centerX.equalToSuperview()
+        }
+        
+        // 詩的內容
+        let contentLabel = UILabel()
+        contentLabel.text = poem.content.joined(separator: "\n")
+        contentLabel.font = UIFont.systemFont(ofSize: 16)
+        contentLabel.textAlignment = .center
+        contentLabel.numberOfLines = 0
+        headerView.addSubview(contentLabel)
+        contentLabel.snp.makeConstraints { make in
+            make.top.equalTo(poetLabel.snp.bottom).offset(10)
+            make.centerX.equalToSuperview()
+            make.leading.equalToSuperview().offset(16)
+            make.trailing.equalToSuperview().offset(-16)
+        }
+        
+        return headerView
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 200 
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         250
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let poem = loadedPoem else {
-            // 如果 `Poem` 尚未加載，返回 0
-            return 0
-        }
         
-        // 返回 `Poem` 中 `content` 的行數
-        return poem.content.count
+        return trip?.placeIds.count ?? 0
     }
-
+    
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "tripDetailCell", for: indexPath) as? TripDetailWithPlaceTableViewCell
         cell?.selectionStyle = .none
-
-        // 確保已加載詩詞資料
-        guard let poem = self.loadedPoem else {
-            cell?.verseLabel.text = "詩句加載中"
-            cell?.placeLabel.text = "地點數據加載中"
-            return cell ?? UITableViewCell()
+        
+        let dataIndex = indexPath.row
+        
+        if buttonState.count != places.count {
+            buttonState = Array(repeating: false, count: places.count)
         }
         
-        // 顯示詩詞內容
-        if indexPath.row < poem.content.count {
-            cell?.verseLabel.text = poem.content[indexPath.row]
-        } else {
-            cell?.verseLabel.text = "詩句加載中"
-        }
-
-        // 如果是地點的行
-        if indexPath.row % 2 == 0 {
-            let dataIndex = indexPath.row / 2
+        if !places.isEmpty && dataIndex < places.count {
+            
             let isButtonEnabled = buttonState[dataIndex]
             
-            // 確保已加載地點資料
-            if !places.isEmpty && dataIndex < places.count {
-                let place = places[dataIndex]
-                cell?.placeLabel.text = place.name
-                cell?.completeButton.isHidden = false
-                cell?.completeButton.isEnabled = isButtonEnabled
-                cell?.completeButton.accessibilityIdentifier = place.id
-                cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
-
-                let placeId = place.id
-
-                // 檢查地點是否已完成
-                let isComplete = completedPlaceIds.contains(placeId)
-                cell?.completeButton.isSelected = isComplete
-                cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
-
-                // 顯示更多資訊
-                if isComplete {
-                    cell?.moreInfoLabel.isHidden = false
-//                    cell?.moreInfoLabel.text = poem.secretTexts[dataIndex]
-                } else {
-                    cell?.moreInfoLabel.isHidden = true
-                }
-
-            } else {
-                cell?.placeLabel.text = "無資料"
-                cell?.completeButton.isHidden = true
-            }
-        } else {
-            let dataIndex = (indexPath.row - 1) / 2
+            let place = places[dataIndex]
+            cell?.placeLabel.text = place.name
+            cell?.completeButton.isHidden = false
+            cell?.completeButton.isEnabled = isButtonEnabled
+            cell?.completeButton.accessibilityIdentifier = place.id
+            cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
             
-            // 顯示情境描述
-//            if dataIndex < poem.situationText.count {
-////                cell?.moreInfoLabel.text = poem.situationText[dataIndex]
-//                cell?.moreInfoLabel.isHidden = false
-//            } else {
-//                cell?.moreInfoLabel.isHidden = true
-//            }
-
-            cell?.placeLabel.text = nil
+            let placeId = place.id
+            
+            let isComplete = completedPlaceIds.contains(placeId)
+            cell?.completeButton.isSelected = isComplete
+            cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
+            
+            if isComplete {
+                cell?.moreInfoLabel.isHidden = false
+            } else {
+                cell?.moreInfoLabel.isHidden = true
+            }
+            
+        } else {
+            cell?.placeLabel.text = "無資料"
             cell?.completeButton.isHidden = true
         }
-
+        
         return cell ?? UITableViewCell()
     }
-
-
     
     func setupTableView() {
         view.addSubview(tableView)
@@ -268,7 +293,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.register(TripDetailWithPlaceTableViewCell.self, forCellReuseIdentifier: "tripDetailCell")
         
         // 設置背景顏色為橘色
-        tableView.backgroundColor = UIColor.orange
+//        tableView.backgroundColor = UIColor.orange
         
         // 使用 SnapKit 設置 tableView 的大小等於 safeArea
         tableView.snp.makeConstraints { make in
@@ -278,27 +303,27 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func didTapCompleteButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-
+        
         sender.isSelected = true
         sender.isEnabled = false
-
+        
         let point = sender.convert(CGPoint.zero, to: tableView)
         if let indexPath = tableView.indexPathForRow(at: point) {
             guard let trip = trip else {
                 print("無法獲取行程資訊")
                 return
             }
-
+            
             let placeIndex = indexPath.row / 2
             guard placeIndex < trip.placeIds.count else {
                 print("地點索引超出範圍")
                 return
             }
-
+            
             let placeId = trip.placeIds[placeIndex]
-
+            
             let tripId = trip.id
-
+            
             // 更新 Firebase 資料
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {

@@ -41,39 +41,37 @@ class PopUpView {
 
         fromEstablishToTripDetail = trip
 
-        // 先清空之前的內容
         versesStackView.removeAllArrangedSubviews()
         placesStackView.removeAllArrangedSubviews()
 
-        // 設置背景視圖
         backgroundView.frame = view.bounds
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5) // 設置背景的半透明效果
         view.addSubview(backgroundView)
         
-        // 設置彈出視圖
-        popupView.backgroundColor = UIColor.darkGray
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
+        backgroundView.addGestureRecognizer(tapGesture)
+        
+        popupView.backgroundColor = .deepBlue
         popupView.layer.cornerRadius = 10
         popupView.clipsToBounds = true
         view.addSubview(popupView)
         
         popupView.snp.makeConstraints { make in
             make.center.equalTo(view)
-            make.width.equalTo(view).multipliedBy(0.8)
-            make.height.equalTo(400)
+            make.width.equalTo(view).multipliedBy(0.85)
+            make.height.equalTo(600)
         }
 
         setupConstraints()
 
-        // 使用 poemId 從 Firebase 中查找詩詞資料
         FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
             guard let self = self else { return }
 
             DispatchQueue.main.async {
                 self.titleLabel.text = poem.title
-                self.poetryLabel.text = "\(poem.poetry)"  // 顯示詩人名稱
-                self.tripStyleLabel.text = "風格: \(poem.tag)"  // 假設風格用 tag 表示
+                self.poetryLabel.text = "\(poem.poetry)"
+                self.tripStyleLabel.text = "風格: \(poem.tag)"
                 
-                // 添加詩句
                 for verse in poem.content {
                     let verseLabel = UILabel()
                     verseLabel.text = verse
@@ -83,21 +81,19 @@ class PopUpView {
             }
         }
 
-        // 使用 placeIds 從 Firebase 中查找地點資料
         FirebaseManager.shared.loadPlaces(placeIds: trip.placeIds) { [weak self] places in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
                 for place in places {
                     let placeLabel = UILabel()
-                    placeLabel.text = place.name  // 顯示地點名稱
+                    placeLabel.text = place.name
                     placeLabel.textColor = .white
                     self.placesStackView.addArrangedSubview(placeLabel)
                 }
             }
         }
 
-        // 顯示彈出視圖動畫
         backgroundView.alpha = 0
         popupView.alpha = 0
         UIView.animate(withDuration: 0.3) {
@@ -105,7 +101,6 @@ class PopUpView {
             self.popupView.alpha = 1
         }
     }
-
 
     func setupConstraints() {
         
@@ -118,7 +113,7 @@ class PopUpView {
         popupView.addSubview(startButton)
         
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(popupView).offset(60)
+            make.top.equalTo(popupView).offset(40)
             make.centerX.equalTo(popupView)
         }
         
@@ -162,6 +157,14 @@ class PopUpView {
             make.width.height.equalTo(30)
         }
         
+        // 設置按鈕圖標和顏色
+        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
+        collectButton.tintColor = .white
+        collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
+        
+        startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        startButton.tintColor = .white
+        startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
     }
     
     @objc func dismissPopup() {
@@ -175,7 +178,6 @@ class PopUpView {
             // 完成動畫後移除 popupView 和 backgroundView
             self.popupView.removeFromSuperview()
             self.backgroundView.removeFromSuperview()
-            
         }
     }
     
@@ -198,5 +200,3 @@ class PopUpView {
     }
     
 }
-
-
