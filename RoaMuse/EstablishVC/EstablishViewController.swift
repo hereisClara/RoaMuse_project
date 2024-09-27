@@ -11,11 +11,13 @@ import WeatherKit
 import CoreLocation
 import FirebaseFirestore
 import MJRefresh
+import MapKit
 
 class EstablishViewController: UIViewController {
     
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
+    var matchingPlaces = [Place]()
     
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
@@ -25,7 +27,7 @@ class EstablishViewController: UIViewController {
     private let popupView = PopUpView()
     let locationManager = LocationManager()
     
-//    private var randomTrip: Trip?
+    //    private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
     override func viewDidLoad() {
@@ -36,7 +38,7 @@ class EstablishViewController: UIViewController {
         
         navigationController?.navigationBar.largeTitleTextAttributes = [
             .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
-            ]
+        ]
         
         view.backgroundColor = UIColor(resource: .backgroundGray)
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -96,8 +98,7 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-        print("random")
-//       TODO: 篩選tag
+        //       TODO: 篩選tag
         // 定義當位置更新時的回調
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
@@ -110,8 +111,22 @@ class EstablishViewController: UIViewController {
                     self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords in
                         // Step 4: 基於關鍵字排出行程
                         self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
+                            
+                            if let trip = trip {
+                                // 使用 placeIds 計算交通時間
+                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: self.matchingPlaces) { totalTravelTime, routes in
+                                    if let totalTravelTime = totalTravelTime {
+                                        let totalMinutes = Int(totalTravelTime / 60)
+                                        print("總預估交通時間：\(totalMinutes) 分鐘")
+                                        
+                                        // 你可以在這裡使用 totalTravelTime 或 totalMinutes 做進一步處理
+                                    }
+                                }
+                            }
+                            
                             DispatchQueue.main.async {
                                 // Step 5: 顯示生成的行程，包含行程類別等資訊
+                                guard let trip = trip else { return }
                                 self.popupView.showPopup(on: self.view, with: trip)
                             }
                         }
@@ -119,20 +134,20 @@ class EstablishViewController: UIViewController {
                 }
             }
         }
-
+        
         // 啟動位置更新
         locationManager.startUpdatingLocation()
     }
-
+    
     // 基於 NLP 模型分析詩詞
     func processPoemText(_ inputText: String, completion: @escaping ([String]) -> Void) {
         let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-
+        
         guard let model = try? poemLocationNLP3(configuration: .init()) else {
             print("NLP 模型加載失敗")
             return
         }
-
+        
         var allResults = [String]()
         for segment in textSegments {
             do {
@@ -147,13 +162,14 @@ class EstablishViewController: UIViewController {
         print(Array(Set(allResults)))
         completion(Array(Set(allResults))) // 去重並返回關鍵字
     }
-
+    
+//    TODO: 先判斷資料庫地點有沒有在範圍內的，如果沒有，才去打api
+    
     // 基於關鍵字生成行程
-    func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip) -> Void) {
-        var matchingPlaces = [Place]()
+    func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         
         let dispatchGroup = DispatchGroup()
-
+        
         // 遍歷每個關鍵字並從 Firebase 中查找相應的地點
         for keyword in keywords {
             dispatchGroup.enter()
@@ -168,7 +184,7 @@ class EstablishViewController: UIViewController {
                             PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                                 if let savedPlace = savedPlace {
                                     print("成功保存地點：\(savedPlace.name)")
-                                    matchingPlaces.append(savedPlace)
+                                    self.matchingPlaces.append(savedPlace)
                                 }
                                 dispatchGroup.leave()
                             }
@@ -177,45 +193,131 @@ class EstablishViewController: UIViewController {
                             dispatchGroup.leave()
                         }
                     }
-
+                    
                 } else {
-                    matchingPlaces.append(contentsOf: places)
+                    self.matchingPlaces.append(contentsOf: places)
                     dispatchGroup.leave()
                 }
             }
         }
-
-        // 當所有地點查詢完成後，生成行程
+        
+        // 當所有地點查詢完成後，生成行程並保存到 Firebase
         dispatchGroup.notify(queue: .main) {
-            if matchingPlaces.count >= 3 {
-                let trip = Trip(
-                    poemId: poem.id,
-                    id: UUID().uuidString,
-                    placeIds: matchingPlaces.map { $0.id },
-                    tag: poem.tag,
-                    season: nil,   // 暫時不處理季節
-                    weather: nil,  // 暫時不處理天氣
-                    startTime: nil // 暫時不處理開始時間
-                )
-                completion(trip)
+            if self.matchingPlaces.count >= 1 {
+                let tripData: [String: Any] = [
+                    "poemId": poem.id,
+                    "placeIds": self.matchingPlaces.map { $0.id },
+                    "tag": poem.tag
+                ]
+                
+                // 保存行程到 Firebase 並獲取自動生成的 documentID
+                let db = Firestore.firestore()
+                var documentRef: DocumentReference? = nil
+                documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                    if let error = error {
+                        print("Error saving trip to Firebase: \(error)")
+                        completion(nil)
+                    } else {
+                        guard let documentID = documentRef?.documentID else {
+                            print("未能獲取到 documentID")
+                            completion(nil)
+                            return
+                        }
+                        print("成功保存行程，ID: \(documentID)")
+                        
+                        // 生成具有 documentID 的 Trip
+                        let trip = Trip(
+                            poemId: poem.id,
+                            id: documentID,  // 使用 Firebase 返回的 documentID
+                            placeIds: self.matchingPlaces.map { $0.id },
+                            tag: poem.tag,
+                            season: nil,   // 暫時不處理季節
+                            weather: nil,  // 暫時不處理天氣
+                            startTime: nil // 暫時不處理開始時間
+                        )
+                        completion(trip)
+                    }
+                }
             } else {
                 print("沒有足夠的地點來生成行程")
+                completion(nil)
             }
         }
     }
-    // 根据关键词生成行程的类别标签
-    func determineTripTag(from keywords: [String]) -> Int {
-        // 这里你可以根据关键词逻辑来判断属于哪一类行程，返回对应的类别标签
-        if keywords.contains("海灘") {
-            return 1 // 例如：海灘類行程
-        } else if keywords.contains("山") {
-            return 2 // 山區類行程
-        } else {
-            return 0 // 默認類型
+    
+    func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
+        let request = MKDirections.Request()
+        
+        // 設置起點與終點
+        let sourcePlacemark = MKPlacemark(coordinate: startLocation)
+        let destinationPlacemark = MKPlacemark(coordinate: endLocation)
+        
+        request.source = MKMapItem(placemark: sourcePlacemark)
+        request.destination = MKMapItem(placemark: destinationPlacemark)
+        
+        // 設定交通方式 (例如：開車、步行)
+        request.transportType = .automobile  // 或者 .walking
+        
+        // 計算路線
+        let directions = MKDirections(request: request)
+        directions.calculate { response, error in
+            if let error = error {
+                print("Error calculating route: \(error)")
+                completion(nil, nil)
+                return
+            }
+            
+            if let route = response?.routes.first {
+                // 回傳路線以及預估的時間
+                completion(route.expectedTravelTime, route)
+            } else {
+                completion(nil, nil)
+            }
         }
     }
-
     
+    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [MKRoute]?) -> Void) {
+        var totalTime: TimeInterval = 0
+        var routes = [MKRoute]()  // 用來存放每段路線的詳細資訊
+        let dispatchGroup = DispatchGroup()
+        
+        // Step 1: 計算從當前位置到第一個地點的時間
+        if let firstPlace = places.first {
+            let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
+            
+            dispatchGroup.enter()
+            calculateRoute(from: currentLocation, to: firstPlaceLocation) { travelTime, route in
+                if let travelTime = travelTime, let route = route {
+                    totalTime += travelTime
+                    routes.append(route)  // 保存路線資訊
+                    print("從當前位置到第一個地點的時間：\(travelTime) 秒")
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Step 2: 計算地點之間的時間
+        for num in 0..<(places.count - 1) {
+            let startLocation = CLLocationCoordinate2D(latitude: places[num].latitude, longitude: places[num].longitude)
+            let endLocation = CLLocationCoordinate2D(latitude: places[num + 1].latitude, longitude: places[num + 1].longitude)
+            
+            dispatchGroup.enter()
+            calculateRoute(from: startLocation, to: endLocation) { travelTime, route in
+                if let travelTime = travelTime, let route = route {
+                    totalTime += travelTime
+                    routes.append(route)  // 保存路線資訊
+                    print("從地點 \(num) 到地點 \(num + 1) 的時間：\(travelTime) 秒")
+                }
+                dispatchGroup.leave()
+            }
+        }
+        
+        // Step 3: 返回總時間和詳細路線
+        dispatchGroup.notify(queue: .main) {
+            print("總交通時間：\(totalTime) 秒")
+            completion(totalTime, routes)
+        }
+    }
 }
 
 extension EstablishViewController: PopupViewDelegate {
