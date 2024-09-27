@@ -17,7 +17,6 @@ class PopUpView {
     
     weak var delegate: PopupViewDelegate?
     
-    // 保存彈出視窗和背景視圖
     private var popupView = UIView()
     private var backgroundView = UIView()
     
@@ -34,53 +33,70 @@ class PopUpView {
     var onTripSelected: ((Trip) -> Void)?
     var fromEstablishToTripDetail: Trip?
     
-    
     init() {}
     
     func showPopup(on view: UIView, with trip: Trip) {
-        fromEstablishToTripDetail = trip
         
+        print("showPopup")
+
+        fromEstablishToTripDetail = trip
+
+        // 先清空之前的內容
         versesStackView.removeAllArrangedSubviews()
         placesStackView.removeAllArrangedSubviews()
 
-        // 加載詩詞資料
-        FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
-            guard let self = self else { return }
-            
-            DispatchQueue.main.async {
-                    self.titleLabel.text = poem.title
-                    self.poetryLabel.text = poem.poetry
-
-                    // 添加詩句
-                    for verse in poem.content {
-                        let verseLabel = UILabel()
-                        verseLabel.text = verse
-                        verseLabel.textColor = .white
-                        self.versesStackView.addArrangedSubview(verseLabel)
-                    }
-                }
+        // 設置背景視圖
+        backgroundView.frame = view.bounds
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5) // 設置背景的半透明效果
+        view.addSubview(backgroundView)
+        
+        // 設置彈出視圖
+        popupView.backgroundColor = UIColor.darkGray
+        popupView.layer.cornerRadius = 10
+        popupView.clipsToBounds = true
+        view.addSubview(popupView)
+        
+        popupView.snp.makeConstraints { make in
+            make.center.equalTo(view)
+            make.width.equalTo(view).multipliedBy(0.8)
+            make.height.equalTo(400)
         }
 
-        // 加載地點資料
+        setupConstraints()
+
+        // 使用 poemId 從 Firebase 中查找詩詞資料
+        FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
+            guard let self = self else { return }
+
+            DispatchQueue.main.async {
+                self.titleLabel.text = poem.title
+                self.poetryLabel.text = "\(poem.poetry)"  // 顯示詩人名稱
+                self.tripStyleLabel.text = "風格: \(poem.tag)"  // 假設風格用 tag 表示
+                
+                // 添加詩句
+                for verse in poem.content {
+                    let verseLabel = UILabel()
+                    verseLabel.text = verse
+                    verseLabel.textColor = .white
+                    self.versesStackView.addArrangedSubview(verseLabel)
+                }
+            }
+        }
+
+        // 使用 placeIds 從 Firebase 中查找地點資料
         FirebaseManager.shared.loadPlaces(placeIds: trip.placeIds) { [weak self] places in
             guard let self = self else { return }
             
             DispatchQueue.main.async {
                 for place in places {
                     let placeLabel = UILabel()
-                    placeLabel.text = place.name
+                    placeLabel.text = place.name  // 顯示地點名稱
                     placeLabel.textColor = .white
                     self.placesStackView.addArrangedSubview(placeLabel)
                 }
             }
         }
 
-        // 設置彈出視圖的其他部分
-        tripStyleLabel.text = styles[trip.tag].name
-        titleLabel.textColor = .white
-        poetryLabel.textColor = .white
-        tripStyleLabel.textColor = .white
-        
         // 顯示彈出視圖動畫
         backgroundView.alpha = 0
         popupView.alpha = 0
@@ -90,7 +106,7 @@ class PopUpView {
         }
     }
 
-    
+
     func setupConstraints() {
         
         popupView.addSubview(titleLabel)
