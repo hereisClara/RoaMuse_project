@@ -20,7 +20,7 @@ class TripDetailViewController: UIViewController {
     private let locationManager = LocationManager()
     private var places = [Place]()
     private var placeName = [String]()
-    let distanceThreshold: Double = 5000
+    let distanceThreshold: Double = 15000
     private var buttonState = [Bool]()
     var selectedIndexPath: IndexPath?
     var completedPlaceIds: [String] = []
@@ -30,6 +30,7 @@ class TripDetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationItem.largeTitleDisplayMode = .never
+        tabBarController?.tabBar.isHidden = false
         view.backgroundColor = UIColor(resource: .backgroundGray)
         
         let shareButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(shareButtonTapped))

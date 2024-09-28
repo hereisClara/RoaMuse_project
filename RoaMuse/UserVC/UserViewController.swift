@@ -315,7 +315,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 設置 Header
         let headerView = UIView()
         headerView.backgroundColor = .lightGray
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 120)
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 180)  // 調整高度以容納行走地圖按鈕
         
         userNameLabel.text = userName
         userNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
@@ -335,14 +335,16 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         fansLabel.font = UIFont.systemFont(ofSize: 16)
         headerView.addSubview(fansLabel)
         
-        fansLabel.snp.makeConstraints { make in
-            make.leading.equalTo(awardsLabel)
-            make.top.equalTo(awardsLabel.snp.bottom).offset(8)
-        }
+        // 新增「行走地圖」按鈕
+        let mapButton = UIButton(type: .system)
+        mapButton.setTitle("行走地圖", for: .normal)
+        mapButton.backgroundColor = .systemBlue
+        mapButton.setTitleColor(.white, for: .normal)
+        mapButton.layer.cornerRadius = 10
+        mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
+        headerView.addSubview(mapButton)
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
-        avatarImageView.addGestureRecognizer(tapGesture)  // 為 avatar 增加點擊手勢
-        
+        // 設置約束
         userNameLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(16)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
@@ -359,6 +361,19 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.leading.equalTo(headerView).offset(15)
         }
         
+        fansLabel.snp.makeConstraints { make in
+            make.leading.equalTo(awardsLabel)
+            make.top.equalTo(awardsLabel.snp.bottom).offset(8)
+        }
+        
+        // 設置「行走地圖」按鈕的約束
+        mapButton.snp.makeConstraints { make in
+            make.top.equalTo(fansLabel.snp.bottom).offset(16)
+            make.centerX.equalTo(headerView)
+            make.width.equalTo(120)
+            make.height.equalTo(40)
+        }
+        
         tableView.tableHeaderView = headerView
         
         // 設置 TableView 大小等於 safeArea
@@ -366,7 +381,15 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
     }
-    
+
+    @objc func handleMapButtonTapped() {
+        // 處理「行走地圖」按鈕的點擊事件
+        print("行走地圖按鈕被點擊")
+        // 可以導航到對應的地圖頁面或執行其他功能
+        let mapViewController = MapViewController()  // 假設你有一個地圖控制器
+        self.navigationController?.pushViewController(mapViewController, animated: true)
+    }
+
     // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         posts.count

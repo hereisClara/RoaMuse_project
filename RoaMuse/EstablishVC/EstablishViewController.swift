@@ -37,6 +37,7 @@ class EstablishViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tabBarController?.tabBar.isHidden = false
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "建立"
@@ -261,11 +262,6 @@ class EstablishViewController: UIViewController {
                             weather: nil,
                             startTime: nil
                         )
-                        
-                        // 調用 popup 顯示現有行程
-                        DispatchQueue.main.async {
-                            self.popupView.showPopup(on: self.view, with: existingTrip, city: self.city, districts: self.districts)
-                        }
                         
                         // 調用 completion 並傳回存在的行程
                         completion(existingTrip)

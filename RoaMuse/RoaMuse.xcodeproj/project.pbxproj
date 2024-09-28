@@ -48,6 +48,7 @@
 		AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */; };
 		AC9775712CA551CB00EF828A /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775702CA551CB00EF828A /* Config.plist */; };
 		AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */; };
+		AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775742CA7E22100EF828A /* MapViewController.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -113,6 +114,7 @@
 		AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDataManager.swift; sourceTree = "<group>"; };
 		AC9775702CA551CB00EF828A /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 		AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoUploadViewController.swift; sourceTree = "<group>"; };
+		AC9775742CA7E22100EF828A /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -223,6 +225,7 @@
 			isa = PBXGroup;
 			children = (
 				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
+				AC9775742CA7E22100EF828A /* MapViewController.swift */,
 			);
 			path = UserVC;
 			sourceTree = "<group>";
@@ -514,6 +517,7 @@
 				AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
 				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
+				AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
