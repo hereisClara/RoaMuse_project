@@ -242,7 +242,6 @@ class PopUpView {
             }
         }
 
-    
     @objc func dismissPopup() {
         UIView.animate(withDuration: 0.3, animations: {
             self.popupView.alpha = 0

@@ -1,32 +1,29 @@
-//
-//  PhotoUploadViewController.swift
-//  RoaMuse
-//
-//  Created by 小妍寶 on 2024/9/27.
-//
-
 import UIKit
 import SnapKit
 import Photos
 
 class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    
+
     let imageView = UIImageView()
     let templateImageView = UIImageView()
-    
+
     let uploadButton = UIButton(type: .system)
     let saveButton = UIButton(type: .system)
     let shareButton = UIButton(type: .system)
-    
+
     var lastScale: CGFloat = 1.0
     var initialCenter: CGPoint = .zero
     var transparentArea: CGRect!
-    
+
+    var imageViewConstraints: [Constraint] = [] // 保存 ImageView 的約束
+    let minWidthScale: CGFloat = UIScreen.main.bounds.width
+    let minHeightScale: CGFloat = UIScreen.main.bounds.height
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         tabBarController?.tabBar.isHidden = true
-        
+
         view.addSubview(templateImageView)
         templateImageView.image = UIImage(named: "transparent_image")  // 模板图片名称
         templateImageView.contentMode = .scaleAspectFit
@@ -34,25 +31,22 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         templateImageView.snp.makeConstraints { make in
             make.top.bottom.centerX.equalTo(view)
         }
-        
+
         imageView.contentMode = .scaleAspectFill
         imageView.isUserInteractionEnabled = true  // 启用用户交互
         view.insertSubview(imageView, belowSubview: templateImageView)  // 将图片视图置于模板下面
-        imageView.snp.makeConstraints { make in
-            make.width.height.equalTo(templateImageView)
-            make.center.equalTo(templateImageView)
-        }
-        
+        setupImageViewConstraints()
+
         setupUploadButton()
-        
+
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
         imageView.addGestureRecognizer(panGesture)
         imageView.addGestureRecognizer(pinchGesture)
-        
+
         setupSaveAndShareButtons()
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         defineTransparentArea()
@@ -60,7 +54,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             resetImageViewPositionAndSize()
         }
     }
-    
+
     func defineTransparentArea() {
         let templateFrame = templateImageView.frame
         let width = templateFrame.width * 0.8
@@ -69,36 +63,36 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let yCoordinate = templateFrame.origin.y + (templateFrame.height - height) / 2
         transparentArea = CGRect(x: xCoordinate, y: yCoordinate, width: width, height: height)
     }
-    
+
     func setupUploadButton() {
         uploadButton.setImage(UIImage(systemName: "arrow.up.circle.fill"), for: .normal)
         uploadButton.tintColor = .systemBlue
         uploadButton.addTarget(self, action: #selector(uploadPhoto), for: .touchUpInside)
-        
+
         view.addSubview(uploadButton)
-        
+
         uploadButton.snp.makeConstraints { make in
             make.top.equalTo(templateImageView.snp.bottom).offset(-150)
             make.centerX.equalTo(view)
             make.width.height.equalTo(50)
         }
     }
-    
+
     func setupSaveAndShareButtons() {
         saveButton.setTitle("保存到相簿", for: .normal)
         saveButton.addTarget(self, action: #selector(saveToPhotoAlbum), for: .touchUpInside)
         view.addSubview(saveButton)
-        
+
         shareButton.setTitle("分享到 IG", for: .normal)
         view.addSubview(shareButton)
-        
+
         saveButton.snp.makeConstraints { make in
             make.bottom.equalTo(view.snp.bottom).offset(-100)
             make.leading.equalTo(view.snp.leading).offset(5)
             make.width.equalTo(150)
             make.height.equalTo(50)
         }
-        
+
         shareButton.snp.makeConstraints { make in
             make.bottom.equalTo(view.snp.bottom).offset(-100)
             make.trailing.equalTo(view.snp.trailing).offset(-5)
@@ -106,14 +100,14 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.height.equalTo(50)
         }
     }
-    
+
     @objc func uploadPhoto() {
         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
         imagePicker.sourceType = .photoLibrary
         self.present(imagePicker, animated: true, completion: nil)
     }
-    
+
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let selectedImage = info[.originalImage] as? UIImage {
             dismiss(animated: true, completion: {
@@ -122,16 +116,16 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             })
         }
     }
-    
+
     func resetImageViewPositionAndSize() {
         guard let image = imageView.image else { return }
-        
+
         let imageAspectRatio = image.size.width / image.size.height
         let transparentAreaAspectRatio = transparentArea.width / transparentArea.height
-        
+
         var newWidth: CGFloat
         var newHeight: CGFloat
-        
+
         if imageAspectRatio > transparentAreaAspectRatio {
             newWidth = transparentArea.width
             newHeight = newWidth / imageAspectRatio
@@ -139,30 +133,43 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             newHeight = transparentArea.height
             newWidth = newHeight * imageAspectRatio
         }
-        
-        let xOffset = transparentArea.origin.x + (transparentArea.width - newWidth) / 2
-        let yOffset = transparentArea.origin.y + (transparentArea.height - newHeight) / 2
-        
-        imageView.frame = CGRect(x: xOffset, y: yOffset, width: newWidth, height: newHeight)
-        
-        imageView.transform = .identity
-        lastScale = 1.0
-        initialCenter = imageView.center
+
+        updateImageViewConstraints(width: newWidth, height: newHeight)
+    }
+
+    // 设置 imageView 的约束
+    func setupImageViewConstraints() {
+        imageViewConstraints = []
+        imageView.snp.makeConstraints { make in
+            imageViewConstraints.append(make.width.equalTo(templateImageView).constraint)
+            imageViewConstraints.append(make.height.equalTo(templateImageView).constraint)
+            imageViewConstraints.append(make.center.equalTo(templateImageView).constraint)
+        }
+    }
+
+    // 更新 imageView 的约束
+    func updateImageViewConstraints(width: CGFloat, height: CGFloat) {
+        imageView.snp.remakeConstraints { make in
+            make.width.equalTo(width)
+            make.height.equalTo(height)
+            make.center.equalTo(templateImageView)
+        }
+        view.layoutIfNeeded()
     }
 
     func captureScreenshotExcludingViews(_ excludedViews: [UIView]) -> UIImage? {
-        // 暫時隱藏排除的視圖
+        // 暂时隐藏排除的视图
         excludedViews.forEach { $0.isHidden = true }
-        
-        // 截圖
+
+        // 截图
         let renderer = UIGraphicsImageRenderer(size: view.bounds.size)
         let screenshot = renderer.image { context in
             view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
         }
-        
-        // 恢復視圖可見性
+
+        // 恢复视图可见性
         excludedViews.forEach { $0.isHidden = false }
-        
+
         return screenshot
     }
 
@@ -171,10 +178,10 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             UIImageWriteToSavedPhotosAlbum(screenshot, self, #selector(imageSaved(_:didFinishSavingWithError:contextInfo:)), nil)
         }
     }
-    
+
     @objc func imageSaved(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
         if let error = error {
-            print("保存失敗: \(error.localizedDescription)")
+            print("保存失败: \(error.localizedDescription)")
         } else {
             print("保存成功")
         }
@@ -184,21 +191,55 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         guard let view = gesture.view else { return }
 
         if gesture.state == .began || gesture.state == .changed {
-            view.transform = view.transform.scaledBy(x: gesture.scale, y: gesture.scale)
-            gesture.scale = 1.0
+            let currentWidth = imageView.frame.width * gesture.scale
+            let currentHeight = imageView.frame.height * gesture.scale
+
+            // 確保縮放不會讓圖片小於螢幕的長寬
+            if currentWidth >= minWidthScale && currentHeight >= minHeightScale {
+                view.transform = view.transform.scaledBy(x: gesture.scale, y: gesture.scale)
+                gesture.scale = 1.0
+            }
         }
+
+        // 更新约束以确保缩放后图片不会超出透明区域
+        ensureImageViewWithinBounds()
     }
 
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
-        
+
         if gesture.state == .began {
             initialCenter = imageView.center
         }
-        
+
         if gesture.state == .changed {
             let newCenter = CGPoint(x: initialCenter.x + translation.x, y: initialCenter.y + translation.y)
             imageView.center = newCenter
+        }
+
+        if gesture.state == .ended || gesture.state == .changed {
+            ensureImageViewWithinBounds()
+        }
+    }
+
+    // 确保 imageView 不超出 transparentArea 的范围
+    func ensureImageViewWithinBounds() {
+        let imageFrame = imageView.frame
+
+        // 检查左右边界
+        if imageFrame.minX > transparentArea.minX {
+            imageViewConstraints[0].update(offset: transparentArea.minX)
+        }
+        if imageFrame.maxX < transparentArea.maxX {
+            imageViewConstraints[0].update(offset: transparentArea.maxX - imageFrame.width)
+        }
+
+        // 检查上下边界
+        if imageFrame.minY > transparentArea.minY {
+            imageViewConstraints[1].update(offset: transparentArea.minY)
+        }
+        if imageFrame.maxY < transparentArea.maxY {
+            imageViewConstraints[1].update(offset: transparentArea.maxY - imageFrame.height)
         }
     }
 }

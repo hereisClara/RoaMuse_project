@@ -56,22 +56,24 @@ class TripDetailViewController: UIViewController {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
             guard let self = self else { return }
-            
-            // 確保 completedPlaces 被正確解析
+
+            // 清空當前的 completedPlaceIds 列表
             self.completedPlaceIds = []
+            
+            // 遍歷 completedPlaces，找到符合當前行程 tripId 的 completedPlace
             for completedPlace in completedPlaces {
                 if let tripId = completedPlace["tripId"] as? String,
                    let placeIds = completedPlace["placeIds"] as? [String],
                    tripId == self.trip?.id {
+                    // 將符合條件的 placeIds 加入 completedPlaceIds 中
                     self.completedPlaceIds.append(contentsOf: placeIds)
                 }
             }
-            
-            // 確保在資料加載完成後更新UI
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
         }
+
     }
     
     @objc func shareButtonTapped() {
@@ -131,20 +133,7 @@ class TripDetailViewController: UIViewController {
                 self.buttonState = Array(repeating: false, count: placesArray.count)
             }
             
-            //            // 重新根據 placeIds 的順序排列 placesArray
-            //            let sortedPlaces = placeIds.compactMap { placeId in
-            //                placesArray.first(where: { $0.id == placeId })
-            //            }
-            //
-            //            // 檢查是否成功排序
-            //            if sortedPlaces.count != placeIds.count {
-            //                print("加載地點時發生錯誤，地點數量不匹配")
-            //                return
-            //            }
-            
-            // 將資料存儲在 places 陣列中
             self.places = placesArray
-            // 更新地點名稱
             self.placeName = self.places.map { $0.name }
             
             print("Updated placeName:", self.placeName)
