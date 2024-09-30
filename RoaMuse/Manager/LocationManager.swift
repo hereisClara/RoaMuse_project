@@ -35,7 +35,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
             onLocationUpdate?(location)
-            stopUpdatingLocation()
+//            stopUpdatingLocation()
         } else {
             print("未獲取到有效位置數據")
         }

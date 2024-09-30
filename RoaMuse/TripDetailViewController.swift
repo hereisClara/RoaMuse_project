@@ -13,6 +13,7 @@ import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
     
+    var currentTargetIndex: Int = 0
     var loadedPoem: Poem?
     var trip: Trip?  
     var onTripReceivedFromHome: ((Trip) -> Void)?
@@ -56,7 +57,7 @@ class TripDetailViewController: UIViewController {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
             guard let self = self else { return }
-
+            
             // 清空當前的 completedPlaceIds 列表
             self.completedPlaceIds = []
             
@@ -74,12 +75,14 @@ class TripDetailViewController: UIViewController {
             }
         }
         
+        // 开始位置更新
         self.locationManager.startUpdatingLocation()
         self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-            self?.checkDistanceForPlace(at: 0, from: currentLocation)  // 只檢查第一個地點
+            guard let self = self else { return }
+            
+            // 检查与当前目标地点的距离
+            self.checkDistanceForCurrentTarget(from: currentLocation)
         }
-
-
     }
     
     @objc func shareButtonTapped() {
@@ -128,58 +131,66 @@ class TripDetailViewController: UIViewController {
         
         FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] (placesArray) in
             guard let self = self else { return }
-
+            
             // 打印調試信息，檢查placesArray是否有正確加載
             print("placesArray loaded from Firebase: \(placesArray)")
-
+            
             // 对 placesArray 进行排序
             self.places = trip.placeIds.compactMap { placeId in
                 return placesArray.first(where: { $0.id == placeId })
             }
-
+            
             // 打印已經排序後的 places
             print("Sorted places: \(self.places)")
-
+            
             // 更新其他相关数据
             self.placeName = self.places.map { $0.name }
-
+            
             DispatchQueue.main.async {
-                print("Places and placeNames updated: \(self.placeName)")
+                // 初始化 buttonState
+                if self.buttonState.count != self.places.count {
+                    self.buttonState = Array(repeating: false, count: self.places.count)
+                }
                 self.tableView.reloadData()
+                // 开始位置更新
+                self.locationManager.startUpdatingLocation()
+                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+                    guard let self = self else { return }
+                    self.checkDistanceForCurrentTarget(from: currentLocation)
+                }
             }
-
-//            // 开始位置更新
-//            self.locationManager.startUpdatingLocation()
-//            self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-//                self?.checkDistances(from: currentLocation)
-//            }
+            
+            //            // 开始位置更新
+            //            self.locationManager.startUpdatingLocation()
+            //            self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+            //                self?.checkDistances(from: currentLocation)
+            //            }
         }
-
+        
     }
     
-    func checkDistanceForPlace(at index: Int, from currentLocation: CLLocation) {
-        print("呼叫～～～")
-        guard index < places.count else {
-            print("已完成所有地點的距離檢查")
+    func checkDistanceForCurrentTarget(from currentLocation: CLLocation) {
+        guard currentTargetIndex < places.count else {
+            print("所有地点都已完成")
+            self.locationManager.stopUpdatingLocation()
             return
         }
         
-        let place = places[index]
+        let place = places[currentTargetIndex]
         let targetLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
         let distance = currentLocation.distance(from: targetLocation)
-        print("距離 \(place.name): \(distance) 公尺")
+        print("距离 \(place.name): \(distance) 米")
         
         if distance <= distanceThreshold {
-            print("距離小於或等於 \(distanceThreshold) 公尺，地點 \(place.name) 可用")
-            buttonState[index] = true
-            tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .none)
+            print("距离小于或等于 \(distanceThreshold) 米，地点 \(place.name) 可用")
+            buttonState[currentTargetIndex] = true
+            tableView.reloadRows(at: [IndexPath(row: currentTargetIndex, section: 0)], with: .none)
         } else {
-            print("距離大於 \(distanceThreshold) 公尺，地點 \(place.name) 不可用")
-            buttonState[index] = false
-            tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .none)
+            print("距离大于 \(distanceThreshold) 米，地点 \(place.name) 不可用")
+            buttonState[currentTargetIndex] = false
+            tableView.reloadRows(at: [IndexPath(row: currentTargetIndex, section: 0)], with: .none)
         }
     }
-
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -257,39 +268,32 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "tripDetailCell", for: indexPath) as? TripDetailWithPlaceTableViewCell
         cell?.selectionStyle = .none
-
+        
         let dataIndex = indexPath.row
-
+        
         if buttonState.count != places.count {
             buttonState = Array(repeating: false, count: places.count)
         }
-
+        
         if !places.isEmpty && dataIndex < places.count {
             let isButtonEnabled = buttonState[dataIndex]
             let place = places[dataIndex]
             cell?.placeLabel.text = place.name
             cell?.completeButton.isHidden = false
-            cell?.completeButton.isEnabled = isButtonEnabled
-
+            //            cell?.completeButton.isEnabled = isButtonEnabled
+            
             // Remove existing targets to prevent multiple triggers
             cell?.completeButton.removeTarget(nil, action: nil, for: .allEvents)
             cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
-
+            
             cell?.completeButton.tag = indexPath.row
             cell?.completeButton.accessibilityIdentifier = place.id
-
+            
             // Rest of your code...
             let isComplete = self.completedPlaceIds.contains(place.id)
             
-            // Configure the button based on completion status
-            if indexPath.row == 0 {
-                cell?.completeButton.isEnabled = true  // 第一个地點總是啟用
-            } else {
-                let previousPlace = places[indexPath.row - 1]
-                let isPreviousPlaceComplete = completedPlaceIds.contains(previousPlace.id)
-                cell?.completeButton.isEnabled = isPreviousPlaceComplete
-            }
-
+            cell?.completeButton.isEnabled = (indexPath.row == currentTargetIndex) && buttonState[indexPath.row]
+            
             cell?.completeButton.isSelected = isComplete
             cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
             cell?.moreInfoLabel.isHidden = !isComplete
@@ -297,10 +301,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             cell?.placeLabel.text = "無資料"
             cell?.completeButton.isHidden = true
         }
-
+        
         return cell ?? UITableViewCell()
     }
-
+    
     
     func setupTableView() {
         view.addSubview(tableView)
@@ -325,39 +329,30 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             print("无法获取行程信息")
             return
         }
-
+        
+        let index = sender.tag
+        
+        // 确保只有当前目标地点的按钮可以点击
+        guard index == currentTargetIndex else {
+            print("不是当前目标地点，无法完成")
+            return
+        }
+        
         let tripId = trip.id
-        let index = sender.tag  // 使用tag來判斷當前行
-
+        
         // 更新 Firebase 数据
         FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
             if success {
                 print("地点 \(placeId) 和行程 \(tripId) 成功更新")
-
+                
                 DispatchQueue.main.async {
                     sender.isSelected = true
                     sender.isEnabled = false
                     self.completedPlaceIds.append(placeId)
-
-                    // 找到當前 placeId 的對應 indexPath 並重載
-                    if let nextIndex = self.places.firstIndex(where: { $0.id == placeId }) {
-                        let nextPlaceIndex = nextIndex + 1
-
-                        // 更新當前行和下一行的狀態
-                        self.tableView.reloadRows(at: [IndexPath(row: nextIndex, section: 0)], with: .none)
-
-                        // 手動將下一個按鈕設為可選狀態
-                        if nextPlaceIndex < self.places.count {
-                            // 更新 buttonState 讓下一個按鈕可用
-                            self.buttonState[nextPlaceIndex] = true
-                            self.tableView.reloadRows(at: [IndexPath(row: nextPlaceIndex, section: 0)], with: .none)
-                            
-                            // 開始檢查下一個地點的距離，使用 onLocationUpdate 持續檢查位置
-                            self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-                                self?.checkDistanceForPlace(at: nextPlaceIndex, from: currentLocation)
-                            }
-                        }
-                    }
+                    self.buttonState[self.currentTargetIndex] = false // 禁用已完成地点的按钮
+                    self.currentTargetIndex += 1
+                    // 更新下一目标地点的按钮状态
+                    self.tableView.reloadData()
                 }
             } else {
                 print("更新失败")
