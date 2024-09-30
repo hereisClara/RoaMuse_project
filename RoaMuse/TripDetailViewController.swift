@@ -36,7 +36,6 @@ class TripDetailViewController: UIViewController {
         let shareButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(shareButtonTapped))
         self.navigationItem.rightBarButtonItem = shareButton
         
-        
         if let poemId = trip?.poemId {
             FirebaseManager.shared.loadPoemById(poemId) { [weak self] poem in
                 guard let self = self else { return }
@@ -55,10 +54,23 @@ class TripDetailViewController: UIViewController {
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] placeIds in
-            self?.completedPlaceIds = placeIds
-            print("獲取的 completedPlaceIds: \(self?.completedPlaceIds)")
-            self?.tableView.reloadData()
+        FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
+            guard let self = self else { return }
+            
+            // 確保 completedPlaces 被正確解析
+            self.completedPlaceIds = []
+            for completedPlace in completedPlaces {
+                if let tripId = completedPlace["tripId"] as? String,
+                   let placeIds = completedPlace["placeIds"] as? [String],
+                   tripId == self.trip?.id {
+                    self.completedPlaceIds.append(contentsOf: placeIds)
+                }
+            }
+            
+            // 確保在資料加載完成後更新UI
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
         }
     }
     
@@ -279,10 +291,24 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
             
             let placeId = place.id
+            let tripId = trip?.id ?? ""
             
-            let isComplete = completedPlaceIds.contains(placeId)
-            cell?.completeButton.isSelected = isComplete
-            cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
+            // 檢查 tripId 和 placeId 是否在 completedPlaceIds 中
+            let isComplete = self.completedPlaceIds.contains(place.id)
+            
+            if indexPath.row == 0 {
+                cell?.completeButton.isEnabled = true
+            } else {
+                // 檢查前一個地點的完成狀態
+                let previousPlace = places[indexPath.row - 1]
+                let isPreviousPlaceComplete = completedPlaceIds.contains(previousPlace.id)
+                
+                // 當前地點按鈕是否可點選取決於前一個地點是否完成
+                cell?.completeButton.isEnabled = isPreviousPlaceComplete
+            }
+            
+            cell?.completeButton.isSelected = self.completedPlaceIds.contains(place.id)
+            cell?.completeButton.setTitle(cell?.completeButton.isSelected == true ? "已完成" : "完成", for: .normal)
             
             if isComplete {
                 cell?.moreInfoLabel.isHidden = false
@@ -301,17 +327,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func setupTableView() {
         view.addSubview(tableView)
         
-        // 設置 delegate 和 dataSource
         tableView.delegate = self
         tableView.dataSource = self
         
-        // 註冊 cell
         tableView.register(TripDetailWithPlaceTableViewCell.self, forCellReuseIdentifier: "tripDetailCell")
         
-        // 設置背景顏色為橘色
-//        tableView.backgroundColor = UIColor.orange
-        
-        // 使用 SnapKit 設置 tableView 的大小等於 safeArea
         tableView.snp.makeConstraints { make in
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
@@ -353,7 +373,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 } else {
                     print("更新失敗")
                     DispatchQueue.main.async {
-                        // 如果更新失敗，將按鈕恢復為未完成狀態
                         sender.isSelected = false
                         sender.isEnabled = true
                     }

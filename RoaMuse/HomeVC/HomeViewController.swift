@@ -243,7 +243,6 @@ class HomeViewController: UIViewController {
     @objc func randomTripEntryButtonDidTapped() {
         FirebaseManager.shared.loadAllTrips { [weak self] trips in
             guard let self = self else { return }
-            print("    >>>>", trips)
             if let randomTrip = trips.randomElement() {
                 self.randomTrip = randomTrip
 

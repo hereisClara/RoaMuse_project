@@ -355,7 +355,6 @@ class ArticleViewController: UIViewController {
                 FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
                     DispatchQueue.main.async {
                         self.tripTitleLabel.text = poem.title  // 這裡使用 poem.title 而不是 trip.poem.title
-                        print(self.tripTitleLabel.text ?? "No title")
                         
                         // 手動更新表頭佈局
                         if let headerView = self.tableView.tableHeaderView {

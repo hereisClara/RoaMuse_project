@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import SnapKit
 import FirebaseFirestore
+import CoreLocation
 
 protocol PopupViewDelegate: AnyObject {
     func navigateToTripDetailPage()
@@ -20,6 +21,8 @@ class PopUpView {
     
     private var popupView = UIView()
     private var backgroundView = UIView()
+    
+    var tripId: String?
     
     let titleLabel = UILabel()
     let poetryLabel = UILabel()
@@ -41,8 +44,10 @@ class PopUpView {
     func showPopup(on view: UIView, with trip: Trip, city: String, districts: [String]) {
         
         guard let window = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
-                return
-            }
+            return
+        }
+        self.tripId = trip.id
+        checkIfTripBookmarked()
         
         fromEstablishToTripDetail = trip
         
@@ -67,12 +72,12 @@ class PopUpView {
             make.width.equalTo(view).multipliedBy(0.85)
             make.height.equalTo(600)
         }
-
+        
         setupConstraints()
-
+        
         FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
             guard let self = self else { return }
-
+            
             DispatchQueue.main.async {
                 self.titleLabel.text = poem.title
                 self.poetryLabel.text = "\(poem.poetry)"
@@ -86,10 +91,8 @@ class PopUpView {
                     self.versesStackView.addArrangedSubview(verseLabel)
                 }
             }
-            
-            print("/`/`/`/``/`/`/`/``/        ",poem.title)
         }
-
+        
         FirebaseManager.shared.loadPlaces(placeIds: trip.placeIds) { [weak self] places in
             guard let self = self else { return }
             
@@ -100,18 +103,19 @@ class PopUpView {
                     placeLabel.text = place.name
                     placeLabel.textColor = .white
                     self.placesStackView.addArrangedSubview(placeLabel)
+
+                    // 進行反向編碼
+                    let location = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                    self.reverseGeocodeLocation(location) { city, district in
+                        if let city = city, let district = district {
+                            self.cityLabel.text = "城市: \(city)"
+                            let districtLabel = UILabel()
+                            districtLabel.text = "#\(district)"
+                            districtLabel.textColor = .white
+                            self.districtsStackView.addArrangedSubview(districtLabel)
+                        }
+                    }
                 }
-            }
-        }
-        
-        DispatchQueue.main.async {
-            self.cityLabel.text = "城市: \(city)"
-            self.cityLabel.textColor = .white
-            for district in districts {
-                let districtLabel = UILabel()
-                districtLabel.text = "#\(district)"
-                districtLabel.textColor = .white
-                self.districtsStackView.addArrangedSubview(districtLabel)
             }
         }
         
@@ -122,7 +126,7 @@ class PopUpView {
             self.popupView.alpha = 1
         }
     }
-
+    
     func setupConstraints() {
         
         popupView.addSubview(titleLabel)
@@ -212,6 +216,33 @@ class PopUpView {
         
     }
     
+    func checkIfTripBookmarked() {
+            guard let userId = UserDefaults.standard.string(forKey: "userId"),
+                  let tripId = tripId else {
+                print("無法獲取 userId 或 tripId")
+                return
+            }
+
+            let userRef = Firestore.firestore().collection("users").document(userId)
+            
+            userRef.getDocument { [weak self] (document, error) in
+                guard let self = self else { return }
+                if let document = document, document.exists {
+                    DispatchQueue.main.async {
+                        if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
+                            self.collectButton.isSelected = bookmarkTrips.contains(tripId)
+                            // 更新按鈕顏色
+                            self.collectButton.tintColor = self.collectButton.isSelected ? .accent : .white
+                            self.startButton.isEnabled = self.collectButton.isSelected
+                        }
+                    }
+                } else {
+                    print("無法獲取用戶資料")
+                }
+            }
+        }
+
+    
     @objc func dismissPopup() {
         UIView.animate(withDuration: 0.3, animations: {
             self.popupView.alpha = 0
@@ -236,20 +267,8 @@ class PopUpView {
     }
     
     @objc func didTapCollectButton() {
-        collectButton.isSelected.toggle()
-        
-        // 更新按鈕顏色
-        if collectButton.isSelected {
-            collectButton.tintColor = .accent
-        } else {
-            collectButton.tintColor = .white
-        }
-        
-        startButton.isEnabled = true
-        
-        // 當收藏按鈕被點擊後，將 tripId 添加到 users 的 bookmarkTrip 中
         guard let userId = UserDefaults.standard.string(forKey: "userId"),
-              let tripId = fromEstablishToTripDetail?.id else {
+              let tripId = tripId else {
             print("無法獲取 userId 或 tripId")
             return
         }
@@ -257,18 +276,7 @@ class PopUpView {
         let userRef = Firestore.firestore().collection("users").document(userId)
         
         if collectButton.isSelected {
-            // 如果收藏了，將 tripId 添加到 bookmarkTrip 中
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayUnion([tripId])
-            ]) { error in
-                if let error = error {
-                    print("更新 bookmarkTrip 時出錯: \(error.localizedDescription)")
-                } else {
-                    print("成功將 tripId 添加到 bookmarkTrip 中")
-                }
-            }
-        } else {
-            // 如果取消收藏，從 bookmarkTrip 中移除該 tripId
+            // 從 bookmarkTrip 中移除
             userRef.updateData([
                 "bookmarkTrip": FieldValue.arrayRemove([tripId])
             ]) { error in
@@ -278,9 +286,37 @@ class PopUpView {
                     print("成功將 tripId 從 bookmarkTrip 中移除")
                 }
             }
+        } else {
+            // 添加到 bookmarkTrip
+            userRef.updateData([
+                "bookmarkTrip": FieldValue.arrayUnion([tripId])
+            ]) { error in
+                if let error = error {
+                    print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
+                } else {
+                    print("成功將 tripId 添加到 bookmarkTrip 中")
+                }
+            }
         }
         
-        tapCollectButton?()
+        collectButton.isSelected.toggle()
+        collectButton.tintColor = collectButton.isSelected ? .accent : .white
+        startButton.isEnabled = collectButton.isSelected
     }
-
+    
+    func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error = error {
+                print("反向地理編碼失敗: \(error.localizedDescription)")
+                completion(nil, nil)
+            } else if let placemark = placemarks?.first {
+                let city = placemark.administrativeArea ?? "未知縣市"
+                let district = placemark.locality ?? placemark.subLocality ?? "未知區"
+                completion(city, district)
+            } else {
+                completion(nil, nil)
+            }
+        }
+    }
 }

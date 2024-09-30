@@ -19,7 +19,7 @@ class CollectionsViewController: UIViewController {
     var bookmarkPostIdArray = [String]()
     var bookmarkTripIdArray = [String]()
     var postsArray = [[String: Any]]()
-    var tripsArray = [Trip]() 
+    var tripsArray = [Trip]()
     var segmentIndex = 0
     let popupView = PopUpView()
     var incompleteTripsArray = [Trip]()
@@ -29,11 +29,13 @@ class CollectionsViewController: UIViewController {
     var selectedFilterIndex: Int?
     
     let mainContainer = UIView()
-        let buttonsBackground = UIView()
-        let magnifierBackground = UIView()
-        let buttonContainer = UIStackView()
-        var isExpanded = false
+    let buttonsBackground = UIView()
+    let magnifierBackground = UIView()
+    let buttonContainer = UIStackView()
+    var isExpanded = false
     var mainContainerWidthConstraint: Constraint?
+    
+    var selectedTrip: Trip?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,6 +52,7 @@ class CollectionsViewController: UIViewController {
             .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
             ]
         
+        popupView.delegate = self
         loadInitialData()
         setupUI()
         setupTableView()
@@ -61,7 +64,6 @@ class CollectionsViewController: UIViewController {
     func setupUI() {
         view.addSubview(segmentedControl)
         
-        // 添加圓角
         segmentedControl.layer.cornerRadius = 20
         segmentedControl.clipsToBounds = true
         
@@ -87,7 +89,6 @@ class CollectionsViewController: UIViewController {
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
         
-        // 添加圓角效果
         collectionsTableView.layer.cornerRadius = 10
         collectionsTableView.layer.masksToBounds = true
         
@@ -531,12 +532,14 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 let city = "台北市"  // 這個是您需要傳遞的城市
                 let districts = ["大安區", "信義區"]  // 假設有區域資料
                 popupView.showPopup(on: self.view, with: trip, city: city, districts: districts)
+                selectedTrip = incompleteTripsArray[indexPath.row]
             } else {
                 
                 let trip = completeTripsArray[indexPath.row]
                 let city = "台北市"  // 這個是您需要傳遞的城市
                 let districts = ["大安區", "信義區"]  // 假設有區域資料
                 popupView.showPopup(on: self.view, with: trip, city: city, districts: districts)
+                selectedTrip = completeTripsArray[indexPath.row]
             }
             
         } else {
@@ -627,5 +630,14 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 }
             }
         }
+    }
+}
+
+extension CollectionsViewController: PopupViewDelegate {
+    
+    func navigateToTripDetailPage() {
+        let tripDetailVC = TripDetailViewController()
+        tripDetailVC.trip = selectedTrip
+        navigationController?.pushViewController(tripDetailVC, animated: true)
     }
 }

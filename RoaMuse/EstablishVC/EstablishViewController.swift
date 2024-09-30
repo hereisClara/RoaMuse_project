@@ -87,7 +87,6 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
-        print("tap")
         randomTripEntryButtonDidTapped()
     }
     
@@ -122,8 +121,6 @@ class EstablishViewController: UIViewController {
                 }
                 
                 if let randomPoem = filteredPoems.randomElement() {
-                    print(randomPoem)
-                    
                     self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords in
                         self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
                             
