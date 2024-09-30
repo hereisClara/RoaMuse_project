@@ -106,7 +106,7 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-        // 禁用按鈕防止重複點擊
+        
         recommendRandomTripView.isUserInteractionEnabled = false
         
         locationManager.onLocationUpdate = { [weak self] currentLocation in

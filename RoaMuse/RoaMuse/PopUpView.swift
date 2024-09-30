@@ -42,13 +42,13 @@ class PopUpView {
     init() {}
     
     func showPopup(on view: UIView, with trip: Trip, city: String, districts: [String]) {
-        
+        print("hi")
         guard let window = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
             return
         }
         self.tripId = trip.id
         checkIfTripBookmarked()
-        
+        print("hihi")
         fromEstablishToTripDetail = trip
         
         versesStackView.removeAllArrangedSubviews()

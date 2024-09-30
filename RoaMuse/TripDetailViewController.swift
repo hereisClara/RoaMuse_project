@@ -15,7 +15,7 @@ class TripDetailViewController: UIViewController {
     
     var currentTargetIndex: Int = 0
     var loadedPoem: Poem?
-    var trip: Trip?  
+    var trip: Trip?
     var onTripReceivedFromHome: ((Trip) -> Void)?
     let placesStackView = UIStackView()
     private let locationManager = LocationManager()
@@ -322,11 +322,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func didTapCompleteButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         guard let placeId = sender.accessibilityIdentifier else {
-            print("无法获取placeId")
             return
         }
         guard let trip = trip else {
-            print("无法获取行程信息")
             return
         }
         
@@ -334,7 +332,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         // 确保只有当前目标地点的按钮可以点击
         guard index == currentTargetIndex else {
-            print("不是当前目标地点，无法完成")
             return
         }
         
