@@ -99,6 +99,6 @@ struct PlaceTripInfo: Codable {
 }
 
 struct TaskSet {
-    let totalTasks: Int
+    var totalTasks: Int
     var completedTasks: Int
 }

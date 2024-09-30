@@ -6,6 +6,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     var dynamicTaskSets: [[TaskSet]] = []
     let tableView = UITableView()
+    var currentTitles: [String] = []
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
@@ -21,6 +22,15 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         ["在成為浪漫大師的路上", "在成為冒險者的路上", "在走向鄉野的路上"],
         ["有始有終，行萬卷書與你一起走過⋯⋯"]
     ]
+    
+    let awardTitles: [[[String]]] = [
+        [["探索者", "街頭土行孫", "現世行腳仙"]],  // 第 1 個 row 的稱號
+        [["浪漫1", "浪漫2", "浪漫3"],   // 第 2 個 row 的稱號
+        ["奇險1", "奇險2", "奇險3"],
+         ["田園1","田園2", "田園3"]],// 第 3 個 row 的稱號
+        [["終點1", "終點2", "終點3"]]
+    ]
+
     
     let awardSections = ["踩點總集", "風格master", "有始有終"]
     
@@ -80,16 +90,12 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         tableHeaderView.addSubview(headerLabel)
         
-        // 使用 SnapKit 設置 headerLabel 的 Auto Layout
         headerLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()  // 垂直居中
             make.leading.equalToSuperview().offset(16)  // 與左邊距離 16 點
         }
         
-        // 設置表头的大小
         tableHeaderView.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 100)
-        
-        // 将 tableHeaderView 设为 TableView 的表头
         tableView.tableHeaderView = tableHeaderView
     }
     
@@ -132,33 +138,35 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             } else {
                 print("無法解析 completedTrip 資料")
             }
-            // 假設第一個 section 是與景點相關的，並且總共有 30 個景點
-            let totalTasks = 50
-            let section = 0 // 第一個 section
-            let row = 0     // 第一個 row
-            
-            // 使用通用的進度更新函數來更新第一個 cell 的進度條
-            self.updateCellProgress(section: 0, row: 0, completedTasks: totalPlacesCompleted, totalTasks: 50)
-            self.updateCellProgress(section: 2, row: 0, completedTasks: totalTripsCompleted, totalTasks: 30)
-            
+           
+            // 將數據存入 dynamicTaskSets
+            self.dynamicTaskSets = [
+                [TaskSet(totalTasks: 50, completedTasks: totalPlacesCompleted)],  // Section 0, row 0
+                [],  // Section 1 將根據 categorizePlacesByTag 來更新
+                [TaskSet(totalTasks: 30, completedTasks: totalTripsCompleted)]    // Section 2, row 0
+            ]
+
+            // 使用 categorizePlacesByTag 更新 section 1
             self.categorizePlacesByTag { categorizedPlaces in
                 if let tagZeroPlaces = categorizedPlaces[0] {
                     let tagZeroPlacesAmount = tagZeroPlaces.count
-                    self.updateCellProgress(section: 1, row: 0, completedTasks: tagZeroPlacesAmount, totalTasks: 30)
-                } else if let tagOnePlaces = categorizedPlaces[1] {
+                    self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagZeroPlacesAmount))  // Section 1, row 0
+                }
+                if let tagOnePlaces = categorizedPlaces[1] {
                     let tagOnePlacesAmount = tagOnePlaces.count
-                    self.updateCellProgress(section: 1, row: 0, completedTasks: tagOnePlacesAmount, totalTasks: 30)
-                } else if let tagTwoPlaces = categorizedPlaces[2] {
+                    self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagOnePlacesAmount))  // Section 1, row 1
+                }
+                if let tagTwoPlaces = categorizedPlaces[2] {
                     let tagTwoPlacesAmount = tagTwoPlaces.count
-                    self.updateCellProgress(section: 1, row: 2, completedTasks: tagTwoPlacesAmount, totalTasks: 30)
+                    self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagTwoPlacesAmount))  // Section 1, row 2
                 }
                 DispatchQueue.main.async {
-                    self.tableView.reloadData()
+                    self.tableView.reloadData()  // 重新加載數據
                 }
             }
-            
         }
     }
+
     
     func updateCellProgress(section: Int, row: Int, completedTasks: Int, totalTasks: Int) {
         let progress = Float(completedTasks) / Float(totalTasks)
@@ -166,8 +174,29 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         let indexPath = IndexPath(row: row, section: section)
         if let cell = tableView.cellForRow(at: indexPath) as? AwardTableViewCell {
             cell.milestoneProgressView.progress = progress
+            
+            let titlesForRow = awardTitles[section][row]
+            
+            // 根據進度選擇稱號
+            var newTitle: String?
+            if progress >= 1.0 {
+                newTitle = titlesForRow[2]
+            } else if progress >= 0.6 {
+                newTitle = titlesForRow[1]
+            } else if progress >= 0.3 {
+                newTitle = titlesForRow[0]
+            }
+            
+            // 確保稱號不重複
+            if let title = newTitle, !currentTitles.contains(title) {
+                currentTitles.append(title)
+            }
+            
+            // 更新 UI
+            print("現有稱號: \(currentTitles)")
         }
     }
+
     
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {
@@ -235,31 +264,35 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     // MARK: - UITableViewDataSource
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return awardSections.count
+        return dynamicTaskSets.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return awards[section].count
+        return dynamicTaskSets[section].count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "awardCell", for: indexPath) as? AwardTableViewCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "awardCell", for: indexPath) as? AwardTableViewCell else {
+            return UITableViewCell()
+        }
         
-        let taskSet = taskSets[indexPath.section][indexPath.row]
+        let awardTitle = awards[indexPath.section][indexPath.row]
+        let awardDesc = awardsDescription[indexPath.section][indexPath.row]
         
-        let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
+        cell.awardLabel.text = awardTitle
+        cell.descriptionLabel.text = awardDesc
+        cell.selectionStyle = .none
+        cell.milestoneProgressView.milestones = milestones
         
-        cell?.awardLabel.text = awards[indexPath.section][indexPath.row]
-        cell?.descriptionLabel.text = awardsDescription[indexPath.section][indexPath.row]
+        // 在這裡不使用 taskSets 而是根據更新後的數據
+        let progress = Float(self.dynamicTaskSets[indexPath.section][indexPath.row].completedTasks) /
+                       Float(self.dynamicTaskSets[indexPath.section][indexPath.row].totalTasks)
         
-        cell?.selectionStyle = .none
-        cell?.milestoneProgressView.progress = progress
-        cell?.milestoneProgressView.milestones = milestones
+        cell.milestoneProgressView.progress = progress
         
-        return cell ?? UITableViewCell()
+        return cell
     }
-    
-    
+
     // MARK: - UITableViewDelegate
     
     // 設置每個 section 的行高度

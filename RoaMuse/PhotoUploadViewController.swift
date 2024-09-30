@@ -54,6 +54,11 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             resetImageViewPositionAndSize()
         }
     }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
+    }
 
     func defineTransparentArea() {
         let templateFrame = templateImageView.frame

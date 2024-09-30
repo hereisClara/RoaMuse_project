@@ -330,14 +330,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let index = sender.tag
         
-        // 确保只有当前目标地点的按钮可以点击
         guard index == currentTargetIndex else {
             return
         }
         
         let tripId = trip.id
         
-        // 更新 Firebase 数据
         FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
             if success {
                 print("地点 \(placeId) 和行程 \(tripId) 成功更新")
