@@ -119,23 +119,17 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
 
     func resetImageViewPositionAndSize() {
         guard let image = imageView.image else { return }
-
+        
+        let screenHeight = UIScreen.main.bounds.height
         let imageAspectRatio = image.size.width / image.size.height
-        let transparentAreaAspectRatio = transparentArea.width / transparentArea.height
 
-        var newWidth: CGFloat
-        var newHeight: CGFloat
-
-        if imageAspectRatio > transparentAreaAspectRatio {
-            newWidth = transparentArea.width
-            newHeight = newWidth / imageAspectRatio
-        } else {
-            newHeight = transparentArea.height
-            newWidth = newHeight * imageAspectRatio
-        }
+        // 設定 imageView 的高度等於螢幕高度
+        let newHeight = screenHeight
+        let newWidth = newHeight * imageAspectRatio
 
         updateImageViewConstraints(width: newWidth, height: newHeight)
     }
+
 
     // 设置 imageView 的约束
     func setupImageViewConstraints() {
