@@ -243,18 +243,20 @@ class HomeViewController: UIViewController {
     @objc func randomTripEntryButtonDidTapped() {
         FirebaseManager.shared.loadAllTrips { [weak self] trips in
             guard let self = self else { return }
-            
+            print("    >>>>", trips)
             if let randomTrip = trips.randomElement() {
                 self.randomTrip = randomTrip
-                
-                // 使用 placeIds 來查詢地點資料
+
                 let placeIds = randomTrip.placeIds  // 確認是否有 placeIds
                 
                 FirebaseManager.shared.loadPlaces(placeIds: placeIds) { places in
-                    // 顯示彈出視窗
-//                    self.popupView.showPopup(on: self.view, with: randomTrip)
                     
-                    // 設定收藏按鈕的操作
+                    let city = "台北市" // 可根據 places 的信息設置
+                    let districts = ["大安區", "信義區"] // 根據 places 設置區域
+                    
+                    // 呼叫 showPopup 彈出視圖
+                    self.popupView.showPopup(on: self.view, with: randomTrip, city: city, districts: districts)
+                    
                     self.popupView.tapCollectButton = { [weak self] in
                         guard let self = self else { return }
                         

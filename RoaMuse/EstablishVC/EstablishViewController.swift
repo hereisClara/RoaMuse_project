@@ -32,12 +32,10 @@ class EstablishViewController: UIViewController {
     
     let searchRadius: CLLocationDistance = 15000
     
-    //    private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tabBarController?.tabBar.isHidden = false
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "建立"
@@ -57,6 +55,12 @@ class EstablishViewController: UIViewController {
         setupPullToRefresh()
         
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = false
+    }
+
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
@@ -98,7 +102,6 @@ class EstablishViewController: UIViewController {
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // 結束刷新
             self.styleTableView.mj_header?.endRefreshing()
         }
     }
@@ -152,7 +155,7 @@ class EstablishViewController: UIViewController {
         }
         locationManager.startUpdatingLocation()
     }
-
+    
     
     
     // 基於 NLP 模型分析詩詞
@@ -179,106 +182,115 @@ class EstablishViewController: UIViewController {
         completion(Array(Set(allResults))) // 去重並返回關鍵字
     }
     
-    // 在保存行程前，檢查 Firebase 中是否已存在相同的行程
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         let dispatchGroup = DispatchGroup()
         var foundValidPlace = false
-         // 10公里
-        
         self.city = "" // 清空現有的城市
         self.districts.removeAll() // 清空現有的行政區
         self.matchingPlaces.removeAll()
         
         for keyword in keywords {
             dispatchGroup.enter()
-
-            FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
-                let nearbyPlaces = places.filter { place in
-                    let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
-                    let distance = currentLocation.distance(from: placeLocation)
-                    return distance <= self.searchRadius
-                }
-                
-                if !nearbyPlaces.isEmpty {
-                    if let randomPlace = nearbyPlaces.randomElement() {
-                        if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
-                            self.matchingPlaces.append(randomPlace)
-                            
-                            let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
-                            
-                            self.reverseGeocodeLocation(placeLocation) { city, district in
-                                if let city = city, let district = district {
-                                    
-                                    if self.city.isEmpty {
-                                        self.city = city
-                                    }
-                                    
-                                    if !self.districts.contains(district) {
-                                        self.districts.append(district)
-                                    }
-                                }
-                            }
-                        }
-                    }
+            processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, dispatchGroup: dispatchGroup) { validPlaceFound in
+                if validPlaceFound {
                     foundValidPlace = true
-                    dispatchGroup.leave()
-                } else {
-                    PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
-                        if let newPlace = foundPlaces.first {
-                            PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
-                                if let savedPlace = savedPlace {
-                                    self.matchingPlaces.append(savedPlace)
-                                    foundValidPlace = true
-                                }
-                                dispatchGroup.leave()
-                            }
-                        } else {
-                            dispatchGroup.leave()
-                        }
-                    }
                 }
             }
         }
         
         dispatchGroup.notify(queue: .main) {
-            
-            
             if foundValidPlace, self.matchingPlaces.count >= 1 {
-                let tripData: [String: Any] = [
-                    "poemId": poem.id,
-                    "placeIds": self.matchingPlaces.map { $0.id },
-                    "tag": poem.tag
-                ]
-                
-                // 保存前先檢查是否有相同的行程
-                FirebaseManager.shared.checkTripExists(tripData) { exists in
-                    if exists {
-                        let existingTrip = Trip(
-                            poemId: poem.id,
-                            id: "existing_trip_id",  // 可以用一個占位符表示現有行程
-                            placeIds: self.matchingPlaces.map { $0.id },
-                            tag: poem.tag,
-                            season: nil,
-                            weather: nil,
-                            startTime: nil
-                        )
-                        
-                        // 調用 completion 並傳回存在的行程
-                        completion(existingTrip)
+                self.saveTripToFirebase(poem: poem, completion: completion)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+
+    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
+        FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
+            let nearbyPlaces = places.filter { place in
+                let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                let distance = currentLocation.distance(from: placeLocation)
+                return distance <= self.searchRadius
+            }
+
+            if !nearbyPlaces.isEmpty {
+                if let randomPlace = nearbyPlaces.randomElement() {
+                    if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
+                        self.matchingPlaces.append(randomPlace)
+
+                        let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                        self.reverseGeocodeLocation(placeLocation) { city, district in
+                            if let city = city, let district = district {
+                                if self.city.isEmpty {
+                                    self.city = city
+                                }
+                                if !self.districts.contains(district) {
+                                    self.districts.append(district)
+                                }
+                            }
+                        }
+                    }
+                }
+                completion(true)
+            } else {
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                    if let newPlace = foundPlaces.first {
+                        PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
+                            if let savedPlace = savedPlace {
+                                self.matchingPlaces.append(savedPlace)
+                                completion(true)
+                            } else {
+                                completion(false)
+                            }
+                        }
                     } else {
-                        // 行程不存在，進行保存
-                        let db = Firestore.firestore()
-                        var documentRef: DocumentReference? = nil
-                        
-                        documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                        completion(false)
+                    }
+                }
+            }
+            dispatchGroup.leave()
+        }
+    }
+
+    func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
+        let tripData: [String: Any] = [
+            "poemId": poem.id,
+            "placeIds": self.matchingPlaces.map { $0.id },
+            "tag": poem.tag
+        ]
+        
+        FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
+            if exists, let existingTripId = existingTripId {
+                let existingTrip = Trip(
+                    poemId: poem.id,
+                    id: existingTripId,
+                    placeIds: self.matchingPlaces.map { $0.id },
+                    tag: poem.tag,
+                    season: nil,
+                    weather: nil,
+                    startTime: nil
+                )
+                completion(existingTrip)
+            } else {
+                let db = Firestore.firestore()
+                var documentRef: DocumentReference? = nil
+                documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                    if let error = error {
+                        completion(nil)
+                    } else {
+                        guard let documentID = documentRef?.documentID else {
+                            completion(nil)
+                            return
+                        }
+
+                        // 更新 tripId
+                        documentRef?.updateData(["id": documentID]) { error in
                             if let error = error {
+                                print("Error updating tripId: \(error)")
                                 completion(nil)
                             } else {
-                                guard let documentID = documentRef?.documentID else {
-                                    completion(nil)
-                                    return
-                                }
-                                
                                 let trip = Trip(
                                     poemId: poem.id,
                                     id: documentID,
@@ -293,13 +305,10 @@ class EstablishViewController: UIViewController {
                         }
                     }
                 }
-            } else {
-                completion(nil)
             }
         }
     }
-    
-    
+
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
         let request = MKDirections.Request()
         
@@ -404,6 +413,7 @@ class EstablishViewController: UIViewController {
     }
 }
 
+
 extension EstablishViewController: PopupViewDelegate {
     
     func navigateToTripDetailPage() {
@@ -456,6 +466,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             styleLabel.text = selectionTitle
             styleLabel.textColor = .deepBlue
             styleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+            
         }
     }
 }

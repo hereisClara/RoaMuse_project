@@ -49,6 +49,10 @@
 		AC9775712CA551CB00EF828A /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775702CA551CB00EF828A /* Config.plist */; };
 		AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */; };
 		AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775742CA7E22100EF828A /* MapViewController.swift */; };
+		AC9775772CA9831C00EF828A /* TripCallOutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775762CA9831C00EF828A /* TripCallOutView.swift */; };
+		AC9775792CA987F900EF828A /* AwardsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775782CA987F900EF828A /* AwardsViewController.swift */; };
+		AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */; };
+		AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -115,6 +119,10 @@
 		AC9775702CA551CB00EF828A /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 		AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoUploadViewController.swift; sourceTree = "<group>"; };
 		AC9775742CA7E22100EF828A /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
+		AC9775762CA9831C00EF828A /* TripCallOutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripCallOutView.swift; sourceTree = "<group>"; };
+		AC9775782CA987F900EF828A /* AwardsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsViewController.swift; sourceTree = "<group>"; };
+		AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardTableViewCell.swift; sourceTree = "<group>"; };
+		AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneProgressView.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -233,6 +241,10 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
+				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
+				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
+				AC9775762CA9831C00EF828A /* TripCallOutView.swift */,
 				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
 				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
 				AC9775702CA551CB00EF828A /* Config.plist */,
@@ -484,6 +496,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */,
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
@@ -495,6 +508,7 @@
 				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
+				AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */,
 				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
@@ -507,8 +521,10 @@
 				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
 				AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */,
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
+				AC9775772CA9831C00EF828A /* TripCallOutView.swift in Sources */,
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
+				AC9775792CA987F900EF828A /* AwardsViewController.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,

@@ -12,6 +12,7 @@ import Photos
 
 class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
     
+    var placeTripDictionary = [String: PlaceTripInfo]()
     var mapView: MKMapView!
     var images: [UIImage] = []  // 定義存放照片的屬性
     var userId: String? {
@@ -26,20 +27,17 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
         view.addSubview(mapView)
         
-        // 設置 clustering
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Marker")
         
-        // 加載用戶的 completedPlace 並添加標註點
         loadCompletedPlacesAndAddAnnotations()
     }
     
-    // 從 Firestore 加載使用者的 completedPlace 資料，並根據 placeId 查詢 place 資訊
     func loadCompletedPlacesAndAddAnnotations() {
         guard let userId = userId else {
             print("錯誤: 無法從 UserDefaults 獲取 userId，請確認 userId 已正確存入 UserDefaults")
             return
         }
-        
+
         let userRef = Firestore.firestore().collection("users").document(userId)
         
         // 從 Firestore 獲取 user 的 completedPlace
@@ -55,20 +53,33 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 return
             }
             
-            // 抓取 placeId 並去重
-            var uniquePlaceIds = Set<String>()
+            // 使用字典來存儲 placeId 和對應的 tripIds
+            
+            
+            // 遍歷 completedPlace，提取 placeIds 和對應的 tripId
             for placeEntry in completedPlace {
-                if let placeIds = placeEntry["placeIds"] as? [String] {
-                    uniquePlaceIds.formUnion(placeIds)
+                if let placeIds = placeEntry["placeIds"] as? [String], let tripId = placeEntry["tripId"] as? String {
+                    for placeId in placeIds {
+                        if var placeTripInfo = self.placeTripDictionary[placeId] {
+                            placeTripInfo.tripIds.append(tripId)
+                            self.placeTripDictionary[placeId] = placeTripInfo
+                        } else {
+                            self.placeTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: [tripId])
+                        }
+                    }
                 }
             }
             
-            // 根據 placeId 從 places 集合中抓取對應的座標
-            self.fetchPlaces(for: Array(uniquePlaceIds))
+            let uniquePlaceIds = Array(self.placeTripDictionary.keys)
+            self.fetchPlaces(for: uniquePlaceIds)
+            
+            for (placeId, placeTripInfo) in self.placeTripDictionary {
+                print("============")
+                print("Place ID: \(placeId), Trip IDs: \(placeTripInfo.tripIds)")
+            }
         }
     }
-    
-    // 根據 placeId 查詢 places 資訊，並添加標註點
+
     func fetchPlaces(for placeIds: [String]) {
         let placesRef = Firestore.firestore().collection("places")
         let dispatchGroup = DispatchGroup()
@@ -78,7 +89,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             
             placesRef.document(placeId).getDocument { documentSnapshot, error in
                 if let error = error {
-                    print("獲取 place 失敗: \(error.localizedDescription)")
                     dispatchGroup.leave()
                     return
                 }
@@ -87,7 +97,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                       let latitude = data["latitude"] as? Double,
                       let longitude = data["longitude"] as? Double,
                       let placeName = data["name"] as? String else {
-                    print("錯誤: 無法解析 place 資料")
                     dispatchGroup.leave()
                     return
                 }
@@ -98,8 +107,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 annotation.coordinate = location
                 annotation.title = placeName
                 self.mapView.addAnnotation(annotation)
-                print("成功添加標註點: \(placeName) at (\(latitude), \(longitude))")
-                
                 dispatchGroup.leave()
             }
         }
@@ -160,26 +167,55 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
     // 設置標註點視圖的 cluster 屬性
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        if annotation is MKClusterAnnotation {
-            // 如果是 cluster，使用內建的 cluster view
-            let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: annotation)
+        // 如果是 cluster（聚簇標註點），使用內建的 cluster 視圖
+        if let clusterAnnotation = annotation as? MKClusterAnnotation {
+            let clusterView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: clusterAnnotation)
+            return clusterView
+        }
+        
+        // 如果是普通的標註點
+        if let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Marker", for: annotation) as? MKMarkerAnnotationView {
+            // 設置 clusteringIdentifier 為 "clusterID" 以支持群組
+            annotationView.clusteringIdentifier = "clusterID"
+            
+            // 啟用懸浮泡泡視窗
+            annotationView.canShowCallout = true
+            
+            // 添加右側的詳細按鈕 (右側的附屬視圖)
+            let infoButton = UIButton(type: .detailDisclosure)
+            annotationView.rightCalloutAccessoryView = infoButton
+            
+            // 可在此處根據 annotation 資訊設置不同的圖片或顯示風格
+            annotationView.markerTintColor = .blue // 設定大頭針的顏色
+            
             return annotationView
         }
         
-        // 其他標註點設置
-        let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Marker", for: annotation)
-        annotationView.clusteringIdentifier = "clusterID"
-        return annotationView
+        return nil
     }
+
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         if let annotation = view.annotation {
-            // 假設 annotation 附帶了一個屬性可以讓我們取得對應的 tripId
-            if let tripId = getTripId(from: annotation) {
-                // 查詢並顯示詩的資訊
-                fetchTripAndPoemData(for: tripId) { poemTitle, poemAuthor in
+            // 獲取對應的 tripIds，這裡我們只顯示第一個 tripId
+            if let tripIds = getTripId(from: annotation), let firstTripId = tripIds.first {
+                // 查詢詩的資訊並顯示
+                fetchTripAndPoemData(for: firstTripId) { poemTitle, poemAuthor in
                     DispatchQueue.main.async {
-                        self.showPoemAlert(title: poemTitle, author: poemAuthor)
+                        // 顯示彈出泡泡
+                        let message = "詩名: \(poemTitle)\n作者: \(poemAuthor)"
+                        let calloutView = UILabel(frame: CGRect(x: 0, y: 0, width: 200, height: 100))
+                        calloutView.text = message
+                        calloutView.numberOfLines = 0
+                        calloutView.textAlignment = .center
+                        calloutView.backgroundColor = UIColor(white: 1.0, alpha: 0.9)
+                        calloutView.layer.cornerRadius = 8
+                        calloutView.layer.borderWidth = 1
+                        calloutView.layer.borderColor = UIColor.lightGray.cgColor
+                        calloutView.clipsToBounds = true
+
+                        // 將 calloutView 設置為 annotationView 的 detailCalloutAccessoryView
+                        view.detailCalloutAccessoryView = calloutView
                     }
                 }
             } else {
@@ -188,12 +224,22 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         }
     }
 
-    // 方法根據標註點 (annotation) 獲取對應的 tripId (具體邏輯依你的資料結構)
-    func getTripId(from annotation: MKAnnotation) -> String? {
-        // 這裡假設 annotation 有某種屬性存儲 tripId，根據實際情況來取值
-//         例如：annotation.subtitle = tripId
-        return annotation.subtitle ?? nil
+    
+    func getTripId(from annotation: MKAnnotation) -> [String]? {
+        // 解包 annotation.subtitle 並確保其為非 nil 值
+        guard let placeId = annotation.subtitle as? String else {
+            return []
+        }
+        
+        // 從 placeTripDictionary 中獲取對應的 tripIds
+        guard let placeTripInfo = placeTripDictionary[placeId] else {
+            return []
+        }
+        
+        // 假設你需要返回第一個 tripId，如果有多個 tripId 可以根據需求進行修改
+        return placeTripInfo.tripIds
     }
+
     
     func showPoemAlert(title: String, author: String) {
         let alertController = UIAlertController(title: "詩", message: "詩名: \(title)\n作者: \(author)", preferredStyle: .alert)

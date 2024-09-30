@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import SnapKit
+import FirebaseFirestore
 
 protocol PopupViewDelegate: AnyObject {
     func navigateToTripDetailPage()
@@ -26,8 +27,8 @@ class PopUpView {
     
     let versesStackView = UIStackView()
     let placesStackView = UIStackView()
-    let collectButton = UIButton(type: .system)
-    let startButton = UIButton(type: .system)
+    let collectButton = UIButton()
+    let startButton = UIButton()
     let cityLabel = UILabel()   // 用来显示城市
     let districtsStackView = UIStackView()
     
@@ -85,6 +86,8 @@ class PopUpView {
                     self.versesStackView.addArrangedSubview(verseLabel)
                 }
             }
+            
+            print("/`/`/`/``/`/`/`/``/        ",poem.title)
         }
 
         FirebaseManager.shared.loadPlaces(placeIds: trip.placeIds) { [weak self] places in
@@ -196,17 +199,20 @@ class PopUpView {
         // 設置按鈕圖標和顏色
         collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
         collectButton.tintColor = .white
+        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
+        
+        collectButton.isEnabled = true
         collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
         
+        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
         startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
         startButton.tintColor = .white
+        startButton.isEnabled = false
         startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
+        
     }
     
     @objc func dismissPopup() {
-        print("hi")
-        
-        // 動畫隱藏 popupView 和 backgroundView
         UIView.animate(withDuration: 0.3, animations: {
             self.popupView.alpha = 0
             self.backgroundView.alpha = 0
@@ -230,9 +236,51 @@ class PopUpView {
     }
     
     @objc func didTapCollectButton() {
+        collectButton.isSelected.toggle()
+        
+        // 更新按鈕顏色
+        if collectButton.isSelected {
+            collectButton.tintColor = .accent
+        } else {
+            collectButton.tintColor = .white
+        }
+        
+        startButton.isEnabled = true
+        
+        // 當收藏按鈕被點擊後，將 tripId 添加到 users 的 bookmarkTrip 中
+        guard let userId = UserDefaults.standard.string(forKey: "userId"),
+              let tripId = fromEstablishToTripDetail?.id else {
+            print("無法獲取 userId 或 tripId")
+            return
+        }
+        
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        
+        if collectButton.isSelected {
+            // 如果收藏了，將 tripId 添加到 bookmarkTrip 中
+            userRef.updateData([
+                "bookmarkTrip": FieldValue.arrayUnion([tripId])
+            ]) { error in
+                if let error = error {
+                    print("更新 bookmarkTrip 時出錯: \(error.localizedDescription)")
+                } else {
+                    print("成功將 tripId 添加到 bookmarkTrip 中")
+                }
+            }
+        } else {
+            // 如果取消收藏，從 bookmarkTrip 中移除該 tripId
+            userRef.updateData([
+                "bookmarkTrip": FieldValue.arrayRemove([tripId])
+            ]) { error in
+                if let error = error {
+                    print("從 bookmarkTrip 中移除 tripId 時出錯: \(error.localizedDescription)")
+                } else {
+                    print("成功將 tripId 從 bookmarkTrip 中移除")
+                }
+            }
+        }
         
         tapCollectButton?()
-        
     }
-    
+
 }

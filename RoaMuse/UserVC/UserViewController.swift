@@ -344,6 +344,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
         headerView.addSubview(mapButton)
         
+        let awardsButton = UIButton(type: .system)
+        awardsButton.setTitle("獎章成就", for: .normal)
+        awardsButton.backgroundColor = .systemBlue
+        awardsButton.setTitleColor(.white, for: .normal)
+        awardsButton.layer.cornerRadius = 10
+        awardsButton.addTarget(self, action: #selector(handleAwardsButtonTapped), for: .touchUpInside)
+        headerView.addSubview(awardsButton)
+        
         // 設置約束
         userNameLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(16)
@@ -369,25 +377,35 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 設置「行走地圖」按鈕的約束
         mapButton.snp.makeConstraints { make in
             make.top.equalTo(fansLabel.snp.bottom).offset(16)
-            make.centerX.equalTo(headerView)
-            make.width.equalTo(120)
+            make.leading.equalTo(fansLabel)
+            make.width.equalTo(100)
+            make.height.equalTo(40)
+        }
+        
+        awardsButton.snp.makeConstraints { make in
+            make.top.equalTo(fansLabel.snp.bottom).offset(16)
+            make.leading.equalTo(mapButton.snp.trailing).offset(20)
+            make.width.equalTo(100)
             make.height.equalTo(40)
         }
         
         tableView.tableHeaderView = headerView
         
-        // 設置 TableView 大小等於 safeArea
         tableView.snp.makeConstraints { make in
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
     }
 
     @objc func handleMapButtonTapped() {
-        // 處理「行走地圖」按鈕的點擊事件
-        print("行走地圖按鈕被點擊")
-        // 可以導航到對應的地圖頁面或執行其他功能
-        let mapViewController = MapViewController()  // 假設你有一個地圖控制器
+        
+        let mapViewController = MapViewController()
         self.navigationController?.pushViewController(mapViewController, animated: true)
+    }
+    
+    @objc func handleAwardsButtonTapped() {
+        
+        let awardsViewController = AwardsViewController()
+        self.navigationController?.pushViewController(awardsViewController, animated: true)
     }
 
     // UITableViewDataSource - 設定 cell 的數量
@@ -426,8 +444,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 DispatchQueue.main.async {
                     // 更新 likeCountLabel 和按鈕的選中狀態
                     cell.likeCountLabel.text = String(likesAccount.count)
-                    cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "") // 依據是否按讚來設置狀態
-                    //                    print("/////", likesAccount.contains(userId))
+                    cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "")
                 }
             } else {
                 // 如果沒有找到相應的貼文，或者 likesAccount 為空

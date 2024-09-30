@@ -40,7 +40,7 @@ struct Trip: Codable {
     let id: String
     var placeIds: [String]
     let tag: Int
-    
+    var poemTitle: String?
     let season: Int?
     let weather: Int?
     let startTime: Int?
@@ -91,4 +91,14 @@ struct User: Codable {
 struct CompletedPlace: Codable {
     let tripId: String                // 行程ID
     var placeIds: [String]            // 行程中完成的地點IDs
+}
+
+struct PlaceTripInfo: Codable {
+    let placeId: String
+    var tripIds: [String]
+}
+
+struct TaskSet {
+    let totalTasks: Int
+    var completedTasks: Int
 }

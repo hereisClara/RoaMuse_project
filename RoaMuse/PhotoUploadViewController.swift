@@ -13,6 +13,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     
     let imageView = UIImageView()
     let templateImageView = UIImageView()
+    
     let uploadButton = UIButton(type: .system)
     var lastScale: CGFloat = 1.0
     var transparentArea: CGRect!
@@ -150,70 +151,68 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         dismiss(animated: true, completion: nil)
     }
     
-    // 處理拖動手勢
+    @objc func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
+        guard let view = gesture.view else { return }
+
+        if gesture.state == .began || gesture.state == .changed {
+            let currentScale = view.frame.size.width / view.bounds.size.width
+            var newScale = currentScale * gesture.scale
+
+            // 限制缩放范围，确保图片不会缩小到比透明区域更小
+            let minScale = max(transparentArea.size.width / view.bounds.size.width, transparentArea.size.height / view.bounds.size.height)
+            let maxScale: CGFloat = 3.0
+
+            // 确保 newScale 在 minScale 和 maxScale 之间
+            if newScale >= minScale && newScale <= maxScale {
+                view.transform = view.transform.scaledBy(x: gesture.scale, y: gesture.scale)
+            }
+
+            // 重置手势缩放比例
+            gesture.scale = 1.0
+        }
+
+        // 在缩放完成时调整边界
+        if gesture.state == .ended {
+            adjustImageViewToCoverTransparentArea()
+        }
+    }
+
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
+        
         if gesture.state == .began || gesture.state == .changed {
             imageView.center = CGPoint(x: imageView.center.x + translation.x, y: imageView.center.y + translation.y)
-            gesture.setTranslation(.zero, in: view)  // 重置平移量
-        }
-        adjustImageViewToCoverTransparentArea()
-        adjustImageViewToScreenEdges()
-    }
-    
-    // 处理缩放手势
-    @objc func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
-        if gesture.state == .began || gesture.state == .changed {
-            let scale = gesture.scale
-            imageView.transform = imageView.transform.scaledBy(x: scale, y: scale)
-            gesture.scale = 1.0  // 重置缩放比例
+            gesture.setTranslation(.zero, in: view)
         }
         
         adjustImageViewToCoverTransparentArea()
-        adjustImageViewToScreenEdges()
     }
-    
+
     func adjustImageViewToCoverTransparentArea() {
         guard let transparentArea = transparentArea else { return }
         
-        let imageViewFrame = imageView.convert(imageView.bounds, to: view)
+        let imageViewFrame = imageView.frame
         
-        if imageViewFrame.contains(transparentArea) {
-            
-        } else {
-            
-            var adjustedTransform = imageView.transform
-            
-            let scaleX = transparentArea.width / imageViewFrame.width
-            let scaleY = transparentArea.height / imageViewFrame.height
-            let requiredScale = max(scaleX, scaleY)
-            
-            adjustedTransform = adjustedTransform.scaledBy(x: requiredScale, y: requiredScale)
-            
-            imageView.transform = adjustedTransform
-            
-            let newImageViewFrame = imageView.convert(imageView.bounds, to: view)
-            
-            var translationX: CGFloat = 0
-            var translationY: CGFloat = 0
-            
-            if newImageViewFrame.minX > transparentArea.minX {
-                translationX = transparentArea.minX - newImageViewFrame.minX
-            } else if newImageViewFrame.maxX < transparentArea.maxX {
-                translationX = transparentArea.maxX - newImageViewFrame.maxX
-            }
-            
-            if newImageViewFrame.minY > transparentArea.minY {
-                translationY = transparentArea.minY - newImageViewFrame.minY
-            } else if newImageViewFrame.maxY < transparentArea.maxY {
-                translationY = transparentArea.maxY - newImageViewFrame.maxY
-            }
-            
-            adjustedTransform = imageView.transform.translatedBy(x: translationX, y: translationY)
-            imageView.transform = adjustedTransform
+        var translationX: CGFloat = 0
+        var translationY: CGFloat = 0
+        
+        // 检查水平边界
+        if imageViewFrame.minX > transparentArea.minX {
+            translationX = transparentArea.minX - imageViewFrame.minX
+        } else if imageViewFrame.maxX < transparentArea.maxX {
+            translationX = transparentArea.maxX - imageViewFrame.maxX
         }
+        
+        // 检查垂直边界
+        if imageViewFrame.minY > transparentArea.minY {
+            translationY = transparentArea.minY - imageViewFrame.minY
+        } else if imageViewFrame.maxY < transparentArea.maxY {
+            translationY = transparentArea.maxY - imageViewFrame.maxY
+        }
+        
+        imageView.transform = imageView.transform.translatedBy(x: translationX, y: translationY)
     }
-    
+
     func adjustImageViewToScreenEdges() {
         
         let imageViewFrame = imageView.convert(imageView.bounds, to: view)
@@ -309,22 +308,24 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
     }
     
-    
-    // 將模板和用戶上傳的圖片合成
     func generateCombinedImage() -> UIImage {
-        UIGraphicsBeginImageContextWithOptions(templateImageView.bounds.size, false, 0.0)
-        
-        // 先繪製用戶上傳的圖片
-        imageView.image?.draw(in: imageView.frame)
-        
-        // 然後在上面繪製模板圖片，模板會在圖片上方
+        // 使用屏幕的 scale 来保持图片清晰度和正确比例
+        UIGraphicsBeginImageContextWithOptions(templateImageView.bounds.size, false, UIScreen.main.scale)
+
+        // 将 imageView 的 frame 转换到 templateImageView 的坐标系中
+        let imageViewFrameInTemplate = imageView.convert(imageView.bounds, to: templateImageView)
+
+        // 绘制用户上传的图片
+        imageView.image?.draw(in: imageViewFrameInTemplate)
+
+        // 绘制模板图片
         templateImageView.image?.draw(in: templateImageView.bounds)
-        
-        // 獲取合成後的圖片
+
+        // 获取合成后的图片
         let combinedImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        
+
         return combinedImage ?? UIImage()
     }
-    
+
 }
