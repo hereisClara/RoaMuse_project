@@ -158,15 +158,12 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let minHeight = UIScreen.main.bounds.height
         
         if gesture.state == .began || gesture.state == .changed {
-            // 計算縮放後的寬高
             let newWidth = imageView.frame.width * gesture.scale
             let newHeight = imageView.frame.height * gesture.scale
 
-            // 確保縮放後的寬度和高度不小於螢幕的寬度和高度
             if newWidth >= minWidth && newHeight >= minHeight {
                 view.transform = view.transform.scaledBy(x: gesture.scale, y: gesture.scale)
             } else {
-                // 如果嘗試縮小超出限制，則不再繼續縮小
                 let scaleWidth = minWidth / imageView.frame.width
                 let scaleHeight = minHeight / imageView.frame.height
                 let scaleFactor = max(scaleWidth, scaleHeight)
@@ -177,7 +174,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             gesture.scale = 1.0
         }
 
-        // 更新約束以確保縮放後圖片不超出透明區域
         ensureImageViewWithinBounds()
     }
 
