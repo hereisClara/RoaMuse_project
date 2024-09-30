@@ -157,48 +157,12 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         view.layoutIfNeeded()
     }
 
-    func captureScreenshotExcludingViews(_ excludedViews: [UIView]) -> UIImage? {
-        // 暂时隐藏排除的视图
-        excludedViews.forEach { $0.isHidden = true }
-
-        // 截图
-        let renderer = UIGraphicsImageRenderer(size: view.bounds.size)
-        let screenshot = renderer.image { context in
-            view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
-        }
-
-        // 恢复视图可见性
-        excludedViews.forEach { $0.isHidden = false }
-
-        return screenshot
-    }
-
-    @objc func saveToPhotoAlbum() {
-        if let screenshot = captureScreenshotExcludingViews([uploadButton, saveButton, shareButton]) {
-            UIImageWriteToSavedPhotosAlbum(screenshot, self, #selector(imageSaved(_:didFinishSavingWithError:contextInfo:)), nil)
-        }
-    }
-
-    @objc func imageSaved(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        if let error = error {
-            print("保存失败: \(error.localizedDescription)")
-        } else {
-            print("保存成功")
-        }
-    }
-
     @objc func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
         guard let view = gesture.view else { return }
 
         if gesture.state == .began || gesture.state == .changed {
-            let currentWidth = imageView.frame.width * gesture.scale
-            let currentHeight = imageView.frame.height * gesture.scale
-
-            // 確保縮放不會讓圖片小於螢幕的長寬
-            if currentWidth >= minWidthScale && currentHeight >= minHeightScale {
-                view.transform = view.transform.scaledBy(x: gesture.scale, y: gesture.scale)
-                gesture.scale = 1.0
-            }
+            view.transform = view.transform.scaledBy(x: gesture.scale, y: gesture.scale)
+            gesture.scale = 1.0
         }
 
         // 更新约束以确保缩放后图片不会超出透明区域
@@ -225,21 +189,52 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     // 确保 imageView 不超出 transparentArea 的范围
     func ensureImageViewWithinBounds() {
         let imageFrame = imageView.frame
+        let superviewBounds = view.bounds
 
-        // 检查左右边界
-        if imageFrame.minX > transparentArea.minX {
-            imageViewConstraints[0].update(offset: transparentArea.minX)
-        }
-        if imageFrame.maxX < transparentArea.maxX {
-            imageViewConstraints[0].update(offset: transparentArea.maxX - imageFrame.width)
+        var newCenter = imageView.center
+
+        // 確保圖片不超出左右邊界
+        if imageFrame.minX > 0 {
+            newCenter.x = imageView.frame.width / 2
+        } else if imageFrame.maxX < superviewBounds.width {
+            newCenter.x = superviewBounds.width - imageView.frame.width / 2
         }
 
-        // 检查上下边界
-        if imageFrame.minY > transparentArea.minY {
-            imageViewConstraints[1].update(offset: transparentArea.minY)
+        // 確保圖片不超出上下邊界
+        if imageFrame.minY > 0 {
+            newCenter.y = imageView.frame.height / 2
+        } else if imageFrame.maxY < superviewBounds.height {
+            newCenter.y = superviewBounds.height - imageView.frame.height / 2
         }
-        if imageFrame.maxY < transparentArea.maxY {
-            imageViewConstraints[1].update(offset: transparentArea.maxY - imageFrame.height)
+
+        imageView.center = newCenter
+    }
+
+    func captureScreenshotExcludingViews(_ excludedViews: [UIView]) -> UIImage? {
+        
+        excludedViews.forEach { $0.isHidden = true }
+
+        let renderer = UIGraphicsImageRenderer(size: view.bounds.size)
+        let screenshot = renderer.image { context in
+            view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
+        }
+
+        excludedViews.forEach { $0.isHidden = false }
+
+        return screenshot
+    }
+
+    @objc func saveToPhotoAlbum() {
+        if let screenshot = captureScreenshotExcludingViews([uploadButton, saveButton, shareButton]) {
+            UIImageWriteToSavedPhotosAlbum(screenshot, self, #selector(imageSaved(_:didFinishSavingWithError:contextInfo:)), nil)
+        }
+    }
+
+    @objc func imageSaved(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        if let error = error {
+            print("保存失败: \(error.localizedDescription)")
+        } else {
+            print("保存成功")
         }
     }
 }
