@@ -31,21 +31,19 @@ class EstablishViewController: UIViewController {
     let locationManager = LocationManager()
     
     let searchRadius: CLLocationDistance = 15000
-    
     var postsArray = [[String: Any]]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.navigationBar.prefersLargeTitles = true
-        navigationItem.largeTitleDisplayMode = .always
-        self.title = "建立"
-        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-            navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, // 修改顏色
-                .font: customFont // 設置字體
-            ]
-        }
-        view.backgroundColor = UIColor(resource: .backgroundGray)
+//        navigationController?.navigationBar.prefersLargeTitles = true
+//        navigationItem.largeTitleDisplayMode = .always
+//        self.title = "建立"
+//        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+//            navigationController?.navigationBar.largeTitleTextAttributes = [
+//                .foregroundColor: UIColor.deepBlue, // 修改顏色
+//                .font: customFont // 設置字體
+//            ]
+//        }
         view.backgroundColor = UIColor(resource: .backgroundGray)
         styleTableView.register(StyleTableViewCell.self, forCellReuseIdentifier: "styleCell")
         
@@ -138,17 +136,13 @@ class EstablishViewController: UIViewController {
                                 }
                                 
                                 DispatchQueue.main.async {
-                                    print("開始傳值")
                                     self.trip = trip
                                 }
                             }
-                            // 操作完成後重新啟用按鈕
                             self.recommendRandomTripView.isUserInteractionEnabled = true
                         }
                     }
                 } else {
-                    print("未找到符合該 styleTag 的詩詞")
-                    // 操作完成後重新啟用按鈕
                     self.recommendRandomTripView.isUserInteractionEnabled = true
                 }
             }
@@ -163,7 +157,7 @@ class EstablishViewController: UIViewController {
         let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
         
         guard let model = try? poemLocationNLP3(configuration: .init()) else {
-            print("NLP 模型加載失敗")
+            
             return
         }
         
@@ -175,7 +169,7 @@ class EstablishViewController: UIViewController {
                 allResults.append(landscape)
                 
             } catch {
-                print("分析失敗：\(error.localizedDescription)")
+                
             }
         }
         print(Array(Set(allResults)))
@@ -187,19 +181,21 @@ class EstablishViewController: UIViewController {
         var foundValidPlace = false
         self.city = "" // 清空現有的城市
         self.districts.removeAll() // 清空現有的行政區
-        self.matchingPlaces.removeAll()
-        
+        self.matchingPlaces.removeAll() // 确保每次只处理新的地点
+
         for keyword in keywords {
             dispatchGroup.enter()
             processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, dispatchGroup: dispatchGroup) { validPlaceFound in
                 if validPlaceFound {
                     foundValidPlace = true
                 }
+                dispatchGroup.leave() // 确保在完成后退出 dispatchGroup
             }
         }
-        
+
         dispatchGroup.notify(queue: .main) {
-            if foundValidPlace, self.matchingPlaces.count >= 1 {
+            // 检查找到的地点数量是否满足要求（至少一个）
+            if foundValidPlace, self.matchingPlaces.count > 0 {
                 self.saveTripToFirebase(poem: poem, completion: completion)
             } else {
                 completion(nil)
@@ -209,48 +205,58 @@ class EstablishViewController: UIViewController {
 
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
+            // 找到所有附近的地点
             let nearbyPlaces = places.filter { place in
                 let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
                 let distance = currentLocation.distance(from: placeLocation)
                 return distance <= self.searchRadius
             }
 
-            if !nearbyPlaces.isEmpty {
-                if let randomPlace = nearbyPlaces.randomElement() {
-                    if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
-                        self.matchingPlaces.append(randomPlace)
-
-                        let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
-                        self.reverseGeocodeLocation(placeLocation) { city, district in
-                            if let city = city, let district = district {
-                                if self.city.isEmpty {
-                                    self.city = city
-                                }
-                                if !self.districts.contains(district) {
-                                    self.districts.append(district)
-                                }
+            if let randomPlace = nearbyPlaces.randomElement() {
+                print("隨機選擇的地點: \(randomPlace)")
+                if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
+                    print("將地點加入 matchingPlaces: \(randomPlace)")
+                    self.matchingPlaces.append(randomPlace)
+                    print("當前 matchingPlaces: \(self.matchingPlaces)")
+                    let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                    self.reverseGeocodeLocation(placeLocation) { city, district in
+                        if let city = city, let district = district {
+                            if self.city.isEmpty {
+                                self.city = city
+                            }
+                            if !self.districts.contains(district) {
+                                self.districts.append(district)
                             }
                         }
                     }
+                    completion(true) // 标记为成功找到地点
+                } else {
+                    completion(false) // 如果已经存在该地点
+                    print("地點已存在 matchingPlaces 中: \(randomPlace)")
                 }
-                completion(true)
             } else {
+                // 如果没有找到符合条件的地点，搜索并保存
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                    print("Found places from Google API: \(foundPlaces)")
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
-                                self.matchingPlaces.append(savedPlace)
+                                // 确保不重复添加地点
+                                if !self.matchingPlaces.contains(where: { $0.id == savedPlace.id }) {
+                                    self.matchingPlaces.append(savedPlace)
+                                    print("Matching places after adding: \(self.matchingPlaces)")
+                                }
                                 completion(true)
                             } else {
                                 completion(false)
                             }
                         }
                     } else {
-                        completion(false)
+                        completion(false) // 没有找到新的地点
                     }
                 }
+                
             }
-            dispatchGroup.leave()
         }
     }
 
@@ -288,7 +294,7 @@ class EstablishViewController: UIViewController {
                         // 更新 tripId
                         documentRef?.updateData(["id": documentID]) { error in
                             if let error = error {
-                                print("Error updating tripId: \(error)")
+                                
                                 completion(nil)
                             } else {
                                 let trip = Trip(
@@ -324,7 +330,7 @@ class EstablishViewController: UIViewController {
         let directions = MKDirections(request: request)
         directions.calculate { response, error in
             if let error = error {
-                print("Error calculating route: \(error)")
+                
                 completion(nil, nil)
                 return
             }
@@ -345,7 +351,7 @@ class EstablishViewController: UIViewController {
         
         // 確保有地點可供計算
         guard !places.isEmpty else {
-            print("沒有地點可供計算")
+            
             completion(nil, nil)
             return
         }
@@ -406,32 +412,7 @@ class EstablishViewController: UIViewController {
             completion(totalTime, nestedInstructions)
         }
     }
-
-        
-        func createNestedRouteInstructions(routesArray: [[MKRoute]]) -> [[[String: Any]]] {
-            var nestedRouteInstructions = [[[String: Any]]]()
-            
-            // 遍歷每一段路線
-            for routeArray in routesArray {
-                var stepInstructions = [[String: Any]]()  // 用來保存每一段路線的步驟
-                
-                if let route = routeArray.first {
-                    // 遍歷該段路線中的每個步驟
-                    for step in route.steps {
-                        let stepData: [String: Any] = [
-                            "instructions": step.instructions,
-                            "distance": step.distance,
-                            "notice": step.notice ?? "無"
-                        ]
-                        stepInstructions.append(stepData)
-                    }
-                }
-                nestedRouteInstructions.append(stepInstructions)
-            }
-            
-            return nestedRouteInstructions
-        }
-    }
+    
     
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
@@ -476,6 +457,7 @@ class EstablishViewController: UIViewController {
         
         return nestedRouteInstructions
     }
+}
 
 
 

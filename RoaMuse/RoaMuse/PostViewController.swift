@@ -523,7 +523,7 @@ extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
         // 移除 StackView 中的所有图片视图
         imagesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         // 重置下拉菜单选择
-        dropdownButton.setTitle("选择行程", for: .normal)
+        dropdownButton.setTitle("選擇行程", for: .normal)
         tripId = ""
         // 重置下拉菜单的显示状态
         isDropdownVisible = false

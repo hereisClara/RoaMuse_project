@@ -46,15 +46,13 @@ class ArticleViewController: UIViewController {
         view.backgroundColor = .white
         
         self.navigationItem.largeTitleDisplayMode = .never
-        
+        getTripData()
         observeLikeCountChanges()
         
         popupView.delegate = self
         setupTableView()
         checkBookmarkStatus()
         updateBookmarkData()
-        
-//        getTripData()
         
         setupCommentInput()
         updateLikesData()
@@ -63,7 +61,6 @@ class ArticleViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        getTripData()
         observeLikeCountChanges()
         checkBookmarkStatus()
         loadComments()
@@ -351,7 +348,6 @@ class ArticleViewController: UIViewController {
                 return trip.id == self.tripId
             }
             if let matchedTrip = filteredTrips.first {
-                // 根據 trip.poemId 取得對應的 Poem 資料
                 FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
                     DispatchQueue.main.async {
                         self.tripTitleLabel.text = poem.title  // 這裡使用 poem.title 而不是 trip.poem.title
@@ -502,9 +498,10 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         headerView.addSubview(authorLabel)
         
         contentLabel.text = articleContent
-        contentLabel.font = UIFont.systemFont(ofSize: 14)
+        contentLabel.font = UIFont.systemFont(ofSize: 18)
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
+        contentLabel.textColor = .darkGray
         contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         headerView.addSubview(contentLabel)
 
@@ -540,7 +537,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         }
         
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(authorLabel.snp.bottom).offset(8)
+            make.top.equalTo(authorLabel.snp.bottom).offset(16)
             make.width.equalTo(headerView).multipliedBy(0.9)
             make.centerX.equalTo(headerView)
         }

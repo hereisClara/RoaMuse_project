@@ -27,7 +27,7 @@ class TripDetailViewController: UIViewController {
     var selectedIndexPath: IndexPath?
     var completedPlaceIds: [String] = []
     
-    let tableView = UITableView()
+    var tableView = UITableView()
     
     let progressView = UIView() // The vertical progress view container
     let progressBar = UIProgressView(progressViewStyle: .bar) // The actual progress bar
@@ -39,7 +39,9 @@ class TripDetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        // 設定導航欄的背景顏色
+        navigationController?.navigationBar.barTintColor = UIColor.white
+
         if let nestedInstructions = nestedInstructions {
             for (index, steps) in nestedInstructions.enumerated() {
                 print("導航段落 \(index):")
@@ -68,6 +70,7 @@ class TripDetailViewController: UIViewController {
         } else {
             print("未接收到行程數據")
         }
+        
         setupUI()
         setupTableView()
         loadPlacesDataFromFirebase()
@@ -102,53 +105,53 @@ class TripDetailViewController: UIViewController {
     }
     
     func setupUI() {
-            view.addSubview(progressView)
+        view.addSubview(progressView)
+        
+        progressView.backgroundColor = .clear // Transparent background
+        progressView.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(20)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
+            make.width.equalTo(20) // Width of the progress bar
+        }
+        
+        for _ in 0..<places.count {
+            let dot = UIView()
+            dot.backgroundColor = .lightGray
+            dot.layer.cornerRadius = 5 // Circular dots
+            progressView.addSubview(dot)
             
-            progressView.backgroundColor = .clear // Transparent background
-            progressView.snp.makeConstraints { make in
-                make.leading.equalToSuperview().offset(20)
-                make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
-                make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-                make.width.equalTo(20) // Width of the progress bar
+            dot.snp.makeConstraints { make in
+                make.width.height.equalTo(10) // Size of dots
+                make.centerX.equalToSuperview()
             }
             
-            for _ in 0..<places.count {
-                let dot = UIView()
-                dot.backgroundColor = .lightGray
-                dot.layer.cornerRadius = 5 // Circular dots
-                progressView.addSubview(dot)
-                
-                dot.snp.makeConstraints { make in
-                    make.width.height.equalTo(10) // Size of dots
-                    make.centerX.equalToSuperview()
-                }
-                
-                progressDots.append(dot)
-            }
-            
-            for (index, dot) in progressDots.enumerated() {
-                dot.snp.makeConstraints { make in
-                    if index == 0 {
-                        make.top.equalToSuperview().offset(20)
-                    } else {
-                        make.top.equalTo(progressDots[index - 1].snp.bottom).offset(30)
-                    }
+            progressDots.append(dot)
+        }
+        
+        for (index, dot) in progressDots.enumerated() {
+            dot.snp.makeConstraints { make in
+                if index == 0 {
+                    make.top.equalToSuperview().offset(20)
+                } else {
+                    make.top.equalTo(progressDots[index - 1].snp.bottom).offset(30)
                 }
             }
         }
+    }
     
     func updateProgress(for placeIndex: Int) {
-            if placeIndex < progressDots.count {
-                let dot = progressDots[placeIndex]
-                dot.backgroundColor = .blue // Change color to indicate completion
-            }
+        if placeIndex < progressDots.count {
+            let dot = progressDots[placeIndex]
+            dot.backgroundColor = .blue // Change color to indicate completion
         }
+    }
     
     @objc func shareButtonTapped() {
         let imageUploadVC = PhotoUploadViewController()
         self.navigationController?.pushViewController(imageUploadVC, animated: true)
     }
-
+    
     
     func loadPoemDataFromFirebase() {
         
@@ -171,7 +174,6 @@ class TripDetailViewController: UIViewController {
     func updatePoemData(poem: Poem) {
         self.tableView.reloadData()
     }
-    
     
     func loadPlacesDataFromFirebase() {
         
@@ -202,16 +204,13 @@ class TripDetailViewController: UIViewController {
                 self.currentTargetIndex = 0
             }
             
-            // 更新其他相关数据
             self.placeName = self.places.map { $0.name }
             
             DispatchQueue.main.async {
-                // 初始化 buttonState
                 if self.buttonState.count != self.places.count {
                     self.buttonState = Array(repeating: false, count: self.places.count)
                 }
                 self.tableView.reloadData()
-                // 开始位置更新，並從最後一個已完成的地點後開始
                 self.locationManager.startUpdatingLocation()
                 self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                     guard let self = self else { return }
@@ -248,6 +247,10 @@ class TripDetailViewController: UIViewController {
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        
+        guard section == 0 else {
+                return nil
+            }
         
         guard let poem = loadedPoem else {
             let headerView = UIView()
@@ -306,67 +309,81 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 160
+            return section == 0 ? UITableView.automaticDimension : 0
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 150
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        250
+        return UITableView.automaticDimension
+    }
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        // 每個地點對應一個 section，根據嵌套數列的數量確定 section 數量
+        return nestedInstructions?.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        // 每個 section 的行數取決於該導航段落的指令數量
+        return nestedInstructions?[section].count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        guard section < places.count else {
+            return nil
+        }
         
-        return trip?.placeIds.count ?? 0
+        let footerView = UIView()
+        let placeLabel = UILabel()
+        let completeButton = UIButton(type: .system)
+        
+        footerView.backgroundColor = .backgroundGray
+        footerView.addSubview(placeLabel)
+        footerView.addSubview(completeButton)
+        
+        // 設置地點名稱
+        let place = places[section]
+        placeLabel.text = place.name
+        placeLabel.font = UIFont.systemFont(ofSize: 18)
+        placeLabel.numberOfLines = 0
+        placeLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(20)
+            make.centerY.equalToSuperview()
+        }
+        
+        // 設置完成按鈕
+        completeButton.setTitle("完成", for: .normal)
+        completeButton.isEnabled = !completedPlaceIds.contains(place.id)
+        completeButton.tag = section // 將 section 設置為按鈕的 tag 以便識別
+        completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
+        completeButton.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().offset(-20)
+            make.centerY.equalToSuperview()
+        }
+        
+        return footerView
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "tripDetailCell", for: indexPath) as? TripDetailWithPlaceTableViewCell
-        cell?.selectionStyle = .none
+        let cell = tableView.dequeueReusableCell(withIdentifier: "instructionCell", for: indexPath)
         
-        let dataIndex = indexPath.row
-        
-        if buttonState.count != places.count {
-            buttonState = Array(repeating: false, count: places.count)
+        if let instruction = nestedInstructions?[indexPath.section][indexPath.row] {
+            cell.textLabel?.text = instruction
+            cell.textLabel?.numberOfLines = 0 // 多行顯示導航指令
         }
         
-        if !places.isEmpty && dataIndex < places.count {
-            let isButtonEnabled = buttonState[dataIndex]
-            let place = places[dataIndex]
-            cell?.placeLabel.text = place.name
-            cell?.completeButton.isHidden = false
-            //            cell?.completeButton.isEnabled = isButtonEnabled
-            
-            // Remove existing targets to prevent multiple triggers
-            cell?.completeButton.removeTarget(nil, action: nil, for: .allEvents)
-            cell?.completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
-            
-            cell?.completeButton.tag = indexPath.row
-            cell?.completeButton.accessibilityIdentifier = place.id
-            
-            // Rest of your code...
-            let isComplete = self.completedPlaceIds.contains(place.id)
-            
-            cell?.completeButton.isEnabled = (indexPath.row == currentTargetIndex) && buttonState[indexPath.row]
-            
-            cell?.completeButton.isSelected = isComplete
-            cell?.completeButton.setTitle(isComplete ? "已完成" : "完成", for: .normal)
-            cell?.moreInfoLabel.isHidden = !isComplete
-        } else {
-            cell?.placeLabel.text = "無資料"
-            cell?.completeButton.isHidden = true
-        }
-        
-        return cell ?? UITableViewCell()
+        return cell
     }
     
-    
     func setupTableView() {
+        tableView = UITableView(frame: .zero, style: .plain)
         view.addSubview(tableView)
-        
         tableView.delegate = self
         tableView.dataSource = self
-        
-        tableView.register(TripDetailWithPlaceTableViewCell.self, forCellReuseIdentifier: "tripDetailCell")
-        
+        tableView.contentInsetAdjustmentBehavior = .automatic
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "instructionCell")
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
@@ -374,16 +391,18 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func didTapCompleteButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        guard let placeId = sender.accessibilityIdentifier else {
-            return
-        }
-        guard let trip = trip else {
+        guard let trip = trip else { return }
+        
+        let sectionIndex = sender.tag
+        
+        guard sectionIndex < places.count else {
             return
         }
         
-        let index = sender.tag
+        let place = places[sectionIndex]
+        let placeId = place.id
         
-        guard index == currentTargetIndex else {
+        guard sectionIndex == currentTargetIndex else {
             return
         }
         
@@ -399,11 +418,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     self.completedPlaceIds.append(placeId)
                     self.buttonState[self.currentTargetIndex] = false // 禁用已完成地点的按钮
                     self.currentTargetIndex += 1 // 更新到下一個地點
-                    self.tableView.reloadData()
+                    self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic) // 更新當前 section
                 }
             } else {
                 print("更新失败")
             }
         }
     }
+    
 }

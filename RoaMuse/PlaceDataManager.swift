@@ -25,7 +25,6 @@ class PlaceDataManager {
         }
     }
     
-    // 根據關鍵字與類型限制來查詢地點
     func searchPlaces(withKeywords keywords: [String], startingFrom startLocation: CLLocation, completion: @escaping ([Place]) -> Void) {
         var foundPlaces = [Place]()
         var currentLocation = startLocation
@@ -53,10 +52,17 @@ class PlaceDataManager {
                     dispatchGroup.leave()
                     return
                 }
+                
                 if let place = place {
-                    foundPlaces.append(place)
-                    currentLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                    // 檢查 placeId 是否已經存在，避免重複
+                    if !foundPlaces.contains(where: { $0.id == place.id }) {
+                        foundPlaces.append(place)
+                        currentLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                    } else {
+                        print("Place with ID \(place.id) already exists, skipping.")
+                    }
                 }
+                
                 dispatchGroup.leave()
                 searchNextKeyword(index: index + 1)
             }
@@ -64,8 +70,7 @@ class PlaceDataManager {
         
         searchNextKeyword(index: 0)
     }
-    
-    // 使用 Google Places API 搜尋特定位置
+
     func searchPlaceByKeyword(_ keyword: String, location: CLLocation, radius: Int, typeRestrictions: String, completion: @escaping (Place?) -> Void) {
         let baseURL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
         let locationParam = "location=\(location.coordinate.latitude),\(location.coordinate.longitude)"
@@ -96,14 +101,12 @@ class PlaceDataManager {
                 if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let results = json["results"] as? [[String: Any]] {
                     
-                    // 篩選符合條件的地點：評論數大於 100 或者評分大於 3.5
                     let filteredPlaces = results.filter { place in
                         let userRatingsTotal = place["user_ratings_total"] as? Int ?? 0
                         let rating = place["rating"] as? Double ?? 0.0
                         return userRatingsTotal > 100 || rating > 3.5
                     }
                     
-                    // 確保有地點符合條件
                     if let firstPlace = filteredPlaces.first {
                         let place = self.parsePlace(from: firstPlace)
                         completion(place)
@@ -121,7 +124,6 @@ class PlaceDataManager {
         }.resume()
     }
 
-    
     // 解析 Google Places API 回應中的地點資料
     func parsePlace(from dictionary: [String: Any]) -> Place? {
         guard let name = dictionary["name"] as? String,
@@ -156,22 +158,26 @@ class PlaceDataManager {
                 completion(nil)
                 return
             }
-
+            
             // 如果找到相同的地點，則不進行上傳
             if let snapshot = snapshot, !snapshot.isEmpty {
                 print("Place already exists in Firebase, skipping upload.")
-                completion(place)  // 地點已經存在，直接回傳
+                if let document = snapshot.documents.first {
+                    var placeToUpdate = place
+                    placeToUpdate.id = document.documentID  // Update the id to Firebase's documentID
+                    completion(placeToUpdate)  // Return the updated place
+                } else {
+                    completion(nil)
+                }
                 return
             }
-
-            // 如果沒有找到相同的地點，則進行上傳
-            var placeToUpdate = place  // 使用本地變量來進行操作
+            
+            var placeToUpdate = place
             
             let placeData: [String: Any] = [
                 "name": place.name,
                 "latitude": roundedLatitude,
-                "longitude": roundedLongitude,
-                "id": place.id  // 在上傳的資料中包含地點的 id
+                "longitude": roundedLongitude
             ]
 
             var documentRef: DocumentReference? = nil
@@ -185,15 +191,19 @@ class PlaceDataManager {
                     print("Successfully saved place: \(place.name)")
 
                     // 使用 Firebase 自動生成的 documentID 更新 place 的 id
-                    let documentID = documentRef?.documentID
+                    guard let documentID = documentRef?.documentID else {
+                        completion(nil)
+                        return
+                    }
 
-                    // 更新 documentID 到 Firebase
+                    // 更新 documentID 到 Firebase 中的 id 字段
                     documentRef?.updateData(["id": documentID]) { error in
                         if let error = error {
                             print("Error updating place id: \(error)")
                             completion(nil)
                         } else {
-                            placeToUpdate.id = documentID ?? ""
+                            // 更新 place 對象的 id
+                            placeToUpdate.id = documentID
                             print("Updated place ID: \(placeToUpdate.id)")
                             completion(placeToUpdate)  // 返回更新後的 place
                         }
@@ -202,5 +212,6 @@ class PlaceDataManager {
             }
         }
     }
+
 }
 

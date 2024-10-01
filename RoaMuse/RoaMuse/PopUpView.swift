@@ -38,17 +38,25 @@ class PopUpView {
     var tapCollectButton: (() -> Void)?
     var onTripSelected: ((Trip) -> Void)?
     var fromEstablishToTripDetail: Trip?
+    let matchingScoreLabel = UILabel()
     
     init() {}
     
-    func showPopup(on view: UIView, with trip: Trip, city: String, districts: [String]) {
-        print("hi")
+    func showPopup(on view: UIView, with trip: Trip, city: String, districts: [String], matchingScore: Double? = nil) {
+        
         guard let window = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
             return
         }
+        
+        if let matchingScore = matchingScore {
+            matchingScoreLabel.text = "匹配分數：\(matchingScore)%"
+            matchingScoreLabel.isHidden = false
+        } else {
+            matchingScoreLabel.isHidden = true
+        }
+        
         self.tripId = trip.id
         checkIfTripBookmarked()
-        print("hihi")
         fromEstablishToTripDetail = trip
         
         versesStackView.removeAllArrangedSubviews()
@@ -94,6 +102,7 @@ class PopUpView {
         }
         
         FirebaseManager.shared.loadPlaces(placeIds: trip.placeIds) { [weak self] places in
+            
             guard let self = self else { return }
             
             DispatchQueue.main.async {
@@ -138,6 +147,13 @@ class PopUpView {
         popupView.addSubview(startButton)
         popupView.addSubview(cityLabel)   // 添加城市标签
         popupView.addSubview(districtsStackView)
+        popupView.addSubview(matchingScoreLabel)
+        
+        
+        matchingScoreLabel.snp.makeConstraints { make in
+            make.centerX.equalTo(popupView)
+            make.bottom.equalTo(startButton.snp.top).offset(-40)
+        }
         
         cityLabel.snp.makeConstraints { make in
             make.top.equalTo(placesStackView.snp.bottom).offset(30)
@@ -213,6 +229,9 @@ class PopUpView {
         startButton.tintColor = .white
         startButton.isEnabled = false
         startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
+        
+        matchingScoreLabel.backgroundColor = .accent
+        matchingScoreLabel.textColor = .white
         
     }
     

@@ -38,9 +38,16 @@ class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        findBestMatchedPoem(currentSeason: getCurrentSeason(), currentWeather: 0, currentTime: getCurrentSeason()) { matchedPoem in
-            // 在這裡處理返回的 matchedPoem
+        findBestMatchedPoem(currentSeason: getCurrentSeason(), currentWeather: 0, currentTime: getCurrentTimeOfDay()) { matchedPoem, matchingPercentage in
+            if let matchedPoem = matchedPoem {
+                if let matchingPercentage = matchingPercentage {
+                    print("匹配百分比為 \(matchingPercentage)%")
+                }
+            } else {
+                print("未找到匹配的詩歌")
+            }
         }
+
 
         
         self.navigationController?.setNavigationBarHidden(false, animated: false)
@@ -339,7 +346,7 @@ class HomeViewController: UIViewController {
             self.locationManager.onLocationUpdate = nil
             
             // Step 1: 查找最佳匹配詩歌
-            self.findBestMatchedPoem(currentSeason: self.getCurrentSeason(), currentWeather: 0, currentTime: self.getCurrentTimeOfDay()) { matchedPoem in
+            self.findBestMatchedPoem(currentSeason: self.getCurrentSeason(), currentWeather: 0, currentTime: self.getCurrentTimeOfDay()) { matchedPoem, matchedScore  in
                 if let matchedPoem = matchedPoem {
                     // Step 2: 使用 NLP 模型提取詩中的關鍵詞
                     self.processPoemText(matchedPoem.content.joined(separator: "\n")) { keywords in
@@ -353,7 +360,7 @@ class HomeViewController: UIViewController {
                                         print("總預估交通時間：\(totalMinutes) 分鐘")
                                     }
                                     
-                                    self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                    self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
                                 }
                                 DispatchQueue.main.async {
                                     self.trip = trip
@@ -377,8 +384,31 @@ extension HomeViewController: PopupViewDelegate {
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
-        navigationController?.pushViewController(tripDetailVC, animated: true)
+        
+        if let currentLocation = locationManager.currentLocation?.coordinate {
+            LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation, places: matchingPlaces) { [weak self] totalTravelTime, routes in
+                guard let self = self else { return }
+                
+                if let totalTravelTime = totalTravelTime, let routes = routes {
+                    tripDetailVC.totalTravelTime = totalTravelTime
+                    
+                    // 創建導航指令數列
+                    var nestedInstructions = [[String]]()
+                    for route in routes {
+                        var stepInstructions = [String]()
+                        for step in route.steps {
+                            stepInstructions.append(step.instructions)
+                        }
+                        nestedInstructions.append(stepInstructions)
+                    }
+                    tripDetailVC.nestedInstructions = nestedInstructions
+                }
+                
+                self.navigationController?.pushViewController(tripDetailVC, animated: true)
+            }
+        }
     }
+
 }
 
 extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
@@ -694,7 +724,7 @@ extension HomeViewController {
         }
     }
 
-    func findBestMatchedPoem(currentSeason: Int, currentWeather: Int, currentTime: Int, completion: @escaping (Poem?) -> Void) {
+    func findBestMatchedPoem(currentSeason: Int, currentWeather: Int, currentTime: Int, completion: @escaping (Poem?, Double?) -> Void) {
         let db = Firestore.firestore()
         
         // 鄰近度矩陣等
@@ -719,13 +749,13 @@ extension HomeViewController {
         db.collection("poems").getDocuments { (snapshot, error) in
             if let error = error {
                 print("Error fetching poems: \(error)")
-                completion(nil)
+                completion(nil, nil)
                 return
             }
             
             guard let documents = snapshot?.documents else {
                 print("No documents found")
-                completion(nil)
+                completion(nil, nil)
                 return
             }
             
@@ -764,7 +794,7 @@ extension HomeViewController {
             
             let bestMatchingPercentage = round((bestMatchingScore / totalScore) * 100)
             print("最高匹配百分比: \(bestMatchingPercentage)%")
-            completion(bestMatchedPoem)
+            completion(bestMatchedPoem, bestMatchingPercentage)
         }
     }
     
