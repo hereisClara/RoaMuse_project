@@ -7,6 +7,10 @@ struct Style {
     let introduction: String
 }
 
+let season = ["不限", "春", "夏", "秋", "冬"]
+let weather = ["不限", "晴天", "雨天"]
+let time = ["不限", "白天", "傍晚", "晚上"]
+
 let styles: [Style] = [
     Style(name: "奇險派", introduction: """
     以震盪光怪為美，以瘁索枯槁為美，以五彩斑斕為美。表現出重主觀心理、尚奇險怪異的創作傾向。
@@ -26,34 +30,32 @@ let styles: [Style] = [
     """)
 ]
 
-
-struct PlaceId: Codable {
-    let id: String
-}
-
 // 定義 Poem 結構
 struct Poem: Codable {
+    var id: String = ""
     let title: String
     let poetry: String
-    let original: [String]
-    let translation: [String]
-    let secretTexts: [String]
-    let situationText: [String]
+    let content: [String]
+    let tag: Int
+    let season: Int?
+    let weather: Int?
+    let time: Int?
 }
 
 struct Trip: Codable {
-    let poem: Poem
+    let poemId: String
     let id: String
-    var places: [PlaceId]
+    var placeIds: [String]
     let tag: Int
-    let season: Int
-    let weather: Int
-    let startTime: Int
+    var poemTitle: String?
+    let season: Int?
+    let weather: Int?
+    let startTime: Int?
 }
 
 // 定義 Place 結構，存放地點詳細資料
 struct Place: Codable {
-    let id: String
+    var id: String
     let name: String
     let latitude: Double
     let longitude: Double
@@ -96,4 +98,14 @@ struct User: Codable {
 struct CompletedPlace: Codable {
     let tripId: String                // 行程ID
     var placeIds: [String]            // 行程中完成的地點IDs
+}
+
+struct PlaceTripInfo: Codable {
+    let placeId: String
+    var tripIds: [String]
+}
+
+struct TaskSet {
+    var totalTasks: Int
+    var completedTasks: Int
 }

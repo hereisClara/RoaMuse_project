@@ -13,7 +13,7 @@ class CollectionsTableViewCell: UITableViewCell {
     
     let containerView = UIView() // 容納所有內容的父視圖
     let titleLabel = UILabel()
-    let collectButton = UIButton(type: .system)
+    let collectButton = UIButton()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -32,10 +32,6 @@ class CollectionsTableViewCell: UITableViewCell {
         containerView.backgroundColor = .white
         containerView.layer.cornerRadius = 15 // 圓角半徑
         containerView.layer.masksToBounds = false
-//        contentView.layer.borderWidth = 1
-//        contentView.layer.borderColor = UIColor.black.cgColor
-//        containerView.layer.borderWidth = 1
-//        containerView.layer.borderColor = UIColor.red.cgColor
         
         // 設置 containerView 的約束
         containerView.snp.makeConstraints { make in
@@ -48,12 +44,12 @@ class CollectionsTableViewCell: UITableViewCell {
         
         // 添加 titleLabel 到 containerView 中
         containerView.addSubview(titleLabel)
-        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
         titleLabel.textColor = .deepBlue
         
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(containerView).offset(20)
-            make.centerY.equalTo(containerView).offset(-15)
+            make.centerY.equalTo(containerView)
         }
         
         // 添加 collectButton 到 containerView 中
@@ -61,8 +57,8 @@ class CollectionsTableViewCell: UITableViewCell {
         
         collectButton.snp.makeConstraints { make in
             make.trailing.equalTo(containerView).offset(-20)
-            make.centerY.equalTo(containerView).offset(15)
-            make.width.height.equalTo(35) // 設置按鈕大小
+            make.centerY.equalTo(containerView)
+            make.width.height.equalTo(25) // 設置按鈕大小
         }
         
         collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)

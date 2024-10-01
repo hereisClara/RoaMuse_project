@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8362CAB986A004E8868 /* DropdownMenu.swift */; };
+		AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8382CABA42D004E8868 /* AwardLabelView.swift */; };
+		AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F83A2CABDA28004E8868 /* LocationService.swift */; };
+		AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -43,6 +47,16 @@
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
 		AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */; };
 		AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */; };
+		AC9775662CA43B4900EF828A /* TestVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775652CA43B4900EF828A /* TestVC.swift */; };
+		AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */; };
+		AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */; };
+		AC9775712CA551CB00EF828A /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775702CA551CB00EF828A /* Config.plist */; };
+		AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */; };
+		AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775742CA7E22100EF828A /* MapViewController.swift */; };
+		AC9775772CA9831C00EF828A /* TripCallOutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775762CA9831C00EF828A /* TripCallOutView.swift */; };
+		AC9775792CA987F900EF828A /* AwardsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775782CA987F900EF828A /* AwardsViewController.swift */; };
+		AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */; };
+		AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -73,6 +87,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AC18F8362CAB986A004E8868 /* DropdownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropdownMenu.swift; sourceTree = "<group>"; };
+		AC18F8382CABA42D004E8868 /* AwardLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardLabelView.swift; sourceTree = "<group>"; };
+		AC18F83A2CABDA28004E8868 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSerifHK-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -102,6 +120,17 @@
 		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewController.swift; sourceTree = "<group>"; };
 		AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AC9775652CA43B4900EF828A /* TestVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestVC.swift; sourceTree = "<group>"; };
+		AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = poemLocationNLP3.mlmodel; path = ../../../poemLocationNLP3.mlmodel; sourceTree = "<group>"; };
+		AC97756D2CA52A9300EF828A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDataManager.swift; sourceTree = "<group>"; };
+		AC9775702CA551CB00EF828A /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
+		AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoUploadViewController.swift; sourceTree = "<group>"; };
+		AC9775742CA7E22100EF828A /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
+		AC9775762CA9831C00EF828A /* TripCallOutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripCallOutView.swift; sourceTree = "<group>"; };
+		AC9775782CA987F900EF828A /* AwardsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsViewController.swift; sourceTree = "<group>"; };
+		AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardTableViewCell.swift; sourceTree = "<group>"; };
+		AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneProgressView.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -199,6 +228,8 @@
 		AC7A2A632C97C63D003FA811 /* Manager */ = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
+				AC18F83A2CABDA28004E8868 /* LocationService.swift */,
 				AC7A2A6B2C984853003FA811 /* firebaseManager.swift */,
 				AC7A2A422C93EA0A003FA811 /* LocationManager.swift */,
 				AC7A2A4C2C943958003FA811 /* PlaceData.json */,
@@ -211,7 +242,13 @@
 		AC7A2A642C97C667003FA811 /* UserVC */ = {
 			isa = PBXGroup;
 			children = (
+				AC18F8362CAB986A004E8868 /* DropdownMenu.swift */,
+				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
+				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
+				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
+				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
 				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
+				AC9775742CA7E22100EF828A /* MapViewController.swift */,
 			);
 			path = UserVC;
 			sourceTree = "<group>";
@@ -219,8 +256,14 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
+				AC9775762CA9831C00EF828A /* TripCallOutView.swift */,
+				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
+				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
+				AC9775702CA551CB00EF828A /* Config.plist */,
+				AC97756D2CA52A9300EF828A /* Config.xcconfig */,
+				AC9775652CA43B4900EF828A /* TestVC.swift */,
 				AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */,
-				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
 				AC7A2A642C97C667003FA811 /* UserVC */,
@@ -257,6 +300,7 @@
 			isa = PBXGroup;
 			children = (
 				AC97755E2CA2472300EF828A /* RoaMuse.entitlements */,
+				AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */,
 				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
 				ACFCA3502C916C8F00643A2E /* AppDelegate.swift */,
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
@@ -415,8 +459,10 @@
 				ACFCA3602C916C9000643A2E /* Base in Resources */,
 				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
+				AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */,
 				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
 				AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */,
+				AC9775712CA551CB00EF828A /* Config.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,27 +509,38 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */,
+				AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */,
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
+				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
+				AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */,
 				AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */,
 				AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */,
 				AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */,
 				AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */,
 				AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */,
+				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
+				AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */,
+				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
+				AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
 				AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */,
+				AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */,
 				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
 				AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */,
 				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
 				AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */,
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
+				AC9775772CA9831C00EF828A /* TripCallOutView.swift in Sources */,
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
+				AC9775792CA987F900EF828A /* AwardsViewController.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
@@ -492,6 +549,7 @@
 				AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
 				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
+				AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -549,6 +607,7 @@
 /* Begin XCBuildConfiguration section */
 		ACFCA3782C916C9000643A2E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -612,6 +671,7 @@
 		};
 		ACFCA3792C916C9000643A2E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -668,6 +728,7 @@
 		};
 		ACFCA37B2C916C9000643A2E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -678,7 +739,10 @@
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要使用您的位置來提供資訊";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "我們需要權限來存取相簿中的照片。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "我們需要存取您的相簿來顯示地點照片。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -702,6 +766,7 @@
 		};
 		ACFCA37C2C916C9000643A2E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -712,7 +777,10 @@
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要使用您的位置來提供資訊";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "我們需要權限來存取相簿中的照片。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "我們需要存取您的相簿來顯示地點照片。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -736,6 +804,7 @@
 		};
 		ACFCA37E2C916C9000643A2E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -756,6 +825,7 @@
 		};
 		ACFCA37F2C916C9000643A2E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -776,6 +846,7 @@
 		};
 		ACFCA3812C916C9000643A2E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
@@ -794,6 +865,7 @@
 		};
 		ACFCA3822C916C9000643A2E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
