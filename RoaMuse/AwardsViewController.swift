@@ -18,7 +18,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     ]
     
     let awardsDescription: [[String]] = [
-        ["從開始到現在，一路走來，你已經走過了這麼多個地方⋯⋯"],
+        ["一路走來，你已經走過了這麼多地方⋯⋯"],
         ["在成為浪漫大師的路上", "在成為冒險者的路上", "在走向鄉野的路上"],
         ["有始有終，行萬卷書與你一起走過⋯⋯"]
     ]
@@ -58,7 +58,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         view.backgroundColor = .white
         fetchUserData()
-        // 設置 TableView
         setupTableView()
         setupTableViewHeader()
     }
@@ -66,16 +65,13 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     func setupTableView() {
         view.addSubview(tableView)
         
-        // 註冊自定義的 UITableViewCell
         tableView.register(AwardTableViewCell.self, forCellReuseIdentifier: "awardCell")
         
-        // 設置委託
         tableView.delegate = self
         tableView.dataSource = self
         
-        // 使用 SnapKit 來設置 Auto Layout
         tableView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()  // 設置 tableView 與父視圖四周對齊
+            make.edges.equalToSuperview()
         }
     }
     
@@ -91,8 +87,8 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         tableHeaderView.addSubview(headerLabel)
         
         headerLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()  // 垂直居中
-            make.leading.equalToSuperview().offset(16)  // 與左邊距離 16 點
+            make.centerY.equalToSuperview()
+            make.leading.equalToSuperview().offset(16)
         }
         
         tableHeaderView.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 100)
@@ -119,7 +115,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 return
             }
             
-            // 計算 completedPlace 中 placeIds 的總數
             var totalPlacesCompleted = 0
             if let completedPlace = data["completedPlace"] as? [[String: Any]] {
                 for placeEntry in completedPlace {
@@ -131,7 +126,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 print("無法解析 completedPlace 資料")
             }
             
-            // 計算 completedTrip 的總數
             var totalTripsCompleted = 0
             if let completedTrip = data["completedTrip"] as? [String] {
                 totalTripsCompleted = completedTrip.count
@@ -139,27 +133,23 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 print("無法解析 completedTrip 資料")
             }
            
-            // 將數據存入 dynamicTaskSets
             self.dynamicTaskSets = [
-                [TaskSet(totalTasks: 50, completedTasks: totalPlacesCompleted)],  // Section 0, row 0
-                [],  // Section 1 將根據 categorizePlacesByTag 來更新
-                [TaskSet(totalTasks: 30, completedTasks: totalTripsCompleted)]    // Section 2, row 0
+                [TaskSet(totalTasks: 50, completedTasks: totalPlacesCompleted)],
+                [],
+                [TaskSet(totalTasks: 30, completedTasks: totalTripsCompleted)]
             ]
 
-            // 使用 categorizePlacesByTag 更新 section 1
             self.categorizePlacesByTag { categorizedPlaces in
-                if let tagZeroPlaces = categorizedPlaces[0] {
-                    let tagZeroPlacesAmount = tagZeroPlaces.count
-                    self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagZeroPlacesAmount))  // Section 1, row 0
-                }
-                if let tagOnePlaces = categorizedPlaces[1] {
-                    let tagOnePlacesAmount = tagOnePlaces.count
-                    self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagOnePlacesAmount))  // Section 1, row 1
-                }
-                if let tagTwoPlaces = categorizedPlaces[2] {
-                    let tagTwoPlacesAmount = tagTwoPlaces.count
-                    self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagTwoPlacesAmount))  // Section 1, row 2
-                }
+                // 確保 Section 1 有三個 row，即便分類結果為空
+                let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
+                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagZeroPlacesAmount))
+
+                let tagOnePlacesAmount = categorizedPlaces[1]?.count ?? 0
+                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagOnePlacesAmount))
+
+                let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
+                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagTwoPlacesAmount))
+                
                 DispatchQueue.main.async {
                     self.tableView.reloadData()  // 重新加載數據
                 }
@@ -217,46 +207,43 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 return
             }
             
-            var categorizedPlaces: [Int: [String]] = [:] // 用來存放不同 tag 對應的 placeId
+            var categorizedPlaces: [Int: [String]] = [:]
             
-            let dispatchGroup = DispatchGroup() // 用來確保所有 tripId 的查詢完成
+            let dispatchGroup = DispatchGroup()
             
             for placeEntry in completedPlace {
                 if let tripId = placeEntry["tripId"] as? String,
                    let placeIds = placeEntry["placeIds"] as? [String] {
                     
-                    dispatchGroup.enter() // 開始一個異步任務
+                    dispatchGroup.enter()
                     
-                    // 根據 tripId 去查詢對應的 tag
                     Firestore.firestore().collection("trips").document(tripId).getDocument { (tripSnapshot, error) in
                         if let error = error {
                             print("獲取 trip 資料時出錯: \(error.localizedDescription)")
-                            dispatchGroup.leave() // 結束這個異步任務
+                            dispatchGroup.leave()
                             return
                         }
                         
                         guard let tripData = tripSnapshot?.data(),
                               let tag = tripData["tag"] as? Int else {
                             print("無法解析 trip 資料")
-                            dispatchGroup.leave() // 結束這個異步任務
+                            dispatchGroup.leave()
                             return
                         }
                         
-                        // 將 placeIds 根據 tag 分類
                         if categorizedPlaces[tag] != nil {
                             categorizedPlaces[tag]?.append(contentsOf: placeIds)
                         } else {
                             categorizedPlaces[tag] = placeIds
                         }
                         
-                        dispatchGroup.leave() // 當這個 trip 查詢結束時
+                        dispatchGroup.leave()
                     }
                 }
             }
             
-            // 當所有的查詢都完成時回調
             dispatchGroup.notify(queue: .main) {
-                completion(categorizedPlaces) // 回傳分類結果
+                completion(categorizedPlaces)
             }
         }
     }
@@ -284,11 +271,14 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         cell.selectionStyle = .none
         cell.milestoneProgressView.milestones = milestones
         
-        // 在這裡不使用 taskSets 而是根據更新後的數據
-        let progress = Float(self.dynamicTaskSets[indexPath.section][indexPath.row].completedTasks) /
-                       Float(self.dynamicTaskSets[indexPath.section][indexPath.row].totalTasks)
-        
-        cell.milestoneProgressView.progress = progress
+        if indexPath.section < dynamicTaskSets.count && indexPath.row < dynamicTaskSets[indexPath.section].count {
+                let taskSet = self.dynamicTaskSets[indexPath.section][indexPath.row]
+                let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
+                cell.milestoneProgressView.progress = progress
+            } else {
+                // 當無數據時，將進度設置為 0
+                cell.milestoneProgressView.progress = 0.0
+            }
         
         return cell
     }

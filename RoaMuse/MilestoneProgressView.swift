@@ -40,17 +40,21 @@ class MilestoneProgressView: UIView {
         // 繪製圓角進度條
         let progressWidth = rect.width * CGFloat(progress)
         let progressPath = UIBezierPath(roundedRect: CGRect(x: 0, y: progressY, width: progressWidth, height: progressHeight), cornerRadius: cornerRadius)
-        context.setFillColor(UIColor.deepBlue.cgColor)
+        context.setFillColor(UIColor.deepBlue.cgColor) // 根據需要調整進度條的顏色
         context.addPath(progressPath.cgPath)
         context.fillPath()
         
         // 繪製里程碑標記
         for milestone in milestones {
-            let milestoneX = CGFloat(milestone) * (rect.width - 16) // 減去一些邊距，避免圓圈超出
+            let milestoneX = CGFloat(milestone) * (rect.width - 16) 
             let milestoneY = rect.midY
             let circleRect = CGRect(x: milestoneX, y: milestoneY - 8, width: 16, height: 16)
-            context.setFillColor(UIColor.accent.cgColor)
+            
+            // 根據進度改變里程碑的顏色
+            let milestoneColor: UIColor = (milestone <= progress) ? UIColor.accent : UIColor.systemGray3
+            context.setFillColor(milestoneColor.cgColor)
             context.fillEllipse(in: circleRect)
         }
     }
+    
 }
