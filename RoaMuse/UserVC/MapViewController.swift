@@ -21,7 +21,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        tabBarController?.tabBar.isHidden = true
         mapView = MKMapView(frame: view.bounds)
         mapView.delegate = self
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
@@ -30,6 +30,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Marker")
         
         loadCompletedPlacesAndAddAnnotations()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     func loadCompletedPlacesAndAddAnnotations() {

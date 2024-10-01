@@ -11,6 +11,7 @@
 		AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8382CABA42D004E8868 /* AwardLabelView.swift */; };
 		AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F83A2CABDA28004E8868 /* LocationService.swift */; };
 		AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */; };
+		AC18F83F2CAC5920004E8868 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -46,7 +47,6 @@
 		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
 		AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */; };
-		AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */; };
 		AC9775662CA43B4900EF828A /* TestVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775652CA43B4900EF828A /* TestVC.swift */; };
 		AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */; };
 		AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */; };
@@ -91,6 +91,7 @@
 		AC18F8382CABA42D004E8868 /* AwardLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardLabelView.swift; sourceTree = "<group>"; };
 		AC18F83A2CABDA28004E8868 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSerifHK-VariableFont_wght.ttf"; sourceTree = "<group>"; };
+		AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -119,7 +120,6 @@
 		AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentTableViewCell.swift; sourceTree = "<group>"; };
 		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewController.swift; sourceTree = "<group>"; };
-		AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC9775652CA43B4900EF828A /* TestVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestVC.swift; sourceTree = "<group>"; };
 		AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = poemLocationNLP3.mlmodel; path = ../../../poemLocationNLP3.mlmodel; sourceTree = "<group>"; };
 		AC97756D2CA52A9300EF828A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
@@ -308,8 +308,8 @@
 				AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */,
 				ACFCA3562C916C8F00643A2E /* Main.storyboard */,
 				ACFCA35E2C916C9000643A2E /* LaunchScreen.storyboard */,
-				AC9775612CA38E0D00EF828A /* GoogleService-Info.plist */,
 				ACFCA3612C916C9000643A2E /* Info.plist */,
+				AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */,
 				ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */,
 			);
 			path = RoaMuse;
@@ -456,12 +456,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACFCA35D2C916C9000643A2E /* Assets.xcassets in Resources */,
+				AC18F83F2CAC5920004E8868 /* GoogleService-Info.plist in Resources */,
 				ACFCA3602C916C9000643A2E /* Base in Resources */,
 				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
 				AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */,
 				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
-				AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */,
 				AC9775712CA551CB00EF828A /* Config.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
