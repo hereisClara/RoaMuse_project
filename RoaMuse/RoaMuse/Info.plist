@@ -2,25 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>我們需要您的位置信息來提供天氣服務</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>我們需要您的位置信息來提供天氣服務</string>
-    
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>我們需要訪問您的相簿以保存生成的圖片。</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>我們需要將生成的圖片保存到您的相簿。</string>
-    
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>我們需要存取您的相簿來顯示地點照片。</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>我們需要權限來存取相簿中的照片。</string>
-
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>instagram-stories</string>
-    </array>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>NotoSerifHK-VariableFont_wght.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -40,7 +31,5 @@
 			</array>
 		</dict>
 	</dict>
-    <key>CFBundleIconName</key>
-    <string>AppIcon</string>
 </dict>
 </plist>

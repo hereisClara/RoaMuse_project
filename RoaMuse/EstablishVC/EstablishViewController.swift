@@ -39,11 +39,12 @@ class EstablishViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "建立"
-        
-        navigationController?.navigationBar.largeTitleTextAttributes = [
-            .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
-        ]
-        
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
+            ]
+        }
         view.backgroundColor = UIColor(resource: .backgroundGray)
         view.backgroundColor = UIColor(resource: .backgroundGray)
         styleTableView.register(StyleTableViewCell.self, forCellReuseIdentifier: "styleCell")

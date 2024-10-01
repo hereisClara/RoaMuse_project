@@ -47,11 +47,12 @@ class CollectionsViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "收藏"
-        
-        navigationController?.navigationBar.largeTitleTextAttributes = [
-            .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
             ]
-        
+        }
         popupView.delegate = self
         loadInitialData()
         setupUI()
@@ -147,7 +148,6 @@ class CollectionsViewController: UIViewController {
             FirebaseManager.shared.loadBookmarkedTrips(tripIds: incompleteTripIds) { [weak self] incompleteTrips in
                 guard let self = self else { return }
                 self.incompleteTripsArray = incompleteTrips
-                print("Incomplete Trips Loaded: \(incompleteTrips)")
                 
                 for (index, trip) in incompleteTrips.enumerated() {
                     FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
@@ -160,11 +160,9 @@ class CollectionsViewController: UIViewController {
                     }
                 }
                 
-                // 查詢已完成的行程
                 FirebaseManager.shared.loadBookmarkedTrips(tripIds: completeTripIds) { [weak self] completeTrips in
                     guard let self = self else { return }
                     self.completeTripsArray = completeTrips
-                    print("complete Trips Loaded: \(completeTrips)")
                     // 查詢詩的 title 並設置為行程的標題
                     for (index, trip) in completeTrips.enumerated() {
                         FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
@@ -469,7 +467,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 150
+        return 70
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

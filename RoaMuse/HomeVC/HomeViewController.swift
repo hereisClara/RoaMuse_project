@@ -7,6 +7,7 @@ import MJRefresh
 import Alamofire
 import Kingfisher
 import FirebaseAuth
+import MapKit
 
 class HomeViewController: UIViewController {
     
@@ -28,10 +29,19 @@ class HomeViewController: UIViewController {
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
+    var matchingPlaces: [Place] = []
+    var city: String = ""
+    var districts: [String] = []
+    let searchRadius: CLLocationDistance = 15000
+    var trip: Trip?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        findBestMatchedPoem(currentSeason: getCurrentSeason(), currentWeather: 0, currentTime: getCurrentSeason())
+        findBestMatchedPoem(currentSeason: getCurrentSeason(), currentWeather: 0, currentTime: getCurrentSeason()) { matchedPoem in
+            // 在這裡處理返回的 matchedPoem
+        }
+
         
         self.navigationController?.setNavigationBarHidden(false, animated: false)
         //        uploadTripsToFirebase()
@@ -41,9 +51,13 @@ class HomeViewController: UIViewController {
         navigationItem.largeTitleDisplayMode = .always
         self.title = "首頁"
         
-        navigationController?.navigationBar.largeTitleTextAttributes = [
-            .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
             ]
+        }
+
         
         view.backgroundColor = UIColor(resource: .backgroundGray)
         homeTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
@@ -71,12 +85,10 @@ class HomeViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
         backgroundView.addGestureRecognizer(tapGesture)
         
-        // 初始化底部選單視圖
         bottomSheetView.backgroundColor = .white
         bottomSheetView.layer.cornerRadius = 15
         bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         
-        // 設置初始位置在螢幕下方
         bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
         
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -264,7 +276,7 @@ class HomeViewController: UIViewController {
             make.top.equalTo(view.safeAreaLayoutGuide)
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(100)
+            make.height.equalTo(120)
         }
         
         recommendRandomTripView.backgroundColor = .white
@@ -274,7 +286,7 @@ class HomeViewController: UIViewController {
         // 在 recommendRandomTripView 裡面添加 UILabel
         let titleLabel = UILabel()
         titleLabel.text = "# 時令推薦"
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 26)
         titleLabel.textColor = UIColor(resource: .deepBlue)
         recommendRandomTripView.addSubview(titleLabel)
         
@@ -285,7 +297,7 @@ class HomeViewController: UIViewController {
         
         let descriptionLabel = UILabel()
         descriptionLabel.text = "下雨的時候就是要......"
-        descriptionLabel.font = UIFont.systemFont(ofSize: 16)
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Medium", size: 20)
         descriptionLabel.textColor = UIColor(resource: .deepBlue)
         recommendRandomTripView.addSubview(descriptionLabel)
         
@@ -318,49 +330,53 @@ class HomeViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-        FirebaseManager.shared.loadAllTrips { [weak self] trips in
+        recommendRandomTripView.isUserInteractionEnabled = false
+        
+        locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
-            if let randomTrip = trips.randomElement() {
-                self.randomTrip = randomTrip
-
-                let placeIds = randomTrip.placeIds  // 確認是否有 placeIds
-                
-                FirebaseManager.shared.loadPlaces(placeIds: placeIds) { places in
-                    
-                    let city = "台北市" // 可根據 places 的信息設置
-                    let districts = ["大安區", "信義區"] // 根據 places 設置區域
-                    
-                    // 呼叫 showPopup 彈出視圖
-                    self.popupView.showPopup(on: self.view, with: randomTrip, city: city, districts: districts)
-                    
-                    self.popupView.tapCollectButton = { [weak self] in
-                        guard let self = self else { return }
-                        
-                        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-                            print("未找到 userId")
-                            return
-                        }
-                        
-                        FirebaseManager.shared.updateUserTripCollections(userId: userId, tripId: randomTrip.id) { success in
-                            if success {
-                                print("收藏成功")
-                            } else {
-                                print("收藏失敗")
+            
+            self.locationManager.stopUpdatingLocation()
+            self.locationManager.onLocationUpdate = nil
+            
+            // Step 1: 查找最佳匹配詩歌
+            self.findBestMatchedPoem(currentSeason: self.getCurrentSeason(), currentWeather: 0, currentTime: self.getCurrentTimeOfDay()) { matchedPoem in
+                if let matchedPoem = matchedPoem {
+                    // Step 2: 使用 NLP 模型提取詩中的關鍵詞
+                    self.processPoemText(matchedPoem.content.joined(separator: "\n")) { keywords in
+                        // Step 3: 根據關鍵詞生成行程
+                        self.generateTripFromKeywords(keywords, poem: matchedPoem, startingFrom: currentLocation) { trip in
+                            if let trip = trip {
+                                // Step 4: 計算路徑總時間
+                                LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: self.matchingPlaces) { totalTravelTime, routes in
+                                    if let totalTravelTime = totalTravelTime {
+                                        let totalMinutes = Int(totalTravelTime / 60)
+                                        print("總預估交通時間：\(totalMinutes) 分鐘")
+                                    }
+                                    
+                                    self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                }
+                                DispatchQueue.main.async {
+                                    self.trip = trip
+                                }
                             }
+                            self.recommendRandomTripView.isUserInteractionEnabled = true
                         }
                     }
+                } else {
+                    print("未找到匹配的詩歌")
+                    self.recommendRandomTripView.isUserInteractionEnabled = true
                 }
             }
         }
+        locationManager.startUpdatingLocation()
     }
-
 }
 
 extension HomeViewController: PopupViewDelegate {
     
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
-        tripDetailVC.trip = randomTrip
+        tripDetailVC.trip = trip
         navigationController?.pushViewController(tripDetailVC, animated: true)
     }
 }
@@ -516,7 +532,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
             
-            // 使用 userId 從 UserDefaults 中獲取
             guard let userId = UserDefaults.standard.string(forKey: "userId") else {
                 print("未找到 userId")
                 return
@@ -679,10 +694,10 @@ extension HomeViewController {
         }
     }
 
-    func findBestMatchedPoem(currentSeason: Int, currentWeather: Int, currentTime: Int) {
+    func findBestMatchedPoem(currentSeason: Int, currentWeather: Int, currentTime: Int, completion: @escaping (Poem?) -> Void) {
         let db = Firestore.firestore()
         
-        // 鄰近度矩陣 (定義季節和時間的鄰近關係)
+        // 鄰近度矩陣等
         let seasonProximityMatrix: [[Double]] = [
             [1.0, 1.0, 1.0, 1.0, 1.0],  // 不限
             [0.8, 1.0, 0.4, 0.2, 0.0],  // 春
@@ -699,63 +714,237 @@ extension HomeViewController {
         ]
         
         let totalScore: Double = 100.0
-        let perConditionScore = totalScore / 3.0 // 每個條件分配 1/3 的分數
+        let perConditionScore = totalScore / 3.0
         
         db.collection("poems").getDocuments { (snapshot, error) in
             if let error = error {
                 print("Error fetching poems: \(error)")
+                completion(nil)
                 return
             }
             
             guard let documents = snapshot?.documents else {
                 print("No documents found")
+                completion(nil)
                 return
             }
             
             var bestMatchingScore: Double = 0.0
-            var bestMatchedPoem: [String: Any]?
-
-            // 遍歷每一首詩
+            var bestMatchedPoem: Poem?
+            
             for document in documents {
                 let data = document.data()
-                
                 guard let poemSeason = data["season"] as? Int,
                       let poemWeather = data["weather"] as? Int,
                       let poemTime = data["time"] as? Int else {
                     continue
                 }
 
-                // 計算匹配度的總分
                 var matchingScore: Double = 0.0
-                
-                // 匹配 "季節" - 使用鄰近度矩陣來給予分數
                 matchingScore += seasonProximityMatrix[currentSeason][poemSeason] * perConditionScore
-                
-                // 匹配 "天氣"
                 if currentWeather == poemWeather || poemWeather == 0 {
                     matchingScore += perConditionScore
                 }
+                matchingScore += timeProximityMatrix[currentTime][poemTime] * perConditionScore
                 
-                // 匹配 "時間"
-                if currentTime == poemTime || poemTime == 0 {
-                    matchingScore += perConditionScore
-                }
-                
-                // 如果這首詩的匹配度高於目前最高的匹配度，更新最佳匹配的詩
                 if matchingScore > bestMatchingScore {
                     bestMatchingScore = matchingScore
-                    bestMatchedPoem = data
+                    bestMatchedPoem = Poem(
+                        id: data["id"] as? String ?? "",
+                        title: data["title"] as? String ?? "",
+                        poetry: data["poetry"] as? String ?? "",
+                        content: data["content"] as? [String] ?? [],
+                        tag: data["tag"] as? Int ?? 0,
+                        season: data["season"] as? Int,
+                        weather: data["weather"] as? Int,
+                        time: data["time"] as? Int
+                    )
                 }
             }
             
-            // 將匹配度轉換為百分比，並四捨五入到一位小數
-            let matchingPercentage = round((bestMatchingScore / totalScore) * 1000) / 10.0
+            let bestMatchingPercentage = round((bestMatchingScore / totalScore) * 100)
+            print("最高匹配百分比: \(bestMatchingPercentage)%")
+            completion(bestMatchedPoem)
+        }
+    }
+    
+    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
+        FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
+            let nearbyPlaces = places.filter { place in
+                let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                let distance = currentLocation.distance(from: placeLocation)
+                return distance <= self.searchRadius
+            }
 
-            if let bestPoem = bestMatchedPoem {
-                print("最匹配的詩歌資料為: \(bestPoem)")
-                print("匹配度為: \(matchingPercentage)%")
+            if !nearbyPlaces.isEmpty {
+                if let randomPlace = nearbyPlaces.randomElement() {
+                    if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
+                        self.matchingPlaces.append(randomPlace)
+
+                        let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                        LocationService.shared.reverseGeocodeLocation(placeLocation) { (city, district) in
+                            if let city = city, let district = district {
+                                if self.city.isEmpty {
+                                    self.city = city
+                                }
+                                if !self.districts.contains(district) {
+                                    self.districts.append(district)
+                                }
+                            }
+                        }
+                    }
+                }
+                completion(true)
             } else {
-                print("沒有找到符合條件的詩歌")
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                    if let newPlace = foundPlaces.first {
+                        PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
+                            if let savedPlace = savedPlace {
+                                self.matchingPlaces.append(savedPlace)
+                                completion(true)
+                            } else {
+                                completion(false)
+                            }
+                        }
+                    } else {
+                        completion(false)
+                    }
+                }
+            }
+            dispatchGroup.leave()
+        }
+    }
+    
+    func processPoemText(_ inputText: String, completion: @escaping ([String]) -> Void) {
+        let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        
+        // 確保NLP模型正常加載
+        guard let model = try? poemLocationNLP3(configuration: .init()) else {
+            print("NLP 模型加載失敗")
+            return
+        }
+        
+        var allResults = [String]()
+        for segment in textSegments {
+            do {
+                let prediction = try model.prediction(text: segment)
+                let landscape = prediction.label
+                allResults.append(landscape)
+            } catch {
+                print("分析失敗：\(error.localizedDescription)")
+            }
+        }
+        
+        // 返回不重複的關鍵字
+        completion(Array(Set(allResults)))
+    }
+    
+    func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        var foundValidPlace = false
+        self.city = "" // 清空現有的城市
+        self.districts.removeAll() // 清空現有的行政區
+        self.matchingPlaces.removeAll()
+        
+        for keyword in keywords {
+            dispatchGroup.enter()
+            processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, dispatchGroup: dispatchGroup) { validPlaceFound in
+                if validPlaceFound {
+                    foundValidPlace = true
+                }
+            }
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            if foundValidPlace, self.matchingPlaces.count >= 1 {
+                self.saveTripToFirebase(poem: poem, completion: completion)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+
+
+    func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
+        let request = MKDirections.Request()
+        
+        let sourcePlacemark = MKPlacemark(coordinate: startLocation)
+        let destinationPlacemark = MKPlacemark(coordinate: endLocation)
+        
+        request.source = MKMapItem(placemark: sourcePlacemark)
+        request.destination = MKMapItem(placemark: destinationPlacemark)
+        
+        request.transportType = .automobile  // 或者 .walking
+        
+        // 計算路線
+        let directions = MKDirections(request: request)
+        directions.calculate { response, error in
+            if let error = error {
+                print("Error calculating route: \(error)")
+                completion(nil, nil)
+                return
+            }
+            
+            if let route = response?.routes.first {
+                
+                completion(route.expectedTravelTime, route)
+            } else {
+                completion(nil, nil)
+            }
+        }
+    }
+
+    func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
+        let tripData: [String: Any] = [
+            "poemId": poem.id,
+            "placeIds": self.matchingPlaces.map { $0.id },
+            "tag": poem.tag
+        ]
+        
+        FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
+            if exists, let existingTripId = existingTripId {
+                let existingTrip = Trip(
+                    poemId: poem.id,
+                    id: existingTripId,
+                    placeIds: self.matchingPlaces.map { $0.id },
+                    tag: poem.tag,
+                    season: nil,
+                    weather: nil,
+                    startTime: nil
+                )
+                completion(existingTrip)
+            } else {
+                let db = Firestore.firestore()
+                var documentRef: DocumentReference? = nil
+                documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                    if let error = error {
+                        completion(nil)
+                    } else {
+                        guard let documentID = documentRef?.documentID else {
+                            completion(nil)
+                            return
+                        }
+
+                        // 更新 tripId
+                        documentRef?.updateData(["id": documentID]) { error in
+                            if let error = error {
+                                print("Error updating tripId: \(error)")
+                                completion(nil)
+                            } else {
+                                let trip = Trip(
+                                    poemId: poem.id,
+                                    id: documentID,
+                                    placeIds: self.matchingPlaces.map { $0.id },
+                                    tag: poem.tag,
+                                    season: nil,
+                                    weather: nil,
+                                    startTime: nil
+                                )
+                                completion(trip)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

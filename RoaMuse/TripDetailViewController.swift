@@ -66,7 +66,6 @@ class TripDetailViewController: UIViewController {
                 if let tripId = completedPlace["tripId"] as? String,
                    let placeIds = completedPlace["placeIds"] as? [String],
                    tripId == self.trip?.id {
-                    // 將符合條件的 placeIds 加入 completedPlaceIds 中
                     self.completedPlaceIds.append(contentsOf: placeIds)
                 }
             }
@@ -80,7 +79,6 @@ class TripDetailViewController: UIViewController {
         self.locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
             
-            // 检查与当前目标地点的距离
             self.checkDistanceForCurrentTarget(from: currentLocation)
         }
     }
@@ -96,11 +94,9 @@ class TripDetailViewController: UIViewController {
         
         guard let trip = trip else { return }
         
-        // 使用 trip.poemId 來加載詩詞
         FirebaseManager.shared.loadPoemById(trip.poemId) { [weak self] poem in
             guard let self = self else { return }
             
-            // 儲存加載到的詩詞資料
             self.loadedPoem = poem
             
             // 更新界面
@@ -111,7 +107,6 @@ class TripDetailViewController: UIViewController {
     }
     
     func updatePoemData(poem: Poem) {
-        // 更新您的 UI，例如 tableView 重新加載資料
         self.tableView.reloadData()
     }
     
@@ -132,23 +127,16 @@ class TripDetailViewController: UIViewController {
         FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] (placesArray) in
             guard let self = self else { return }
             
-            // 打印調試信息，檢查placesArray是否有正確加載
             print("placesArray loaded from Firebase: \(placesArray)")
-            
-            // 对 placesArray 进行排序
             self.places = trip.placeIds.compactMap { placeId in
                 return placesArray.first(where: { $0.id == placeId })
             }
             
-            // 打印已經排序後的 places
             print("Sorted places: \(self.places)")
-            
-            // 找到最後一個已完成的地點的索引
             if let lastCompletedPlaceId = self.completedPlaceIds.last,
                let lastCompletedIndex = self.places.firstIndex(where: { $0.id == lastCompletedPlaceId }) {
                 self.currentTargetIndex = lastCompletedIndex + 1
             } else {
-                // 如果沒有已完成的地點，則從第 0 個地點開始
                 self.currentTargetIndex = 0
             }
             
@@ -249,13 +237,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerX.equalToSuperview()
             make.leading.equalToSuperview().offset(16)
             make.trailing.equalToSuperview().offset(-16)
+            make.bottom.equalToSuperview().offset(-10) // Add this line
         }
         
         return headerView
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 200
+        return 160
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -317,7 +306,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.register(TripDetailWithPlaceTableViewCell.self, forCellReuseIdentifier: "tripDetailCell")
         
         tableView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+            make.edges.equalToSuperview()
         }
     }
     

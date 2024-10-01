@@ -93,12 +93,12 @@ class UserTableViewCell: UITableViewCell {
         }
         
         dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(10)
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
             make.leading.equalTo(titleLabel)
         }
         
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(8)
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
             make.leading.equalTo(contentView).offset(16)
             make.trailing.equalTo(contentView).offset(-16)
             make.height.lessThanOrEqualTo(120) // 例如限制为 100 点高度
@@ -158,8 +158,9 @@ class UserTableViewCell: UITableViewCell {
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
         contentLabel.textColor = .darkGray
+        contentLabel.font = UIFont.systemFont(ofSize: 18, weight: .light)
         
-        titleLabel.font = .boldSystemFont(ofSize: 20)
+        titleLabel.font = .boldSystemFont(ofSize: 22)
         titleLabel.textColor = .deepBlue
         
         dateLabel.textColor = .gray

@@ -40,7 +40,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.backgroundColor = .backgroundGray
         setupUI()
         setupDropdownTableView()
-        
+        self.navigationItem.largeTitleDisplayMode = .never
         let postButtonItem = UIBarButtonItem(title: "發文", style: .done, target: self, action: #selector(handlePostAction))
         
         postButtonItem.isEnabled = false
@@ -102,7 +102,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         contentTextView.backgroundColor = .systemGray5
         titleTextField.backgroundColor = .systemGray5
-        dropdownButton.setTitle("選擇行程", for: .normal)
+        dropdownButton.setTitle("choose trip", for: .normal)
         dropdownButton.backgroundColor = .systemBlue
         dropdownButton.setTitleColor(.white, for: .normal)
         dropdownButton.addTarget(self, action: #selector(toggleDropdown), for: .touchUpInside)

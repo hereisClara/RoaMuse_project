@@ -98,9 +98,9 @@ class LoginViewController: UIViewController {
     }
     
     @objc func tapTestBtn() {
-        let testVC = TestVC()
-        print("Test button tapped, presenting TestVC.")
-        self.present(testVC, animated: true, completion: nil)
+//        let testVC = TestVC()
+//        print("Test button tapped, presenting TestVC.")
+//        self.present(testVC, animated: true, completion: nil)
     }
     
     @objc func didTapOrangeLoginButton() {

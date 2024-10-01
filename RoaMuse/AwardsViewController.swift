@@ -64,7 +64,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         fetchUserData()
         setupTableView()
         setupTableViewHeader()
-        
+        self.navigationItem.largeTitleDisplayMode = .never
         dropdownMenu.onItemSelected = { [weak self] selectedItem in
             guard let self = self else { return }
             

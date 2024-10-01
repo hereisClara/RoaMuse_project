@@ -37,9 +37,9 @@ struct Poem: Codable {
     let poetry: String
     let content: [String]
     let tag: Int
-//    let season: Int?
-//    let weather: Int?
-//    let time: Int?
+    let season: Int?
+    let weather: Int?
+    let time: Int?
 }
 
 struct Trip: Codable {

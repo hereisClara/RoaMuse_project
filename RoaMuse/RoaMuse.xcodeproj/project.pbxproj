@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8362CAB986A004E8868 /* DropdownMenu.swift */; };
 		AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8382CABA42D004E8868 /* AwardLabelView.swift */; };
+		AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F83A2CABDA28004E8868 /* LocationService.swift */; };
+		AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -87,6 +89,8 @@
 /* Begin PBXFileReference section */
 		AC18F8362CAB986A004E8868 /* DropdownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropdownMenu.swift; sourceTree = "<group>"; };
 		AC18F8382CABA42D004E8868 /* AwardLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardLabelView.swift; sourceTree = "<group>"; };
+		AC18F83A2CABDA28004E8868 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSerifHK-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -245,6 +249,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F83A2CABDA28004E8868 /* LocationService.swift */,
+				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
 				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
 				AC18F8362CAB986A004E8868 /* DropdownMenu.swift */,
 				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
@@ -453,6 +459,7 @@
 				ACFCA3602C916C9000643A2E /* Base in Resources */,
 				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
+				AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */,
 				AC7A2A4D2C943958003FA811 /* PlaceData.json in Resources */,
 				AC9775622CA38E0D00EF828A /* GoogleService-Info.plist in Resources */,
 				AC9775712CA551CB00EF828A /* Config.plist in Resources */,
@@ -507,6 +514,7 @@
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
+				AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */,
 				AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */,
 				AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */,
 				AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */,
@@ -731,7 +739,10 @@
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要使用您的位置來提供資訊";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "我們需要權限來存取相簿中的照片。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "我們需要存取您的相簿來顯示地點照片。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -766,7 +777,10 @@
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "需要使用您的位置來提供資訊";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "我們需要您的位置信息來提供天氣服務";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "我們需要權限來存取相簿中的照片。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "我們需要存取您的相簿來顯示地點照片。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen.storyboard;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;

@@ -39,6 +39,17 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
+        
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        self.title = "個人"
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
+            ]
+        }
+        
         imagePicker.delegate = self
         setupTableView()
         setupRefreshControl()

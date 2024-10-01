@@ -23,6 +23,16 @@ class NewsFeedViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        self.title = "動態"
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
+            ]
+        }
+        
         postsTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         postsTableView.delegate = self
         postsTableView.dataSource = self
