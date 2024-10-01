@@ -1,10 +1,3 @@
-//
-//  NewsFeedViewController.swift
-//  RoaMuse
-//
-//  Created by 小妍寶 on 2024/9/12.
-//
-
 import Foundation
 import UIKit
 import SnapKit
@@ -23,8 +16,22 @@ class NewsFeedViewController: UIViewController {
     var bookmarkCount = String()
     var likeButtonIsSelected = Bool()
     
+    let bottomSheetView = UIView()
+        let backgroundView = UIView() // 半透明背景
+        let sheetHeight: CGFloat = 300 // 選單高度
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        self.title = "動態"
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
+            ]
+        }
         
         postsTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         postsTableView.delegate = self
@@ -33,6 +40,7 @@ class NewsFeedViewController: UIViewController {
         setupPostButton()
         setupPostsTableView()
         setupRefreshControl()
+        setupBottomSheet()
         FirebaseManager.shared.loadPosts { postsArray in
             self.postsArray = postsArray
             self.postsTableView.reloadData()
@@ -60,6 +68,74 @@ class NewsFeedViewController: UIViewController {
             }
         }
     }
+    
+    func setupBottomSheet() {
+        // 初始化背景蒙層
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        backgroundView.frame = self.view.bounds
+        backgroundView.alpha = 0
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
+        backgroundView.addGestureRecognizer(tapGesture)
+        
+        // 初始化底部選單視圖
+        bottomSheetView.backgroundColor = .white
+        bottomSheetView.layer.cornerRadius = 15
+        bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        
+        // 設置初始位置在螢幕下方
+        bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.addSubview(backgroundView)
+            window.addSubview(bottomSheetView)
+        }
+        
+        // 在選單視圖內部添加按鈕
+        let saveButton = createButton(title: "刪除貼文")
+        let impeachButton = createButton(title: "檢舉貼文")
+        let blockButton = createButton(title: "封鎖用戶")
+        let cancelButton = createButton(title: "取消", textColor: .red)
+        
+        let stackView = UIStackView(arrangedSubviews: [saveButton, impeachButton, blockButton, cancelButton])
+        stackView.axis = .vertical
+        stackView.spacing = 20
+        stackView.alignment = .fill
+        stackView.distribution = .fillEqually
+        
+        bottomSheetView.addSubview(stackView)
+        stackView.snp.makeConstraints { make in
+            make.top.equalTo(bottomSheetView.snp.top).offset(20)
+            make.leading.equalTo(bottomSheetView.snp.leading).offset(20)
+            make.trailing.equalTo(bottomSheetView.snp.trailing).offset(-20)
+        }
+    }
+    
+    func createButton(title: String, textColor: UIColor = .black) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.setTitleColor(textColor, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        button.backgroundColor = .clear
+        return button
+    }
+
+    // 顯示彈窗
+    func showBottomSheet() {
+        UIView.animate(withDuration: 0.3) {
+            self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
+            self.backgroundView.alpha = 1
+        }
+    }
+
+    // 隱藏彈窗
+    @objc func dismissBottomSheet() {
+        UIView.animate(withDuration: 0.3) {
+            self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: self.sheetHeight)
+            self.backgroundView.alpha = 0
+        }
+    }
+
     
     func setupPostButton() {
         
@@ -250,12 +326,21 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         postsTableView.snp.makeConstraints { make in
             make.top.equalTo(postButton.snp.bottom).offset(40)
-            make.width.equalTo(view)
-            make.bottom.equalTo(view.safeAreaLayoutGuide)
+            make.width.equalTo(view).multipliedBy(0.9)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
+            make.centerX.equalTo(view)
         }
         
+        postsTableView.rowHeight = UITableView.automaticDimension
+        postsTableView.estimatedRowHeight = 250
+        
+        postsTableView.layer.cornerRadius = 20
+        postsTableView.layer.masksToBounds = true
+        
+        postsTableView.backgroundColor = .clear
+        
         postsTableView.allowsSelection = true
-        postsTableView.backgroundColor = .blue
+//        postsTableView.backgroundColor = .blue
         
     }
     
@@ -283,6 +368,10 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         cell.likeButton.addTarget(self, action: #selector(self.didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeButton.isSelected = self.likeButtonIsSelected
         cell.likeCountLabel.text = self.likeCount
+        cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
+        cell.configureMoreButton {
+            self.showBottomSheet()  // 顯示彈窗
+        }
         
         if let createdAtTimestamp = postData["createdAt"] as? Timestamp {
             let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
@@ -367,4 +456,3 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
     }
-

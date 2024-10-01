@@ -11,17 +11,19 @@ import SnapKit
 import MJRefresh
 import FirebaseCore
 import FirebaseFirestore
+import CoreLocation
 
 class CollectionsViewController: UIViewController {
     
+    let locationManager = LocationManager()
     let segmentedControl = UISegmentedControl(items: ["行程", "日記"])
     let collectionsTableView = UITableView()
     var bookmarkPostIdArray = [String]()
     var bookmarkTripIdArray = [String]()
     var postsArray = [[String: Any]]()
-    var tripsArray = [Trip]() // 更新為存儲從 Firebase 獲取的行程
+    var tripsArray = [Trip]()
     var segmentIndex = 0
-    
+    let popupView = PopUpView()
     var incompleteTripsArray = [Trip]()
     var completeTripsArray = [Trip]()
     
@@ -29,11 +31,13 @@ class CollectionsViewController: UIViewController {
     var selectedFilterIndex: Int?
     
     let mainContainer = UIView()
-        let buttonsBackground = UIView()
-        let magnifierBackground = UIView()
-        let buttonContainer = UIStackView()
-        var isExpanded = false
+    let buttonsBackground = UIView()
+    let magnifierBackground = UIView()
+    let buttonContainer = UIStackView()
+    var isExpanded = false
     var mainContainerWidthConstraint: Constraint?
+    
+    var selectedTrip: Trip?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,11 +49,13 @@ class CollectionsViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "收藏"
-        
-        navigationController?.navigationBar.largeTitleTextAttributes = [
-            .foregroundColor: UIColor.deepBlue // 修改為你想要的顏色
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
             ]
-        
+        }
+        popupView.delegate = self
         loadInitialData()
         setupUI()
         setupTableView()
@@ -61,7 +67,6 @@ class CollectionsViewController: UIViewController {
     func setupUI() {
         view.addSubview(segmentedControl)
         
-        // 添加圓角
         segmentedControl.layer.cornerRadius = 20
         segmentedControl.clipsToBounds = true
         
@@ -73,7 +78,6 @@ class CollectionsViewController: UIViewController {
         }
     }
 
-    
     func setupSegmentedControl() {
         segmentedControl.selectedSegmentIndex = 0
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged(_:)), for: .valueChanged)
@@ -88,7 +92,6 @@ class CollectionsViewController: UIViewController {
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
         
-        // 添加圓角效果
         collectionsTableView.layer.cornerRadius = 10
         collectionsTableView.layer.masksToBounds = true
         
@@ -100,7 +103,6 @@ class CollectionsViewController: UIViewController {
         collectionsTableView.dataSource = self
     }
 
-    
     @objc func segmentedControlChanged(_ sender: UISegmentedControl) {
         segmentIndex = sender.selectedSegmentIndex
         resetFilterButtons()
@@ -117,7 +119,6 @@ class CollectionsViewController: UIViewController {
         }
     }
 
-    
     // 加載收藏的行程
     func loadTripsData(userId: String) {
 
@@ -140,17 +141,44 @@ class CollectionsViewController: UIViewController {
             
             let bookmarkTripIds = data["bookmarkTrip"] as? [String] ?? []
             let completedTripIds = data["completedTrip"] as? [String] ?? []
+            print(bookmarkTripIds)
+            print(completedTripIds)
             
             let incompleteTripIds = bookmarkTripIds.filter { !completedTripIds.contains($0) }
             let completeTripIds = bookmarkTripIds.filter { completedTripIds.contains($0) }
+            print(incompleteTripIds)
             
             FirebaseManager.shared.loadBookmarkedTrips(tripIds: incompleteTripIds) { [weak self] incompleteTrips in
                 guard let self = self else { return }
                 self.incompleteTripsArray = incompleteTrips
                 
+                for (index, trip) in incompleteTrips.enumerated() {
+                    FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                        DispatchQueue.main.async {
+                            
+                            let poemTitle = poem.title
+                            self.incompleteTripsArray[index].poemTitle = poemTitle
+                            self.collectionsTableView.reloadData()
+                        }
+                    }
+                }
+                
                 FirebaseManager.shared.loadBookmarkedTrips(tripIds: completeTripIds) { [weak self] completeTrips in
                     guard let self = self else { return }
                     self.completeTripsArray = completeTrips
+                    // 查詢詩的 title 並設置為行程的標題
+                    for (index, trip) in completeTrips.enumerated() {
+                        FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                            DispatchQueue.main.async {
+                                // 設置行程的標題為詩的 title
+                                let poemTitle = poem.title
+                                // 將詩的標題設置到對應的行程（您可以定制存儲結構）
+                                self.completeTripsArray[index].poemTitle = poemTitle
+                                
+                                self.collectionsTableView.reloadData()
+                            }
+                        }
+                    }
                     
                     DispatchQueue.main.async {
                         self.collectionsTableView.reloadData()
@@ -160,7 +188,7 @@ class CollectionsViewController: UIViewController {
             }
         }
     }
-
+    
     // 加載收藏的文章
     func loadPostsData() {
 
@@ -203,7 +231,6 @@ class CollectionsViewController: UIViewController {
             make.leading.equalTo(segmentedControl.snp.leading) // 藍色圓底的 leading 和 segmentedControl 的 leading 對齊
             make.bottom.equalTo(segmentedControl.snp.top).offset(-15) // 底部距離 segmentControl 30
             make.height.equalTo(50)
-            // 初始寬度約束，保存寬度約束到變量
             self.mainContainerWidthConstraint = make.width.equalTo(50).constraint
         }
 
@@ -219,9 +246,8 @@ class CollectionsViewController: UIViewController {
             make.height.equalTo(50)
             make.centerY.equalTo(mainContainer)
         }
-        buttonsBackground.isHidden = true // 初始狀態隱藏
+        buttonsBackground.isHidden = true
 
-        // 左邊放大鏡圓形背景
         magnifierBackground.backgroundColor = .deepBlue
         magnifierBackground.layer.cornerRadius = 25
         magnifierBackground.layer.masksToBounds = true
@@ -243,14 +269,12 @@ class CollectionsViewController: UIViewController {
             make.width.height.equalTo(24)
         }
 
-        // 點擊放大鏡時展開/收合按鈕
         let magnifierTapGesture = UITapGestureRecognizer(target: self, action: #selector(toggleFilterButtons))
         magnifierBackground.addGestureRecognizer(magnifierTapGesture)
 
-        // 三個篩選按鈕容器
         buttonContainer.axis = .horizontal
         buttonContainer.distribution = .fillEqually
-        buttonContainer.spacing = 15 // 第一個按鈕距離藍色圓底 15
+        buttonContainer.spacing = 15
         buttonsBackground.addSubview(buttonContainer)
 
         buttonContainer.snp.makeConstraints { make in
@@ -273,13 +297,10 @@ class CollectionsViewController: UIViewController {
         }
     }
 
-        
-        // 點擊放大鏡時展開/收合按鈕
     @objc func toggleFilterButtons() {
         if isExpanded {
             // 收合動畫
             UIView.animate(withDuration: 0.3, animations: {
-                // 將按鈕背景寬度調整回圓形大小
                 self.mainContainerWidthConstraint?.update(offset: 50)
                 self.buttonsBackground.alpha = 1 // 淡出動畫
                 self.view.layoutIfNeeded()
@@ -301,18 +322,19 @@ class CollectionsViewController: UIViewController {
         isExpanded.toggle() // 切換展開狀態
     }
 
-    
     @objc func filterButtonTapped(_ sender: UIButton) {
         let index = sender.tag
         
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
 
+        // 檢查是否點擊了相同的篩選按鈕，如果是則重置
         if selectedFilterIndex == index {
             sender.setTitleColor(.deepBlue, for: .normal)
             selectedFilterIndex = nil
             loadTripsData(userId: userId)
             loadPostsData()
         } else {
+            // 重置之前的按鈕顏色
             if let previousIndex = selectedFilterIndex {
                 if previousIndex < filterButtons.count {
                     filterButtons[previousIndex].setTitleColor(.deepBlue, for: .normal)
@@ -321,6 +343,7 @@ class CollectionsViewController: UIViewController {
             sender.setTitleColor(.accent, for: .normal)
             selectedFilterIndex = index
             
+            // 根據 tag 加載行程
             FirebaseManager.shared.loadTripsByTag(tag: index) { [weak self] trips in
                 guard let self = self else { return }
                 
@@ -332,10 +355,42 @@ class CollectionsViewController: UIViewController {
                             let bookmarkedTrips = trips.filter { bookmarkedTrips.contains($0.id) }
                             self.incompleteTripsArray = bookmarkedTrips.filter { !completedTrips.contains($0.id) }
                             self.completeTripsArray = bookmarkedTrips.filter { completedTrips.contains($0.id) }
-                            self.filterPostsByTrips(trips: bookmarkedTrips)
+                            
+                            // 邊界檢查，確保不會訪問越界的數組
+                            if !self.incompleteTripsArray.isEmpty {
+                                for (index, trip) in self.incompleteTripsArray.enumerated() {
+                                    FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                                        DispatchQueue.main.async {
+                                            // 檢查 index 是否在邊界內
+                                            if index < self.incompleteTripsArray.count {
+                                                self.incompleteTripsArray[index].poemTitle = poem.title
+                                                self.collectionsTableView.reloadData()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if !self.completeTripsArray.isEmpty {
+                                for (index, trip) in self.completeTripsArray.enumerated() {
+                                    FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                                        DispatchQueue.main.async {
+                                            // 檢查 index 是否在邊界內
+                                            if index < self.completeTripsArray.count {
+                                                self.completeTripsArray[index].poemTitle = poem.title
+                                                self.collectionsTableView.reloadData()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             DispatchQueue.main.async {
+                                if !self.incompleteTripsArray.isEmpty {
+                                }
                                 self.collectionsTableView.reloadData()
                             }
+                            
                         case .failure(let error):
                             print("Failed to fetch user data: \(error.localizedDescription)")
                         }
@@ -346,7 +401,6 @@ class CollectionsViewController: UIViewController {
     }
 
     func filterPostsByTrips(trips: [Trip]) {
-        // 根據行程數據中的 tripId 篩選對應的貼文
         let tripIds = trips.map { $0.id }
         
         FirebaseManager.shared.loadPosts { [weak self] posts in
@@ -355,7 +409,6 @@ class CollectionsViewController: UIViewController {
             guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
 
             FirebaseManager.shared.loadBookmarkPostIDs(forUserId: userId) { bookmarkedPostIds in
-                // 過濾掉沒有對應行程的貼文和未被收藏的貼文
                 self.postsArray = posts.filter { post in
                     if let postTripId = post["tripId"] as? String, let postId = post["id"] as? String {
                         return tripIds.contains(postTripId) && bookmarkedPostIds.contains(postId)
@@ -363,7 +416,6 @@ class CollectionsViewController: UIViewController {
                     return false
                 }
                 
-                // 更新 tableView
                 DispatchQueue.main.async {
                     self.collectionsTableView.reloadData()
                 }
@@ -377,7 +429,7 @@ class CollectionsViewController: UIViewController {
             button.backgroundColor = .clear
             button.setTitleColor(.deepBlue, for: .normal)
         }
-        selectedFilterIndex = nil // 重置選取的索引
+        selectedFilterIndex = nil
     }
 }
 
@@ -413,28 +465,14 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         if segmentIndex == 0 {
-            return 35 // 自訂 header 高度
+            return 35
         } else {
-            return 0 // 隱藏 header
+            return 0
         }
     }
     
-//    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-//            if segmentIndex == 0 {
-//                // "行程" 頁面 section 標題
-//                if section == 0 {
-//                    return "未完成"
-//                } else {
-//                    return "已完成"
-//                }
-//            } else {
-//                // "日記" 頁面沒有 section 標題
-//                return nil
-//            }
-//        }
-    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 150
+        return 70
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -459,67 +497,121 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         if segmentIndex == 0 {
 
             if indexPath.section == 0 {
-                cell?.titleLabel.text = incompleteTripsArray[indexPath.row].poem.title as? String ?? "Unknown Trip"
-                // 檢查行程是否已收藏
-                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: incompleteTripsArray[indexPath.row].id as? String ?? "") { isBookmarked in
+                let trip = incompleteTripsArray[indexPath.row]
+                cell?.titleLabel.text = trip.poemTitle
+                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: trip.id) { isBookmarked in
                     cell?.collectButton.isSelected = isBookmarked
                 }
+
             } else {
-                cell?.titleLabel.text = completeTripsArray[indexPath.row].poem.title as? String ?? "Unknown Trip"
-                // 檢查行程是否已收藏
-                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: completeTripsArray[indexPath.row].id as? String ?? "") { isBookmarked in
+                let trip = completeTripsArray[indexPath.row]
+                cell?.titleLabel.text = trip.poemTitle
+                
+                FirebaseManager.shared.isTripBookmarked(forUserId: userId, tripId: trip.id) { isBookmarked in
                     cell?.collectButton.isSelected = isBookmarked
                 }
             }
         } else {
             cell?.titleLabel.text = postsArray[indexPath.row]["title"] as? String
-            
-            // 檢查貼文是否已收藏
 
             FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postsArray[indexPath.row]["id"] as? String ?? "") { isBookmarked in
 
                 cell?.collectButton.isSelected = isBookmarked
             }
         }
-        
+
         cell?.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
-        
+
         return cell ?? UITableViewCell()
     }
 
-    
+
+//    TODO: 地理反向編碼
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        if segmentIndex == 0 {
-            
-            
-        } else {
-            let post = postsArray[indexPath.row]
-            
-            let articleVC = ArticleViewController()
-            
-            FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
-                if let userName = userName {
-                    print("找到的 userName: \(userName)")
-                    articleVC.articleAuthor = userName
-                    articleVC.articleTitle = post["title"] as? String ?? "無標題"
-                    articleVC.articleContent = post["content"] as? String ?? "無內容"
-                    if let createdAtTimestamp = post["createdAt"] as? Timestamp {
-                        let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
-                        articleVC.articleDate = createdAtString
+            if segmentIndex == 0 {
+                let trip: Trip
+                
+                if indexPath.section == 0 {
+                            trip = incompleteTripsArray[indexPath.row]
+                        } else {
+                            trip = completeTripsArray[indexPath.row]
+                        }
+
+                        // 獲取當前位置
+                        if let currentLocation = locationManager.currentLocation {
+                            let dispatchGroup = DispatchGroup()
+                            var places: [Place] = []
+                            
+                            for placeId in trip.placeIds {
+                                    dispatchGroup.enter()
+                                    FirebaseManager.shared.loadPlaceById(placeId: placeId) { place in
+                                        if let place = place {
+                                            places.append(place)
+                                        } else {
+                                            print("未能加載位置 ID: \(placeId)")
+                                        }
+                                        dispatchGroup.leave()
+                                    }
+                                }
+                            dispatchGroup.notify(queue: .main) {
+                                // 確保 places 不為空
+                                if places.isEmpty {
+                                    print("未找到有效的地點數據，無法計算路徑時間。")
+                                    return
+                                }
+                                LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                    let tripDetailVC = TripDetailViewController()
+                                    tripDetailVC.trip = trip
+                                    
+                                    if let totalTravelTime = totalTravelTime, let routes = routes {
+                                        tripDetailVC.totalTravelTime = totalTravelTime // 設置總路徑時間
+                                        
+                                        // 創建導航指令數列
+                                        var nestedInstructions = [[String]]()
+                                        for route in routes {
+                                            var stepInstructions = [String]()
+                                            for step in route.steps {
+                                                stepInstructions.append(step.instructions)
+                                            }
+                                            nestedInstructions.append(stepInstructions)
+                                        }
+                                        tripDetailVC.nestedInstructions = nestedInstructions // 設置導航指令數列
+                                    }
+                                    
+                                    // 跳轉到 TripDetailViewController
+                                    self.navigationController?.pushViewController(tripDetailVC, animated: true)
+                                }
+                            }
+                        } else {
+                            print("無法獲取當前位置")
+                        }
+            } else {
+                // 處理文章的選擇
+                let post = postsArray[indexPath.row]
+                let articleVC = ArticleViewController()
+                
+                FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
+                    if let userName = userName {
+                        articleVC.articleAuthor = userName
+                        articleVC.articleTitle = post["title"] as? String ?? "無標題"
+                        articleVC.articleContent = post["content"] as? String ?? "無內容"
+                        articleVC.tripId = post["tripId"] as? String ?? ""
+                        if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+                            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                            articleVC.articleDate = createdAtString
+                        }
+                        
+                        articleVC.authorId = post["userId"] as? String ?? ""
+                        articleVC.postId = post["id"] as? String ?? ""
+                        articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
+                        
+                        self.navigationController?.pushViewController(articleVC, animated: true)
+                    } else {
+                        print("未找到對應的 userName")
                     }
-                    
-                    articleVC.authorId = post["userId"] as? String ?? ""
-                    articleVC.postId = post["id"] as? String ?? ""
-                    articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
-                    
-                    self.navigationController?.pushViewController(articleVC, animated: true)
-                } else {
-                    print("未找到對應的 userName")
                 }
             }
         }
-    }
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
@@ -583,5 +675,14 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 }
             }
         }
+    }
+}
+
+extension CollectionsViewController: PopupViewDelegate {
+    
+    func navigateToTripDetailPage() {
+        let tripDetailVC = TripDetailViewController()
+        tripDetailVC.trip = selectedTrip
+        navigationController?.pushViewController(tripDetailVC, animated: true)
     }
 }
