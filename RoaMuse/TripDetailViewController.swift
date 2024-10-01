@@ -41,7 +41,7 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
         // 設定導航欄的背景顏色
         navigationController?.navigationBar.barTintColor = UIColor.white
-
+        self.tabBarController?.tabBar.isHidden = true
         if let nestedInstructions = nestedInstructions {
             for (index, steps) in nestedInstructions.enumerated() {
                 print("導航段落 \(index):")
@@ -51,7 +51,6 @@ class TripDetailViewController: UIViewController {
             }
         }
         self.navigationItem.largeTitleDisplayMode = .never
-        tabBarController?.tabBar.isHidden = false
         view.backgroundColor = UIColor(resource: .backgroundGray)
         
         let shareButton = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(shareButtonTapped))
@@ -102,6 +101,11 @@ class TripDetailViewController: UIViewController {
             
             self.checkDistanceForCurrentTarget(from: currentLocation)
         }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.tabBarController?.tabBar.isHidden = false
     }
     
     func setupUI() {
@@ -268,10 +272,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let headerView = UIView()
         headerView.backgroundColor = UIColor(resource: .deepBlue)
+        headerView.layer.cornerRadius = 20
         
         let titleLabel = UILabel()
         titleLabel.text = poem.title
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 22)
+        titleLabel.textColor = .white
         titleLabel.textAlignment = .center
         headerView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
@@ -283,6 +289,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let poetLabel = UILabel()
         poetLabel.text = poem.poetry
         poetLabel.font = UIFont.systemFont(ofSize: 18)
+        poetLabel.textColor = .white
         poetLabel.textAlignment = .center
         headerView.addSubview(poetLabel)
         poetLabel.snp.makeConstraints { make in
@@ -294,6 +301,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let contentLabel = UILabel()
         contentLabel.text = poem.content.joined(separator: "\n")
         contentLabel.font = UIFont.systemFont(ofSize: 16)
+        contentLabel.textColor = .white
         contentLabel.textAlignment = .center
         contentLabel.numberOfLines = 0
         headerView.addSubview(contentLabel)
@@ -317,7 +325,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
+        return 35
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -326,60 +334,94 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // 每個 section 的行數取決於該導航段落的指令數量
-        return nestedInstructions?[section].count ?? 0
+        guard section < places.count else {
+                return 0
+            }
+
+            if completedPlaceIds.contains(places[section].id) {
+                return 0
+            }
+
+            return nestedInstructions?[section].count ?? 0
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         guard section < places.count else {
             return nil
         }
+
+        // 創建透明的 containerView
+        let containerView = UIView()
+        containerView.backgroundColor = .clear // 透明背景
         
+        // 創建 footerView，並添加到 containerView 中
         let footerView = UIView()
+        footerView.backgroundColor = .systemGray3
+        footerView.layer.cornerRadius = 20
+        footerView.layer.masksToBounds = true // 讓角落變成圓角
+        containerView.addSubview(footerView)
+
+        // 設置 footerView 的內縮約束，讓它看起來內縮
+        footerView.snp.makeConstraints { make in
+            make.top.equalTo(containerView).offset(10)
+            make.bottom.equalTo(containerView).offset(-10)
+            make.leading.equalTo(containerView)
+            make.trailing.equalTo(containerView)
+        }
+
+        // 創建 placeLabel 並加入 footerView
         let placeLabel = UILabel()
-        let completeButton = UIButton(type: .system)
-        
-        footerView.backgroundColor = .backgroundGray
-        footerView.addSubview(placeLabel)
-        footerView.addSubview(completeButton)
-        
-        // 設置地點名稱
         let place = places[section]
         placeLabel.text = place.name
         placeLabel.font = UIFont.systemFont(ofSize: 18)
         placeLabel.numberOfLines = 0
+        footerView.addSubview(placeLabel)
+
         placeLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
             make.centerY.equalToSuperview()
         }
-        
-        // 設置完成按鈕
+
+        // 創建 completeButton 並加入 footerView
+        let completeButton = UIButton(type: .system)
         completeButton.setTitle("完成", for: .normal)
         completeButton.isEnabled = !completedPlaceIds.contains(place.id)
         completeButton.tag = section // 將 section 設置為按鈕的 tag 以便識別
         completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
+        footerView.addSubview(completeButton)
+
         completeButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-20)
             make.centerY.equalToSuperview()
         }
-        
-        return footerView
+
+        return containerView
     }
+
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "instructionCell", for: indexPath)
-        
+        cell.selectionStyle = .none
         if let instruction = nestedInstructions?[indexPath.section][indexPath.row] {
             cell.textLabel?.text = instruction
+            cell.textLabel?.font = UIFont.systemFont(ofSize: 14, weight: .light)
             cell.textLabel?.numberOfLines = 0 // 多行顯示導航指令
         }
+        
+        cell.contentView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
+        cell.contentView.layer.cornerRadius = 10
+        cell.contentView.layer.masksToBounds = true
+        cell.contentView.backgroundColor = .clear
+        cell.backgroundColor = .clear
         
         return cell
     }
     
     func setupTableView() {
-        tableView = UITableView(frame: .zero, style: .plain)
+        tableView = UITableView(frame: .zero, style: .insetGrouped)
         view.addSubview(tableView)
+        tableView.backgroundColor = .clear
+        tableView.separatorStyle = .none
         tableView.delegate = self
         tableView.dataSource = self
         tableView.contentInsetAdjustmentBehavior = .automatic
