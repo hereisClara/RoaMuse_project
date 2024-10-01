@@ -7,6 +7,10 @@ struct Style {
     let introduction: String
 }
 
+let season = ["不限", "春", "夏", "秋", "冬"]
+let weather = ["不限", "晴天", "雨天"]
+let time = ["不限", "白天", "傍晚", "晚上"]
+
 let styles: [Style] = [
     Style(name: "奇險派", introduction: """
     以震盪光怪為美，以瘁索枯槁為美，以五彩斑斕為美。表現出重主觀心理、尚奇險怪異的創作傾向。
@@ -33,6 +37,9 @@ struct Poem: Codable {
     let poetry: String
     let content: [String]
     let tag: Int
+//    let season: Int?
+//    let weather: Int?
+//    let time: Int?
 }
 
 struct Trip: Codable {

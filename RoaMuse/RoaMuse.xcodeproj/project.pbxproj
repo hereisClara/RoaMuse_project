@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8362CAB986A004E8868 /* DropdownMenu.swift */; };
+		AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8382CABA42D004E8868 /* AwardLabelView.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -83,6 +85,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AC18F8362CAB986A004E8868 /* DropdownMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropdownMenu.swift; sourceTree = "<group>"; };
+		AC18F8382CABA42D004E8868 /* AwardLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardLabelView.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -241,6 +245,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
+				AC18F8362CAB986A004E8868 /* DropdownMenu.swift */,
 				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
 				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
 				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
@@ -497,6 +503,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */,
+				AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */,
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
@@ -516,6 +523,7 @@
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
 				AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */,
+				AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */,
 				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
 				AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */,
 				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,

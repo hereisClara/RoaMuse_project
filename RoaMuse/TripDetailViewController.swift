@@ -143,6 +143,15 @@ class TripDetailViewController: UIViewController {
             // 打印已經排序後的 places
             print("Sorted places: \(self.places)")
             
+            // 找到最後一個已完成的地點的索引
+            if let lastCompletedPlaceId = self.completedPlaceIds.last,
+               let lastCompletedIndex = self.places.firstIndex(where: { $0.id == lastCompletedPlaceId }) {
+                self.currentTargetIndex = lastCompletedIndex + 1
+            } else {
+                // 如果沒有已完成的地點，則從第 0 個地點開始
+                self.currentTargetIndex = 0
+            }
+            
             // 更新其他相关数据
             self.placeName = self.places.map { $0.name }
             
@@ -152,21 +161,14 @@ class TripDetailViewController: UIViewController {
                     self.buttonState = Array(repeating: false, count: self.places.count)
                 }
                 self.tableView.reloadData()
-                // 开始位置更新
+                // 开始位置更新，並從最後一個已完成的地點後開始
                 self.locationManager.startUpdatingLocation()
                 self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                     guard let self = self else { return }
                     self.checkDistanceForCurrentTarget(from: currentLocation)
                 }
             }
-            
-            //            // 开始位置更新
-            //            self.locationManager.startUpdatingLocation()
-            //            self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-            //                self?.checkDistances(from: currentLocation)
-            //            }
         }
-        
     }
     
     func checkDistanceForCurrentTarget(from currentLocation: CLLocation) {
@@ -345,8 +347,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     sender.isEnabled = false
                     self.completedPlaceIds.append(placeId)
                     self.buttonState[self.currentTargetIndex] = false // 禁用已完成地点的按钮
-                    self.currentTargetIndex += 1
-                    // 更新下一目标地点的按钮状态
+                    self.currentTargetIndex += 1 // 更新到下一個地點
                     self.tableView.reloadData()
                 }
             } else {

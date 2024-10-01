@@ -26,9 +26,12 @@ class UserTableViewCell: UITableViewCell {
     let photoStackView = UIStackView() // 新增的 StackView 用於顯示圖片
     let scrollView = UIScrollView()
     
+    var moreButtonAction: (() -> Void)?
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupCell()
+        addActions()
     }
     
     required init?(coder: NSCoder) {
@@ -78,7 +81,6 @@ class UserTableViewCell: UITableViewCell {
         photoStackView.alignment = .center
         photoStackView.distribution = .fillEqually
         
-        
         avatarImageView.snp.makeConstraints { make in
             make.top.equalTo(contentView).offset(30)
             make.leading.equalTo(contentView).offset(15)
@@ -104,7 +106,6 @@ class UserTableViewCell: UITableViewCell {
         
         photoStackView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
-//            make.bottom.equalTo(likeButton.snp.top).offset(-16)
             make.leading.equalTo(contentLabel)
             make.trailing.equalTo(contentLabel)
             self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
@@ -114,7 +115,7 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(photoStackView.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView).offset(10)
             make.width.height.equalTo(20)
-            make.bottom.equalTo(contentView).offset(-16) // 确保与 contentView 的底部有约束
+            make.bottom.equalTo(contentView).offset(-16)
         }
         
         commentButton.snp.makeConstraints { make in
@@ -175,15 +176,24 @@ class UserTableViewCell: UITableViewCell {
         dateLabel.font = UIFont.systemFont(ofSize: 14)
     }
     
+    private func addActions() {
+        moreButton.addTarget(self, action: #selector(didTapMoreButton), for: .touchUpInside)
+    }
+    
+    @objc private func didTapMoreButton() {
+        moreButtonAction?()
+    }
+    
+    func configureMoreButton(action: @escaping () -> Void) {
+        moreButtonAction = action
+    }
+    
     func configurePhotoStackView(with photoUrls: [String]) {
-        // 清除之前的图片
         photoStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         if photoUrls.isEmpty {
-            // 没有图片，隐藏 scrollView
             scrollView.isHidden = true
         } else {
-            // 有图片，显示 scrollView
             scrollView.isHidden = false
 
             for urlString in photoUrls {
@@ -203,15 +213,12 @@ class UserTableViewCell: UITableViewCell {
                 }
             }
 
-            // 更新 contentSize
             let totalWidth = photoUrls.count * 150 + (photoUrls.count - 1) * Int(photoStackView.spacing)
             scrollView.contentSize = CGSize(width: totalWidth, height: 150)
         }
 
-        // 更新高度约束
         self.photoStackViewHeightConstraint?.update(offset: 150)
 
-        // 通知表格视图更新布局
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
             tableView.endUpdates()

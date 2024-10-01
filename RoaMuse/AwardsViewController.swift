@@ -4,6 +4,8 @@ import FirebaseFirestore
 
 class AwardsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
+    let dropdownMenu = DropdownMenu(items: ["探索者", "街頭土行孫", "現世行腳仙", "浪漫1", "奇險1", "田園1"])
+    let dropdownButton = UIButton(type: .system)
     var dynamicTaskSets: [[TaskSet]] = []
     let tableView = UITableView()
     var currentTitles: [String] = []
@@ -25,9 +27,11 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     let awardTitles: [[[String]]] = [
         [["探索者", "街頭土行孫", "現世行腳仙"]],  // 第 1 個 row 的稱號
+        
         [["浪漫1", "浪漫2", "浪漫3"],   // 第 2 個 row 的稱號
         ["奇險1", "奇險2", "奇險3"],
          ["田園1","田園2", "田園3"]],// 第 3 個 row 的稱號
+        
         [["終點1", "終點2", "終點3"]]
     ]
 
@@ -60,6 +64,42 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         fetchUserData()
         setupTableView()
         setupTableViewHeader()
+        
+        dropdownMenu.onItemSelected = { [weak self] selectedItem in
+            guard let self = self else { return }
+            
+            if let (section, row, item) = self.findIndexesForTitle(selectedItem) {
+                self.saveSelectedIndexesToFirebase(section: section, row: row, item: item)
+                print("已保存的索引: section = \(section), row = \(row), item = \(item)")
+            }
+        }
+    }
+    
+    func findIndexesForTitle(_ title: String) -> (Int, Int, Int)? {
+        for section in 0..<awardTitles.count {
+            for row in 0..<awardTitles[section].count {
+                if let itemIndex = awardTitles[section][row].firstIndex(of: title) {
+                    return (section, row, itemIndex)  // 返回 section, row 和 item 索引
+                }
+            }
+        }
+        return nil  // 如果找不到则返回 nil
+    }
+    
+    func saveSelectedIndexesToFirebase(section: Int, row: Int, item: Int) {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        
+        let indexArray = [section, row, item]
+        
+        userRef.setData(["selectedTitleIndex": indexArray], merge: true) { error in
+            if let error = error {
+                print("保存到 Firebase 时出错: \(error)")
+            } else {
+                print("选定的 section, row 和 item 已成功保存")
+            }
+        }
     }
     
     func setupTableView() {
@@ -91,12 +131,28 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             make.leading.equalToSuperview().offset(16)
         }
         
+        dropdownButton.setTitle("查看稱號", for: .normal)
+        dropdownButton.addTarget(self, action: #selector(showDropdownMenu), for: .touchUpInside)
+        
+        tableHeaderView.addSubview(dropdownButton)
+        dropdownButton.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.trailing.equalToSuperview().offset(-16)
+        }
+        
         tableHeaderView.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 100)
         tableView.tableHeaderView = tableHeaderView
     }
     
+    @objc func showDropdownMenu() {
+        if dropdownMenu.superview == nil {  // 如果還未顯示
+            dropdownMenu.show(in: self.view, anchorView: dropdownButton)
+        } else {
+            dropdownMenu.hide()
+        }
+    }
+    
     func fetchUserData() {
-        // 假設 userId 是已經獲取的用戶 ID
         guard let userId = userId else {
             print("無法獲取 userId")
             return
@@ -143,20 +199,27 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 // 確保 Section 1 有三個 row，即便分類結果為空
                 let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
                 self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagZeroPlacesAmount))
-
+                
                 let tagOnePlacesAmount = categorizedPlaces[1]?.count ?? 0
                 self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagOnePlacesAmount))
-
+                
                 let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
                 self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagTwoPlacesAmount))
                 
                 DispatchQueue.main.async {
                     self.tableView.reloadData()  // 重新加載數據
+                    
+                    for section in 0..<self.dynamicTaskSets.count {
+                        for row in 0..<self.dynamicTaskSets[section].count {
+                            let taskSet = self.dynamicTaskSets[section][row]
+                            self.updateCellProgress(section: section, row: row, completedTasks: taskSet.completedTasks, totalTasks: taskSet.totalTasks)
+                        }
+                    }
+                    self.dropdownMenu.items = self.currentTitles
                 }
             }
         }
     }
-
     
     func updateCellProgress(section: Int, row: Int, completedTasks: Int, totalTasks: Int) {
         let progress = Float(completedTasks) / Float(totalTasks)
@@ -167,7 +230,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             
             let titlesForRow = awardTitles[section][row]
             
-            // 根據進度選擇稱號
             var newTitle: String?
             if progress >= 1.0 {
                 newTitle = titlesForRow[2]
@@ -177,12 +239,10 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 newTitle = titlesForRow[0]
             }
             
-            // 確保稱號不重複
             if let title = newTitle, !currentTitles.contains(title) {
                 currentTitles.append(title)
             }
             
-            // 更新 UI
             print("現有稱號: \(currentTitles)")
         }
     }

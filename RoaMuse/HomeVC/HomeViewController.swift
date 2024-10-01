@@ -21,14 +21,22 @@ class HomeViewController: UIViewController {
     var likeButtonIsSelected = Bool()
     var isUpdatingLikeStatus = false
     
+    let bottomSheetView = UIView()
+        let backgroundView = UIView() // 半透明背景
+        let sheetHeight: CGFloat = 300 // 選單高度
+    
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        findBestMatchedPoem(currentSeason: getCurrentSeason(), currentWeather: 0, currentTime: getCurrentSeason())
+        
         self.navigationController?.setNavigationBarHidden(false, animated: false)
         //        uploadTripsToFirebase()
         //        uploadPlaces()
+        updatePoemData()
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "首頁"
@@ -52,8 +60,77 @@ class HomeViewController: UIViewController {
         }
         setupLocationUpdates()
         setupUserProfileImage()
-        
+        setupBottomSheet()
     }
+    
+    func setupBottomSheet() {
+        // 初始化背景蒙層
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        backgroundView.frame = self.view.bounds
+        backgroundView.alpha = 0
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
+        backgroundView.addGestureRecognizer(tapGesture)
+        
+        // 初始化底部選單視圖
+        bottomSheetView.backgroundColor = .white
+        bottomSheetView.layer.cornerRadius = 15
+        bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        
+        // 設置初始位置在螢幕下方
+        bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.addSubview(backgroundView)
+            window.addSubview(bottomSheetView)
+        }
+        
+        // 在選單視圖內部添加按鈕
+        let saveButton = createButton(title: "刪除貼文")
+        let impeachButton = createButton(title: "檢舉貼文")
+        let blockButton = createButton(title: "封鎖用戶")
+        let cancelButton = createButton(title: "取消", textColor: .red)
+        
+        let stackView = UIStackView(arrangedSubviews: [saveButton, impeachButton, blockButton, cancelButton])
+        stackView.axis = .vertical
+        stackView.spacing = 20
+        stackView.alignment = .fill
+        stackView.distribution = .fillEqually
+        
+        bottomSheetView.addSubview(stackView)
+        stackView.snp.makeConstraints { make in
+            make.top.equalTo(bottomSheetView.snp.top).offset(20)
+            make.leading.equalTo(bottomSheetView.snp.leading).offset(20)
+            make.trailing.equalTo(bottomSheetView.snp.trailing).offset(-20)
+        }
+    }
+    
+    func createButton(title: String, textColor: UIColor = .black) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.setTitleColor(textColor, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        button.backgroundColor = .clear
+        return button
+    }
+    
+    // 顯示彈窗
+    func showBottomSheet() {
+        UIView.animate(withDuration: 0.3) {
+            self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
+            self.backgroundView.alpha = 1
+        }
+    }
+
+    // 隱藏彈窗
+    @objc func dismissBottomSheet() {
+        UIView.animate(withDuration: 0.3) {
+            self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: self.sheetHeight)
+            self.backgroundView.alpha = 0
+        }
+    }
+
+
     
     func setupUserProfileImage() {
         let avatarImageView = UIImageView()
@@ -330,6 +407,10 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
         //        homeTableView.layoutIfNeeded()
         
+        cell.configureMoreButton {
+            self.showBottomSheet()  // 顯示彈窗
+        }
+        
         if let createdAtTimestamp = postData["createdAt"] as? Timestamp {
             let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
             cell.dateLabel.text = createdAtString
@@ -538,6 +619,143 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                         print("取消收藏失敗")
                     }
                 }
+            }
+        }
+    }
+    
+    func updatePoemData() {
+        // 確定要更新的文件 ID
+        let poemId = "sH9huntnRR2BNeQqEhrp"  // 該資料的 ID
+        let db = Firestore.firestore()
+        
+        // 準備新的資料
+        let newFields: [String: Any] = [
+            "season": 3,
+            "weather": 3,
+            "time": 2
+        ]
+        
+        // 更新指定 ID 的文檔
+        db.collection("poems").document(poemId).updateData(newFields) { error in
+            if let error = error {
+                print("更新失敗: \(error.localizedDescription)")
+            } else {
+                print("資料已成功更新")
+            }
+        }
+    }
+
+}
+
+extension HomeViewController {
+    
+    func getCurrentSeason() -> Int {
+        let month = Calendar.current.component(.month, from: Date())
+
+        switch month {
+        case 3...5:
+            return 1 // 春天
+        case 6...8:
+            return 2 // 夏天
+        case 9...11:
+            return 3 // 秋天
+        default:
+            return 4 // 冬天
+        }
+    }
+
+    func getCurrentTimeOfDay() -> Int {
+        let hour = Calendar.current.component(.hour, from: Date())
+
+        switch hour {
+        case 5...11:
+            return 1 // 白天
+        case 12...17:
+            return 2 // 傍晚
+        case 18...23, 0...4:
+            return 3 // 晚上
+        default:
+            return 0 // 不限
+        }
+    }
+
+    func findBestMatchedPoem(currentSeason: Int, currentWeather: Int, currentTime: Int) {
+        let db = Firestore.firestore()
+        
+        // 鄰近度矩陣 (定義季節和時間的鄰近關係)
+        let seasonProximityMatrix: [[Double]] = [
+            [1.0, 1.0, 1.0, 1.0, 1.0],  // 不限
+            [0.8, 1.0, 0.4, 0.2, 0.0],  // 春
+            [0.8, 0.4, 1.0, 0.4, 0.2],  // 夏
+            [0.8, 0.2, 0.4, 1.0, 0.2],  // 秋
+            [0.8, 0.0, 0.2, 0.4, 1.0]   // 冬
+        ]
+        
+        let timeProximityMatrix: [[Double]] = [
+            [1.0, 1.0, 1.0, 1.0],
+            [0.8, 1.0, 0.3, 0.0],
+            [0.8, 0.3, 1.0, 0.3],
+            [0.8, 0.0, 0.3, 1.0]
+        ]
+        
+        let totalScore: Double = 100.0
+        let perConditionScore = totalScore / 3.0 // 每個條件分配 1/3 的分數
+        
+        db.collection("poems").getDocuments { (snapshot, error) in
+            if let error = error {
+                print("Error fetching poems: \(error)")
+                return
+            }
+            
+            guard let documents = snapshot?.documents else {
+                print("No documents found")
+                return
+            }
+            
+            var bestMatchingScore: Double = 0.0
+            var bestMatchedPoem: [String: Any]?
+
+            // 遍歷每一首詩
+            for document in documents {
+                let data = document.data()
+                
+                guard let poemSeason = data["season"] as? Int,
+                      let poemWeather = data["weather"] as? Int,
+                      let poemTime = data["time"] as? Int else {
+                    continue
+                }
+
+                // 計算匹配度的總分
+                var matchingScore: Double = 0.0
+                
+                // 匹配 "季節" - 使用鄰近度矩陣來給予分數
+                matchingScore += seasonProximityMatrix[currentSeason][poemSeason] * perConditionScore
+                
+                // 匹配 "天氣"
+                if currentWeather == poemWeather || poemWeather == 0 {
+                    matchingScore += perConditionScore
+                }
+                
+                // 匹配 "時間"
+                if currentTime == poemTime || poemTime == 0 {
+                    matchingScore += perConditionScore
+                }
+                
+                // 如果這首詩的匹配度高於目前最高的匹配度，更新最佳匹配的詩
+                if matchingScore > bestMatchingScore {
+                    bestMatchingScore = matchingScore
+                    bestMatchedPoem = data
+                }
+            }
+            
+            // 將匹配度轉換為百分比，並四捨五入到一位小數
+            let matchingPercentage = round((bestMatchingScore / totalScore) * 1000) / 10.0
+
+            if let bestPoem = bestMatchedPoem {
+                print("最匹配的詩歌資料為: \(bestPoem)")
+                print("匹配度為: \(matchingPercentage)%")
+            } else {
+                print("沒有找到符合條件的詩歌")
             }
         }
     }

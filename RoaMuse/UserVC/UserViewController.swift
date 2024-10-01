@@ -18,7 +18,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     let tableView = UITableView()
     let userNameLabel = UILabel()
-    let awardsLabel = UILabel()
+    let awardLabelView = AwardLabelView(title: "稱號：", backgroundColor: .systemGray)
     let fansLabel = UILabel()
     var userName = String()
     var awards = Int()
@@ -27,6 +27,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let avatarImageView = UIImageView()
     let imagePicker = UIImagePickerController()
     var selectedImage: UIImage?
+    
+    let bottomSheetView = UIView()
+    let backgroundView = UIView() // 半透明背景
+    let sheetHeight: CGFloat = 250 // 選單高度
     
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
@@ -38,6 +42,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         imagePicker.delegate = self
         setupTableView()
         setupRefreshControl()
+        setupBottomSheet()
         guard let userId = userId else {
             print("未找到 userId，請先登入")
             return
@@ -63,10 +68,20 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             case .failure(let error):
                 print("Error fetching user data: \(error.localizedDescription)")
             }
-            
-            FirebaseManager.shared.countCompletedPlaces(userId: userId) { totalPlaces in
-                self?.awards = totalPlaces
-                self?.awardsLabel.text = "打開卡片：\(String(self?.awards ?? 0))張"
+        }
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
+        avatarImageView.addGestureRecognizer(tapGestureRecognizer)
+        avatarImageView.isUserInteractionEnabled = true
+        
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
+            switch result {
+            case .success(let awardTitle):
+                DispatchQueue.main.async {
+                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                }
+            case .failure(let error):
+                print("無法加載稱號: \(error.localizedDescription)")
             }
         }
         
@@ -104,11 +119,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             case .failure(let error):
                 print("Error fetching user data: \(error.localizedDescription)")
             }
-            
-            FirebaseManager.shared.countCompletedPlaces(userId: userId) { totalPlaces in
-                self?.awards = totalPlaces
-                self?.awardsLabel.text = "打開卡片：\(String(self?.awards ?? 0))張"
-            }
         }
         
         // 重新檢查每個 cell 的收藏狀態並更新
@@ -121,8 +131,124 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             }
         }
         
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
+            switch result {
+            case .success(let awardTitle):
+                DispatchQueue.main.async {
+                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                }
+            case .failure(let error):
+                print("無法加載稱號: \(error.localizedDescription)")
+            }
+        }
+        
         // 每次頁面顯示時重新加載貼文數據
         loadUserPosts()
+    }
+    
+    func setupBottomSheet() {
+        // 初始化背景蒙層
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        backgroundView.frame = self.view.bounds
+        backgroundView.alpha = 0
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
+        backgroundView.addGestureRecognizer(tapGesture)
+        
+        // 初始化底部選單視圖
+        bottomSheetView.backgroundColor = .white
+        bottomSheetView.layer.cornerRadius = 15
+        bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        
+        // 設置初始位置在螢幕下方
+        bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.addSubview(backgroundView)
+            window.addSubview(bottomSheetView)
+        }
+        
+        // 在選單視圖內部添加按鈕（這裡根據需要添加自訂按鈕）
+        let deleteButton = createButton(title: "刪除貼文")
+        let impeachButton = createButton(title: "檢舉貼文")
+        let blockButton = createButton(title: "封鎖用戶")
+        let cancelButton = createButton(title: "取消", textColor: .red)
+        
+        deleteButton.addTarget(self, action: #selector(deletePost), for: .touchUpInside)
+        
+        let stackView = UIStackView(arrangedSubviews: [deleteButton, impeachButton, blockButton, cancelButton])
+        stackView.axis = .vertical
+        stackView.spacing = 20
+        stackView.alignment = .fill
+        stackView.distribution = .fillEqually
+        
+        bottomSheetView.addSubview(stackView)
+        stackView.snp.makeConstraints { make in
+            make.top.equalTo(bottomSheetView.snp.top).offset(20)
+            make.leading.equalTo(bottomSheetView.snp.leading).offset(20)
+            make.trailing.equalTo(bottomSheetView.snp.trailing).offset(-20)
+        }
+    }
+    
+    @objc func deletePost(_ sender: UIButton) {
+        let post = posts[sender.tag]
+        guard let postId = post["id"] as? String else {
+            print("無法獲取貼文ID")
+            return
+        }
+        
+        let alert = UIAlertController(title: "確認刪除", message: "你確定要刪除這篇貼文嗎？", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        
+        alert.addAction(UIAlertAction(title: "刪除", style: .destructive, handler: { [weak self] _ in
+            
+            Firestore.firestore().collection("posts").document(postId).delete { error in
+                if let error = error {
+                    print("刪除貼文失敗: \(error.localizedDescription)")
+                } else {
+                    print("貼文已成功刪除")
+                    self?.posts.remove(at: sender.tag)
+                    self?.tableView.deleteRows(at: [IndexPath(row: sender.tag, section: 0)], with: .fade)
+                    self?.dismissBottomSheet()
+                }
+            }
+        }))
+        
+        present(alert, animated: true, completion: nil)
+    }
+
+    func createButton(title: String, textColor: UIColor = .black) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.setTitleColor(textColor, for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        button.backgroundColor = .clear
+        return button
+    }
+    
+    // 點擊 moreButton 呼叫此方法顯示選單
+    func showBottomSheet(at indexPath: IndexPath) {
+        let post = posts[indexPath.row]
+        
+        // 顯示彈窗
+        UIView.animate(withDuration: 0.3) {
+            self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
+            self.backgroundView.alpha = 1
+        }
+        
+        // 傳遞 IndexPath 到刪除按鈕
+        let deleteButton = bottomSheetView.viewWithTag(1001) as? UIButton
+        deleteButton?.addTarget(self, action: #selector(deletePost(_:)), for: .touchUpInside)
+        deleteButton?.tag = indexPath.row  // 使用 `tag` 傳遞行號
+    }
+    
+    // 點擊背景或取消按鈕時呼叫此方法隱藏選單
+    @objc func dismissBottomSheet() {
+        UIView.animate(withDuration: 0.3) {
+            self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: self.sheetHeight)
+            self.backgroundView.alpha = 0
+        }
     }
     
     func setupRefreshControl() {
@@ -136,7 +262,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             self.tableView.mj_header?.endRefreshing() // 保證刷新結束
             return
         }
-
+        
         // 重新加載用戶資料
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
@@ -154,13 +280,18 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             case .failure(let error):
                 print("Error fetching user data: \(error.localizedDescription)")
             }
-            
-            FirebaseManager.shared.countCompletedPlaces(userId: userId) { totalPlaces in
-                self?.awards = totalPlaces
-                self?.awardsLabel.text = "打開卡片：\(String(self?.awards ?? 0))張"
-            }
         }
         
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
+            switch result {
+            case .success(let awardTitle):
+                DispatchQueue.main.async {
+                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                }
+            case .failure(let error):
+                print("無法加載稱號: \(error.localizedDescription)")
+            }
+        }
         // 重新加載用戶貼文
         loadUserPosts()
         
@@ -270,8 +401,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             if let error = error {
                 print("保存到 Firestore 失敗: \(error.localizedDescription)")
             } else {
-                //                print("圖片 URL 已保存到 Firestore")
-                // 保存成功後，立即加載新圖片到 avatarImageView
                 self.loadAvatarImage(from: url)
             }
         }
@@ -293,7 +422,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         ], completionHandler: { result in
             switch result {
             case .success(let value): break
-                //                    print("圖片成功加載: \(value.source.url?.absoluteString ?? "")")
             case .failure(let error):
                 print("圖片加載失敗: \(error.localizedDescription)")
             }
@@ -315,15 +443,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 設置 Header
         let headerView = UIView()
         headerView.backgroundColor = .lightGray
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 180)  // 調整高度以容納行走地圖按鈕
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 210)  // 調整高度以容納行走地圖按鈕
         
         userNameLabel.text = userName
         userNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         headerView.addSubview(userNameLabel)
         
-        awardsLabel.text = "打開卡片：\(String(self.awards))張"
-        awardsLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        headerView.addSubview(awardsLabel)
+        headerView.addSubview(awardLabelView)
         
         avatarImageView.backgroundColor = .blue
         avatarImageView.isUserInteractionEnabled = true
@@ -358,34 +484,38 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
         }
         
-        awardsLabel.snp.makeConstraints { make in
+        awardLabelView.snp.makeConstraints { make in
             make.top.equalTo(userNameLabel.snp.bottom).offset(8)
             make.leading.equalTo(userNameLabel)
+            make.height.equalTo(40)
+            make.width.equalTo(180)
         }
         
         avatarImageView.snp.makeConstraints { make in
-            make.width.height.equalTo(70)
-            make.centerY.equalTo(headerView)
+            make.width.height.equalTo(110)
+            make.top.equalTo(userNameLabel)
             make.leading.equalTo(headerView).offset(15)
         }
         
+        avatarImageView.layer.cornerRadius = 55
+        
         fansLabel.snp.makeConstraints { make in
-            make.leading.equalTo(awardsLabel)
-            make.top.equalTo(awardsLabel.snp.bottom).offset(8)
+            make.leading.equalTo(awardLabelView)
+            make.bottom.equalTo(avatarImageView.snp.bottom)
         }
         
         // 設置「行走地圖」按鈕的約束
         mapButton.snp.makeConstraints { make in
-            make.top.equalTo(fansLabel.snp.bottom).offset(16)
-            make.leading.equalTo(fansLabel)
-            make.width.equalTo(100)
+            make.top.equalTo(fansLabel.snp.bottom).offset(24)
+            make.leading.equalTo(avatarImageView)
+            make.width.equalTo(headerView).multipliedBy(0.4)
             make.height.equalTo(40)
         }
         
         awardsButton.snp.makeConstraints { make in
-            make.top.equalTo(fansLabel.snp.bottom).offset(16)
-            make.leading.equalTo(mapButton.snp.trailing).offset(20)
-            make.width.equalTo(100)
+            make.top.equalTo(fansLabel.snp.bottom).offset(24)
+            make.leading.equalTo(mapButton.snp.trailing).offset(15)
+            make.width.equalTo(headerView).multipliedBy(0.4)
             make.height.equalTo(40)
         }
         
@@ -395,7 +525,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
     }
-
+    
     @objc func handleMapButtonTapped() {
         
         let mapViewController = MapViewController()
@@ -407,7 +537,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let awardsViewController = AwardsViewController()
         self.navigationController?.pushViewController(awardsViewController, animated: true)
     }
-
+    
     // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         posts.count
@@ -433,6 +563,9 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        cell.configureMoreButton { [weak self] in
+            self?.showBottomSheet(at: indexPath)
+        }
         
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
@@ -513,8 +646,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func loadUserPosts() {
         FirebaseManager.shared.loadSpecifyUserPost(forUserId: userId ?? "") { [weak self] postsArray in
             guard let self = self else { return }
-            
-            // 根據文章的 createdAt 時間戳排序
             self.posts = postsArray.sorted(by: { (post1, post2) -> Bool in
                 if let createdAt1 = post1["createdAt"] as? Timestamp,
                    let createdAt2 = post2["createdAt"] as? Timestamp {
@@ -522,8 +653,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 }
                 return false
             })
-            //            print("加載到的文章數據: \(self.posts)")
-            // 重新載入表格數據
             self.tableView.reloadData()
         }
     }
@@ -536,7 +665,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             let post = posts[indexPath.row]
             let postId = post["id"] as? String ?? ""
             
-            // 更新 Firebase 中的 like 狀態
             updateLikeStatus(postId: postId, isLiked: sender.isSelected)
         }
     }
@@ -551,7 +679,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 if let error = error {
                     print("按讚失敗: \(error.localizedDescription)")
                 } else {
-                    //                    print("按讚成功")
+                    
                 }
             }
         } else {
@@ -561,7 +689,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 if let error = error {
                     print("取消按讚失敗: \(error.localizedDescription)")
                 } else {
-                    //                    print("取消按讚成功")
+                    
                 }
             }
         }
@@ -575,7 +703,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             let post = posts[indexPath.row]
             let postId = post["id"] as? String ?? ""
             
-            // 更新 Firebase 中的收藏狀態
             updateBookmarkStatus(postId: postId, isBookmarked: sender.isSelected)
         }
     }
@@ -590,7 +717,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 if let error = error {
                     print("收藏失敗: \(error.localizedDescription)")
                 } else {
-                    //                    print("收藏成功")
+                    
                 }
             }
         } else {
@@ -600,7 +727,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 if let error = error {
                     print("取消收藏失敗: \(error.localizedDescription)")
                 } else {
-                    //                    print("取消收藏成功")
+                    
                 }
             }
         }
