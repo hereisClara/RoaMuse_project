@@ -34,6 +34,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
+            currentLocation = location
             onLocationUpdate?(location)
 //            stopUpdatingLocation()
         } else {

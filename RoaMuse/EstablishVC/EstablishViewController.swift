@@ -57,6 +57,8 @@ class EstablishViewController: UIViewController {
         
     }
     
+    
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = false
@@ -336,9 +338,9 @@ class EstablishViewController: UIViewController {
         }
     }
     
-    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [MKRoute]?) -> Void) {
+    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [[String]]?) -> Void) {
         var totalTime: TimeInterval = 0
-        var routes = [MKRoute]()  // 用來存放每段路線的詳細資訊
+        var nestedInstructions = [[String]]()  // 用來存放每段路線的指令數列
         let dispatchGroup = DispatchGroup()
         
         // 確保有地點可供計算
@@ -349,8 +351,7 @@ class EstablishViewController: UIViewController {
         }
         
         totalTime = 0
-        routes.removeAll()
-        
+        nestedInstructions.removeAll()
         
         // Step 1: 計算從當前位置到第一個地點的時間
         if let firstPlace = places.first {
@@ -360,8 +361,15 @@ class EstablishViewController: UIViewController {
             calculateRoute(from: currentLocation, to: firstPlaceLocation) { travelTime, route in
                 if let travelTime = travelTime, let route = route {
                     totalTime += travelTime
-                    routes.append(route)  // 保存路線資訊
-                    print("從當前位置到第一個地點的時間：\(travelTime) 秒")
+                    
+                    // 創建導航指令數列
+                    var stepInstructions = [String]()
+                    for step in route.steps {
+                        let instruction = step.instructions
+                        stepInstructions.append(instruction)
+                    }
+                    nestedInstructions.append(stepInstructions)  // 加入嵌套數列
+                    print("從當前位置到第一個地點的導航指令已保存")
                 }
                 dispatchGroup.leave()
             }
@@ -377,18 +385,51 @@ class EstablishViewController: UIViewController {
                 calculateRoute(from: startLocation, to: endLocation) { travelTime, route in
                     if let travelTime = travelTime, let route = route {
                         totalTime += travelTime
-                        routes.append(route)
-                        print("從地點 \(num) 到地點 \(num + 1) 的時間：\(travelTime) 秒")
+                        
+                        // 創建導航指令數列
+                        var stepInstructions = [String]()
+                        for step in route.steps {
+                            let instruction = step.instructions
+                            stepInstructions.append(instruction)
+                        }
+                        nestedInstructions.append(stepInstructions)  // 加入嵌套數列
+                        print("從地點 \(num) 到地點 \(num + 1) 的導航指令已保存")
                     }
                     dispatchGroup.leave()
                 }
             }
         }
         
-        // Step 3: 返回總時間和詳細路線
+        // Step 3: 返回總時間和詳細導航指令
         dispatchGroup.notify(queue: .main) {
             print("總交通時間：\(totalTime) 秒")
-            completion(totalTime, routes)
+            completion(totalTime, nestedInstructions)
+        }
+    }
+
+        
+        func createNestedRouteInstructions(routesArray: [[MKRoute]]) -> [[[String: Any]]] {
+            var nestedRouteInstructions = [[[String: Any]]]()
+            
+            // 遍歷每一段路線
+            for routeArray in routesArray {
+                var stepInstructions = [[String: Any]]()  // 用來保存每一段路線的步驟
+                
+                if let route = routeArray.first {
+                    // 遍歷該段路線中的每個步驟
+                    for step in route.steps {
+                        let stepData: [String: Any] = [
+                            "instructions": step.instructions,
+                            "distance": step.distance,
+                            "notice": step.notice ?? "無"
+                        ]
+                        stepInstructions.append(stepData)
+                    }
+                }
+                nestedRouteInstructions.append(stepInstructions)
+            }
+            
+            return nestedRouteInstructions
         }
     }
     
@@ -409,7 +450,33 @@ class EstablishViewController: UIViewController {
             }
         }
     }
-}
+    
+    func createNestedRouteInstructions(routesArray: [[MKRoute]]) -> [[[String: Any]]] {
+        var nestedRouteInstructions = [[[String: Any]]]()
+        
+        // 遍歷每一段路線
+        for routeArray in routesArray {
+            var stepInstructions = [[String: Any]]()  // 用來保存每一段路線的步驟
+            
+            if let route = routeArray.first {
+                // 遍歷該段路線中的每個步驟
+                for step in route.steps {
+                    let stepData: [String: Any] = [
+                        "instructions": step.instructions,
+                        "distance": step.distance,
+                        "notice": step.notice ?? "無"  // `notice` 可能為 nil，所以提供預設值
+                    ]
+                    stepInstructions.append(stepData)
+                }
+            }
+            
+            // 將每段路線的步驟保存到外層數組中
+            nestedRouteInstructions.append(stepInstructions)
+        }
+        
+        return nestedRouteInstructions
+    }
+
 
 
 extension EstablishViewController: PopupViewDelegate {
@@ -417,8 +484,21 @@ extension EstablishViewController: PopupViewDelegate {
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
-        navigationController?.pushViewController(tripDetailVC, animated: true)
+        if let currentLocation = locationManager.currentLocation?.coordinate {
+            calculateTotalRouteTimeAndDetails(from: currentLocation, places: matchingPlaces) { [weak self] totalTravelTime, nestedInstructions in
+                guard let self = self else { return }
+                
+                if let totalTravelTime = totalTravelTime, let nestedInstructions = nestedInstructions {
+                    tripDetailVC.totalTravelTime = totalTravelTime // 傳遞總交通時間
+                    tripDetailVC.nestedInstructions = nestedInstructions // 傳遞嵌套的導航指令數列
+                }
+                
+                // 跳轉到 TripDetailViewController
+                self.navigationController?.pushViewController(tripDetailVC, animated: true)
+            }
+        }
     }
+
 }
 
 extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {

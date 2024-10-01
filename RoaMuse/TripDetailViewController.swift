@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import CoreLocation
 import SnapKit
+import MapKit
 import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
@@ -28,8 +29,25 @@ class TripDetailViewController: UIViewController {
     
     let tableView = UITableView()
     
+    let progressView = UIView() // The vertical progress view container
+    let progressBar = UIProgressView(progressViewStyle: .bar) // The actual progress bar
+    var progressDots = [UIView]()
+    
+    var totalTravelTime: TimeInterval? // 用來存儲總交通時間
+    var routesArray: [[MKRoute]]?
+    var nestedInstructions: [[String]]?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if let nestedInstructions = nestedInstructions {
+            for (index, steps) in nestedInstructions.enumerated() {
+                print("導航段落 \(index):")
+                for instruction in steps {
+                    print("指令: \(instruction)")
+                }
+            }
+        }
         self.navigationItem.largeTitleDisplayMode = .never
         tabBarController?.tabBar.isHidden = false
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -50,7 +68,7 @@ class TripDetailViewController: UIViewController {
         } else {
             print("未接收到行程數據")
         }
-        
+        setupUI()
         setupTableView()
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
@@ -83,10 +101,54 @@ class TripDetailViewController: UIViewController {
         }
     }
     
+    func setupUI() {
+            view.addSubview(progressView)
+            
+            progressView.backgroundColor = .clear // Transparent background
+            progressView.snp.makeConstraints { make in
+                make.leading.equalToSuperview().offset(20)
+                make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
+                make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
+                make.width.equalTo(20) // Width of the progress bar
+            }
+            
+            for _ in 0..<places.count {
+                let dot = UIView()
+                dot.backgroundColor = .lightGray
+                dot.layer.cornerRadius = 5 // Circular dots
+                progressView.addSubview(dot)
+                
+                dot.snp.makeConstraints { make in
+                    make.width.height.equalTo(10) // Size of dots
+                    make.centerX.equalToSuperview()
+                }
+                
+                progressDots.append(dot)
+            }
+            
+            for (index, dot) in progressDots.enumerated() {
+                dot.snp.makeConstraints { make in
+                    if index == 0 {
+                        make.top.equalToSuperview().offset(20)
+                    } else {
+                        make.top.equalTo(progressDots[index - 1].snp.bottom).offset(30)
+                    }
+                }
+            }
+        }
+    
+    func updateProgress(for placeIndex: Int) {
+            if placeIndex < progressDots.count {
+                let dot = progressDots[placeIndex]
+                dot.backgroundColor = .blue // Change color to indicate completion
+            }
+        }
+    
     @objc func shareButtonTapped() {
         let imageUploadVC = PhotoUploadViewController()
         self.navigationController?.pushViewController(imageUploadVC, animated: true)
     }
+
     
     func loadPoemDataFromFirebase() {
         
