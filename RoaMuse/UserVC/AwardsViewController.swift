@@ -188,9 +188,9 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             } else {
                 print("無法解析 completedTrip 資料")
             }
-           
+//           MARK: totalTask
             self.dynamicTaskSets = [
-                [TaskSet(totalTasks: 50, completedTasks: totalPlacesCompleted)],
+                [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
                 [],
                 [TaskSet(totalTasks: 30, completedTasks: totalTripsCompleted)]
             ]

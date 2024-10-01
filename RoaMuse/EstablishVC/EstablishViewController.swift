@@ -35,15 +35,15 @@ class EstablishViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        navigationController?.navigationBar.prefersLargeTitles = true
-//        navigationItem.largeTitleDisplayMode = .always
-//        self.title = "建立"
-//        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-//            navigationController?.navigationBar.largeTitleTextAttributes = [
-//                .foregroundColor: UIColor.deepBlue, // 修改顏色
-//                .font: customFont // 設置字體
-//            ]
-//        }
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        self.title = "建立"
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改顏色
+                .font: customFont // 設置字體
+            ]
+        }
         view.backgroundColor = UIColor(resource: .backgroundGray)
         styleTableView.register(StyleTableViewCell.self, forCellReuseIdentifier: "styleCell")
         
@@ -129,7 +129,6 @@ class EstablishViewController: UIViewController {
                                 self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: self.matchingPlaces) { totalTravelTime, routes in
                                     if let totalTravelTime = totalTravelTime {
                                         let totalMinutes = Int(totalTravelTime / 60)
-                                        print("總預估交通時間：\(totalMinutes) 分鐘")
                                     }
                                     
                                     self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)

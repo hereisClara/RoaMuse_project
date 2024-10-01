@@ -326,9 +326,18 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         postsTableView.snp.makeConstraints { make in
             make.top.equalTo(postButton.snp.bottom).offset(40)
-            make.width.equalTo(view)
-            make.bottom.equalTo(view.safeAreaLayoutGuide)
+            make.width.equalTo(view).multipliedBy(0.9)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
+            make.centerX.equalTo(view)
         }
+        
+        postsTableView.rowHeight = UITableView.automaticDimension
+        postsTableView.estimatedRowHeight = 250
+        
+        postsTableView.layer.cornerRadius = 20
+        postsTableView.layer.masksToBounds = true
+        
+        postsTableView.backgroundColor = .clear
         
         postsTableView.allowsSelection = true
         postsTableView.backgroundColor = .blue
@@ -359,6 +368,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         cell.likeButton.addTarget(self, action: #selector(self.didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeButton.isSelected = self.likeButtonIsSelected
         cell.likeCountLabel.text = self.likeCount
+        cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
         cell.configureMoreButton {
             self.showBottomSheet()  // 顯示彈窗
         }

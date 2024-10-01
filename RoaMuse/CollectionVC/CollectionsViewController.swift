@@ -11,9 +11,11 @@ import SnapKit
 import MJRefresh
 import FirebaseCore
 import FirebaseFirestore
+import CoreLocation
 
 class CollectionsViewController: UIViewController {
     
+    let locationManager = LocationManager()
     let segmentedControl = UISegmentedControl(items: ["行程", "日記"])
     let collectionsTableView = UITableView()
     var bookmarkPostIdArray = [String]()
@@ -521,53 +523,90 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
 
 //    TODO: 地理反向編碼
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        if segmentIndex == 0 {
-            
-            if indexPath.section == 0 {
+            if segmentIndex == 0 {
+                let trip: Trip
                 
-                let trip = incompleteTripsArray[indexPath.row]
-                let city = "台北市"  // 這個是您需要傳遞的城市
-                let districts = ["大安區", "信義區"]  // 假設有區域資料
-                popupView.showPopup(on: self.view, with: trip, city: city, districts: districts)
-                selectedTrip = incompleteTripsArray[indexPath.row]
+                if indexPath.section == 0 {
+                            trip = incompleteTripsArray[indexPath.row]
+                        } else {
+                            trip = completeTripsArray[indexPath.row]
+                        }
+
+                        // 獲取當前位置
+                        if let currentLocation = locationManager.currentLocation {
+                            let dispatchGroup = DispatchGroup()
+                            var places: [Place] = []
+                            
+                            for placeId in trip.placeIds {
+                                    dispatchGroup.enter()
+                                    FirebaseManager.shared.loadPlaceById(placeId: placeId) { place in
+                                        if let place = place {
+                                            places.append(place)
+                                        } else {
+                                            print("未能加載位置 ID: \(placeId)")
+                                        }
+                                        dispatchGroup.leave()
+                                    }
+                                }
+                            dispatchGroup.notify(queue: .main) {
+                                // 確保 places 不為空
+                                if places.isEmpty {
+                                    print("未找到有效的地點數據，無法計算路徑時間。")
+                                    return
+                                }
+                                LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                    let tripDetailVC = TripDetailViewController()
+                                    tripDetailVC.trip = trip
+                                    
+                                    if let totalTravelTime = totalTravelTime, let routes = routes {
+                                        tripDetailVC.totalTravelTime = totalTravelTime // 設置總路徑時間
+                                        
+                                        // 創建導航指令數列
+                                        var nestedInstructions = [[String]]()
+                                        for route in routes {
+                                            var stepInstructions = [String]()
+                                            for step in route.steps {
+                                                stepInstructions.append(step.instructions)
+                                            }
+                                            nestedInstructions.append(stepInstructions)
+                                        }
+                                        tripDetailVC.nestedInstructions = nestedInstructions // 設置導航指令數列
+                                    }
+                                    
+                                    // 跳轉到 TripDetailViewController
+                                    self.navigationController?.pushViewController(tripDetailVC, animated: true)
+                                }
+                            }
+                        } else {
+                            print("無法獲取當前位置")
+                        }
             } else {
+                // 處理文章的選擇
+                let post = postsArray[indexPath.row]
+                let articleVC = ArticleViewController()
                 
-                let trip = completeTripsArray[indexPath.row]
-                let city = "台北市"  // 這個是您需要傳遞的城市
-                let districts = ["大安區", "信義區"]  // 假設有區域資料
-                popupView.showPopup(on: self.view, with: trip, city: city, districts: districts)
-                selectedTrip = completeTripsArray[indexPath.row]
-            }
-            
-        } else {
-            let post = postsArray[indexPath.row]
-            
-            let articleVC = ArticleViewController()
-            
-            FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
-                if let userName = userName {
-//                    print("找到的 userName: \(userName)")
-                    articleVC.articleAuthor = userName
-                    articleVC.articleTitle = post["title"] as? String ?? "無標題"
-                    articleVC.articleContent = post["content"] as? String ?? "無內容"
-                    articleVC.tripId = post["tripId"] as? String ?? ""
-                    if let createdAtTimestamp = post["createdAt"] as? Timestamp {
-                        let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
-                        articleVC.articleDate = createdAtString
+                FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
+                    if let userName = userName {
+                        articleVC.articleAuthor = userName
+                        articleVC.articleTitle = post["title"] as? String ?? "無標題"
+                        articleVC.articleContent = post["content"] as? String ?? "無內容"
+                        articleVC.tripId = post["tripId"] as? String ?? ""
+                        if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+                            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                            articleVC.articleDate = createdAtString
+                        }
+                        
+                        articleVC.authorId = post["userId"] as? String ?? ""
+                        articleVC.postId = post["id"] as? String ?? ""
+                        articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
+                        
+                        self.navigationController?.pushViewController(articleVC, animated: true)
+                    } else {
+                        print("未找到對應的 userName")
                     }
-                    
-                    articleVC.authorId = post["userId"] as? String ?? ""
-                    articleVC.postId = post["id"] as? String ?? ""
-                    articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
-                    
-                    self.navigationController?.pushViewController(articleVC, animated: true)
-                } else {
-                    print("未找到對應的 userName")
                 }
             }
         }
-    }
     
     @objc func didTapCollectButton(_ sender: UIButton) {
         sender.isSelected.toggle()
