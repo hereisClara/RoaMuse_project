@@ -421,7 +421,7 @@ class CollectionsViewController: UIViewController {
     }
     
     func resetFilterButtons() {
-        // 取消所有篩選按鈕的選取狀態
+        
         for button in filterButtons {
             button.backgroundColor = .clear
             button.setTitleColor(.deepBlue, for: .normal)

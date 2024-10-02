@@ -104,7 +104,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                                 print("總預計交通時間：\(totalMinutes) 分鐘")
                             }
                             
-                            // 彈出顯示行程詳情的彈窗
                             self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                         }
                         
@@ -505,6 +504,31 @@ extension ArticleTripViewController: PopupViewDelegate {
         
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
-        navigationController?.pushViewController(tripDetailVC, animated: true)
+
+        FirebaseManager.shared.loadPlacesByIds(placeIds: trip.placeIds) { [weak self] places in
+            guard let self = self else { return }
+            
+            if let currentLocation = self.locationManager.currentLocation?.coordinate {
+                LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { totalTravelTime, routes in
+                    if let totalTravelTime = totalTravelTime, let routes = routes {
+                        tripDetailVC.totalTravelTime = totalTravelTime
+                        var nestedInstructions = [[String]]()
+                        for route in routes {
+                            var stepInstructions = [String]()
+                            for step in route.steps {
+                                stepInstructions.append(step.instructions)
+                            }
+                            nestedInstructions.append(stepInstructions)
+                        }
+                        tripDetailVC.nestedInstructions = nestedInstructions
+                    } else {
+                        print("Failed to calculate routes or totalTravelTime.")
+                    }
+
+                    self.navigationController?.pushViewController(tripDetailVC, animated: true)
+                }
+            }
+        }
     }
+
 }

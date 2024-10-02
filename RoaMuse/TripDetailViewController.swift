@@ -14,6 +14,19 @@ import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
     
+    var buttonContainer: UIStackView = UIStackView()
+    var transportButtons: [UIButton] = []
+    var selectedTransportButton: UIButton?
+    var isExpanded: Bool = false
+    var buttonsViewWidthConstraint: Constraint?
+    var selectedTransportType: MKDirectionsTransportType = .automobile
+    var transportBackgroundView: UIView?
+    var transportButtonsViewWidthConstraint: Constraint?
+    
+
+    
+    let buttonTitles = ["car.fill", "figure.walk", "bicycle", "tram.fill"]
+    
     var currentTargetIndex: Int = 0
     var loadedPoem: Poem?
     var trip: Trip?
@@ -37,9 +50,11 @@ class TripDetailViewController: UIViewController {
     var routesArray: [[MKRoute]]?
     var nestedInstructions: [[String]]?
     
+    private var isMapVisible: Bool = false
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // 設定導航欄的背景顏色
+
         navigationController?.navigationBar.barTintColor = UIColor.white
         
         if let nestedInstructions = nestedInstructions {
@@ -72,6 +87,7 @@ class TripDetailViewController: UIViewController {
         
         setupUI()
         setupTableView()
+//        setupTransportButtons()
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
@@ -241,88 +257,298 @@ class TripDetailViewController: UIViewController {
         let distance = currentLocation.distance(from: targetLocation)
         print("距离 \(place.name): \(distance) 米")
         
-        if distance <= distanceThreshold {
-            print("距离小于或等于 \(distanceThreshold) 米，地点 \(place.name) 可用")
-            buttonState[currentTargetIndex] = true
-            tableView.reloadRows(at: [IndexPath(row: currentTargetIndex, section: 0)], with: .none)
-        } else {
-            print("距离大于 \(distanceThreshold) 米，地点 \(place.name) 不可用")
-            buttonState[currentTargetIndex] = false
-            tableView.reloadRows(at: [IndexPath(row: currentTargetIndex, section: 0)], with: .none)
+        let isWithinThreshold = distance <= distanceThreshold
+        
+        if isWithinThreshold != buttonState[currentTargetIndex] {
+            buttonState[currentTargetIndex] = isWithinThreshold
+            print("距离 \(isWithinThreshold ? "小于或等于" : "大于") \(distanceThreshold) 米，地点 \(place.name) \(isWithinThreshold ? "可用" : "不可用")")
+            tableView.reloadRows(at: [IndexPath(row: 0, section: currentTargetIndex)], with: .none)
         }
     }
+    
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        
         guard section == 0 else {
-                return nil
-            }
-        
-        guard let poem = loadedPoem else {
-            let headerView = UIView()
-            headerView.backgroundColor = .deepBlue
-            let label = UILabel()
-            label.text = "詩句加載中"
-            label.textAlignment = .center
-            label.font = UIFont.boldSystemFont(ofSize: 24)
-            headerView.addSubview(label)
-            label.snp.makeConstraints { make in
-                make.center.equalToSuperview()
-            }
-            return headerView
+            return nil
         }
-        
+
+        guard let poem = loadedPoem else {
+            return createLoadingHeaderView()
+        }
+
+        let containerView = UIView()
+        containerView.backgroundColor = .clear
+        containerView.isUserInteractionEnabled = true // 确保容器视图可以交互
+
+        let headerView = createHeaderView(poem: poem)
+        headerView.isUserInteractionEnabled = true // 确保 headerView 可以交互
+        containerView.addSubview(headerView)
+
+        headerView.snp.makeConstraints { make in
+            make.top.leading.trailing.equalToSuperview()
+        }
+
+        let buttonsView = createButtonsView()
+        containerView.addSubview(buttonsView)
+
+        buttonsView.snp.makeConstraints { make in
+            make.top.equalTo(headerView.snp.bottom).offset(12)
+            make.leading.trailing.equalToSuperview()
+            make.height.equalTo(50)
+            make.bottom.equalToSuperview().offset(-10)
+        }
+
+        return containerView
+    }
+
+    // 拆分函數，用於創建加載中的標題視圖
+    private func createLoadingHeaderView() -> UIView {
+        let headerView = UIView()
+        headerView.backgroundColor = .deepBlue
+        let label = UILabel()
+        label.text = "詩句加載中"
+        label.textAlignment = .center
+        label.font = UIFont.boldSystemFont(ofSize: 24)
+        headerView.addSubview(label)
+        label.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+        return headerView
+    }
+
+    // 拆分函數，用於創建標題視圖
+    private func createHeaderView(poem: Poem) -> UIView {
         let headerView = UIView()
         headerView.backgroundColor = UIColor(resource: .deepBlue)
         headerView.layer.cornerRadius = 20
-        
-        let titleLabel = UILabel()
-        titleLabel.text = poem.title
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 22)
-        titleLabel.textColor = .white
-        titleLabel.textAlignment = .center
+
+        let titleLabel = createLabel(text: poem.title, font: UIFont(name: "NotoSerifHK-Black", size: 22) ?? UIFont.systemFont(ofSize: 22))
+
         headerView.addSubview(titleLabel)
+
         titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.centerX.equalToSuperview()
+            make.top.equalToSuperview().offset(16)
+            make.leading.equalToSuperview().offset(12)
         }
-        
-        // 詩人
-        let poetLabel = UILabel()
-        poetLabel.text = poem.poetry
-        poetLabel.font = UIFont.systemFont(ofSize: 18)
-        poetLabel.textColor = .white
-        poetLabel.textAlignment = .center
+
+        let poetLabel = createLabel(text: poem.poetry, font: UIFont(name: "NotoSerifHK-Bold", size: 20) ?? UIFont.systemFont(ofSize: 20))
         headerView.addSubview(poetLabel)
+
         poetLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(5)
-            make.centerX.equalToSuperview()
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.leading.equalToSuperview().offset(12)
         }
-        
-        // 詩的內容
-        let contentLabel = UILabel()
-        contentLabel.text = poem.content.joined(separator: "\n")
-        contentLabel.font = UIFont.systemFont(ofSize: 16)
-        contentLabel.textColor = .white
-        contentLabel.textAlignment = .center
+
+        let contentLabel = createLabel(text: poem.content.joined(separator: "\n"), font: UIFont(name: "NotoSerifHK-Regular", size: 18) ?? UIFont.systemFont(ofSize: 18))
         contentLabel.numberOfLines = 0
         headerView.addSubview(contentLabel)
+
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(poetLabel.snp.bottom).offset(10)
+            make.top.equalTo(poetLabel.snp.bottom).offset(30)
             make.centerX.equalToSuperview()
-            make.leading.equalToSuperview().offset(16)
-            make.trailing.equalToSuperview().offset(-16)
-            make.bottom.equalToSuperview().offset(-10) // Add this line
+            make.leading.equalToSuperview().offset(12)
+            make.trailing.equalToSuperview().offset(-12)
+            make.bottom.equalToSuperview().offset(-16)
         }
-        
+
         return headerView
     }
+
+    // 拆分函數，用於創建通用的標籤
+    private func createLabel(text: String, font: UIFont) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.textColor = .white
+        label.textAlignment = .center
+        label.font = font
+        return label
+    }
+
+    private func createButtonsView() -> UIView {
+        let buttonsView = UIView()
+        buttonsView.isUserInteractionEnabled = true
+
+        // 设置 locateButton
+        let locationButton = UIButton()
+        locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
+        locationButton.tintColor = .white
+        locationButton.backgroundColor = .systemGray5
+        locationButton.layer.cornerRadius = 25
+        locationButton.addTarget(self, action: #selector(didTapLocateButton(_:)), for: .touchUpInside)
+        locationButton.isUserInteractionEnabled = true
+
+        buttonsView.addSubview(locationButton)
+
+        locationButton.snp.makeConstraints { make in
+            make.leading.equalToSuperview()
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(50)
+        }
+
+        // 创建用于放置交通工具按钮的容器视图
+        let transportButtonsView = UIView()
+        transportButtonsView.isUserInteractionEnabled = true
+        buttonsView.addSubview(transportButtonsView)
+
+        transportButtonsView.snp.makeConstraints { make in
+            make.leading.equalTo(locationButton.snp.trailing).offset(12)
+            make.centerY.equalToSuperview()
+            make.height.equalTo(50)
+            // 添加宽度约束，初始为单个按钮的宽度
+            transportButtonsViewWidthConstraint = make.width.equalTo(50).constraint
+        }
+
+        // 创建按钮容器 StackView
+        buttonContainer = UIStackView()
+        buttonContainer.axis = .horizontal
+        buttonContainer.distribution = .fillEqually
+        buttonContainer.spacing = 12
+        buttonContainer.isUserInteractionEnabled = true
+        transportButtonsView.addSubview(buttonContainer)
+
+        buttonContainer.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+
+        // 创建交通工具按钮
+        let transportOptions = ["car.fill", "bicycle", "tram.fill", "figure.walk"]
+        transportButtons = []
+
+        for (index, icon) in transportOptions.enumerated() {
+            let button = UIButton(type: .system)
+            button.setImage(UIImage(systemName: icon), for: .normal)
+            button.tintColor = .white
+            button.backgroundColor = .clear
+            button.layer.cornerRadius = 25
+            button.tag = index
+            button.isUserInteractionEnabled = true
+            // 添加点击事件处理器
+            button.addTarget(self, action: #selector(transportButtonTapped(_:)), for: .touchUpInside)
+            transportButtons.append(button)
+        }
+
+        // 设置初始选中按钮为第一个
+        selectedTransportButton = transportButtons.first
+        selectedTransportButton?.backgroundColor = .deepBlue
+
+        // 将所有按钮添加到 buttonContainer
+        for button in transportButtons {
+            buttonContainer.addArrangedSubview(button)
+        }
+
+        // 初始状态下，只显示 selectedTransportButton
+        updateTransportButtonsDisplay()
+
+        // 不再为 selectedTransportButton 添加额外的点击事件
+
+        return buttonsView
+    }
+    
+    private func updateTransportButtonsDisplay() {
+        if isExpanded {
+            // 显示所有按钮
+            for button in transportButtons {
+                button.isHidden = false
+            }
+            // 计算总宽度
+            let buttonWidth: CGFloat = 50
+            let buttonSpacing: CGFloat = 12
+            let totalWidth = CGFloat(transportButtons.count) * buttonWidth + CGFloat(transportButtons.count - 1) * buttonSpacing
+            // 更新宽度约束
+            transportButtonsViewWidthConstraint?.update(offset: totalWidth)
+        } else {
+            // 只显示选中的按钮
+            for button in transportButtons {
+                button.isHidden = (button != selectedTransportButton)
+            }
+            // 更新宽度约束为单个按钮的宽度
+            transportButtonsViewWidthConstraint?.update(offset: 50)
+        }
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+
+    @objc private func transportButtonTapped(_ sender: UIButton) {
+        print("transportButtonTapped called")
+        if sender == selectedTransportButton {
+            // 点击的是当前选中按钮，切换展开/收合
+            toggleTransportButtons()
+        } else {
+            // 更新选中按钮的背景颜色
+            selectedTransportButton?.backgroundColor = .clear
+            selectedTransportButton = sender
+            sender.backgroundColor = .deepBlue
+
+            // 更新选中的交通方式
+            selectedTransportType = transportTypeForIndex(sender.tag)
+
+            // 将选中按钮移动到第一个位置
+            if let index = transportButtons.firstIndex(of: sender) {
+                transportButtons.remove(at: index)
+                transportButtons.insert(sender, at: 0)
+            }
+            // 重新排列按钮
+            for button in buttonContainer.arrangedSubviews {
+                buttonContainer.removeArrangedSubview(button)
+                button.removeFromSuperview()
+            }
+            for button in transportButtons {
+                buttonContainer.addArrangedSubview(button)
+            }
+            // 收合按钮
+            isExpanded = false
+            UIView.animate(withDuration: 0.3) {
+                self.updateTransportButtonsDisplay()
+                self.view.layoutIfNeeded()
+            }
+
+            // 如果需要，根据新的交通方式更新地图或路线
+            updateMapForSelectedTransportType()
+        }
+    }
+
+    @objc private func toggleTransportButtons() {
+        print("toggleTransportButtons called")
+        isExpanded.toggle()
+        UIView.animate(withDuration: 0.3) {
+            self.updateTransportButtonsDisplay()
+            self.view.layoutIfNeeded()
+        }
+    }
+
+
+    private func transportTypeForIndex(_ index: Int) -> MKDirectionsTransportType {
+        switch index {
+        case 0:
+            return .automobile
+        case 1:
+            return .walking
+        case 2:
+            return .transit
+        case 3:
+            return .walking
+        default:
+            return .automobile
+        }
+    }
+    
+    private func updateMapForSelectedTransportType() {
+        // 根据 selectedTransportType 更新地图上的路线
+        // 例如，重新计算路线并刷新地图
+
+        // 如果地图当前可见，更新地图
+        if isMapVisible {
+            tableView.reloadRows(at: [IndexPath(row: 0, section: currentTargetIndex)], with: .none)
+        }
+    }
+
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-            return section == 0 ? UITableView.automaticDimension : 0
+        return section == 0 ? UITableView.automaticDimension : 0
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
@@ -330,31 +556,26 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 35
+        if isMapVisible && indexPath.section == currentTargetIndex {
+            return 200 // 顯示地圖的高度
+        } else {
+            return 0 // 隱藏cell時高度為0
+        }
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        // 每個地點對應一個 section，根據嵌套數列的數量確定 section 數量
-        return nestedInstructions?.count ?? 0
+        places.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard section < places.count else {
-                return 0
-            }
-
-            if completedPlaceIds.contains(places[section].id) {
-                return 0
-            }
-
-            return nestedInstructions?[section].count ?? 0
+        1
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         guard section < places.count else {
             return nil
         }
-
+        
         // 創建透明的 containerView
         let containerView = UIView()
         containerView.backgroundColor = .clear // 透明背景
@@ -365,7 +586,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         footerView.layer.cornerRadius = 20
         footerView.layer.masksToBounds = true // 讓角落變成圓角
         containerView.addSubview(footerView)
-
+        
         // 設置 footerView 的內縮約束，讓它看起來內縮
         footerView.snp.makeConstraints { make in
             make.top.equalTo(containerView).offset(10)
@@ -373,7 +594,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.leading.equalTo(containerView)
             make.trailing.equalTo(containerView)
         }
-
+        
         // 創建 placeLabel 並加入 footerView
         let placeLabel = UILabel()
         let place = places[section]
@@ -381,43 +602,41 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         placeLabel.font = UIFont.systemFont(ofSize: 18)
         placeLabel.numberOfLines = 0
         footerView.addSubview(placeLabel)
-
+        
         placeLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
             make.centerY.equalToSuperview()
         }
-
+        
         // 創建 completeButton 並加入 footerView
         let completeButton = UIButton(type: .system)
-        completeButton.setTitle("完成", for: .normal)
+//        completeButton.setTitle("完成", for: .normal)
+        completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+        completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
         completeButton.isEnabled = !completedPlaceIds.contains(place.id)
-        completeButton.tag = section // 將 section 設置為按鈕的 tag 以便識別
+        completeButton.tag = section
         completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
         footerView.addSubview(completeButton)
-
+        
         completeButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-20)
             make.centerY.equalToSuperview()
         }
-
+        
         return containerView
     }
-
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "instructionCell", for: indexPath)
-        cell.selectionStyle = .none
-        if let instruction = nestedInstructions?[indexPath.section][indexPath.row] {
-            cell.textLabel?.text = instruction
-            cell.textLabel?.font = UIFont.systemFont(ofSize: 14, weight: .light)
-            cell.textLabel?.numberOfLines = 0 // 多行顯示導航指令
-        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? MapTableViewCell ?? MapTableViewCell()
+        let place = places[indexPath.section]
         
-        cell.contentView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
-        cell.contentView.layer.cornerRadius = 10
-        cell.contentView.layer.masksToBounds = true
-        cell.contentView.backgroundColor = .clear
-        cell.backgroundColor = .clear
+        if isMapVisible {
+            let startCoordinate = locationManager.currentLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
+            let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+            cell.showMap(from: startCoordinate, to: destinationCoordinate)
+        } else {
+            cell.hideMap()
+        }
         
         return cell
     }
@@ -430,11 +649,28 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.contentInsetAdjustmentBehavior = .automatic
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "instructionCell")
+        tableView.register(MapTableViewCell.self, forCellReuseIdentifier: "MapCell")
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
     }
+    
+    @objc func didTapLocateButton(_ sender: UIButton) {
+        isMapVisible.toggle()
+        
+        sender.isSelected = isMapVisible
+        
+        if sender.isSelected {
+            sender.backgroundColor = .deepBlue
+        } else {
+            sender.backgroundColor = .systemGray5
+        }
+        
+        UIView.performWithoutAnimation {
+               tableView.reloadSections(IndexSet(integer: currentTargetIndex), with: .none)
+           }
+    }
+
     
     @objc func didTapCompleteButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
@@ -463,14 +699,23 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     sender.isSelected = true
                     sender.isEnabled = false
                     self.completedPlaceIds.append(placeId)
-                    self.buttonState[self.currentTargetIndex] = false // 禁用已完成地点的按钮
-                    self.currentTargetIndex += 1 // 更新到下一個地點
-                    self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic) // 更新當前 section
+                    
+                    // 禁用已完成地點的按鈕
+                    self.buttonState[self.currentTargetIndex] = false
+                    
+                    // 更新 currentTargetIndex 到下一個地點
+                    self.currentTargetIndex += 1
+                    
+                    // 重新加載表格視圖
+                    // 收合當前地點並顯示下一個地點的地圖
+                    self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic)
+                    if self.currentTargetIndex < self.places.count {
+                        self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .automatic)
+                    }
                 }
             } else {
                 print("更新失败")
             }
         }
     }
-    
 }

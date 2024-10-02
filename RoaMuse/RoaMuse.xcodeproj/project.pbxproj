@@ -13,6 +13,7 @@
 		AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */; };
 		AC18F83F2CAC5920004E8868 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */; };
 		AC18F8412CAD1200004E8868 /* ArticleTripViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */; };
+		AC18F8432CAD6C61004E8868 /* MapTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -94,6 +95,7 @@
 		AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSerifHK-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleTripViewController.swift; sourceTree = "<group>"; };
+		AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTableViewCell.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -279,6 +281,7 @@
 				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
 				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
 				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
+				AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */,
 				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
 				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
 				AC7A2A5D2C97C5A7003FA811 /* HomeVC */,
@@ -529,6 +532,7 @@
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
 				AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */,
 				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
+				AC18F8432CAD6C61004E8868 /* MapTableViewCell.swift in Sources */,
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
 				AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */,
