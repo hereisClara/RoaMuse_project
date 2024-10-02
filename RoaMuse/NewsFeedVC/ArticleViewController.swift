@@ -3,7 +3,6 @@ import UIKit
 import SnapKit
 import FirebaseFirestore
 
-
 class ArticleViewController: UIViewController {
     
     var authorId = String()
@@ -35,6 +34,8 @@ class ArticleViewController: UIViewController {
     let authorLabel = UILabel()
     let contentLabel = UILabel()
     let dateLabel = UILabel()
+    var photoUrls = [String]()
+    let photoContainerView = UIView()
     
     var trip: Trip?
     var isScrolledToFirstComment = false
@@ -44,13 +45,14 @@ class ArticleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        
         self.navigationItem.largeTitleDisplayMode = .never
         getTripData()
         observeLikeCountChanges()
         
         popupView.delegate = self
         setupTableView()
+        setupPhotos()
+        updateHeaderViewLayout()
         checkBookmarkStatus()
         updateBookmarkData()
         
@@ -83,7 +85,6 @@ class ArticleViewController: UIViewController {
         postRef.addSnapshotListener { [weak self] snapshot, error in
             guard let self = self else { return }
             
-            // 如果正在更新按讚狀態，暫停監聽器的更新
             if self.isUpdatingLikeStatus {
                 return
             }
@@ -129,7 +130,6 @@ class ArticleViewController: UIViewController {
         }
     }
     
-    // 檢查文章是否已被收藏，並更新收藏按鈕狀態
     func checkBookmarkStatus() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.isContentBookmarked(forUserId: userId, id: postId) { [weak self] isBookmarked in
@@ -138,10 +138,6 @@ class ArticleViewController: UIViewController {
         }
     }
     
-    // 按讚按鈕事件處理
-    
-    
-    // 保存留言
     func saveComment(userId: String, postId: String, commentContent: String, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
@@ -542,12 +538,22 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.centerX.equalTo(headerView)
         }
         
-        tripView.snp.makeConstraints { make in
-            make.top.equalTo(contentLabel.snp.bottom).offset(12)
-            make.width.equalTo(headerView).multipliedBy(0.9)
-            make.height.equalTo(60)
-            make.centerX.equalTo(headerView)
-        }
+        // 添加 photoContainerView
+            headerView.addSubview(photoContainerView)
+            photoContainerView.snp.makeConstraints { make in
+                make.top.equalTo(contentLabel.snp.bottom).offset(12)
+                make.width.equalTo(headerView).multipliedBy(0.9)
+                make.centerX.equalTo(headerView)
+                // 高度稍后根据图片数量动态调整
+            }
+
+            // 将 tripView 的顶部约束修改为相对于 photoContainerView
+            tripView.snp.makeConstraints { make in
+                make.top.equalTo(photoContainerView.snp.bottom).offset(12)
+                make.width.equalTo(headerView).multipliedBy(0.9)
+                make.height.equalTo(60)
+                make.centerX.equalTo(headerView)
+            }
         
         tripTitleLabel.snp.makeConstraints { make in
             make.centerY.equalTo(tripView)
@@ -568,19 +574,14 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         
-        likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
-        likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
-        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        
         headerView.addSubview(likeButton)
         
-        commentButton.setImage(UIImage(named: "normal_comment"), for: .normal)
-        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
         headerView.addSubview(commentButton)
         
-        collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
-        collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
-        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         headerView.addSubview(collectButton)
+        
+        setupButton()
         
         likeCountLabel.text = "0"
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
@@ -611,6 +612,32 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         }
     }
     
+    func setupButton() {
+        
+        likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
+        likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
+        likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        commentButton.setImage(UIImage(named: "normal_comment"), for: .normal)
+        commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
+        collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
+        collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
+        collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+    }
+    
+    func updateHeaderViewLayout() {
+        if let headerView = self.tableView.tableHeaderView {
+            headerView.setNeedsLayout()
+            headerView.layoutIfNeeded()
+            let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+            var frame = headerView.frame
+            frame.size.height = headerHeight
+            headerView.frame = frame
+            self.tableView.tableHeaderView = headerView
+            self.tableView.layoutIfNeeded()
+        }
+    }
+
+    
     func setupActionButtons(in headerView: UIView) {
         
         likeButton.tintColor = UIColor.systemBlue
@@ -632,6 +659,186 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         tripView.addGestureRecognizer(tapGesture)
         
     }
+    
+    func setupPhotos() {
+        // 清除之前的子视图
+        for subview in photoContainerView.subviews {
+            subview.removeFromSuperview()
+        }
+
+        let numberOfPhotos = photoUrls.count
+
+        // 根据图片数量选择布局
+        if numberOfPhotos == 1 {
+            // 单张图片，居中显示
+            let imageView = createImageView(urlString: photoUrls[0])
+            photoContainerView.addSubview(imageView)
+            imageView.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+                make.height.equalTo(200)
+            }
+        } else if numberOfPhotos == 2 {
+            // 两张图片，水平平分
+            let stackView = UIStackView()
+            stackView.axis = .horizontal
+            stackView.spacing = 8
+            stackView.distribution = .fillEqually
+
+            for url in photoUrls {
+                let imageView = createImageView(urlString: url)
+                stackView.addArrangedSubview(imageView)
+            }
+
+            photoContainerView.addSubview(stackView)
+            stackView.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+                make.height.equalTo(150)
+            }
+        } else if numberOfPhotos == 3 {
+            // 三张图片，水平平分
+            let stackView = UIStackView()
+            stackView.axis = .horizontal
+            stackView.spacing = 8
+            stackView.distribution = .fillEqually
+
+            for url in photoUrls {
+                let imageView = createImageView(urlString: url)
+                stackView.addArrangedSubview(imageView)
+            }
+
+            photoContainerView.addSubview(stackView)
+            stackView.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+                make.height.equalTo(150)
+            }
+        } else if numberOfPhotos == 4 {
+            // 四张图片，2x2 网格
+            let gridStackView = UIStackView()
+            gridStackView.axis = .vertical
+            gridStackView.spacing = 8
+            gridStackView.distribution = .fillEqually
+
+            for num in 0..<2 {
+                let rowStackView = UIStackView()
+                rowStackView.axis = .horizontal
+                rowStackView.spacing = 8
+                rowStackView.distribution = .fillEqually
+
+                for num2 in 0..<2 {
+                    let index = num * 2 + num2
+                    if index < photoUrls.count {
+                        let imageView = createImageView(urlString: photoUrls[index])
+                        rowStackView.addArrangedSubview(imageView)
+                    }
+                }
+
+                gridStackView.addArrangedSubview(rowStackView)
+            }
+
+            photoContainerView.addSubview(gridStackView)
+            gridStackView.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+                make.height.equalTo(200)
+            }
+        } else {
+            // 超过四张图片，可根据需求自行调整
+            // 这里简单处理为网格布局
+            let columns = 3
+            let rows = Int(ceil(Double(numberOfPhotos) / Double(columns)))
+            let gridStackView = UIStackView()
+            gridStackView.axis = .vertical
+            gridStackView.spacing = 8
+            gridStackView.distribution = .fillEqually
+
+            for row in 0..<rows {
+                let rowStackView = UIStackView()
+                rowStackView.axis = .horizontal
+                rowStackView.spacing = 8
+                rowStackView.distribution = .fillEqually
+
+                for column in 0..<columns {
+                    let index = row * columns + column
+                    if index < photoUrls.count {
+                        let imageView = createImageView(urlString: photoUrls[index])
+                        rowStackView.addArrangedSubview(imageView)
+                    } else {
+                        // 如果图片数量不足，在布局中添加空白视图占位
+                        let placeholderView = UIView()
+                        rowStackView.addArrangedSubview(placeholderView)
+                    }
+                }
+
+                gridStackView.addArrangedSubview(rowStackView)
+            }
+
+            photoContainerView.addSubview(gridStackView)
+            gridStackView.snp.makeConstraints { make in
+                make.edges.equalToSuperview()
+                make.height.equalTo(rows * 100 + (rows - 1) * 8)
+            }
+        }
+    }
+
+    func createImageView(urlString: String) -> UIImageView {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        imageView.isUserInteractionEnabled = true
+
+        if let url = URL(string: urlString) {
+            imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
+        }
+
+        // 添加点击手势
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapImage(_:)))
+        imageView.addGestureRecognizer(tapGesture)
+
+        return imageView
+    }
+
+    @objc func didTapImage(_ sender: UITapGestureRecognizer) {
+        guard let imageView = sender.view as? UIImageView else { return }
+        let fullScreenImageView = UIImageView()
+        fullScreenImageView.contentMode = .scaleAspectFit
+        fullScreenImageView.image = imageView.image
+        fullScreenImageView.backgroundColor = .black
+        fullScreenImageView.isUserInteractionEnabled = true
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.addSubview(fullScreenImageView)
+            fullScreenImageView.frame = window.frame
+
+            // 添加关闭按钮
+            let closeButton = UIButton(type: .system)
+            closeButton.setTitle("×", for: .normal)
+            closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 30)
+            closeButton.setTitleColor(.white, for: .normal)
+            closeButton.addTarget(self, action: #selector(dismissFullScreenImage(_:)), for: .touchUpInside)
+            fullScreenImageView.addSubview(closeButton)
+            closeButton.snp.makeConstraints { make in
+                make.top.equalTo(fullScreenImageView).offset(40)
+                make.trailing.equalTo(fullScreenImageView).offset(-20)
+                make.width.height.equalTo(40)
+            }
+
+            // 添加点击手势，点击图片本身也可以关闭
+            let dismissTapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullScreenImage(_:)))
+            fullScreenImageView.addGestureRecognizer(dismissTapGesture)
+        }
+    }
+
+    @objc func dismissFullScreenImage(_ sender: Any) {
+        if let window = UIApplication.shared.keyWindow {
+            for subview in window.subviews {
+                if subview is UIImageView && subview.backgroundColor == .black {
+                    subview.removeFromSuperview()
+                }
+            }
+        }
+    }
+
     
     @objc func openPopupView() {
         

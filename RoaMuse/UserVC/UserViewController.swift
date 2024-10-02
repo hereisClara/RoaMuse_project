@@ -450,20 +450,30 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
 }
 
 extension UserViewController: UITableViewDelegate, UITableViewDataSource {
+    
     func setupTableView() {
         view.addSubview(tableView)
         
         // 註冊自定義 cell
         tableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
-        
+        tableView.backgroundColor = .clear
         // 設置代理和資料來源
         tableView.delegate = self
         tableView.dataSource = self
         
+        tableView.snp.makeConstraints { make in
+            make.width.equalTo(view).multipliedBy(0.9)
+            make.top.equalTo(view.safeAreaLayoutGuide)
+            make.centerX.equalTo(view)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
+        }
+        
         // 設置 Header
         let headerView = UIView()
         headerView.backgroundColor = .systemGray5
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 210)
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width , height: 210)
+        headerView.layer.cornerRadius = 20  // 設置所需的圓角半徑
+        headerView.layer.masksToBounds = true
         
         userNameLabel.text = "新用戶"
         userNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
@@ -541,10 +551,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         tableView.tableHeaderView = headerView
-        
-        tableView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
-        }
         
         let editButton = UIButton(type: .system)
         editButton.setImage(UIImage(systemName: "pencil.circle"), for: .normal) // 使用 SF Symbols 的鉛筆圖示
@@ -655,14 +661,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             }
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
-                // 更新 likeCountLabel
+                
                 DispatchQueue.main.async {
-                    // 更新 likeCountLabel 和按鈕的選中狀態
                     cell.likeCountLabel.text = String(likesAccount.count)
                     cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "")
                 }
             } else {
-                // 如果沒有找到相應的貼文，或者 likesAccount 為空
                 DispatchQueue.main.async {
                     cell.likeCountLabel.text = "0"
                     cell.likeButton.isSelected = false // 依據狀態設置未選中
@@ -718,11 +722,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 print("未找到對應的 userName")
             }
         }
-    }
-    
-    // UITableViewDelegate - 設定 cell 高度
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 250 // 設定 cell 高度
     }
     
     func loadUserPosts() {

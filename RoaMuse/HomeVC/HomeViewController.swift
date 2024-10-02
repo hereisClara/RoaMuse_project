@@ -25,8 +25,8 @@ class HomeViewController: UIViewController {
     var isUpdatingLikeStatus = false
     
     let bottomSheetView = UIView()
-        let backgroundView = UIView() // 半透明背景
-        let sheetHeight: CGFloat = 250 // 選單高度
+        let backgroundView = UIView()
+        let sheetHeight: CGFloat = 250
     
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
@@ -466,8 +466,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeCountLabel.text = likeCount
         cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
-        //        homeTableView.layoutIfNeeded()
-        
         cell.configureMoreButton {
             self.showBottomSheet()  // 顯示彈窗
         }
@@ -548,6 +546,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
                 articleVC.tripId = post["tripId"] as? String ?? ""
                 articleVC.likeAccounts = post["likeAccount"] as? [String] ?? []
+                articleVC.photoUrls = post["photoUrls"] as? [String] ?? []
                 
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)

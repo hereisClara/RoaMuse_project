@@ -71,6 +71,11 @@ class NewsFeedViewController: UIViewController {
         }
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        postsTableView.layoutIfNeeded()
+    }
+    
     func loadAvatarImageForPostView() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         
@@ -410,7 +415,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         view.addSubview(postsTableView)
         
         postsTableView.snp.makeConstraints { make in
-            make.top.equalTo(postView.snp.bottom).offset(16) // 修改這一行，將 postButton 改為 postView
+            make.top.equalTo(postView.snp.bottom).offset(16)
             make.width.equalTo(view).multipliedBy(0.9)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
             make.centerX.equalTo(view)
@@ -423,11 +428,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         postsTableView.layer.masksToBounds = true
         postsTableView.allowsSelection = true
         postsTableView.backgroundColor = .clear
-    }
-    
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        250
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

@@ -68,8 +68,9 @@ class UserTableViewCell: UITableViewCell {
         scrollView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.trailing.equalTo(contentLabel)
-            // 不设置高度约束，让内容决定高度
+            make.height.equalTo(0)  // 初始高度為 0
         }
+
 
         photoStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
@@ -165,16 +166,22 @@ class UserTableViewCell: UITableViewCell {
         
         dateLabel.textColor = .gray
         
-        // 設置按鈕圖片
-        likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
-        likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
         
-        commentButton.setImage(UIImage(named: "normal_comment"), for: .normal)
-        
-        collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
-        collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
         
         dateLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        setupButtonStyle()
+    }
+    
+    func setupButtonStyle() {
+        
+        likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
+                likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
+                
+                commentButton.setImage(UIImage(named: "normal_comment"), for: .normal)
+                
+                collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
+                collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
     }
     
     private func addActions() {
@@ -194,6 +201,9 @@ class UserTableViewCell: UITableViewCell {
 
         if photoUrls.isEmpty {
             scrollView.isHidden = true
+            scrollView.snp.updateConstraints { make in
+                make.height.equalTo(0)  // 沒有圖片時高度設置為 0
+            }
         } else {
             scrollView.isHidden = false
 
@@ -216,13 +226,16 @@ class UserTableViewCell: UITableViewCell {
 
             let totalWidth = photoUrls.count * 150 + (photoUrls.count - 1) * Int(photoStackView.spacing)
             scrollView.contentSize = CGSize(width: totalWidth, height: 150)
-        }
 
-        self.photoStackViewHeightConstraint?.update(offset: 150)
+            scrollView.snp.updateConstraints { make in
+                make.height.equalTo(150)  // 有圖片時高度設置為 150
+            }
+        }
 
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
             tableView.endUpdates()
         }
     }
+
 }
