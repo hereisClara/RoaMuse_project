@@ -45,16 +45,16 @@ struct Poem: Codable {
 struct Trip: Codable {
     let poemId: String
     let id: String
-    var placeIds: [String]
+    let placeIds: [String]
+    let keywordPlaceIds: [[String: String]]?
     let tag: Int
-    var poemTitle: String?
-    let season: Int?
-    let weather: Int?
-    let startTime: Int?
+    let season: String?
+    let weather: String?
+    let startTime: Date?
 }
 
 // 定義 Place 結構，存放地點詳細資料
-struct Place: Codable {
+struct Place: Codable, Hashable {
     var id: String
     let name: String
     let latitude: Double

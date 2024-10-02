@@ -17,10 +17,13 @@ class EstablishViewController: UIViewController {
     
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
-    var matchingPlaces = [Place]()
+    
     var trip: Trip?
     var city = String()
     var districts = [String]()
+    var keywordToLineMap = [String: String]()
+    var matchingPlaces = [(keyword: String, place: Place)]()
+
     
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
@@ -122,11 +125,12 @@ class EstablishViewController: UIViewController {
                 }
                 
                 if let randomPoem = filteredPoems.randomElement() {
-                    self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords in
+                    self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                        self.keywordToLineMap = keywordToLineMap
                         self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
-                            
                             if let trip = trip {
-                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: self.matchingPlaces) { totalTravelTime, routes in
+                                let places = self.matchingPlaces.map { $0.place }
+                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
                                     if let totalTravelTime = totalTravelTime {
                                         let totalMinutes = Int(totalTravelTime / 60)
                                     }
@@ -149,31 +153,29 @@ class EstablishViewController: UIViewController {
         locationManager.startUpdatingLocation()
     }
     
-    
-    
-    // 基於 NLP 模型分析詩詞
-    func processPoemText(_ inputText: String, completion: @escaping ([String]) -> Void) {
+    func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
         let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
         
         guard let model = try? poemLocationNLP3(configuration: .init()) else {
-            
             return
         }
         
         var allResults = [String]()
+        var keywordToLineMap = [String: String]() // 添加关键字到诗句行的映射
+        
         for segment in textSegments {
             do {
                 let prediction = try model.prediction(text: segment)
-                let landscape = prediction.label
-                allResults.append(landscape)
-                
+                let keyword = prediction.label
+                allResults.append(keyword)
+                keywordToLineMap[keyword] = segment // 保存关键字和诗句行的对应关系
             } catch {
-                
+                print("Error in prediction: \(error)")
             }
         }
-        print(Array(Set(allResults)))
-        completion(Array(Set(allResults))) // 去重並返回關鍵字
+        completion(Array(Set(allResults)), keywordToLineMap) // 返回关键字和映射
     }
+
     
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         let dispatchGroup = DispatchGroup()
@@ -213,9 +215,9 @@ class EstablishViewController: UIViewController {
 
             if let randomPlace = nearbyPlaces.randomElement() {
                 print("隨機選擇的地點: \(randomPlace)")
-                if !self.matchingPlaces.contains(where: { $0.id == randomPlace.id }) {
+                if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
                     print("將地點加入 matchingPlaces: \(randomPlace)")
-                    self.matchingPlaces.append(randomPlace)
+                    self.matchingPlaces.append((keyword: keyword, place: randomPlace))
                     print("當前 matchingPlaces: \(self.matchingPlaces)")
                     let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
                     self.reverseGeocodeLocation(placeLocation) { city, district in
@@ -241,8 +243,8 @@ class EstablishViewController: UIViewController {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
                                 // 确保不重复添加地点
-                                if !self.matchingPlaces.contains(where: { $0.id == savedPlace.id }) {
-                                    self.matchingPlaces.append(savedPlace)
+                                if !self.matchingPlaces.contains(where: { $0.place.id == savedPlace.id }) {
+                                    self.matchingPlaces.append((keyword: keyword, place: savedPlace))
                                     print("Matching places after adding: \(self.matchingPlaces)")
                                 }
                                 completion(true)
@@ -260,18 +262,23 @@ class EstablishViewController: UIViewController {
     }
 
     func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
+        
+        let keywordPlaceIds = self.matchingPlaces.map { ["keyword": $0.keyword, "placeId": $0.place.id] }
+
         let tripData: [String: Any] = [
             "poemId": poem.id,
-            "placeIds": self.matchingPlaces.map { $0.id },
+            "placeIds": self.matchingPlaces.map { $0.place.id },
+            "keywordPlaceIds": keywordPlaceIds,
             "tag": poem.tag
         ]
+
         
         FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
             if exists, let existingTripId = existingTripId {
                 let existingTrip = Trip(
                     poemId: poem.id,
                     id: existingTripId,
-                    placeIds: self.matchingPlaces.map { $0.id },
+                    placeIds: self.matchingPlaces.map { $0.place.id },
                     tag: poem.tag,
                     season: nil,
                     weather: nil,
@@ -299,7 +306,7 @@ class EstablishViewController: UIViewController {
                                 let trip = Trip(
                                     poemId: poem.id,
                                     id: documentID,
-                                    placeIds: self.matchingPlaces.map { $0.id },
+                                    placeIds: self.matchingPlaces.map { $0.place.id },
                                     tag: poem.tag,
                                     season: nil,
                                     weather: nil,
@@ -465,16 +472,19 @@ extension EstablishViewController: PopupViewDelegate {
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
+        tripDetailVC.matchingPlaces = self.matchingPlaces // 传递 matchingPlaces
+        tripDetailVC.keywordToLineMap = self.keywordToLineMap // 传递 keywordToLineMap
         if let currentLocation = locationManager.currentLocation?.coordinate {
-            calculateTotalRouteTimeAndDetails(from: currentLocation, places: matchingPlaces) { [weak self] totalTravelTime, nestedInstructions in
+            let places = matchingPlaces.map { $0.place } // 提取 Place 数组
+            calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { [weak self] totalTravelTime, nestedInstructions in
                 guard let self = self else { return }
                 
                 if let totalTravelTime = totalTravelTime, let nestedInstructions = nestedInstructions {
-                    tripDetailVC.totalTravelTime = totalTravelTime // 傳遞總交通時間
-                    tripDetailVC.nestedInstructions = nestedInstructions // 傳遞嵌套的導航指令數列
+                    tripDetailVC.totalTravelTime = totalTravelTime // 传递总交通时间
+                    tripDetailVC.nestedInstructions = nestedInstructions // 传递嵌套的导航指令数组
                 }
                 
-                // 跳轉到 TripDetailViewController
+                // 跳转到 TripDetailViewController
                 self.navigationController?.pushViewController(tripDetailVC, animated: true)
             }
         }

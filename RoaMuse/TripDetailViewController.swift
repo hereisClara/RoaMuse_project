@@ -23,7 +23,8 @@ class TripDetailViewController: UIViewController {
     var transportBackgroundView: UIView?
     var transportButtonsViewWidthConstraint: Constraint?
     
-
+    var keywordToLineMap = [String: String]()
+    var matchingPlaces = [(keyword: String, place: Place)]()
     
     let buttonTitles = ["car.fill", "figure.walk", "bicycle", "tram.fill"]
     
@@ -202,7 +203,7 @@ class TripDetailViewController: UIViewController {
     
     func loadPlacesDataFromFirebase() {
         
-        self.places.removeAll()
+        self.matchingPlaces.removeAll()
         
         guard let trip = trip else { return }
         
@@ -217,11 +218,16 @@ class TripDetailViewController: UIViewController {
             guard let self = self else { return }
             
             print("placesArray loaded from Firebase: \(placesArray)")
-            self.places = trip.placeIds.compactMap { placeId in
-                return placesArray.first(where: { $0.id == placeId })
-            }
             
-            print("Sorted places: \(self.places)")
+            self.matchingPlaces = trip.placeIds.compactMap { placeId in
+                        if let place = placesArray.first(where: { $0.id == placeId }) {
+                            return (keyword: "未知关键字", place: place)
+                        } else {
+                            return nil
+                        }
+                    }
+            print("Sorted matchingPlaces: \(self.matchingPlaces)")
+            
             if let lastCompletedPlaceId = self.completedPlaceIds.last,
                let lastCompletedIndex = self.places.firstIndex(where: { $0.id == lastCompletedPlaceId }) {
                 self.currentTargetIndex = lastCompletedIndex + 1
@@ -721,15 +727,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     sender.isSelected = true
                     sender.isEnabled = false
                     self.completedPlaceIds.append(placeId)
-                    
-                    // 禁用已完成地點的按鈕
                     self.buttonState[self.currentTargetIndex] = false
                     
-                    // 更新 currentTargetIndex 到下一個地點
                     self.currentTargetIndex += 1
                     
-                    // 重新加載表格視圖
-                    // 收合當前地點並顯示下一個地點的地圖
                     self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic)
                     if self.currentTargetIndex < self.places.count {
                         self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .automatic)
