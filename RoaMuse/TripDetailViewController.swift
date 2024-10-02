@@ -375,7 +375,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let locationButton = UIButton()
         locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
         locationButton.tintColor = .white
-        locationButton.backgroundColor = .systemGray5
+        locationButton.backgroundColor = .systemGray4
         locationButton.layer.cornerRadius = 25
         locationButton.addTarget(self, action: #selector(didTapLocateButton(_:)), for: .touchUpInside)
         locationButton.isUserInteractionEnabled = true
@@ -401,6 +401,19 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             transportButtonsViewWidthConstraint = make.width.equalTo(50).constraint
         }
 
+        // 添加背景视图
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = .systemGray4
+        backgroundView.layer.cornerRadius = 25
+        backgroundView.isHidden = true // 初始隐藏
+        transportButtonsView.addSubview(backgroundView)
+        // 将背景视图放在所有按钮的后面
+        transportButtonsView.sendSubviewToBack(backgroundView)
+
+        backgroundView.snp.makeConstraints { make in
+            make.edges.equalTo(transportButtonsView)
+        }
+
         // 创建按钮容器 StackView
         buttonContainer = UIStackView()
         buttonContainer.axis = .horizontal
@@ -421,7 +434,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             let button = UIButton(type: .system)
             button.setImage(UIImage(systemName: icon), for: .normal)
             button.tintColor = .white
-            button.backgroundColor = .clear
+            button.backgroundColor = .clear // 未选中时背景为透明
             button.layer.cornerRadius = 25
             button.tag = index
             button.isUserInteractionEnabled = true
@@ -442,10 +455,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         // 初始状态下，只显示 selectedTransportButton
         updateTransportButtonsDisplay()
 
-        // 不再为 selectedTransportButton 添加额外的点击事件
+        // 保存背景视图，便于在其他方法中使用
+        self.transportBackgroundView = backgroundView
 
         return buttonsView
     }
+
     
     private func updateTransportButtonsDisplay() {
         if isExpanded {
@@ -453,10 +468,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             for button in transportButtons {
                 button.isHidden = false
             }
+            // 显示背景视图
+            transportBackgroundView?.isHidden = false
+
             // 计算总宽度
             let buttonWidth: CGFloat = 50
             let buttonSpacing: CGFloat = 12
             let totalWidth = CGFloat(transportButtons.count) * buttonWidth + CGFloat(transportButtons.count - 1) * buttonSpacing
+
             // 更新宽度约束
             transportButtonsViewWidthConstraint?.update(offset: totalWidth)
         } else {
@@ -464,6 +483,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             for button in transportButtons {
                 button.isHidden = (button != selectedTransportButton)
             }
+            // 隐藏背景视图
+            transportBackgroundView?.isHidden = true
+
             // 更新宽度约束为单个按钮的宽度
             transportButtonsViewWidthConstraint?.update(offset: 50)
         }
@@ -471,6 +493,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             self.view.layoutIfNeeded()
         }
     }
+
 
     @objc private func transportButtonTapped(_ sender: UIButton) {
         print("transportButtonTapped called")
@@ -512,7 +535,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     @objc private func toggleTransportButtons() {
-        print("toggleTransportButtons called")
         isExpanded.toggle()
         UIView.animate(withDuration: 0.3) {
             self.updateTransportButtonsDisplay()
@@ -663,7 +685,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         if sender.isSelected {
             sender.backgroundColor = .deepBlue
         } else {
-            sender.backgroundColor = .systemGray5
+            sender.backgroundColor = .systemGray4
         }
         
         UIView.performWithoutAnimation {

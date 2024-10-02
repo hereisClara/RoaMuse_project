@@ -31,8 +31,7 @@ class MapTableViewCell: UITableViewCell {
     private func setupMapView() {
         contentView.addSubview(mapView)
         mapView.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.height.equalTo(200)
+            make.edges.equalToSuperview()
         }
         mapView.isHidden = true
         mapView.delegate = self
@@ -59,7 +58,7 @@ class MapTableViewCell: UITableViewCell {
             let destDistance = destinationLocation.distance(from: lastDestinationLocation)
             
             if startDistance < coordinateThreshold && destDistance < coordinateThreshold {
-                // 坐标变化小于阈值，避免更新地图
+                
                 return
             }
         }
