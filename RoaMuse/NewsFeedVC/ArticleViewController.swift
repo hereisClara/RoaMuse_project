@@ -8,6 +8,7 @@ class ArticleViewController: UIViewController {
     var authorId = String()
     var postId = String()
     var tripId = String()
+    var poemId = String()
     var bookmarkAccounts = [String]()
     var likeAccounts = [String]()
     let tableView = UITableView()
@@ -37,6 +38,7 @@ class ArticleViewController: UIViewController {
     var photoUrls = [String]()
     let photoContainerView = UIView()
     
+    var poemTitle = String()
     var trip: Trip?
     var isScrolledToFirstComment = false
     
@@ -346,9 +348,10 @@ class ArticleViewController: UIViewController {
             if let matchedTrip = filteredTrips.first {
                 FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
                     DispatchQueue.main.async {
-                        self.tripTitleLabel.text = poem.title  // 這裡使用 poem.title 而不是 trip.poem.title
+                        self.tripTitleLabel.text = poem.title
+                        self.poemTitle = poem.title
+                        self.poemId = poem.id
                         
-                        // 手動更新表頭佈局
                         if let headerView = self.tableView.tableHeaderView {
                             headerView.setNeedsLayout()
                             headerView.layoutIfNeeded()
@@ -655,22 +658,19 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     func setupTripViewAction() {
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPopupView))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPresent))
         tripView.addGestureRecognizer(tapGesture)
         
     }
     
     func setupPhotos() {
-        // 清除之前的子视图
         for subview in photoContainerView.subviews {
             subview.removeFromSuperview()
         }
 
         let numberOfPhotos = photoUrls.count
 
-        // 根据图片数量选择布局
         if numberOfPhotos == 1 {
-            // 单张图片，居中显示
             let imageView = createImageView(urlString: photoUrls[0])
             photoContainerView.addSubview(imageView)
             imageView.snp.makeConstraints { make in
@@ -712,7 +712,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 make.height.equalTo(150)
             }
         } else if numberOfPhotos == 4 {
-            // 四张图片，2x2 网格
             let gridStackView = UIStackView()
             gridStackView.axis = .vertical
             gridStackView.spacing = 8
@@ -741,8 +740,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 make.height.equalTo(200)
             }
         } else {
-            // 超过四张图片，可根据需求自行调整
-            // 这里简单处理为网格布局
             let columns = 3
             let rows = Int(ceil(Double(numberOfPhotos) / Double(columns)))
             let gridStackView = UIStackView()
@@ -838,12 +835,19 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             }
         }
     }
-
     
-    @objc func openPopupView() {
+    @objc func openPresent() {
         
         getTripDataById()
+        let articleTripVC = ArticleTripViewController()
+        articleTripVC.modalPresentationStyle = .pageSheet
+        articleTripVC.tripId = self.tripId
+        articleTripVC.poemId = self.poemId
+        articleTripVC.postUsernameLabel.text = self.articleAuthor
+        articleTripVC.poemTitleLabel.text = "〈\(self.poemTitle)〉之旅"
         
+        let navController = UINavigationController(rootViewController: articleTripVC)
+        self.present(navController, animated: true, completion: nil)
     }
     
     func getTripDataById() {

@@ -361,27 +361,30 @@ class HomeViewController: UIViewController {
                     // Step 2: 使用 NLP 模型提取詩中的關鍵詞
                     self.processPoemText(matchedPoem.content.joined(separator: "\n")) { keywords in
                         // Step 3: 根據關鍵詞生成行程
-                        self.generateTripFromKeywords(keywords, poem: matchedPoem, startingFrom: currentLocation) { trip in
-                            if let trip = trip {
-                                // Step 4: 計算路徑總時間
-                                LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: self.matchingPlaces) { totalTravelTime, routes in
-                                    if let totalTravelTime = totalTravelTime {
-                                        let totalMinutes = Int(totalTravelTime / 60)
-                                        print("總預估交通時間：\(totalMinutes) 分鐘")
-                                    }
-                                    
-                                    self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
-                                    
-                                    self.activityIndicator.stopAnimating()
-                                    self.activityIndicator.isHidden = true
-                                }
-                                DispatchQueue.main.async {
-                                    self.trip = trip
-                                }
-                            }
-                            self.recommendRandomTripView.isUserInteractionEnabled = true
-                        }
-                    }
+                                            self.generateTripFromKeywords(keywords, poem: matchedPoem, startingFrom: currentLocation) { trip in
+                                                if let trip = trip {
+                                                    // 確保 matchingPlaces 轉換為 [Place] 類型
+                                                    let places: [Place] = self.matchingPlaces
+                                                    
+                                                    // Step 4: 計算路徑總時間
+                                                    LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                                        if let totalTravelTime = totalTravelTime {
+                                                            let totalMinutes = Int(totalTravelTime / 60)
+                                                            print("總預估交通時間：\(totalMinutes) 分鐘")
+                                                        }
+                                                        
+                                                        self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
+                                                        
+                                                        self.activityIndicator.stopAnimating()
+                                                        self.activityIndicator.isHidden = true
+                                                    }
+                                                    DispatchQueue.main.async {
+                                                        self.trip = trip
+                                                    }
+                                                }
+                                                self.recommendRandomTripView.isUserInteractionEnabled = true
+                                            }
+                                        }
                 } else {
                     print("未找到匹配的詩歌")
                     self.recommendRandomTripView.isUserInteractionEnabled = true

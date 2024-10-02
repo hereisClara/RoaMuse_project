@@ -12,6 +12,7 @@
 		AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F83A2CABDA28004E8868 /* LocationService.swift */; };
 		AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */; };
 		AC18F83F2CAC5920004E8868 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */; };
+		AC18F8412CAD1200004E8868 /* ArticleTripViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -92,6 +93,7 @@
 		AC18F83A2CABDA28004E8868 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSerifHK-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleTripViewController.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -256,6 +258,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */,
 				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
 				AC9775762CA9831C00EF828A /* TripCallOutView.swift */,
 				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
@@ -511,6 +514,7 @@
 			files = (
 				AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */,
 				AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */,
+				AC18F8412CAD1200004E8868 /* ArticleTripViewController.swift in Sources */,
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,

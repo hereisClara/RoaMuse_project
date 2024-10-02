@@ -282,7 +282,7 @@ class PopUpView {
     }
     
     @objc func didTapStartButton() {
-        
+        print("click")
         popupView.removeFromSuperview()
         self.backgroundView.removeFromSuperview()
         
