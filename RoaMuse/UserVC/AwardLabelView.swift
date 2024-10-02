@@ -36,7 +36,8 @@ class AwardLabelView: UIView {
         
         // 設置 titleLabel 的 Auto Layout
         titleLabel.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(10) // 標籤與邊框之間留一些間隙
+            make.leading.equalToSuperview().offset(10) // 標籤與邊框之間留一些間隙
+            make.centerY.equalToSuperview()
         }
         
         // 添加點擊手勢

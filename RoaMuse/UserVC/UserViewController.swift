@@ -49,6 +49,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 .font: customFont // 設置字體
             ]
         }
+
         
         imagePicker.delegate = self
         setupTableView()
@@ -155,6 +156,14 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         // 每次頁面顯示時重新加載貼文數據
         loadUserPosts()
+    }
+    
+    
+    @objc func updateAwardTitle(_ notification: Notification) {
+        if let userInfo = notification.userInfo, let newTitle = userInfo["title"] as? String {
+            // 更新稱號 UI
+            awardLabelView.updateTitle("稱號：\(newTitle)")
+        }
     }
     
     func setupBottomSheet() {
@@ -453,10 +462,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         // 設置 Header
         let headerView = UIView()
-        headerView.backgroundColor = .lightGray
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 210)  // 調整高度以容納行走地圖按鈕
+        headerView.backgroundColor = .systemGray5
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 210)
         
-        userNameLabel.text = userName
+        userNameLabel.text = "新用戶"
         userNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         headerView.addSubview(userNameLabel)
         
@@ -475,17 +484,17 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 新增「行走地圖」按鈕
         let mapButton = UIButton(type: .system)
         mapButton.setTitle("行走地圖", for: .normal)
-        mapButton.backgroundColor = .systemBlue
+        mapButton.backgroundColor = .deepBlue
         mapButton.setTitleColor(.white, for: .normal)
-        mapButton.layer.cornerRadius = 10
+        mapButton.layer.cornerRadius = 15
         mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
         headerView.addSubview(mapButton)
         
         let awardsButton = UIButton(type: .system)
         awardsButton.setTitle("獎章成就", for: .normal)
-        awardsButton.backgroundColor = .systemBlue
+        awardsButton.backgroundColor = .deepBlue
         awardsButton.setTitleColor(.white, for: .normal)
-        awardsButton.layer.cornerRadius = 10
+        awardsButton.layer.cornerRadius = 15
         awardsButton.addTarget(self, action: #selector(handleAwardsButtonTapped), for: .touchUpInside)
         headerView.addSubview(awardsButton)
         
@@ -493,6 +502,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         userNameLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(16)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
+            make.height.equalTo(30)
         }
         
         awardLabelView.snp.makeConstraints { make in
@@ -535,6 +545,66 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.snp.makeConstraints { make in
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
+        
+        let editButton = UIButton(type: .system)
+        editButton.setImage(UIImage(systemName: "pencil.circle"), for: .normal) // 使用 SF Symbols 的鉛筆圖示
+        editButton.tintColor = .deepBlue
+        editButton.addTarget(self, action: #selector(editUserName), for: .touchUpInside)
+
+        headerView.addSubview(editButton)
+
+        // 設置 editButton 的約束
+        editButton.snp.makeConstraints { make in
+            make.leading.equalTo(userNameLabel.snp.trailing).offset(8) // 緊貼 userNameLabel 的右側
+            make.centerY.equalTo(userNameLabel) // 與 userNameLabel 垂直居中對齊
+            make.width.height.equalTo(30) // 設置固定的大小
+        }
+
+    }
+    
+    @objc func editUserName() {
+        let alertController = UIAlertController(title: "編輯使用者名稱", message: "請輸入新的名稱", preferredStyle: .alert)
+        
+        // 在彈窗中添加一個文字輸入框
+        alertController.addTextField { textField in
+            textField.text = self.userNameLabel.text // 預設為當前的使用者名稱
+        }
+        
+        // 添加「取消」按鈕
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        // 添加「確認」按鈕
+        let confirmAction = UIAlertAction(title: "確認", style: .default) { [weak self] _ in
+            // 獲取輸入框中的文字
+            if let newUserName = alertController.textFields?.first?.text, !newUserName.isEmpty {
+                // 更新本地 userNameLabel
+                self?.userNameLabel.text = newUserName
+                self?.userName = newUserName
+                // 上傳新的 userName 到 Firebase
+                self?.updateUserNameInFirebase(newUserName)
+            }
+        }
+        alertController.addAction(confirmAction)
+        
+        // 顯示彈窗
+        present(alertController, animated: true, completion: nil)
+    }
+
+    func updateUserNameInFirebase(_ newUserName: String) {
+        guard let userId = userId else {
+            print("未找到 userId，無法更新使用者名稱")
+            return
+        }
+        
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        userRef.updateData(["userName": newUserName]) { error in
+            if let error = error {
+                print("更新使用者名稱失敗: \(error.localizedDescription)")
+            } else {
+                print("使用者名稱更新成功")
+            }
+        }
     }
     
     @objc func handleMapButtonTapped() {
@@ -572,6 +642,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 檢查按讚狀態
         let postId = post["id"] as? String ?? ""
         
+        cell.configurePhotoStackView(with: post["photoUrls"] as? [String] ?? [])
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         cell.configureMoreButton { [weak self] in

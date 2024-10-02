@@ -17,6 +17,8 @@ class HomeViewController: UIViewController {
     private let homeTableView = UITableView()
     private let popupView = PopUpView()
     
+    let activityIndicator = UIActivityIndicatorView(style: .large)
+    
     var likeCount = String()
     var bookmarkCount = String()
     var likeButtonIsSelected = Bool()
@@ -74,7 +76,6 @@ class HomeViewController: UIViewController {
         setupTableView()
         setupPullToRefresh()
 //        uploadTripData()
-        // 从 Firebase 加载 posts
         FirebaseManager.shared.loadPosts { postsArray in
             self.postsArray = postsArray
             self.homeTableView.reloadData()
@@ -274,6 +275,9 @@ class HomeViewController: UIViewController {
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
+        view.addSubview(activityIndicator)
+        view.bringSubviewToFront(activityIndicator)
+//TODO: indicator not show
         
         // 添加圓角效果
         recommendRandomTripView.layer.cornerRadius = 20
@@ -312,6 +316,10 @@ class HomeViewController: UIViewController {
             make.top.equalTo(titleLabel.snp.bottom).offset(10)
             make.leading.equalTo(titleLabel)
         }
+        
+        activityIndicator.snp.makeConstraints { make in
+                make.center.equalTo(view)  // 設置指示器在視圖的中央
+            }
     }
     
     
@@ -344,6 +352,8 @@ class HomeViewController: UIViewController {
             
             self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
+            activityIndicator.startAnimating()
+            activityIndicator.isHidden = false
             
             // Step 1: 查找最佳匹配詩歌
             self.findBestMatchedPoem(currentSeason: self.getCurrentSeason(), currentWeather: 0, currentTime: self.getCurrentTimeOfDay()) { matchedPoem, matchedScore  in
@@ -361,6 +371,9 @@ class HomeViewController: UIViewController {
                                     }
                                     
                                     self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
+                                    
+                                    self.activityIndicator.stopAnimating()
+                                    self.activityIndicator.isHidden = true
                                 }
                                 DispatchQueue.main.async {
                                     self.trip = trip
@@ -372,6 +385,8 @@ class HomeViewController: UIViewController {
                 } else {
                     print("未找到匹配的詩歌")
                     self.recommendRandomTripView.isUserInteractionEnabled = true
+                    self.activityIndicator.stopAnimating()
+                    self.activityIndicator.isHidden = true
                 }
             }
         }

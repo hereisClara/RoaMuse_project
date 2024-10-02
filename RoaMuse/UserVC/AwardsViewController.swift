@@ -59,7 +59,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         view.backgroundColor = .white
         fetchUserData()
         setupTableView()
@@ -87,20 +86,27 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     func saveSelectedIndexesToFirebase(section: Int, row: Int, item: Int) {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            print("無法取得 userId，無法保存到 Firebase")
+            return
+        }
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
         let indexArray = [section, row, item]
         
+        // 儲存資料到 Firebase
         userRef.setData(["selectedTitleIndex": indexArray], merge: true) { error in
             if let error = error {
-                print("保存到 Firebase 时出错: \(error)")
+                print("保存到 Firebase 時出錯: \(error.localizedDescription)")
             } else {
-                print("选定的 section, row 和 item 已成功保存")
+                print("成功保存到 Firebase: \(indexArray)")
+                let selectedTitle = self.awardTitles[section][row][item]
+                NotificationCenter.default.post(name: NSNotification.Name("awardUpdated"), object: nil, userInfo: ["title": selectedTitle])
             }
         }
     }
+
     
     func setupTableView() {
         view.addSubview(tableView)
@@ -192,19 +198,19 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             self.dynamicTaskSets = [
                 [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
                 [],
-                [TaskSet(totalTasks: 30, completedTasks: totalTripsCompleted)]
+                [TaskSet(totalTasks: 6, completedTasks: totalTripsCompleted)]
             ]
 
             self.categorizePlacesByTag { categorizedPlaces in
                 // 確保 Section 1 有三個 row，即便分類結果為空
                 let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
-                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagZeroPlacesAmount))
+                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 10, completedTasks: tagZeroPlacesAmount))
                 
                 let tagOnePlacesAmount = categorizedPlaces[1]?.count ?? 0
-                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagOnePlacesAmount))
+                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 10, completedTasks: tagOnePlacesAmount))
                 
                 let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
-                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagTwoPlacesAmount))
+                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 10, completedTasks: tagTwoPlacesAmount))
                 
                 DispatchQueue.main.async {
                     self.tableView.reloadData()  // 重新加載數據
@@ -230,23 +236,28 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             
             let titlesForRow = awardTitles[section][row]
             
-            var newTitle: String?
+            // 動態獲取稱號
+            var obtainedTitles: [String] = []
+            
             if progress >= 1.0 {
-                newTitle = titlesForRow[2]
+                obtainedTitles = titlesForRow // 獲得所有稱號
             } else if progress >= 0.6 {
-                newTitle = titlesForRow[1]
+                obtainedTitles = Array(titlesForRow[0...1]) // 獲得前兩個稱號
             } else if progress >= 0.3 {
-                newTitle = titlesForRow[0]
+                obtainedTitles = [titlesForRow[0]] // 獲得第一個稱號
             }
             
-            if let title = newTitle, !currentTitles.contains(title) {
-                currentTitles.append(title)
+            for title in obtainedTitles {
+                if !currentTitles.contains(title) {
+                    currentTitles.append(title)
+                }
             }
+            
+            dropdownMenu.items = currentTitles
             
             print("現有稱號: \(currentTitles)")
         }
     }
-
     
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {

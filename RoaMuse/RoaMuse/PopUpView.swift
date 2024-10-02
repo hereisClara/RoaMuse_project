@@ -153,7 +153,15 @@ class PopUpView {
         matchingScoreLabel.snp.makeConstraints { make in
             make.centerX.equalTo(popupView)
             make.bottom.equalTo(startButton.snp.top).offset(-40)
+            make.width.equalTo(160)  // 設置寬度
+            make.height.equalTo(60)  // 設置高度
         }
+        
+        matchingScoreLabel.backgroundColor = .accent
+        matchingScoreLabel.textColor = .white
+        matchingScoreLabel.textAlignment = .center
+        matchingScoreLabel.layer.cornerRadius = 15
+        matchingScoreLabel.layer.masksToBounds = true
         
         cityLabel.snp.makeConstraints { make in
             make.top.equalTo(placesStackView.snp.bottom).offset(30)
@@ -215,6 +223,7 @@ class PopUpView {
         titleLabel.textColor = .white
         poetryLabel.textColor = .white
         tripStyleLabel.textColor = .white
+        cityLabel.textColor = .white
         
         // 設置按鈕圖標和顏色
         collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)

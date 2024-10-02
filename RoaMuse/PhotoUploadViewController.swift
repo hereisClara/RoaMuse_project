@@ -22,8 +22,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        tabBarController?.tabBar.isHidden = true
-
         view.addSubview(templateImageView)
         templateImageView.image = UIImage(named: "transparent_image")  // 模板图片名称
         templateImageView.contentMode = .scaleAspectFit
@@ -36,15 +34,18 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         imageView.isUserInteractionEnabled = true  // 启用用户交互
         view.insertSubview(imageView, belowSubview: templateImageView)  // 将图片视图置于模板下面
         setupImageViewConstraints()
-
-        setupUploadButton()
+        setupButtons()
 
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
         imageView.addGestureRecognizer(panGesture)
         imageView.addGestureRecognizer(pinchGesture)
-
-        setupSaveAndShareButtons()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 隱藏 TabBar
+        self.tabBarController?.tabBar.isHidden = true
     }
 
     override func viewDidLayoutSubviews() {
@@ -57,7 +58,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        tabBarController?.tabBar.isHidden = false
+        self.tabBarController?.tabBar.isHidden = false
     }
 
     func defineTransparentArea() {
@@ -69,42 +70,32 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         transparentArea = CGRect(x: xCoordinate, y: yCoordinate, width: width, height: height)
     }
 
-    func setupUploadButton() {
-        uploadButton.setImage(UIImage(systemName: "arrow.up.circle.fill"), for: .normal)
-        uploadButton.tintColor = .systemBlue
-        uploadButton.addTarget(self, action: #selector(uploadPhoto), for: .touchUpInside)
+    func setupButtons() {
+            // 更改 uploadButton 成 plus.circle.fill 圖標
+            uploadButton.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
+            uploadButton.tintColor = .systemBlue
+            uploadButton.addTarget(self, action: #selector(uploadPhoto), for: .touchUpInside)
+            view.addSubview(uploadButton)
 
-        view.addSubview(uploadButton)
+            // 更改 saveButton 成 arrow.down.circle.fill 圖標
+            saveButton.setImage(UIImage(systemName: "arrow.down.circle.fill"), for: .normal)
+            saveButton.tintColor = .systemGreen
+            saveButton.addTarget(self, action: #selector(saveToPhotoAlbum), for: .touchUpInside)
+            view.addSubview(saveButton)
 
-        uploadButton.snp.makeConstraints { make in
-            make.top.equalTo(templateImageView.snp.bottom).offset(-150)
-            make.centerX.equalTo(view)
-            make.width.height.equalTo(50)
+            // 增大按鈕大小，並平行放置在底部
+            uploadButton.snp.makeConstraints { make in
+                make.bottom.equalTo(view.snp.bottom).offset(-100)
+                make.leading.equalTo(view.snp.leading).offset(50)
+                make.width.height.equalTo(80)
+            }
+
+            saveButton.snp.makeConstraints { make in
+                make.bottom.equalTo(view.snp.bottom).offset(-100)
+                make.trailing.equalTo(view.snp.trailing).offset(-50)
+                make.width.height.equalTo(80)
+            }
         }
-    }
-
-    func setupSaveAndShareButtons() {
-        saveButton.setTitle("保存到相簿", for: .normal)
-        saveButton.addTarget(self, action: #selector(saveToPhotoAlbum), for: .touchUpInside)
-        view.addSubview(saveButton)
-
-        shareButton.setTitle("分享到 IG", for: .normal)
-        view.addSubview(shareButton)
-
-        saveButton.snp.makeConstraints { make in
-            make.bottom.equalTo(view.snp.bottom).offset(-100)
-            make.leading.equalTo(view.snp.leading).offset(5)
-            make.width.equalTo(150)
-            make.height.equalTo(50)
-        }
-
-        shareButton.snp.makeConstraints { make in
-            make.bottom.equalTo(view.snp.bottom).offset(-100)
-            make.trailing.equalTo(view.snp.trailing).offset(-5)
-            make.width.equalTo(200)
-            make.height.equalTo(50)
-        }
-    }
 
     @objc func uploadPhoto() {
         let imagePicker = UIImagePickerController()

@@ -3,6 +3,7 @@ import UIKit
 import SnapKit
 import FirebaseFirestore
 import MJRefresh
+import Kingfisher
 
 class NewsFeedViewController: UIViewController {
     
@@ -11,14 +12,15 @@ class NewsFeedViewController: UIViewController {
     var postsArray = [[String: Any]]()
     let postsTableView = UITableView()
     let postButton = UIButton(type: .system)
-    
+    let postView = UIView()
+    let avatarImageView = UIImageView()
     var likeCount = String()
     var bookmarkCount = String()
     var likeButtonIsSelected = Bool()
     
     let bottomSheetView = UIView()
-        let backgroundView = UIView() // 半透明背景
-        let sheetHeight: CGFloat = 300 // 選單高度
+    let backgroundView = UIView() // 半透明背景
+    let sheetHeight: CGFloat = 300 // 選單高度
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,12 +34,12 @@ class NewsFeedViewController: UIViewController {
                 .font: customFont // 設置字體
             ]
         }
-        
+        loadAvatarImageForPostView()
         postsTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         postsTableView.delegate = self
         postsTableView.dataSource = self
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        setupPostButton()
+        setupPostView()
         setupPostsTableView()
         setupRefreshControl()
         setupBottomSheet()
@@ -68,6 +70,90 @@ class NewsFeedViewController: UIViewController {
             }
         }
     }
+    
+    func loadAvatarImageForPostView() {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
+        FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
+            switch result {
+            case .success(let data):
+                if let avatarUrl = data["photo"] as? String {
+                    self?.loadAvatarImage(from: avatarUrl)
+                }
+            case .failure(let error):
+                print("無法加載大頭貼: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // 加載圖片的通用方法
+    func loadAvatarImage(from urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        avatarImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: [
+            .transition(.fade(0.2)),
+            .cacheOriginalImage
+        ], completionHandler: { result in
+            switch result {
+            case .success(let value):
+                print("圖片加載成功: \(value.source.url?.absoluteString ?? "")")
+            case .failure(let error):
+                print("圖片加載失敗: \(error.localizedDescription)")
+            }
+        })
+    }
+    
+    
+    func setupPostView() {
+        // 建立一個容器 View 來取代原先的 postButton
+        
+        postView.backgroundColor = .clear
+        view.addSubview(postView)
+        
+        // 設置點擊手勢
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapPostView))
+        postView.addGestureRecognizer(tapGesture)
+        postView.layer.cornerRadius = 20
+        postView.backgroundColor = .white
+        
+        postView.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide)
+            make.centerX.equalTo(view)
+            make.width.equalTo(view).multipliedBy(0.9)
+            make.height.equalTo(60) // 設置高度
+        }
+        
+        // Avatar ImageView
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.clipsToBounds = true
+        avatarImageView.layer.cornerRadius = 25
+        avatarImageView.image = UIImage(named: "placeholder") // 可以替換成實際的 avatar 圖片
+        postView.addSubview(avatarImageView)
+        
+        avatarImageView.snp.makeConstraints { make in
+            make.centerY.equalTo(postView)
+            make.leading.equalTo(postView)
+            make.width.height.equalTo(50) // 設置為圓形
+        }
+        
+        // 中間的 "想說些什麼" Label
+        let postLabel = UILabel()
+        postLabel.text = "想說些什麼？"
+        postLabel.textColor = .lightGray
+        postLabel.font = UIFont.systemFont(ofSize: 16)
+        postView.addSubview(postLabel)
+        
+        postLabel.snp.makeConstraints { make in
+            make.centerY.equalTo(postView)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(10)
+            make.trailing.equalTo(postView)
+        }
+    }
+    
+    // 點擊手勢的動作處理
+    @objc func didTapPostView() {
+        navigationController?.pushViewController(postViewController, animated: true)
+    }
+    
     
     func setupBottomSheet() {
         // 初始化背景蒙層
@@ -119,7 +205,7 @@ class NewsFeedViewController: UIViewController {
         button.backgroundColor = .clear
         return button
     }
-
+    
     // 顯示彈窗
     func showBottomSheet() {
         UIView.animate(withDuration: 0.3) {
@@ -127,7 +213,7 @@ class NewsFeedViewController: UIViewController {
             self.backgroundView.alpha = 1
         }
     }
-
+    
     // 隱藏彈窗
     @objc func dismissBottomSheet() {
         UIView.animate(withDuration: 0.3) {
@@ -135,7 +221,7 @@ class NewsFeedViewController: UIViewController {
             self.backgroundView.alpha = 0
         }
     }
-
+    
     
     func setupPostButton() {
         
@@ -163,7 +249,7 @@ class NewsFeedViewController: UIViewController {
         
         db.collection("posts").getDocuments { querySnapshot, error in
             if error != nil {
-//                print("錯錯錯")
+                //                print("錯錯錯")
             } else {
                 
                 for num in 0 ..< self.postsArray.count {
@@ -268,7 +354,7 @@ class NewsFeedViewController: UIViewController {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
             guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-
+            
             
             // 獲取當前的 bookmarkAccount
             var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
@@ -321,11 +407,10 @@ class NewsFeedViewController: UIViewController {
 extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setupPostsTableView() {
-        
         view.addSubview(postsTableView)
         
         postsTableView.snp.makeConstraints { make in
-            make.top.equalTo(postButton.snp.bottom).offset(40)
+            make.top.equalTo(postView.snp.bottom).offset(16) // 修改這一行，將 postButton 改為 postView
             make.width.equalTo(view).multipliedBy(0.9)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
             make.centerX.equalTo(view)
@@ -336,13 +421,10 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         postsTableView.layer.cornerRadius = 20
         postsTableView.layer.masksToBounds = true
-        
-        postsTableView.backgroundColor = .clear
-        
         postsTableView.allowsSelection = true
-        postsTableView.backgroundColor = .blue
-        
+        postsTableView.backgroundColor = .clear
     }
+    
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         250
@@ -426,33 +508,33 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         return cell
     }
-
-        func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-            let post = postsArray[indexPath.row]
-            
-            let articleVC = ArticleViewController()
-            
-            // 傳遞貼文的資料
-            
-            FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
-                if let userName = userName {
-                    articleVC.articleAuthor = userName
-                    articleVC.articleTitle = post["title"] as? String ?? "無標題"
-                    articleVC.articleContent = post["content"] as? String ?? "無內容"
-                    articleVC.tripId = post["tripId"] as? String ?? ""
-                    if let createdAtTimestamp = post["createdAt"] as? Timestamp {
-                        let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
-                        articleVC.articleDate = createdAtString
-                    }
-                    
-                    articleVC.authorId = post["userId"] as? String ?? ""
-                    articleVC.postId = post["id"] as? String ?? ""
-                    articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
-                    
-                    self.navigationController?.pushViewController(articleVC, animated: true)
-                } else {
-                    print("未找到對應的 userName")
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let post = postsArray[indexPath.row]
+        
+        let articleVC = ArticleViewController()
+        
+        // 傳遞貼文的資料
+        
+        FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
+            if let userName = userName {
+                articleVC.articleAuthor = userName
+                articleVC.articleTitle = post["title"] as? String ?? "無標題"
+                articleVC.articleContent = post["content"] as? String ?? "無內容"
+                articleVC.tripId = post["tripId"] as? String ?? ""
+                if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+                    let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+                    articleVC.articleDate = createdAtString
                 }
+                
+                articleVC.authorId = post["userId"] as? String ?? ""
+                articleVC.postId = post["id"] as? String ?? ""
+                articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
+                
+                self.navigationController?.pushViewController(articleVC, animated: true)
+            } else {
+                print("未找到對應的 userName")
             }
         }
     }
+}
