@@ -845,9 +845,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         articleTripVC.poemId = self.poemId
         articleTripVC.postUsernameLabel.text = self.articleAuthor
         articleTripVC.poemTitleLabel.text = "〈\(self.poemTitle)〉之旅"
-        
-        let navController = UINavigationController(rootViewController: articleTripVC)
-        self.present(navController, animated: true, completion: nil)
+        navigationController?.pushViewController(articleTripVC, animated: true)
     }
     
     func getTripDataById() {

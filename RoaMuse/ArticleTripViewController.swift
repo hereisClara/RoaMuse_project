@@ -406,8 +406,8 @@ extension ArticleTripViewController {
         containerView.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(view).multipliedBy(0.7)
-            make.top.equalTo(view).offset(24)
+            make.height.equalTo(view).multipliedBy(0.6)
+            make.top.equalTo(view.safeAreaLayoutGuide)
         }
         containerView.layer.cornerRadius = 15
         
