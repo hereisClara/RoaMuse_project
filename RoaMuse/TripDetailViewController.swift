@@ -41,7 +41,7 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
         // 設定導航欄的背景顏色
         navigationController?.navigationBar.barTintColor = UIColor.white
-        self.tabBarController?.tabBar.isHidden = true
+        
         if let nestedInstructions = nestedInstructions {
             for (index, steps) in nestedInstructions.enumerated() {
                 print("導航段落 \(index):")
@@ -101,6 +101,11 @@ class TripDetailViewController: UIViewController {
             
             self.checkDistanceForCurrentTarget(from: currentLocation)
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.tabBarController?.tabBar.isHidden = true
     }
     
     override func viewWillDisappear(_ animated: Bool) {

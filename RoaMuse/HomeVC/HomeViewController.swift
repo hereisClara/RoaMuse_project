@@ -26,7 +26,7 @@ class HomeViewController: UIViewController {
     
     let bottomSheetView = UIView()
         let backgroundView = UIView() // 半透明背景
-        let sheetHeight: CGFloat = 300 // 選單高度
+        let sheetHeight: CGFloat = 250 // 選單高度
     
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
@@ -106,7 +106,7 @@ class HomeViewController: UIViewController {
         }
         
         // 在選單視圖內部添加按鈕
-        let saveButton = createButton(title: "刪除貼文")
+        let saveButton = createButton(title: "隱藏貼文")
         let impeachButton = createButton(title: "檢舉貼文")
         let blockButton = createButton(title: "封鎖用戶")
         let cancelButton = createButton(title: "取消", textColor: .red)
