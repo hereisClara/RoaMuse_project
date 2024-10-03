@@ -559,32 +559,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
-    func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
-        // 更新 footerView 的內容為「已完成」
-        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-            placeLabel.text = "已完成"
-            placeLabel.textColor = .systemGreen
-        }
-        
-        if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-            completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-            completeButton.isEnabled = false
-        }
-        
-        // 添加「翻回去」按鈕
-        let flipBackButton = UIButton(type: .system)
-        flipBackButton.setTitle("翻回去", for: .normal)
-        flipBackButton.addTarget(self, action: #selector(self.didTapFlipBackButton(_:)), for: .touchUpInside)
-        flipBackButton.tag = sectionIndex
-        footerView.addSubview(flipBackButton)
-        
-        // 設定按鈕約束
-        flipBackButton.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.bottom.equalToSuperview().offset(-10)
-        }
-    }
-    
     
     @objc private func transportButtonTapped(_ sender: UIButton) {
         print("transportButtonTapped called")
@@ -793,116 +767,124 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
         return 60 // 給定合理的估計高度
     }
-    @objc func didTapCompleteButton(_ sender: UIButton) {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        guard let trip = trip else { return }
-        
-        let sectionIndex = sender.tag
-        
-        guard sectionIndex < places.count else {
-            return
+    
+    func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
+        // 更新 footerView 的內容為「已完成」
+        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+            placeLabel.text = "已完成"
+            placeLabel.textColor = .systemGreen
         }
         
-        let place = places[sectionIndex]
-        let placeId = place.id
-        
-        // 確保只有當前目標地點可以標記為已完成
-        guard sectionIndex == currentTargetIndex else {
-            return
-        }
-        
-        let tripId = trip.id
-        
-        // Firebase 中更新此地點為已完成
-        FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
-            if success {
-                print("地点 \(placeId) 和行程 \(tripId) 成功更新")
-                
-                DispatchQueue.main.async {
-                    if let footerView = self.footerViews[sectionIndex] {
-                        // 標記此卡片已翻到「完成」一面
-                        self.isFlipped[sectionIndex] = false
-                        
-                        // 將 footerView 進行翻轉動畫，顯示「已完成」狀態
-                        UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
-                            
-                            // 更新 footerView 的內容
-                            if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                                placeLabel.text = "已完成"
-                                placeLabel.textColor = .systemGreen
-                            }
-                            
-                            if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-                                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-                                completeButton.isEnabled = false
-                            }
-                            
-                        }, completion: { _ in
-                            // 顯示「翻回去」按鈕
-                            let flipBackButton = UIButton(type: .system)
-                            flipBackButton.setTitle("翻回去", for: .normal)
-                            flipBackButton.addTarget(self, action: #selector(self.didTapFlipBackButton(_:)), for: .touchUpInside)
-                            flipBackButton.tag = sectionIndex
-                            footerView.addSubview(flipBackButton)
-                            
-                            // 設定「翻回去」按鈕約束
-                            flipBackButton.snp.makeConstraints { make in
-                                make.centerX.equalToSuperview()
-                                make.bottom.equalToSuperview().offset(-10)
-                            }
-                        })
-                    } else {
-                        print("FooterView not found")
-                    }
-                }
-            } else {
-                print("更新失败")
-            }
+        if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+            completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            completeButton.isEnabled = false
         }
     }
     
-    @objc func didTapFlipBackButton(_ sender: UIButton) {
+    @objc func didTapCompleteButton(_ sender: UIButton) {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        guard let trip = trip else { return }
+
         let sectionIndex = sender.tag
-        
-        guard sectionIndex < places.count else {
-            return
-        }
-        
-        if let footerView = self.footerViews[sectionIndex] {
-            // 根據當前的翻轉狀態進行對應的翻轉操作
-            let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
-            
-            let transitionOptions: UIView.AnimationOptions = isCurrentlyFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft]
-            
-            // 更新狀態來允許來回翻轉
-            UIView.transition(with: footerView, duration: 0.5, options: transitionOptions, animations: {
-                if isCurrentlyFlipped {
-                    // 翻回地名的一面
-                    if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                        placeLabel.text = self.places[sectionIndex].name
-                        placeLabel.textColor = .black
-                    }
-                    
-                    if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-                        completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .normal)
-                        completeButton.isEnabled = true
+        guard sectionIndex < places.count else { return }
+
+        let place = places[sectionIndex]
+        let placeId = place.id
+
+        // 確保只有當前目標地點可以標記為已完成
+        guard sectionIndex == currentTargetIndex else { return }
+
+        // 檢查是否已經翻轉過
+        let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
+
+        if isCurrentlyFlipped {
+            // 翻轉回地名
+            UIView.transition(with: sender.superview!, duration: 0.5, options: [.transitionFlipFromRight], animations: {
+                if let placeLabel = sender.superview?.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                    placeLabel.text = place.name
+                    placeLabel.textColor = .black
+                }
+                sender.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            }, completion: { _ in
+                self.isFlipped[sectionIndex] = false
+            })
+        } else {
+            // 翻轉到詩句並更新 Firebase
+            FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
+                if success {
+                    DispatchQueue.main.async {
+                        if let footerView = self.footerViews[sectionIndex] {
+                            self.isFlipped[sectionIndex] = true
+
+                            // 翻轉動畫顯示詩句
+                            UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
+                                if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                                    if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+                                        placeLabel.text = poemPair.poemLine
+                                        placeLabel.textColor = .systemGreen
+                                    }
+                                }
+
+                                // 改變按鈕圖標為翻轉圖標
+                                if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                                    completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                                }
+                            }, completion: { _ in
+                                // 收合當前 section 並展開下一個或收合最後一個
+                                self.collapseCurrentAndExpandNext(sectionIndex)
+                            })
+                        }
                     }
                 } else {
-                    // 翻到已完成的一面
-                    if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                        placeLabel.text = "已完成"
-                        placeLabel.textColor = .systemGreen
-                    }
-                    
-                    if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-                        completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-                        completeButton.isEnabled = false
-                    }
+                    print("更新失敗")
                 }
-            }, completion: { _ in
-                // 更新翻轉狀態
-                self.isFlipped[sectionIndex] = !isCurrentlyFlipped
-            })
+            }
         }
+    }
+
+    func collapseCurrentAndExpandNext(_ currentSection: Int) {
+        let nextSection = currentSection + 1
+
+        UIView.animate(withDuration: 0.3, animations: {
+            // 將當前 section 的 cell 收合，並將 cell 的高度設置為 0
+            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: currentSection)) {
+                cell.contentView.alpha = 0
+                cell.isHidden = true
+            }
+
+            // 立刻更新 footer 並上推
+            self.tableView.performBatchUpdates({
+                self.tableView.beginUpdates()
+                self.tableView.endUpdates()
+            }, completion: { _ in
+                // 展開下一個 section
+                if nextSection < self.places.count {
+                    self.currentTargetIndex = nextSection
+                    if let nextCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: nextSection)) {
+                        nextCell.isHidden = false
+                        nextCell.contentView.alpha = 1
+                    }
+                } else {
+                    // 如果是最後一個 section，執行收合
+                    self.collapseLastSection(currentSection)
+                }
+            })
+        })
+    }
+
+    func collapseLastSection(_ sectionIndex: Int) {
+        UIView.animate(withDuration: 0.3, animations: {
+            // 隱藏最後一個 section 的 cell
+            if let lastCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
+                lastCell.contentView.alpha = 0
+                lastCell.isHidden = true
+            }
+
+            // 通知 tableView 更新佈局
+            self.tableView.performBatchUpdates({
+                self.tableView.beginUpdates()
+                self.tableView.endUpdates()
+            })
+        })
     }
 }
