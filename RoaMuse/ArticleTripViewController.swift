@@ -33,7 +33,9 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     var placeNames = [String]()
     
     let collectButton = UIButton(type: .custom)
-    var matchingPlaces = [Place]()
+    var matchingPlaces: [(keyword: String, place: Place)] = []
+    var places: [Place] = []
+    var keywordToLineMap = [String: String]()
     var city: String = ""
     var districts: [String] = []
     var popUpView = PopUpView()
@@ -57,82 +59,195 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         checkIfTripBookmarked()
     }
     
-    
-    
     @objc func didTapGenerateView() {
-        // 禁用生成按鈕，避免重複點擊
+        // 禁用生成按钮，避免重复点击
         generateView.isUserInteractionEnabled = false
-        
-        // 開始更新位置，獲取當前使用者位置
+
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
-            
-            // 停止位置更新，確保只獲取一次即可
             self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
-            
-            // 根據 poemId 查詢詩詞資料
-            FirebaseManager.shared.loadPoemById(self.poemId) { poem in
+
+            self.processWithCurrentLocation(currentLocation)
+        }
+
+        let authorizationStatus = CLLocationManager.authorizationStatus()
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            locationManager.requestLocation()
+        } else if authorizationStatus == .notDetermined {
+            locationManager.requestWhenInUseAuthorization()
+        } else {
+            print("定位权限被拒绝或受限")
+            generateView.isUserInteractionEnabled = true
+        }
+    }
+    
+    func processWithCurrentLocation(_ currentLocation: CLLocation) {
+        FirebaseManager.shared.loadPoemById(self.poemId) { poem in
+            if poem.content.isEmpty {
+                print("未找到诗词，内容为空")
+                DispatchQueue.main.async {
                     self.generateView.isUserInteractionEnabled = true
-                
-                if poem.content.isEmpty {
-                        print("未找到詩詞，內容為空")
-                        return
-                    }
-                
-                // 使用 NLP 模型解析詩詞，生成關鍵字
-                LocationService.shared.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
-                    guard !keywords.isEmpty else {
-                        print("關鍵字生成失敗或無關鍵字")
-                        self.generateView.isUserInteractionEnabled = true
-                        return
-                    }
+                }
+                return
+            }
 
-                    // 使用關鍵字生成行程
-                    LocationService.shared.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
-                        guard let trip = trip else {
-                            print("未生成行程，matchingPlaces 可能為空")
-                            self.generateView.isUserInteractionEnabled = true
-                            return
-                        }
-
-                        let placeCoordinates = self.matchingPlaces.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
-
-                        // 顯示關鍵字對應的詩句行
-                        print("Keyword to Line Map: \(keywordToLineMap)")
-
-                        // 計算整體路線的總時間和詳細導航指令
-                        self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: placeCoordinates) { totalTime, routes in
-                            if let totalTime = totalTime {
-                                let totalMinutes = Int(totalTime / 60)
-                                print("總預計交通時間：\(totalMinutes) 分鐘")
+            self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                self.keywordToLineMap = keywordToLineMap
+                self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
+                    if let trip = trip {
+                        print("成功生成 trip：\(trip)")
+                        let places = self.matchingPlaces.map { $0.place }
+                        self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
+                            DispatchQueue.main.async {
+                                self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                self.trip = trip
+                                self.generateView.isUserInteractionEnabled = true
                             }
-
-                            self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                         }
-
-                        // 將生成的行程存儲，並解除按鈕的點擊鎖定
+                    } else {
+                        print("未能生成行程")
                         DispatchQueue.main.async {
-                            self.trip = trip
                             self.generateView.isUserInteractionEnabled = true
                         }
                     }
                 }
             }
         }
-        locationManager.startUpdatingLocation()  // 開始獲取位置
     }
 
-    func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
-        LocationService.shared.processPoemText(inputText) { (keywords, keywordToLineMap) in
-            completion(keywords, keywordToLineMap)
+
+    func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        var foundValidPlace = false
+        self.city = ""
+        self.districts.removeAll()
+        self.matchingPlaces.removeAll()
+        let searchRadius: Double = 15000 // 定义搜索半径
+
+        for keyword in keywords {
+            dispatchGroup.enter()
+            self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, searchRadius: searchRadius, dispatchGroup: dispatchGroup) { validPlaceFound in
+                if validPlaceFound {
+                    foundValidPlace = true
+                }
+            }
+        }
+
+        dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
+            if foundValidPlace, self.matchingPlaces.count >= 1 {
+                print("matchingPlaces: \(self.matchingPlaces)")
+                FirebaseManager.shared.saveTripToFirebase(poem: poem, matchingPlaces: self.matchingPlaces) { trip in
+                    DispatchQueue.main.async {
+                        completion(trip)
+                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+            }
         }
     }
 
-    func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
-        LocationService.shared.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation, completion: completion)
+    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
+        FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
+            let nearbyPlaces = places.filter { place in
+                let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                let distance = currentLocation.distance(from: placeLocation)
+                return distance <= searchRadius
+            }
+
+            if !nearbyPlaces.isEmpty {
+                if let randomPlace = nearbyPlaces.randomElement() {
+                    if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
+                        self.matchingPlaces.append((keyword: keyword, place: randomPlace))
+
+                        let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                        self.reverseGeocodeLocation(placeLocation) { (city, district) in
+                            if let city = city, let district = district {
+                                if self.city.isEmpty {
+                                    self.city = city
+                                }
+                                if !self.districts.contains(district) {
+                                    self.districts.append(district)
+                                }
+                            }
+                            completion(true)
+                            dispatchGroup.leave()
+                        }
+                    } else {
+                        completion(true)
+                        dispatchGroup.leave()
+                    }
+                } else {
+                    completion(false)
+                    dispatchGroup.leave()
+                }
+            } else {
+                // 如果没有找到符合条件的地方，可以执行其他逻辑，例如调用 Google Place API
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                    if let newPlace = foundPlaces.first {
+                        PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
+                            if let savedPlace = savedPlace {
+                                self.matchingPlaces.append((keyword: keyword, place: savedPlace))
+                                completion(true)
+                            } else {
+                                completion(false)
+                            }
+                            dispatchGroup.leave()
+                        }
+                    } else {
+                        completion(false)
+                        dispatchGroup.leave()
+                    }
+                }
+            }
+        }
     }
 
+    func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let placemark = placemarks?.first {
+                let city = placemark.locality
+                let district = placemark.subLocality
+                completion(city, district)
+            } else {
+                completion(nil, nil)
+            }
+        }
+    }
+    
+    func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            
+            // 确保NLP模型正常加载
+            guard let model = try? poemLocationNLP3(configuration: .init()) else {
+                print("NLP 模型加载失败")
+                return
+            }
+            
+            var allResults = [String]()
+            var keywordToLineMap = [String: String]()
+            for segment in textSegments {
+                do {
+                    let prediction = try model.prediction(text: segment)
+                    let landscape = prediction.label
+                    allResults.append(landscape)
+                    keywordToLineMap[landscape] = segment
+                } catch {
+                    print("分析失败：\(error.localizedDescription)")
+                }
+            }
+            
+            // 返回不重复的关键字
+            DispatchQueue.main.async {
+                completion(Array(Set(allResults)), keywordToLineMap)
+            }
+        }
+    }
     
     func displayPlacesInLabel() {
         var placeDisplayText = ""
@@ -235,72 +350,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         locationManager.startUpdatingLocation()
     }
     
-    func loadPlacesDataAndAnnotateMap() {
-        let tripRef = Firestore.firestore().collection("trips").document(tripId)
-        tripRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                if let placeIds = document.data()?["placeIds"] as? [String] {
-                    let dispatchGroup = DispatchGroup()
-                    
-                    // 遍歷每個 placeId，從 places 集合中加載對應的地點數據
-                    for placeId in placeIds {
-                        dispatchGroup.enter()
-                        self.loadPlaceData(placeId: placeId) {
-                            dispatchGroup.leave()
-                        }
-                    }
-                    
-                    // 當所有的地點數據加載完成後，調整地圖視角
-                    dispatchGroup.notify(queue: .main) {
-                        self.mapView.showAnnotations(self.annotations, animated: true)
-                        
-                        // 如果獲取到了使用者當前位置，則計算路線
-                        if let userLocation = self.userLocation {
-                            self.calculateTotalRouteTimeAndDetails(from: userLocation, places: self.annotations.map { annotation in
-                                CLLocationCoordinate2D(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
-                            }) { totalTime, placeOrder in
-                                if let totalTime = totalTime {
-                                    self.updateTransportTimeLabel(totalTime: totalTime)
-                                }
-                                if let placeOrder = placeOrder {
-                                    self.placeNames = placeOrder  // 更新 placeNames
-                                    self.displayPlacesInLabel()  // 顯示地點
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                print("Trip data not found")
-            }
-        }
-    }
-    
-    // 加載每個 place 的經緯度並在地圖上標註
-    func loadPlaceData(placeId: String, completion: @escaping () -> Void) {
-        let placeRef = Firestore.firestore().collection("places").document(placeId)
-        placeRef.getDocument { (document, error) in
-            if let document = document, document.exists {
-                if let latitude = document.data()?["latitude"] as? Double,
-                   let longitude = document.data()?["longitude"] as? Double,
-                   let name = document.data()?["name"] as? String {
-                    
-                    let annotation = MKPointAnnotation()
-                    annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                    annotation.title = name
-                    
-                    self.mapView.addAnnotation(annotation)
-                    self.annotations.append(annotation)
-                    
-                    completion()
-                }
-            } else {
-                print("Place data not found for placeId: \(placeId)")
-                completion()
-            }
-        }
-    }
-    
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (MKRoute?) -> Void) {
         let request = MKDirections.Request()
         let sourcePlacemark = MKPlacemark(coordinate: startLocation)
@@ -319,55 +368,51 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         }
     }
     
-    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [CLLocationCoordinate2D], completion: @escaping (TimeInterval?, [String]?) -> Void) {
+    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [String]?) -> Void) {
         var totalTime: TimeInterval = 0
         let dispatchGroup = DispatchGroup()
-        var placeOrder = [String]()  // 存放地點的順序
+        var placeOrder = [String]()  // 存放地點的顺序
         
-        // Step 1: 當前位置到第一個地點
+        // Step 1: 当当前位置到第一个地点
         if let firstPlace = places.first {
-                dispatchGroup.enter()
-                calculateRoute(from: currentLocation, to: firstPlace) { route in
-                    if let route = route {
-                        totalTime += route.expectedTravelTime
-                        self.mapView.addOverlay(route.polyline)  // 绘制路径
-                        placeOrder.append(self.annotations.first?.title ?? "")
-                    }
-                    dispatchGroup.leave()
+            let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
+            dispatchGroup.enter()
+            calculateRoute(from: currentLocation, to: firstPlaceLocation) { route in
+                if let route = route {
+                    totalTime += route.expectedTravelTime
+                    self.mapView.addOverlay(route.polyline)  // 绘制路径
+                    placeOrder.append(firstPlace.name)
                 }
-            } else {
-                // 如果没有任何地点，直接返回
-                completion(nil, nil)
-                return
+                dispatchGroup.leave()
             }
-        
-        // Step 2: 計算地點之間的路徑
-        if places.count >= 2 {
-                for index in 0..<(places.count - 1) {
-                    let startLocation = places[index]
-                    let endLocation = places[index + 1]
-                    
-                    dispatchGroup.enter()
-                    calculateRoute(from: startLocation, to: endLocation) { route in
-                        if let route = route {
-                            totalTime += route.expectedTravelTime
-                            self.mapView.addOverlay(route.polyline)  // 绘制每段路径
-                            placeOrder.append(self.annotations[index + 1].title ?? "")
-                        }
-                        dispatchGroup.leave()
-                    }
-                }
-            }
-        
-        if places.isEmpty {
-            let alert = UIAlertController(title: "提示", message: "附近沒有合適的地點", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "確定", style: .default, handler: nil))
-            self.present(alert, animated: true, completion: nil)
+        } else {
+            // 如果没有任何地点，直接返回
             completion(nil, nil)
             return
         }
         
-        // Step 3: 返回結果
+        // Step 2: 计算地点之间的路径
+        if places.count >= 2 {
+            for index in 0..<(places.count - 1) {
+                let startPlace = places[index]
+                let endPlace = places[index + 1]
+                
+                let startLocation = CLLocationCoordinate2D(latitude: startPlace.latitude, longitude: startPlace.longitude)
+                let endLocation = CLLocationCoordinate2D(latitude: endPlace.latitude, longitude: endPlace.longitude)
+                
+                dispatchGroup.enter()
+                calculateRoute(from: startLocation, to: endLocation) { route in
+                    if let route = route {
+                        totalTime += route.expectedTravelTime
+                        self.mapView.addOverlay(route.polyline)  // 绘制每段路径
+                        placeOrder.append(endPlace.name)
+                    }
+                    dispatchGroup.leave()
+                }
+            }
+        }
+        
+        // Step 3: 返回结果
         dispatchGroup.notify(queue: .main) {
             completion(totalTime, placeOrder)
         }
@@ -537,4 +582,69 @@ extension ArticleTripViewController: PopupViewDelegate {
         }
     }
 
+}
+
+extension ArticleTripViewController {
+    
+    func loadPlacesDataAndAnnotateMap() {
+        let tripRef = Firestore.firestore().collection("trips").document(tripId)
+        tripRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                if let placeIds = document.data()?["placeIds"] as? [String] {
+                    let dispatchGroup = DispatchGroup()
+                    
+                    for placeId in placeIds {
+                        dispatchGroup.enter()
+                        self.loadPlaceData(placeId: placeId) {
+                            dispatchGroup.leave()
+                        }
+                    }
+                    
+                    dispatchGroup.notify(queue: .main) {
+                        self.mapView.showAnnotations(self.annotations, animated: true)
+                        
+                        if let userLocation = self.userLocation {
+                            self.calculateTotalRouteTimeAndDetails(from: userLocation, places: self.places) { totalTime, placeOrder in
+                                if let totalTime = totalTime {
+                                    self.updateTransportTimeLabel(totalTime: totalTime)
+                                }
+                                if let placeOrder = placeOrder {
+                                    self.placeNames = placeOrder  // 更新 placeNames
+                                    self.displayPlacesInLabel()  // 显示地点
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                print("Trip data not found")
+            }
+        }
+    }
+    
+    // 加載每個 place 的經緯度並在地圖上標註
+    func loadPlaceData(placeId: String, completion: @escaping () -> Void) {
+        let placeRef = Firestore.firestore().collection("places").document(placeId)
+        placeRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                if let latitude = document.data()?["latitude"] as? Double,
+                   let longitude = document.data()?["longitude"] as? Double,
+                   let name = document.data()?["name"] as? String {
+                    
+                    let annotation = MKPointAnnotation()
+                    annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                    annotation.title = name
+                    
+                    self.mapView.addAnnotation(annotation)
+                    self.annotations.append(annotation)
+                    let place = Place(id: placeId, name: name, latitude: latitude, longitude: longitude)
+                    self.places.append(place)
+                    completion()
+                }
+            } else {
+                print("Place data not found for placeId: \(placeId)")
+                completion()
+            }
+        }
+    }
 }
