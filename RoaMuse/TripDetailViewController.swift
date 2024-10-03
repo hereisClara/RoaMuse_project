@@ -52,7 +52,10 @@ class TripDetailViewController: UIViewController {
     var routesArray: [[MKRoute]]?
     var nestedInstructions: [[String]]?
     
+    var footerViews = [Int: UIView]()
+    
     private var isMapVisible: Bool = false
+    var isFlipped: [Int: Bool] = [:]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -279,19 +282,27 @@ class TripDetailViewController: UIViewController {
                 // 初始化 buttonState
                 self.buttonState = Array(repeating: false, count: self.places.count)
                 
-                // 设置进度点（稍后步骤中详细说明）
+                // 设置进度点
                 self.setupProgressDots()
                 
                 // 重新加载表格视图
                 self.tableView.reloadData()
                 
-                // **在数据加载完成后开始位置更新**
+                // **檢查已完成的地點並設置狀態**
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                    }
+                }
+                
+                // 開始位置更新
                 self.locationManager.startUpdatingLocation()
                 self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                     guard let self = self else { return }
                     self.checkDistanceForCurrentTarget(from: currentLocation)
                 }
             }
+
         }
     }
     
@@ -328,36 +339,36 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         guard section == 0 else {
             return nil
         }
-
+        
         guard let poem = loadedPoem else {
             return createLoadingHeaderView()
         }
-
+        
         let containerView = UIView()
         containerView.backgroundColor = .clear
         containerView.isUserInteractionEnabled = true // 确保容器视图可以交互
-
+        
         let headerView = createHeaderView(poem: poem)
         headerView.isUserInteractionEnabled = true // 确保 headerView 可以交互
         containerView.addSubview(headerView)
-
+        
         headerView.snp.makeConstraints { make in
             make.top.leading.trailing.equalToSuperview()
         }
-
+        
         let buttonsView = createButtonsView()
         containerView.addSubview(buttonsView)
-
+        
         buttonsView.snp.makeConstraints { make in
             make.top.equalTo(headerView.snp.bottom).offset(12)
             make.leading.trailing.equalToSuperview()
             make.height.equalTo(50)
             make.bottom.equalToSuperview().offset(-10)
         }
-
+        
         return containerView
     }
-
+    
     // 拆分函數，用於創建加載中的標題視圖
     private func createLoadingHeaderView() -> UIView {
         let headerView = UIView()
@@ -372,34 +383,34 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
         return headerView
     }
-
+    
     // 拆分函數，用於創建標題視圖
     private func createHeaderView(poem: Poem) -> UIView {
         let headerView = UIView()
         headerView.backgroundColor = UIColor(resource: .deepBlue)
         headerView.layer.cornerRadius = 20
-
+        
         let titleLabel = createLabel(text: poem.title, font: UIFont(name: "NotoSerifHK-Black", size: 22) ?? UIFont.systemFont(ofSize: 22))
-
+        
         headerView.addSubview(titleLabel)
-
+        
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(16)
             make.leading.equalToSuperview().offset(12)
         }
-
+        
         let poetLabel = createLabel(text: poem.poetry, font: UIFont(name: "NotoSerifHK-Bold", size: 20) ?? UIFont.systemFont(ofSize: 20))
         headerView.addSubview(poetLabel)
-
+        
         poetLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(8)
             make.leading.equalToSuperview().offset(12)
         }
-
+        
         let contentLabel = createLabel(text: poem.content.joined(separator: "\n"), font: UIFont(name: "NotoSerifHK-Regular", size: 18) ?? UIFont.systemFont(ofSize: 18))
         contentLabel.numberOfLines = 0
         headerView.addSubview(contentLabel)
-
+        
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(poetLabel.snp.bottom).offset(30)
             make.centerX.equalToSuperview()
@@ -407,10 +418,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.trailing.equalToSuperview().offset(-12)
             make.bottom.equalToSuperview().offset(-16)
         }
-
+        
         return headerView
     }
-
+    
     // 拆分函數，用於創建通用的標籤
     private func createLabel(text: String, font: UIFont) -> UILabel {
         let label = UILabel()
@@ -420,11 +431,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         label.font = font
         return label
     }
-
+    
     private func createButtonsView() -> UIView {
         let buttonsView = UIView()
         buttonsView.isUserInteractionEnabled = true
-
+        
         // 设置 locateButton
         let locationButton = UIButton()
         locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
@@ -433,20 +444,20 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         locationButton.layer.cornerRadius = 25
         locationButton.addTarget(self, action: #selector(didTapLocateButton(_:)), for: .touchUpInside)
         locationButton.isUserInteractionEnabled = true
-
+        
         buttonsView.addSubview(locationButton)
-
+        
         locationButton.snp.makeConstraints { make in
             make.leading.equalToSuperview()
             make.centerY.equalToSuperview()
             make.width.height.equalTo(50)
         }
-
+        
         // 创建用于放置交通工具按钮的容器视图
         let transportButtonsView = UIView()
         transportButtonsView.isUserInteractionEnabled = true
         buttonsView.addSubview(transportButtonsView)
-
+        
         transportButtonsView.snp.makeConstraints { make in
             make.leading.equalTo(locationButton.snp.trailing).offset(12)
             make.centerY.equalToSuperview()
@@ -454,7 +465,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             // 添加宽度约束，初始为单个按钮的宽度
             transportButtonsViewWidthConstraint = make.width.equalTo(50).constraint
         }
-
+        
         // 添加背景视图
         let backgroundView = UIView()
         backgroundView.backgroundColor = .systemGray4
@@ -463,11 +474,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         transportButtonsView.addSubview(backgroundView)
         // 将背景视图放在所有按钮的后面
         transportButtonsView.sendSubviewToBack(backgroundView)
-
+        
         backgroundView.snp.makeConstraints { make in
             make.edges.equalTo(transportButtonsView)
         }
-
+        
         // 创建按钮容器 StackView
         buttonContainer = UIStackView()
         buttonContainer.axis = .horizontal
@@ -475,15 +486,15 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         buttonContainer.spacing = 12
         buttonContainer.isUserInteractionEnabled = true
         transportButtonsView.addSubview(buttonContainer)
-
+        
         buttonContainer.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-
+        
         // 创建交通工具按钮
         let transportOptions = ["car.fill", "bicycle", "tram.fill", "figure.walk"]
         transportButtons = []
-
+        
         for (index, icon) in transportOptions.enumerated() {
             let button = UIButton(type: .system)
             button.setImage(UIImage(systemName: icon), for: .normal)
@@ -496,25 +507,25 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             button.addTarget(self, action: #selector(transportButtonTapped(_:)), for: .touchUpInside)
             transportButtons.append(button)
         }
-
+        
         // 设置初始选中按钮为第一个
         selectedTransportButton = transportButtons.first
         selectedTransportButton?.backgroundColor = .deepBlue
-
+        
         // 将所有按钮添加到 buttonContainer
         for button in transportButtons {
             buttonContainer.addArrangedSubview(button)
         }
-
+        
         // 初始状态下，只显示 selectedTransportButton
         updateTransportButtonsDisplay()
-
+        
         // 保存背景视图，便于在其他方法中使用
         self.transportBackgroundView = backgroundView
-
+        
         return buttonsView
     }
-
+    
     
     private func updateTransportButtonsDisplay() {
         if isExpanded {
@@ -524,12 +535,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
             // 显示背景视图
             transportBackgroundView?.isHidden = false
-
+            
             // 计算总宽度
             let buttonWidth: CGFloat = 50
             let buttonSpacing: CGFloat = 12
             let totalWidth = CGFloat(transportButtons.count) * buttonWidth + CGFloat(transportButtons.count - 1) * buttonSpacing
-
+            
             // 更新宽度约束
             transportButtonsViewWidthConstraint?.update(offset: totalWidth)
         } else {
@@ -539,7 +550,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
             // 隐藏背景视图
             transportBackgroundView?.isHidden = true
-
+            
             // 更新宽度约束为单个按钮的宽度
             transportButtonsViewWidthConstraint?.update(offset: 50)
         }
@@ -547,8 +558,34 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             self.view.layoutIfNeeded()
         }
     }
-
-
+    
+    func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
+        // 更新 footerView 的內容為「已完成」
+        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+            placeLabel.text = "已完成"
+            placeLabel.textColor = .systemGreen
+        }
+        
+        if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+            completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            completeButton.isEnabled = false
+        }
+        
+        // 添加「翻回去」按鈕
+        let flipBackButton = UIButton(type: .system)
+        flipBackButton.setTitle("翻回去", for: .normal)
+        flipBackButton.addTarget(self, action: #selector(self.didTapFlipBackButton(_:)), for: .touchUpInside)
+        flipBackButton.tag = sectionIndex
+        footerView.addSubview(flipBackButton)
+        
+        // 設定按鈕約束
+        flipBackButton.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-10)
+        }
+    }
+    
+    
     @objc private func transportButtonTapped(_ sender: UIButton) {
         print("transportButtonTapped called")
         if sender == selectedTransportButton {
@@ -559,10 +596,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             selectedTransportButton?.backgroundColor = .clear
             selectedTransportButton = sender
             sender.backgroundColor = .deepBlue
-
+            
             // 更新选中的交通方式
             selectedTransportType = transportTypeForIndex(sender.tag)
-
+            
             // 将选中按钮移动到第一个位置
             if let index = transportButtons.firstIndex(of: sender) {
                 transportButtons.remove(at: index)
@@ -582,12 +619,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 self.updateTransportButtonsDisplay()
                 self.view.layoutIfNeeded()
             }
-
+            
             // 如果需要，根据新的交通方式更新地图或路线
             updateMapForSelectedTransportType()
         }
     }
-
+    
     @objc private func toggleTransportButtons() {
         isExpanded.toggle()
         UIView.animate(withDuration: 0.3) {
@@ -595,8 +632,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             self.view.layoutIfNeeded()
         }
     }
-
-
+    
+    
     private func transportTypeForIndex(_ index: Int) -> MKDirectionsTransportType {
         switch index {
         case 0:
@@ -615,13 +652,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     private func updateMapForSelectedTransportType() {
         // 根据 selectedTransportType 更新地图上的路线
         // 例如，重新计算路线并刷新地图
-
+        
         // 如果地图当前可见，更新地图
         if isMapVisible {
             tableView.reloadRows(at: [IndexPath(row: 0, section: currentTargetIndex)], with: .none)
         }
     }
-
+    
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return section == 0 ? UITableView.automaticDimension : 0
@@ -686,7 +723,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         // 創建 completeButton 並加入 footerView
         let completeButton = UIButton(type: .system)
-//        completeButton.setTitle("完成", for: .normal)
+        //        completeButton.setTitle("完成", for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
         completeButton.isEnabled = !completedPlaceIds.contains(place.id)
@@ -698,6 +735,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.trailing.equalToSuperview().offset(-20)
             make.centerY.equalToSuperview()
         }
+        
+        if completedPlaceIds.contains(place.id) {
+            setupCompletedFooterView(footerView: footerView, sectionIndex: section)
+        }
+        
+        footerViews[section] = footerView
         
         return containerView
     }
@@ -743,11 +786,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         UIView.performWithoutAnimation {
-               tableView.reloadSections(IndexSet(integer: currentTargetIndex), with: .none)
-           }
+            tableView.reloadSections(IndexSet(integer: currentTargetIndex), with: .none)
+        }
     }
-
     
+    func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
+        return 60 // 給定合理的估計高度
+    }
     @objc func didTapCompleteButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         guard let trip = trip else { return }
@@ -761,32 +806,103 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let place = places[sectionIndex]
         let placeId = place.id
         
+        // 確保只有當前目標地點可以標記為已完成
         guard sectionIndex == currentTargetIndex else {
             return
         }
         
         let tripId = trip.id
         
+        // Firebase 中更新此地點為已完成
         FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
             if success {
                 print("地点 \(placeId) 和行程 \(tripId) 成功更新")
                 
                 DispatchQueue.main.async {
-                    sender.isSelected = true
-                    sender.isEnabled = false
-                    self.completedPlaceIds.append(placeId)
-                    self.buttonState[self.currentTargetIndex] = false
-                    
-                    self.currentTargetIndex += 1
-                    
-                    self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic)
-                    if self.currentTargetIndex < self.places.count {
-                        self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .automatic)
+                    if let footerView = self.footerViews[sectionIndex] {
+                        // 標記此卡片已翻到「完成」一面
+                        self.isFlipped[sectionIndex] = false
+                        
+                        // 將 footerView 進行翻轉動畫，顯示「已完成」狀態
+                        UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
+                            
+                            // 更新 footerView 的內容
+                            if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                                placeLabel.text = "已完成"
+                                placeLabel.textColor = .systemGreen
+                            }
+                            
+                            if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                                completeButton.isEnabled = false
+                            }
+                            
+                        }, completion: { _ in
+                            // 顯示「翻回去」按鈕
+                            let flipBackButton = UIButton(type: .system)
+                            flipBackButton.setTitle("翻回去", for: .normal)
+                            flipBackButton.addTarget(self, action: #selector(self.didTapFlipBackButton(_:)), for: .touchUpInside)
+                            flipBackButton.tag = sectionIndex
+                            footerView.addSubview(flipBackButton)
+                            
+                            // 設定「翻回去」按鈕約束
+                            flipBackButton.snp.makeConstraints { make in
+                                make.centerX.equalToSuperview()
+                                make.bottom.equalToSuperview().offset(-10)
+                            }
+                        })
+                    } else {
+                        print("FooterView not found")
                     }
                 }
             } else {
                 print("更新失败")
             }
+        }
+    }
+    
+    @objc func didTapFlipBackButton(_ sender: UIButton) {
+        let sectionIndex = sender.tag
+        
+        guard sectionIndex < places.count else {
+            return
+        }
+        
+        if let footerView = self.footerViews[sectionIndex] {
+            // 根據當前的翻轉狀態進行對應的翻轉操作
+            let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
+            
+            let transitionOptions: UIView.AnimationOptions = isCurrentlyFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft]
+            
+            // 更新狀態來允許來回翻轉
+            UIView.transition(with: footerView, duration: 0.5, options: transitionOptions, animations: {
+                if isCurrentlyFlipped {
+                    // 翻回地名的一面
+                    if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                        placeLabel.text = self.places[sectionIndex].name
+                        placeLabel.textColor = .black
+                    }
+                    
+                    if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                        completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .normal)
+                        completeButton.isEnabled = true
+                    }
+                } else {
+                    // 翻到已完成的一面
+                    if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                        placeLabel.text = "已完成"
+                        placeLabel.textColor = .systemGreen
+                    }
+                    
+                    if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                        completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                        completeButton.isEnabled = false
+                    }
+                }
+            }, completion: { _ in
+                // 更新翻轉狀態
+                self.isFlipped[sectionIndex] = !isCurrentlyFlipped
+            })
         }
     }
 }
