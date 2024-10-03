@@ -45,7 +45,8 @@ class CollectionsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
         self.navigationController?.setNavigationBarHidden(false, animated: false)
         //        uploadTripsToFirebase()
         //        uploadPlaces()

@@ -120,7 +120,6 @@ class EstablishViewController: UIViewController {
             print("当前位置：\(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
             self.locationManager.onLocationUpdate = nil
 
-            // 处理位置更新后的逻辑
             self.processWithCurrentLocation(currentLocation)
         }
         locationManager.requestLocation()

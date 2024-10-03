@@ -81,32 +81,36 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                     }
                 
                 // 使用 NLP 模型解析詩詞，生成關鍵字
-                self.processPoemText(poem.content.joined(separator: "\n")) { keywords in
+                LocationService.shared.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                     guard !keywords.isEmpty else {
-                            print("關鍵字生成失敗或無關鍵字")
+                        print("關鍵字生成失敗或無關鍵字")
+                        self.generateView.isUserInteractionEnabled = true
+                        return
+                    }
+
+                    // 使用關鍵字生成行程
+                    LocationService.shared.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
+                        guard let trip = trip else {
+                            print("未生成行程，matchingPlaces 可能為空")
                             self.generateView.isUserInteractionEnabled = true
                             return
                         }
-                    // 使用關鍵字生成行程
-                    self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
-                        guard let trip = trip else {
-                                print("未生成行程，matchingPlaces 可能為空")
-                                self.generateView.isUserInteractionEnabled = true
-                                return
-                            }
-                        
+
                         let placeCoordinates = self.matchingPlaces.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) }
-                        
+
+                        // 顯示關鍵字對應的詩句行
+                        print("Keyword to Line Map: \(keywordToLineMap)")
+
                         // 計算整體路線的總時間和詳細導航指令
                         self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: placeCoordinates) { totalTime, routes in
                             if let totalTime = totalTime {
                                 let totalMinutes = Int(totalTime / 60)
                                 print("總預計交通時間：\(totalMinutes) 分鐘")
                             }
-                            
+
                             self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                         }
-                        
+
                         // 將生成的行程存儲，並解除按鈕的點擊鎖定
                         DispatchQueue.main.async {
                             self.trip = trip
@@ -119,8 +123,10 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         locationManager.startUpdatingLocation()  // 開始獲取位置
     }
 
-    func processPoemText(_ inputText: String, completion: @escaping ([String]) -> Void) {
-        LocationService.shared.processPoemText(inputText, completion: completion)
+    func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
+        LocationService.shared.processPoemText(inputText) { (keywords, keywordToLineMap) in
+            completion(keywords, keywordToLineMap)
+        }
     }
 
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {

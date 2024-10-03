@@ -64,22 +64,22 @@ class PopUpView {
         districtsStackView.removeAllArrangedSubviews()
         
         backgroundView.frame = window.bounds
-        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        window.addSubview(backgroundView)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
-        backgroundView.addGestureRecognizer(tapGesture)
-        
-        popupView.backgroundColor = .deepBlue
-        popupView.layer.cornerRadius = 10
-        popupView.clipsToBounds = true
-        window.addSubview(popupView)
-        
-        popupView.snp.makeConstraints { make in
-            make.center.equalTo(view)
-            make.width.equalTo(view).multipliedBy(0.85)
-            make.height.equalTo(600)
-        }
+            backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+            window.addSubview(backgroundView)
+
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
+            backgroundView.addGestureRecognizer(tapGesture)
+
+            popupView.backgroundColor = .deepBlue
+            popupView.layer.cornerRadius = 10
+            popupView.clipsToBounds = true
+            backgroundView.addSubview(popupView)
+
+            popupView.snp.makeConstraints { make in
+                make.center.equalTo(backgroundView)
+                make.width.equalTo(backgroundView).multipliedBy(0.85)
+                make.height.equalTo(600)
+            }
         
         setupConstraints()
         

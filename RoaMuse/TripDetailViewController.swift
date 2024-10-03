@@ -111,13 +111,13 @@ class TripDetailViewController: UIViewController {
             }
         }
         
-        // 开始位置更新
-        self.locationManager.startUpdatingLocation()
-        self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-            guard let self = self else { return }
-            
-            self.checkDistanceForCurrentTarget(from: currentLocation)
-        }
+//        // 开始位置更新
+//        self.locationManager.startUpdatingLocation()
+//        self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+//            guard let self = self else { return }
+//            
+//            self.checkDistanceForCurrentTarget(from: currentLocation)
+//        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -140,7 +140,16 @@ class TripDetailViewController: UIViewController {
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
             make.width.equalTo(20) // Width of the progress bar
         }
+    }
+    
+    func setupProgressDots() {
+        // 移除之前的进度点
+        for dot in progressDots {
+            dot.removeFromSuperview()
+        }
+        progressDots.removeAll()
         
+        // 添加新的进度点
         for _ in 0..<places.count {
             let dot = UIView()
             dot.backgroundColor = .lightGray
@@ -236,6 +245,7 @@ class TripDetailViewController: UIViewController {
                             return nil
                         }
                     }
+            self.places = self.matchingPlaces.map { $0.place }
             print("Sorted matchingPlaces: \(self.matchingPlaces)")
             
             if let lastCompletedPlaceId = self.completedPlaceIds.last,
@@ -248,10 +258,16 @@ class TripDetailViewController: UIViewController {
             self.placeName = self.places.map { $0.name }
             
             DispatchQueue.main.async {
-                if self.buttonState.count != self.places.count {
-                    self.buttonState = Array(repeating: false, count: self.places.count)
-                }
+                // 初始化 buttonState
+                self.buttonState = Array(repeating: false, count: self.places.count)
+                
+                // 设置进度点（稍后步骤中详细说明）
+                self.setupProgressDots()
+                
+                // 重新加载表格视图
                 self.tableView.reloadData()
+                
+                // **在数据加载完成后开始位置更新**
                 self.locationManager.startUpdatingLocation()
                 self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                     guard let self = self else { return }
@@ -268,6 +284,11 @@ class TripDetailViewController: UIViewController {
             return
         }
         
+        guard currentTargetIndex < buttonState.count else {
+            print("buttonState 未正确初始化")
+            return
+        }
+        
         let place = places[currentTargetIndex]
         let targetLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
         let distance = currentLocation.distance(from: targetLocation)
@@ -281,7 +302,6 @@ class TripDetailViewController: UIViewController {
             tableView.reloadRows(at: [IndexPath(row: 0, section: currentTargetIndex)], with: .none)
         }
     }
-    
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
