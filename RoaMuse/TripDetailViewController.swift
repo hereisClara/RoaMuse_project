@@ -62,9 +62,7 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
 
         navigationController?.navigationBar.barTintColor = UIColor.white
-        
-        print("============", matchingPlaces)
-        print("============", keywordToLineMap)
+        self.buttonState = []
         getPoemPlacePair()
         if let nestedInstructions = nestedInstructions {
             for (index, steps) in nestedInstructions.enumerated() {
@@ -280,30 +278,29 @@ class TripDetailViewController: UIViewController {
             self.placeName = self.places.map { $0.name }
             
             DispatchQueue.main.async {
-                // 初始化 buttonState
-                self.buttonState = Array(repeating: false, count: self.places.count)
-                
-                // 设置进度点
-                self.setupProgressDots()
-                
-                // 重新加载表格视图
-                self.tableView.reloadData()
-                
-                // **檢查已完成的地點並設置狀態**
-                for (index, place) in self.places.enumerated() {
-                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
-                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                self.places = self.matchingPlaces.map { $0.place }
+                    
+                    // Initialize buttonState with the correct count
+                    self.buttonState = Array(repeating: false, count: self.places.count)
+                    self.setupProgressDots()
+                    
+                    // 重新加载表格视图
+                    self.tableView.reloadData()
+                    
+                    // 检查已完成的地点并设置状态
+                    for (index, place) in self.places.enumerated() {
+                        if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                            self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                        }
+                    }
+                    
+                    // 开始位置更新
+                    self.locationManager.startUpdatingLocation()
+                    self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+                        guard let self = self else { return }
+                        self.checkDistanceForCurrentTarget(from: currentLocation)
                     }
                 }
-                
-                // 開始位置更新
-                self.locationManager.startUpdatingLocation()
-                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-                    guard let self = self else { return }
-                    self.checkDistanceForCurrentTarget(from: currentLocation)
-                }
-            }
-
         }
     }
     
@@ -327,11 +324,15 @@ class TripDetailViewController: UIViewController {
         let isWithinThreshold = distance <= distanceThreshold
         
         if isWithinThreshold != buttonState[currentTargetIndex] {
-            buttonState[currentTargetIndex] = isWithinThreshold
-            print("距离 \(isWithinThreshold ? "小于或等于" : "大于") \(distanceThreshold) 米，地点 \(place.name) \(isWithinThreshold ? "可用" : "不可用")")
-            tableView.reloadRows(at: [IndexPath(row: 0, section: currentTargetIndex)], with: .none)
-        }
+                buttonState[currentTargetIndex] = isWithinThreshold
+                
+                // Reload the specific section to update the button state
+                DispatchQueue.main.async {
+                    self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .none)
+                }
+            }
     }
+
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -703,10 +704,31 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerY.equalToSuperview()
         }
         
-        // 根據 isFlipped 狀態來顯示對應的一面
-        updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
-        
-        footerViews[section] = footerView
+        // 设置按钮和标签的初始状态
+            let isCompleted = completedPlaceIds.contains(place.id)
+        let isWithinRange = (section < buttonState.count) ? buttonState[section] : false
+            
+            if isCompleted {
+                // 地点已完成
+                completeButton.isEnabled = true
+                completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
+            } else {
+                // 地点未完成
+                if section == currentTargetIndex && isWithinRange {
+                    // 用户在指定范围内，可以完成地点
+                    completeButton.isEnabled = true
+                    completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                } else {
+                    // 用户不在范围内，按钮禁用
+                    completeButton.isEnabled = false
+                    completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                }
+                placeLabel.text = place.name
+                placeLabel.textColor = .black
+            }
+            
+            footerViews[section] = footerView
         
         return containerView
     }
@@ -763,13 +785,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
         // 更新 footerView 的內容為「已完成」
         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-            placeLabel.text = "已完成"
-            placeLabel.textColor = .systemGreen
-        }
+                placeLabel.text = places[sectionIndex].name
+                placeLabel.textColor = .black
+            }
         
         if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
             completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-            completeButton.isEnabled = false
+            completeButton.isEnabled = true
         }
     }
     
@@ -783,21 +805,18 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let place = places[sectionIndex]
         let placeId = place.id
 
-        // 确保当前 section 可以操作
-        guard sectionIndex == currentTargetIndex else { return }
-
         // 检查翻转状态
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
         let isCompleted = completedPlaceIds.contains(placeId)
 
         if !isCompleted {
-            // 如果地点未完成，先进行完成操作：关闭地图并折叠cell
+            // 地点未完成，执行完成操作
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     DispatchQueue.main.async {
                         self.closeMapAndCollapseCell(at: sectionIndex)
 
-                        // 更新按钮为翻转箭头，并允许点击翻转
+                        // 更新按钮为箭头
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
@@ -819,17 +838,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             }
         } else {
-            // 如果地点已完成，执行翻转操作
+            // 地点已完成，执行翻转动画
             if let footerView = self.footerViews[sectionIndex] {
                 if isCurrentlyFlipped {
-                    // 翻转回地名
+                    // 翻转回地点名称
                     UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
                         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                             placeLabel.text = place.name
                             placeLabel.textColor = .black
-                        }
-                        if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-                            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                         }
                     }, completion: { _ in
                         self.isFlipped[sectionIndex] = false
@@ -851,7 +867,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
 
-    // 用于关闭地图并折叠cell
     func closeMapAndCollapseCell(at sectionIndex: Int) {
         isMapVisible = false
 
@@ -909,6 +924,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
 
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                 completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                completeButton.isEnabled = true // 确保按钮启用
             }
         } else {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
@@ -917,10 +933,17 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
 
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                if completedPlaceIds.contains(place.id) {
+                    // 地点已完成，按钮为箭头
+                    completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                    completeButton.isEnabled = true
+                } else {
+                    // 地点未完成，按钮为勾勾，是否启用取决于用户位置
+                    let isWithinRange = buttonState[sectionIndex]
+                    completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                    completeButton.isEnabled = isWithinRange
+                }
             }
         }
     }
-
-
 }
