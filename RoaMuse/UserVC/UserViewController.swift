@@ -50,6 +50,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             ]
         }
 
+        let navigateBtn = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"), style: .plain, target: self, action: #selector(navigateToSettings))
+            navigationItem.rightBarButtonItems = [navigateBtn]
         
         imagePicker.delegate = self
         setupTableView()
@@ -98,7 +100,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
         
         self.loadUserPosts()
-        setupLogoutButton()
+//        setupLogoutButton()
         loadUserDataFromUserDefaults()
     }
     
@@ -158,6 +160,11 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         loadUserPosts()
     }
     
+    @objc func navigateToSettings() {
+        let settingsViewController = SettingsViewController()
+        settingsViewController.title = "設定"
+        navigationController?.pushViewController(settingsViewController, animated: true)
+    }
     
     @objc func updateAwardTitle(_ notification: Notification) {
         if let userInfo = notification.userInfo, let newTitle = userInfo["title"] as? String {
@@ -321,10 +328,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
-    func setupLogoutButton() {
-        let logoutButton = UIBarButtonItem(title: "登出", style: .plain, target: self, action: #selector(logout))
-        self.navigationItem.rightBarButtonItem = logoutButton
-    }
+//    func setupLogoutButton() {
+//        let logoutButton = UIBarButtonItem(title: "登出", style: .plain, target: self, action: #selector(logout))
+//        self.navigationItem.rightBarButtonItem = logoutButton
+//    }
     
     @objc func logout() {
         // 清空 UserDefaults

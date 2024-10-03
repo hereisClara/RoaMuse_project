@@ -663,18 +663,15 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             return nil
         }
         
-        // 創建透明的 containerView
         let containerView = UIView()
-        containerView.backgroundColor = .clear // 透明背景
-        
-        // 創建 footerView，並添加到 containerView 中
+        containerView.backgroundColor = .clear
+
         let footerView = UIView()
         footerView.backgroundColor = .systemGray3
         footerView.layer.cornerRadius = 20
-        footerView.layer.masksToBounds = true // 讓角落變成圓角
+        footerView.layer.masksToBounds = true
         containerView.addSubview(footerView)
         
-        // 設置 footerView 的內縮約束，讓它看起來內縮
         footerView.snp.makeConstraints { make in
             make.top.equalTo(containerView).offset(10)
             make.bottom.equalTo(containerView).offset(-10)
@@ -682,10 +679,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.trailing.equalTo(containerView)
         }
         
-        // 創建 placeLabel 並加入 footerView
         let placeLabel = UILabel()
         let place = places[section]
-        placeLabel.text = place.name
         placeLabel.font = UIFont.systemFont(ofSize: 18)
         placeLabel.numberOfLines = 0
         footerView.addSubview(placeLabel)
@@ -695,9 +690,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerY.equalToSuperview()
         }
         
-        // 創建 completeButton 並加入 footerView
         let completeButton = UIButton(type: .system)
-        //        completeButton.setTitle("完成", for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
         completeButton.isEnabled = !completedPlaceIds.contains(place.id)
@@ -710,9 +703,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerY.equalToSuperview()
         }
         
-        if completedPlaceIds.contains(place.id) {
-            setupCompletedFooterView(footerView: footerView, sectionIndex: section)
-        }
+        // 根據 isFlipped 狀態來顯示對應的一面
+        updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
         
         footerViews[section] = footerView
         
@@ -791,100 +783,110 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let place = places[sectionIndex]
         let placeId = place.id
 
-        // 確保只有當前目標地點可以標記為已完成
+        // 确保当当前 section 可以操作
         guard sectionIndex == currentTargetIndex else { return }
 
-        // 檢查是否已經翻轉過
+        // 检查翻转状态
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
+        let isCompleted = completedPlaceIds.contains(placeId)
 
-        if isCurrentlyFlipped {
-            // 翻轉回地名
-            UIView.transition(with: sender.superview!, duration: 0.5, options: [.transitionFlipFromRight], animations: {
-                if let placeLabel = sender.superview?.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                    placeLabel.text = place.name
-                    placeLabel.textColor = .black
-                }
-                sender.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-            }, completion: { _ in
-                self.isFlipped[sectionIndex] = false
-            })
-        } else {
-            // 翻轉到詩句並更新 Firebase
+        if !isCompleted {
+            // 如果地点未完成，先进行完成操作：关闭地图并折叠cell
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     DispatchQueue.main.async {
-                        if let footerView = self.footerViews[sectionIndex] {
-                            self.isFlipped[sectionIndex] = true
+                        self.closeMapAndCollapseCell(at: sectionIndex)
 
-                            // 翻轉動畫顯示詩句
-                            UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
-                                if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                                    if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
-                                        placeLabel.text = poemPair.poemLine
-                                        placeLabel.textColor = .systemGreen
-                                    }
-                                }
-
-                                // 改變按鈕圖標為翻轉圖標
-                                if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-                                    completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
-                                }
-                            }, completion: { _ in
-                                // 收合當前 section 並展開下一個或收合最後一個
-                                self.collapseCurrentAndExpandNext(sectionIndex)
-                            })
+                        // 更新按钮为翻转箭头
+                        if let footerView = self.footerViews[sectionIndex],
+                           let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                         }
+                        // 记录地点为已完成
+                        self.completedPlaceIds.append(placeId)
+                        self.isFlipped[sectionIndex] = false
                     }
                 } else {
-                    print("更新失敗")
+                    print("更新失败")
+                }
+            }
+        } else {
+            // 如果地点已完成，执行翻转操作
+            if let footerView = self.footerViews[sectionIndex] {
+                if isCurrentlyFlipped {
+                    // 翻转回地名
+                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
+                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                            placeLabel.text = place.name
+                            placeLabel.textColor = .black
+                        }
+                        if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                        }
+                    }, completion: { _ in
+                        self.isFlipped[sectionIndex] = false
+                    })
+                } else {
+                    // 翻转到诗句
+                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
+                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                            if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+                                placeLabel.text = poemPair.poemLine
+                                placeLabel.textColor = .systemGreen
+                            }
+                        }
+                    }, completion: { _ in
+                        self.isFlipped[sectionIndex] = true
+                    })
                 }
             }
         }
     }
 
-    func collapseCurrentAndExpandNext(_ currentSection: Int) {
-        let nextSection = currentSection + 1
+    // 用于关闭地图并折叠cell
+    func closeMapAndCollapseCell(at sectionIndex: Int) {
+        isMapVisible = false
 
         UIView.animate(withDuration: 0.3, animations: {
-            // 將當前 section 的 cell 收合，並將 cell 的高度設置為 0
-            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: currentSection)) {
+            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
                 cell.contentView.alpha = 0
                 cell.isHidden = true
             }
-
-            // 立刻更新 footer 並上推
-            self.tableView.performBatchUpdates({
-                self.tableView.beginUpdates()
-                self.tableView.endUpdates()
-            }, completion: { _ in
-                // 展開下一個 section
-                if nextSection < self.places.count {
-                    self.currentTargetIndex = nextSection
-                    if let nextCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: nextSection)) {
-                        nextCell.isHidden = false
-                        nextCell.contentView.alpha = 1
-                    }
-                } else {
-                    // 如果是最後一個 section，執行收合
-                    self.collapseLastSection(currentSection)
-                }
-            })
         })
+
+        UIView.performWithoutAnimation {
+            self.tableView.beginUpdates()
+            self.tableView.endUpdates()
+
+            // 重新加载cell，使其高度变为0
+            self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .none)
+        }
     }
 
-    func collapseLastSection(_ sectionIndex: Int) {
-        UIView.animate(withDuration: 0.3, animations: {
-            // 隱藏最後一個 section 的 cell
-            if let lastCell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
-                lastCell.contentView.alpha = 0
-                lastCell.isHidden = true
+    func updateFooterViewForFlippedState(_ footerView: UIView, sectionIndex: Int, place: Place) {
+        let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
+        if isCurrentlyFlipped {
+            if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+                    placeLabel.text = poemPair.poemLine
+                    placeLabel.textColor = .systemGreen
+                }
             }
 
-            // 通知 tableView 更新佈局
-            self.tableView.performBatchUpdates({
-                self.tableView.beginUpdates()
-                self.tableView.endUpdates()
-            })
-        })
+            if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+            }
+        } else {
+            if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                placeLabel.text = place.name
+                placeLabel.textColor = .black
+            }
+
+            if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            }
+        }
     }
+
+
 }
