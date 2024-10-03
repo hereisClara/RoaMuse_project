@@ -22,6 +22,7 @@ class TripDetailViewController: UIViewController {
     var selectedTransportType: MKDirectionsTransportType = .automobile
     var transportBackgroundView: UIView?
     var transportButtonsViewWidthConstraint: Constraint?
+    let locationButton = UIButton()
     
     var keywordToLineMap = [String: String]()
     var matchingPlaces = [(keyword: String, place: Place)]()
@@ -437,7 +438,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         buttonsView.isUserInteractionEnabled = true
         
         // 设置 locateButton
-        let locationButton = UIButton()
         locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
         locationButton.tintColor = .white
         locationButton.backgroundColor = .systemGray4
@@ -783,7 +783,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let place = places[sectionIndex]
         let placeId = place.id
 
-        // 确保当当前 section 可以操作
+        // 确保当前 section 可以操作
         guard sectionIndex == currentTargetIndex else { return }
 
         // 检查翻转状态
@@ -797,14 +797,22 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     DispatchQueue.main.async {
                         self.closeMapAndCollapseCell(at: sectionIndex)
 
-                        // 更新按钮为翻转箭头
+                        // 更新按钮为翻转箭头，并允许点击翻转
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                         }
+
                         // 记录地点为已完成
                         self.completedPlaceIds.append(placeId)
                         self.isFlipped[sectionIndex] = false
+                        
+                        // 展开下一个 section 的 cell（如果有的话）
+                        if sectionIndex + 1 < self.places.count {
+                            self.expandNextCell(at: sectionIndex + 1)
+                        } else {
+                            self.checkIfAllPlacesCompleted()
+                        }
                     }
                 } else {
                     print("更新失败")
@@ -861,6 +869,32 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             // 重新加载cell，使其高度变为0
             self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .none)
         }
+    }
+
+    // 用于展开下一个 section 的 cell
+    func expandNextCell(at sectionIndex: Int) {
+        guard sectionIndex < places.count else { return }
+
+        currentTargetIndex = sectionIndex
+        isMapVisible = true
+
+        // 重新加载下一个section并展开cell
+        UIView.performWithoutAnimation {
+            self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic)
+        }
+    }
+
+    // 检查是否所有地点都已完成
+    func checkIfAllPlacesCompleted() {
+        if completedPlaceIds.count == places.count {
+            disableLocateButton()
+        }
+    }
+
+    // 禁用 locateButton
+    func disableLocateButton() {
+        locationButton.isEnabled = false
+        locationButton.backgroundColor = .systemGray5
     }
 
     func updateFooterViewForFlippedState(_ footerView: UIView, sectionIndex: Int, place: Place) {
