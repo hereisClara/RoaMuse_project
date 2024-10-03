@@ -111,3 +111,8 @@ struct TaskSet {
     var totalTasks: Int
     var completedTasks: Int
 }
+
+struct PlacePoemPair {
+    let placeId: String
+    let poemLine: String
+}

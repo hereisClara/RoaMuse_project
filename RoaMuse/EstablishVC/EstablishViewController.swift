@@ -23,7 +23,8 @@ class EstablishViewController: UIViewController {
     var districts = [String]()
     var keywordToLineMap = [String: String]()
     var matchingPlaces = [(keyword: String, place: Place)]()
-
+    var placePoemPairs = [PlacePoemPair]()
+    
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
     private let styleLabel = UILabel()
@@ -181,6 +182,7 @@ class EstablishViewController: UIViewController {
                     let keyword = prediction.label
                     allResults.append(keyword)
                     keywordToLineMap[keyword] = segment
+                    print("          ", keywordToLineMap)
                 } catch {
                     print("Error in prediction: \(error)")
                 }
@@ -482,7 +484,16 @@ extension EstablishViewController {
                                     weather: nil,
                                     startTime: nil
                                 )
-                                completion(trip)
+                                
+                                self.getPoemPlacePair()  // Make sure placePoemPairs is populated
+                                self.saveSimplePlacePoemPairsToFirebase(tripId: documentID, simplePairs: self.placePoemPairs) { success in
+                                    if success {
+                                        print("Successfully saved placePoemPairs to Firebase.")
+                                    } else {
+                                        print("Failed to save placePoemPairs to Firebase.")
+                                    }
+                                    completion(trip)
+                                }
                             }
                         }
                     }
@@ -551,7 +562,6 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         cell?.descriptionLabel.text = styles[indexPath.row].introduction
         cell?.selectionStyle = .none
         
-        //        TODO: cell另外做
         return cell ?? UITableViewCell()
     }
     
@@ -566,4 +576,48 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             
         }
     }
+}
+
+extension EstablishViewController {
+    
+    func getPoemPlacePair() {
+        
+        placePoemPairs.removeAll()
+        
+        for matchingPlace in matchingPlaces {
+            let keyword = matchingPlace.keyword
+            
+            if let poemLine = keywordToLineMap[keyword] {
+                let placePoemPair = PlacePoemPair(placeId: matchingPlace.place.id, poemLine: poemLine)
+                placePoemPairs.append(placePoemPair)
+            }
+        }
+        
+        print("++++++  ", placePoemPairs)
+    }
+    
+    func saveSimplePlacePoemPairsToFirebase(tripId: String, simplePairs: [PlacePoemPair], completion: @escaping (Bool) -> Void) {
+        let db = Firestore.firestore()
+        let tripRef = db.collection("trips").document(tripId)
+
+        let placePoemData = simplePairs.map { pair in
+            return [
+                "placeId": pair.placeId,
+                "poemLine": pair.poemLine
+            ] as [String : Any]
+        }
+        
+        tripRef.updateData([
+            "placePoemPairs": placePoemData
+        ]) { error in
+            if let error = error {
+                print("Error updating document: \(error)")
+                completion(false)
+            } else {
+                print("Document successfully updated with placePoemPairs")
+                completion(true)
+            }
+        }
+    }
+
 }

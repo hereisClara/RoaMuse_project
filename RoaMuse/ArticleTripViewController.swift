@@ -77,45 +77,44 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         } else if authorizationStatus == .notDetermined {
             locationManager.requestWhenInUseAuthorization()
         } else {
-            print("定位权限被拒绝或受限")
             generateView.isUserInteractionEnabled = true
         }
     }
     
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
-        FirebaseManager.shared.loadPoemById(self.poemId) { poem in
-            if poem.content.isEmpty {
-                print("未找到诗词，内容为空")
-                DispatchQueue.main.async {
-                    self.generateView.isUserInteractionEnabled = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            FirebaseManager.shared.loadPoemById(self.poemId) { poem in
+                if poem.content.isEmpty {
+                    DispatchQueue.main.async {
+                        self.generateView.isUserInteractionEnabled = true
+                    }
+                    return
                 }
-                return
-            }
 
-            self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
-                self.keywordToLineMap = keywordToLineMap
-                self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
-                    if let trip = trip {
-                        print("成功生成 trip：\(trip)")
-                        let places = self.matchingPlaces.map { $0.place }
-                        self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
+                self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                    self.keywordToLineMap = keywordToLineMap
+                    self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
+                        if let trip = trip {
+                            print("成功生成 trip：\(trip)")
+                            let places = self.matchingPlaces.map { $0.place }
+                            self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
+                                DispatchQueue.main.async {
+                                    self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                    self.trip = trip
+                                    self.generateView.isUserInteractionEnabled = true
+                                }
+                            }
+                        } else {
+                            print("未能生成行程")
                             DispatchQueue.main.async {
-                                self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
-                                self.trip = trip
                                 self.generateView.isUserInteractionEnabled = true
                             }
-                        }
-                    } else {
-                        print("未能生成行程")
-                        DispatchQueue.main.async {
-                            self.generateView.isUserInteractionEnabled = true
                         }
                     }
                 }
             }
         }
     }
-
 
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         let dispatchGroup = DispatchGroup()
@@ -125,18 +124,23 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         self.matchingPlaces.removeAll()
         let searchRadius: Double = 15000 // 定义搜索半径
 
-        for keyword in keywords {
+        let maxKeywords = 3
+        let limitedKeywords = Array(keywords.prefix(maxKeywords))
+        let keywordQueue = DispatchQueue(label: "keywordQueue", attributes: .concurrent)
+
+        for keyword in limitedKeywords {
             dispatchGroup.enter()
-            self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, searchRadius: searchRadius, dispatchGroup: dispatchGroup) { validPlaceFound in
-                if validPlaceFound {
-                    foundValidPlace = true
+            keywordQueue.async {
+                self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, searchRadius: searchRadius, dispatchGroup: dispatchGroup) { validPlaceFound in
+                    if validPlaceFound {
+                        foundValidPlace = true
+                    }
                 }
             }
         }
 
         dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
             if foundValidPlace, self.matchingPlaces.count >= 1 {
-                print("matchingPlaces: \(self.matchingPlaces)")
                 FirebaseManager.shared.saveTripToFirebase(poem: poem, matchingPlaces: self.matchingPlaces) { trip in
                     DispatchQueue.main.async {
                         completion(trip)
@@ -151,6 +155,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     }
 
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
+        print("Start processing keyword: \(keyword)")
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
             let nearbyPlaces = places.filter { place in
                 let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
@@ -181,11 +186,12 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                         dispatchGroup.leave()
                     }
                 } else {
+                    // 如果 randomPlace 为 nil
                     completion(false)
                     dispatchGroup.leave()
                 }
             } else {
-                // 如果没有找到符合条件的地方，可以执行其他逻辑，例如调用 Google Place API
+                // 调用 PlaceDataManager 搜索
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
@@ -223,9 +229,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         DispatchQueue.global(qos: .userInitiated).async {
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             
-            // 确保NLP模型正常加载
             guard let model = try? poemLocationNLP3(configuration: .init()) else {
-                print("NLP 模型加载失败")
                 return
             }
             
@@ -238,7 +242,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                     allResults.append(landscape)
                     keywordToLineMap[landscape] = segment
                 } catch {
-                    print("分析失败：\(error.localizedDescription)")
+
                 }
             }
             
@@ -269,7 +273,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     
     @objc func didTapCollectButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            print("無法獲取 userId")
             return
         }
         
@@ -283,7 +286,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                 if let error = error {
                     print("從 bookmarkTrip 中移除 tripId 時出錯: \(error.localizedDescription)")
                 } else {
-                    print("成功將 tripId 從 bookmarkTrip 中移除")
+
                 }
             }
         } else {
@@ -294,7 +297,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                 if let error = error {
                     print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
                 } else {
-                    print("成功將 tripId 添加到 bookmarkTrip 中")
+                    
                 }
             }
         }
@@ -305,7 +308,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     
     func checkIfTripBookmarked() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            print("無法獲取 userId")
+            
             return
         }
         
@@ -555,7 +558,8 @@ extension ArticleTripViewController: PopupViewDelegate {
         
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
-
+        tripDetailVC.keywordToLineMap = self.keywordToLineMap
+        
         FirebaseManager.shared.loadPlacesByIds(placeIds: trip.placeIds) { [weak self] places in
             guard let self = self else { return }
             

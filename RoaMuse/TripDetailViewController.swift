@@ -25,6 +25,7 @@ class TripDetailViewController: UIViewController {
     
     var keywordToLineMap = [String: String]()
     var matchingPlaces = [(keyword: String, place: Place)]()
+    var placePoemPairs = [PlacePoemPair]()
     
     let buttonTitles = ["car.fill", "figure.walk", "bicycle", "tram.fill"]
     
@@ -58,6 +59,9 @@ class TripDetailViewController: UIViewController {
 
         navigationController?.navigationBar.barTintColor = UIColor.white
         
+        print("============", matchingPlaces)
+        print("============", keywordToLineMap)
+        getPoemPlacePair()
         if let nestedInstructions = nestedInstructions {
             for (index, steps) in nestedInstructions.enumerated() {
                 print("導航段落 \(index):")
@@ -175,6 +179,22 @@ class TripDetailViewController: UIViewController {
         }
     }
     
+    func getPoemPlacePair() {
+        
+        placePoemPairs.removeAll()
+        
+        for matchingPlace in matchingPlaces {
+            let keyword = matchingPlace.keyword
+            
+            if let poemLine = keywordToLineMap[keyword] {
+                let placePoemPair = PlacePoemPair(placeId: matchingPlace.place.id, poemLine: poemLine)
+                placePoemPairs.append(placePoemPair)
+            }
+        }
+        
+        print("++++++  ", placePoemPairs)
+    }
+    
     func updateProgress(for placeIndex: Int) {
         if placeIndex < progressDots.count {
             let dot = progressDots[placeIndex]
@@ -211,8 +231,6 @@ class TripDetailViewController: UIViewController {
     }
     
     func loadPlacesDataFromFirebase() {
-        
-//        self.matchingPlaces.removeAll()
         
         guard let trip = trip else { return }
         
