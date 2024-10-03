@@ -203,9 +203,19 @@ class TripDetailViewController: UIViewController {
     
     func loadPlacesDataFromFirebase() {
         
-        self.matchingPlaces.removeAll()
+//        self.matchingPlaces.removeAll()
         
         guard let trip = trip else { return }
+        
+        self.places = self.matchingPlaces.map { $0.place }
+        
+        self.places.sort { (place1, place2) -> Bool in
+                guard let index1 = trip.placeIds.firstIndex(of: place1.id),
+                      let index2 = trip.placeIds.firstIndex(of: place2.id) else {
+                    return false
+                }
+                return index1 < index2
+            }
         
         let placeIds = trip.placeIds
         

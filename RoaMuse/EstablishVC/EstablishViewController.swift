@@ -113,8 +113,11 @@ class EstablishViewController: UIViewController {
         recommendRandomTripView.isUserInteractionEnabled = false
         
         locationManager.onLocationUpdate = { [weak self] currentLocation in
-            guard let self = self else { return }
-            
+            print("onLocationUpdate 被调用")
+            guard let self = self else { 
+                print("self 为 nil，退出闭包")
+                return }
+            print("当前位置：\(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
             self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
             
@@ -128,6 +131,7 @@ class EstablishViewController: UIViewController {
                         self.keywordToLineMap = keywordToLineMap
                         self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
                             if let trip = trip {
+                                print("成功生成 trip：\(trip)")
                                 let places = self.matchingPlaces.map { $0.place }
                                 self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
                                     if let totalTravelTime = totalTravelTime {
@@ -140,7 +144,11 @@ class EstablishViewController: UIViewController {
                                 DispatchQueue.main.async {
                                     self.trip = trip
                                 }
+                            } else {
+                                print("生成 trip 失败，trip 为 nil")
                             }
+                            
+                            
                             self.recommendRandomTripView.isUserInteractionEnabled = true
                         }
                     }
@@ -196,6 +204,7 @@ class EstablishViewController: UIViewController {
         dispatchGroup.notify(queue: .main) {
             // 检查找到的地点数量是否满足要求（至少一个）
             if foundValidPlace, self.matchingPlaces.count > 0 {
+                print("matchingPlaces: \(self.matchingPlaces)")
                 self.saveTripToFirebase(poem: poem, completion: completion)
             } else {
                 completion(nil)
