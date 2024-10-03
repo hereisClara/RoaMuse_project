@@ -24,7 +24,6 @@ class EstablishViewController: UIViewController {
     var keywordToLineMap = [String: String]()
     var matchingPlaces = [(keyword: String, place: Place)]()
 
-    
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
     private let styleLabel = UILabel()
@@ -261,66 +260,6 @@ class EstablishViewController: UIViewController {
         }
     }
 
-    func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
-        
-        let keywordPlaceIds = self.matchingPlaces.map { ["keyword": $0.keyword, "placeId": $0.place.id] }
-
-        let tripData: [String: Any] = [
-            "poemId": poem.id,
-            "placeIds": self.matchingPlaces.map { $0.place.id },
-            "keywordPlaceIds": keywordPlaceIds,
-            "tag": poem.tag
-        ]
-
-        
-        FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
-            if exists, let existingTripId = existingTripId {
-                let existingTrip = Trip(
-                    poemId: poem.id,
-                    id: existingTripId,
-                    placeIds: self.matchingPlaces.map { $0.place.id },
-                    tag: poem.tag,
-                    season: nil,
-                    weather: nil,
-                    startTime: nil
-                )
-                completion(existingTrip)
-            } else {
-                let db = Firestore.firestore()
-                var documentRef: DocumentReference? = nil
-                documentRef = db.collection("trips").addDocument(data: tripData) { error in
-                    if let error = error {
-                        completion(nil)
-                    } else {
-                        guard let documentID = documentRef?.documentID else {
-                            completion(nil)
-                            return
-                        }
-
-                        // 更新 tripId
-                        documentRef?.updateData(["id": documentID]) { error in
-                            if let error = error {
-                                
-                                completion(nil)
-                            } else {
-                                let trip = Trip(
-                                    poemId: poem.id,
-                                    id: documentID,
-                                    placeIds: self.matchingPlaces.map { $0.place.id },
-                                    tag: poem.tag,
-                                    season: nil,
-                                    weather: nil,
-                                    startTime: nil
-                                )
-                                completion(trip)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
         let request = MKDirections.Request()
         
@@ -465,7 +404,70 @@ class EstablishViewController: UIViewController {
     }
 }
 
+extension EstablishViewController {
+    
+    func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
+        
+        let keywordPlaceIds = self.matchingPlaces.map { ["keyword": $0.keyword, "placeId": $0.place.id] }
 
+        let tripData: [String: Any] = [
+            "poemId": poem.id,
+            "placeIds": self.matchingPlaces.map { $0.place.id },
+            "keywordPlaceIds": keywordPlaceIds,
+            "tag": poem.tag
+        ]
+
+        
+        FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
+            if exists, let existingTripId = existingTripId {
+                let existingTrip = Trip(
+                    poemId: poem.id,
+                    id: existingTripId,
+                    placeIds: self.matchingPlaces.map { $0.place.id },
+                    keywordPlaceIds: nil,
+                    tag: poem.tag,
+                    season: nil,
+                    weather: nil,
+                    startTime: nil
+                )
+                completion(existingTrip)
+            } else {
+                let db = Firestore.firestore()
+                var documentRef: DocumentReference? = nil
+                documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                    if let error = error {
+                        completion(nil)
+                    } else {
+                        guard let documentID = documentRef?.documentID else {
+                            completion(nil)
+                            return
+                        }
+
+                        // 更新 tripId
+                        documentRef?.updateData(["id": documentID]) { error in
+                            if let error = error {
+                                
+                                completion(nil)
+                            } else {
+                                let trip = Trip(
+                                    poemId: poem.id,
+                                    id: documentID,
+                                    placeIds: self.matchingPlaces.map { $0.place.id },
+                                    keywordPlaceIds: nil,
+                                    tag: poem.tag,
+                                    season: nil,
+                                    weather: nil,
+                                    startTime: nil
+                                )
+                                completion(trip)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 extension EstablishViewController: PopupViewDelegate {
     

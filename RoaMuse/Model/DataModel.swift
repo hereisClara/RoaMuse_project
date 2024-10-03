@@ -42,16 +42,18 @@ struct Poem: Codable {
     let time: Int?
 }
 
+// TODO: 更新資料結構 還有homeVC跟articleTripVC的keyword傳值
 struct Trip: Codable {
     let poemId: String
     let id: String
     let placeIds: [String]
     let keywordPlaceIds: [[String: String]]?
     let tag: Int
-    let season: String?
-    let weather: String?
-    let startTime: Date?
+    let season: Int?      // 修改为 Int?
+    let weather: Int?     // 修改为 Int?
+    let startTime: Date?  // 保持为 Date?
 }
+
 
 // 定義 Place 結構，存放地點詳細資料
 struct Place: Codable, Hashable {

@@ -871,7 +871,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                    let tag = data["tag"] as? Int,
                    let season = data["season"] as? Int,
                    let weather = data["weather"] as? Int,
-                   let startTime = data["startTime"] as? Int {
+                   let startTime = (data["startTime"] as? Timestamp)?.dateValue() {
                     
                     let places = placesData.compactMap { placeDict in
                         return placeDict["id"] as? String
@@ -891,7 +891,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                     let trip = Trip(
                         poemId: poem.id,  // 使用 poemId
                         id: self.tripId,
-                        placeIds: places, // 這裡應該是 places，類型是 [String]
+                        placeIds: places, 
+                        keywordPlaceIds: nil,
                         tag: tag,
                         season: season,
                         weather: weather,
