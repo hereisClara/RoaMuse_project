@@ -18,7 +18,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 10
-        locationManager.requestWhenInUseAuthorization()
+        
     }
 
     func startUpdatingLocation() {
@@ -29,24 +29,36 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.stopUpdatingLocation()
     }
     
+    func requestWhenInUseAuthorization() {
+            locationManager.requestWhenInUseAuthorization()
+        }
+    
+    func requestLocation() {
+        locationManager.requestLocation()
+    }
+
+    
     func setTargetLocation(latitude: Double, longitude: Double) {
         targetLocation = CLLocation(latitude: latitude, longitude: longitude)
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.first {
-            currentLocation = location
-            onLocationUpdate?(location)
-//            stopUpdatingLocation()
+            print("位置更新：\(location.coordinate.latitude), \(location.coordinate.longitude)")
+            self.currentLocation = location
+            self.onLocationUpdate?(location)
+            // 只在授权后开始定位，因此无需再次停止
         } else {
-            print("未獲取到有效位置數據")
+            print("未获取到有效位置数据")
         }
     }
+
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
-            locationManager.startUpdatingLocation()
+//            locationManager.startUpdatingLocation()
+            print("位置授权已获得")
         case .denied, .restricted:
             print("位置授權被拒絕或受限")
         default:

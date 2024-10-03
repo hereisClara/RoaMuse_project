@@ -48,7 +48,7 @@ class EstablishViewController: UIViewController {
         }
         view.backgroundColor = UIColor(resource: .backgroundGray)
         styleTableView.register(StyleTableViewCell.self, forCellReuseIdentifier: "styleCell")
-        
+        locationManager.requestWhenInUseAuthorization()
         popupView.delegate = self
         
         setupUI()
@@ -109,23 +109,31 @@ class EstablishViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-        
         recommendRandomTripView.isUserInteractionEnabled = false
-        
+
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             print("onLocationUpdate 被调用")
-            guard let self = self else { 
+            guard let self = self else {
                 print("self 为 nil，退出闭包")
-                return }
+                return
+            }
             print("当前位置：\(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
-            self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
-            
+
+            // 处理位置更新后的逻辑
+            self.processWithCurrentLocation(currentLocation)
+        }
+        locationManager.requestLocation()
+    }
+
+    func processWithCurrentLocation(_ currentLocation: CLLocation) {
+        // 将耗时操作放在后台线程中
+        DispatchQueue.global(qos: .userInitiated).async {
             FirebaseManager.shared.loadAllPoems { poems in
                 let filteredPoems = poems.filter { poem in
                     return poem.tag == self.styleTag
                 }
-                
+
                 if let randomPoem = filteredPoems.randomElement() {
                     self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                         self.keywordToLineMap = keywordToLineMap
@@ -134,80 +142,87 @@ class EstablishViewController: UIViewController {
                                 print("成功生成 trip：\(trip)")
                                 let places = self.matchingPlaces.map { $0.place }
                                 self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
-                                    if let totalTravelTime = totalTravelTime {
-                                        let totalMinutes = Int(totalTravelTime / 60)
+                                    DispatchQueue.main.async {
+                                        self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                        self.trip = trip
+                                        self.recommendRandomTripView.isUserInteractionEnabled = true
                                     }
-                                    
-                                    self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    self.trip = trip
                                 }
                             } else {
                                 print("生成 trip 失败，trip 为 nil")
+                                DispatchQueue.main.async {
+                                    self.recommendRandomTripView.isUserInteractionEnabled = true
+                                }
                             }
-                            
-                            
-                            self.recommendRandomTripView.isUserInteractionEnabled = true
                         }
                     }
                 } else {
-                    self.recommendRandomTripView.isUserInteractionEnabled = true
+                    DispatchQueue.main.async {
+                        self.recommendRandomTripView.isUserInteractionEnabled = true
+                    }
                 }
             }
         }
-        locationManager.startUpdatingLocation()
     }
-    
+
     func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
-        let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-        
-        guard let model = try? poemLocationNLP3(configuration: .init()) else {
-            return
-        }
-        
-        var allResults = [String]()
-        var keywordToLineMap = [String: String]() // 添加关键字到诗句行的映射
-        
-        for segment in textSegments {
-            do {
-                let prediction = try model.prediction(text: segment)
-                let keyword = prediction.label
-                allResults.append(keyword)
-                keywordToLineMap[keyword] = segment // 保存关键字和诗句行的对应关系
-            } catch {
-                print("Error in prediction: \(error)")
+        DispatchQueue.global(qos: .userInitiated).async {
+            let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            
+            guard let model = try? poemLocationNLP3(configuration: .init()) else {
+                return
+            }
+            
+            var allResults = [String]()
+            var keywordToLineMap = [String: String]()
+            
+            for segment in textSegments {
+                do {
+                    let prediction = try model.prediction(text: segment)
+                    let keyword = prediction.label
+                    allResults.append(keyword)
+                    keywordToLineMap[keyword] = segment
+                } catch {
+                    print("Error in prediction: \(error)")
+                }
+            }
+            DispatchQueue.main.async {
+                completion(Array(Set(allResults)), keywordToLineMap)
             }
         }
-        completion(Array(Set(allResults)), keywordToLineMap) // 返回关键字和映射
     }
 
-    
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
-        let dispatchGroup = DispatchGroup()
-        var foundValidPlace = false
-        self.city = "" // 清空現有的城市
-        self.districts.removeAll() // 清空現有的行政區
-        self.matchingPlaces.removeAll() // 确保每次只处理新的地点
+        DispatchQueue.global(qos: .userInitiated).async {
+            let dispatchGroup = DispatchGroup()
+            var foundValidPlace = false
+            self.city = ""
+            self.districts.removeAll()
+            self.matchingPlaces.removeAll()
 
-        for keyword in keywords {
-            dispatchGroup.enter()
-            processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, dispatchGroup: dispatchGroup) { validPlaceFound in
-                if validPlaceFound {
-                    foundValidPlace = true
+            for keyword in keywords {
+                dispatchGroup.enter()
+                self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, dispatchGroup: dispatchGroup) { validPlaceFound in
+                    if validPlaceFound {
+                        foundValidPlace = true
+                    }
+                    dispatchGroup.leave()
                 }
-                dispatchGroup.leave() // 确保在完成后退出 dispatchGroup
             }
-        }
 
-        dispatchGroup.notify(queue: .main) {
-            // 检查找到的地点数量是否满足要求（至少一个）
-            if foundValidPlace, self.matchingPlaces.count > 0 {
-                print("matchingPlaces: \(self.matchingPlaces)")
-                self.saveTripToFirebase(poem: poem, completion: completion)
-            } else {
-                completion(nil)
+            dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
+                if foundValidPlace, self.matchingPlaces.count > 0 {
+                    print("matchingPlaces: \(self.matchingPlaces)")
+                    self.saveTripToFirebase(poem: poem) { trip in
+                        DispatchQueue.main.async {
+                            completion(trip)
+                        }
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        completion(nil)
+                    }
+                }
             }
         }
     }
@@ -261,7 +276,7 @@ class EstablishViewController: UIViewController {
                             }
                         }
                     } else {
-                        completion(false) // 没有找到新的地点
+                        completion(false)
                     }
                 }
                 
@@ -483,20 +498,23 @@ extension EstablishViewController: PopupViewDelegate {
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
-        tripDetailVC.matchingPlaces = self.matchingPlaces // 传递 matchingPlaces
+        tripDetailVC.matchingPlaces = self.matchingPlaces // 确保 TripDetailViewController 能处理新的数据结构
         tripDetailVC.keywordToLineMap = self.keywordToLineMap // 传递 keywordToLineMap
+
         if let currentLocation = locationManager.currentLocation?.coordinate {
             let places = matchingPlaces.map { $0.place } // 提取 Place 数组
             calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { [weak self] totalTravelTime, nestedInstructions in
                 guard let self = self else { return }
-                
+
                 if let totalTravelTime = totalTravelTime, let nestedInstructions = nestedInstructions {
                     tripDetailVC.totalTravelTime = totalTravelTime // 传递总交通时间
                     tripDetailVC.nestedInstructions = nestedInstructions // 传递嵌套的导航指令数组
                 }
-                
+
                 // 跳转到 TripDetailViewController
-                self.navigationController?.pushViewController(tripDetailVC, animated: true)
+                DispatchQueue.main.async {
+                    self.navigationController?.pushViewController(tripDetailVC, animated: true)
+                }
             }
         }
     }

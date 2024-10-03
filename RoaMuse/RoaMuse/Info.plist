@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>我們需要使用您的位置信息來提供更好的服務</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>instagram-stories</string>
