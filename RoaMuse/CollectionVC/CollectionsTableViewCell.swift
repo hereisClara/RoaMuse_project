@@ -39,7 +39,6 @@ class CollectionsTableViewCell: UITableViewCell {
             make.bottom.equalTo(contentView).inset(10)
             make.width.equalTo(contentView)
             make.center.equalTo(contentView)
-            // 讓 containerView 與 contentView 之間有 10 點的間距
         }
         
         // 添加 titleLabel 到 containerView 中

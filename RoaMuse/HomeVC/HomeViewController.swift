@@ -48,6 +48,18 @@ class HomeViewController: UIViewController {
         
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 300)
         
+        bottomSheetManager?.addActionButton(title: "隱藏貼文") {
+            print("隱藏貼文")
+        }
+        
+        bottomSheetManager?.addActionButton(title: "檢舉貼文", textColor: .red) {
+            self.presentImpeachAlert()
+        }
+        
+        bottomSheetManager?.addActionButton(title: "取消", textColor: .gray) {
+            self.bottomSheetManager?.dismissBottomSheet()
+        }
+        
         locationManager.onAuthorizationChange = { [weak self] status in
             guard let self = self else { return }
             switch status {
@@ -463,6 +475,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeCountLabel.text = likeCount
         cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
+        
         cell.configureMoreButton {
             self.bottomSheetManager?.showBottomSheet()
         }
@@ -926,6 +939,19 @@ extension HomeViewController {
             }
         }
     }
+    
+    func presentImpeachAlert() {
+            let alertController = UIAlertController(title: "檢舉貼文", message: "你確定要檢舉這篇貼文嗎？", preferredStyle: .alert)
+            
+            let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+            alertController.addAction(cancelAction)
+            
+            let confirmAction = UIAlertAction(title: "確定", style: .destructive) { _ in
+                print("已檢舉貼文")
+                self.bottomSheetManager?.dismissBottomSheet()
+            }
+            alertController.addAction(confirmAction)
+            
+            present(alertController, animated: true, completion: nil)
+        }
 }
-
-

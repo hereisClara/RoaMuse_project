@@ -88,23 +88,26 @@ class TripDetailViewController: UIViewController {
         
         if let trip = trip {
             print("成功接收到行程數據: \(trip)")
+            fetchPlacePoemPairs(for: trip.id) { pair in
+                if let pair = pair {
+                    self.placePoemPairs.append(contentsOf: pair)
+                }
+            }
         } else {
             print("未接收到行程數據")
         }
         
         setupUI()
         setupTableView()
-//        setupTransportButtons()
+        //        setupTransportButtons()
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
             guard let self = self else { return }
             
-            // 清空當前的 completedPlaceIds 列表
             self.completedPlaceIds = []
             
-            // 遍歷 completedPlaces，找到符合當前行程 tripId 的 completedPlace
             for completedPlace in completedPlaces {
                 if let tripId = completedPlace["tripId"] as? String,
                    let placeIds = completedPlace["placeIds"] as? [String],
@@ -117,13 +120,6 @@ class TripDetailViewController: UIViewController {
             }
         }
         
-//        // 开始位置更新
-//        self.locationManager.startUpdatingLocation()
-//        self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-//            guard let self = self else { return }
-//            
-//            self.checkDistanceForCurrentTarget(from: currentLocation)
-//        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -862,7 +858,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         self.isFlipped[sectionIndex] = false
                     })
                 } else {
-//                    MARK: pair要從firebase拿
                     UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
                         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                             print("-----===", self.placePoemPairs)
@@ -952,6 +947,42 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
                     completeButton.isEnabled = isWithinRange
                 }
+            }
+        }
+    }
+    
+    func fetchPlacePoemPairs(for tripId: String, completion: @escaping ([PlacePoemPair]?) -> Void) {
+        let db = Firestore.firestore()
+        let tripRef = db.collection("trips").document(tripId)
+        
+        tripRef.getDocument { (document, error) in
+            if let error = error {
+                print("Error getting document: \(error)")
+                completion(nil)
+                return
+            }
+            
+            guard let document = document, document.exists, let data = document.data() else {
+                print("Document does not exist or has no data")
+                completion(nil)
+                return
+            }
+            
+            if let placePoemPairsData = data["placePoemPairs"] as? [[String: Any]] {
+                var placePoemPairs = [PlacePoemPair]()
+                
+                for pairData in placePoemPairsData {
+                    if let placeId = pairData["placeId"] as? String,
+                       let poemLine = pairData["poemLine"] as? String {
+                        let placePoemPair = PlacePoemPair(placeId: placeId, poemLine: poemLine)
+                        placePoemPairs.append(placePoemPair)
+                    }
+                }
+                
+                completion(placePoemPairs)
+            } else {
+                print("No placePoemPairs field found in the document")
+                completion(nil)
             }
         }
     }

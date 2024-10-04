@@ -16,21 +16,23 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    let headerView = UIView()
     let tableView = UITableView()
     let userNameLabel = UILabel()
     let awardLabelView = AwardLabelView(title: "稱號：", backgroundColor: .systemGray)
-    let fansLabel = UILabel()
+    let fansNumberLabel = UILabel()
+    let followingNumberLabel = UILabel()
     var userName = String()
     var awards = Int()
     var posts: [[String: Any]] = []
-    
+    let fansTextLabel = UILabel()
     let avatarImageView = UIImageView()
     let imagePicker = UIImagePickerController()
     var selectedImage: UIImage?
-    
+    let followingTextLabel = UILabel()
     let bottomSheetView = UIView()
-    let backgroundView = UIView() // 半透明背景
-    let sheetHeight: CGFloat = 250 // 選單高度
+    let backgroundView = UIView()
+    let sheetHeight: CGFloat = 250
     
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
@@ -49,9 +51,9 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 .font: customFont // 設置字體
             ]
         }
-
+        
         let navigateBtn = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"), style: .plain, target: self, action: #selector(navigateToSettings))
-            navigationItem.rightBarButtonItems = [navigateBtn]
+        navigationItem.rightBarButtonItems = [navigateBtn]
         
         imagePicker.delegate = self
         setupTableView()
@@ -76,7 +78,11 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 }
                 
                 if let followers = data["followers"] as? [String] {
-                    self?.fansLabel.text = "粉絲人數：\(String(followers.count))"
+                    self?.fansNumberLabel.text = "粉絲人數：\(String(followers.count))"
+                }
+                
+                if let followings = data["following"] as? [String] {
+                    self?.followingNumberLabel.text = String(followings.count)
                 }
                 
             case .failure(let error):
@@ -100,7 +106,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
         
         self.loadUserPosts()
-//        setupLogoutButton()
+        //        setupLogoutButton()
         loadUserDataFromUserDefaults()
     }
     
@@ -122,12 +128,16 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 }
                 
                 if let followers = data["followers"] as? [String] {
-                    self?.fansLabel.text = "粉絲人數：\(String(followers.count))"
+                    self?.fansNumberLabel.text = String(followers.count)
                 }
                 
                 // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
+                }
+                
+                if let followings = data["following"] as? [String] {
+                    self?.followingNumberLabel.text = String(followings.count)
                 }
                 
             case .failure(let error):
@@ -168,7 +178,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     @objc func updateAwardTitle(_ notification: Notification) {
         if let userInfo = notification.userInfo, let newTitle = userInfo["title"] as? String {
-            // 更新稱號 UI
             awardLabelView.updateTitle("稱號：\(newTitle)")
         }
     }
@@ -244,7 +253,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         present(alert, animated: true, completion: nil)
     }
-
+    
     func createButton(title: String, textColor: UIColor = .black) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
@@ -327,11 +336,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             self.tableView.mj_header?.endRefreshing()
         }
     }
-    
-//    func setupLogoutButton() {
-//        let logoutButton = UIBarButtonItem(title: "登出", style: .plain, target: self, action: #selector(logout))
-//        self.navigationItem.rightBarButtonItem = logoutButton
-//    }
     
     @objc func logout() {
         // 清空 UserDefaults
@@ -475,8 +479,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
         
-        // 設置 Header
-        let headerView = UIView()
         headerView.backgroundColor = .systemGray5
         headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width , height: 210)
         headerView.layer.cornerRadius = 20  // 設置所需的圓角半徑
@@ -493,25 +495,33 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         headerView.addSubview(avatarImageView)
+        headerView.addSubview(fansTextLabel)
+        headerView.addSubview(followingTextLabel)
+        headerView.addSubview(fansNumberLabel)
+        headerView.addSubview(followingNumberLabel)
         
-        fansLabel.text = "粉絲人數：0"
-        fansLabel.font = UIFont.systemFont(ofSize: 16)
-        headerView.addSubview(fansLabel)
+        setupFollowersAndFollowing()
+        
+        let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
+        followingStackView.axis = .vertical
+        followingStackView.alignment = .center
+        followingStackView.spacing = 0
+        headerView.addSubview(followingStackView)
         
         // 新增「行走地圖」按鈕
-        let mapButton = UIButton(type: .system)
-        mapButton.setTitle("行走地圖", for: .normal)
-        mapButton.backgroundColor = .deepBlue
-        mapButton.setTitleColor(.white, for: .normal)
-        mapButton.layer.cornerRadius = 15
+        let mapButton = UIButton()
+        let mapIcon = UIImage(systemName: "map.circle.fill") // 使用 SF Symbols
+        mapButton.setImage(mapIcon, for: .normal) // 設置圖標
+        mapButton.tintColor = .deepBlue // 背景顏色
+        mapButton.imageView?.contentMode = .scaleAspectFit // 圖標大小適應
         mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
         headerView.addSubview(mapButton)
         
-        let awardsButton = UIButton(type: .system)
-        awardsButton.setTitle("獎章成就", for: .normal)
-        awardsButton.backgroundColor = .deepBlue
-        awardsButton.setTitleColor(.white, for: .normal)
-        awardsButton.layer.cornerRadius = 15
+        let awardsButton = UIButton()
+        let awardsIcon = UIImage(systemName: "trophy.circle.fill") // 使用 SF Symbols
+        awardsButton.setImage(awardsIcon, for: .normal) // 設置圖標
+        awardsButton.tintColor = .deepBlue // 背景顏色
+        awardsButton.imageView?.contentMode = .scaleAspectFit // 圖標大小適應
         awardsButton.addTarget(self, action: #selector(handleAwardsButtonTapped), for: .touchUpInside)
         headerView.addSubview(awardsButton)
         
@@ -537,42 +547,78 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         avatarImageView.layer.cornerRadius = 55
         
-        fansLabel.snp.makeConstraints { make in
-            make.leading.equalTo(awardLabelView)
-            make.bottom.equalTo(avatarImageView.snp.bottom)
-        }
-        
-        // 設置「行走地圖」按鈕的約束
-        mapButton.snp.makeConstraints { make in
-            make.top.equalTo(fansLabel.snp.bottom).offset(24)
-            make.leading.equalTo(avatarImageView)
-            make.width.equalTo(headerView).multipliedBy(0.4)
-            make.height.equalTo(40)
-        }
-        
         awardsButton.snp.makeConstraints { make in
-            make.top.equalTo(fansLabel.snp.bottom).offset(24)
-            make.leading.equalTo(mapButton.snp.trailing).offset(15)
-            make.width.equalTo(headerView).multipliedBy(0.4)
-            make.height.equalTo(40)
+            make.bottom.equalTo(headerView).offset(-16)
+            make.trailing.equalTo(headerView.snp.trailing).offset(-16)
+            make.width.height.equalTo(60)
         }
+        
+        mapButton.snp.makeConstraints { make in
+            make.bottom.equalTo(awardsButton) // 與 awardsButton 水平對齊
+            make.trailing.equalTo(awardsButton.snp.leading).offset(-16) // 在 awardsButton 左邊，留出 16 的間隔
+            make.width.height.equalTo(60) // 設置大小
+        }
+        
+        let fansStackView = UIStackView(arrangedSubviews: [fansNumberLabel, fansTextLabel])
+        fansStackView.axis = .vertical
+        fansStackView.alignment = .center
+        fansStackView.spacing = 0
+        headerView.addSubview(fansStackView)
+        
+        // 設置 fansStackView 的約束
+        fansStackView.snp.makeConstraints { make in
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.centerX.equalTo(avatarImageView) // 垂直居中在 avatarImageView
+        }
+        
+        followingStackView.snp.makeConstraints { make in
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.leading.equalTo(fansStackView.snp.trailing).offset(40) // 與 followers 保持一定間隔
+        }
+        
+        let fansTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFans))
+        fansStackView.addGestureRecognizer(fansTapGesture)
+        fansStackView.isUserInteractionEnabled = true
+        
+        let followingTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFollowing))
+        followingStackView.addGestureRecognizer(followingTapGesture)
+        followingStackView.isUserInteractionEnabled = true
         
         tableView.tableHeaderView = headerView
         
-        let editButton = UIButton(type: .system)
-        editButton.setImage(UIImage(systemName: "pencil.circle"), for: .normal) // 使用 SF Symbols 的鉛筆圖示
-        editButton.tintColor = .deepBlue
-        editButton.addTarget(self, action: #selector(editUserName), for: .touchUpInside)
+    }
+    
+    func setupFollowersAndFollowing() {
+        
+        fansNumberLabel.text = "0"
+        fansNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        
+        fansTextLabel.text = "Followers"
+        fansTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular) // 設定"Followers"字樣的字體和大小
+        fansTextLabel.textColor = .gray
+        fansTextLabel.textAlignment = .center
+        
+        followingNumberLabel.text = "0"
+        followingNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        
+        followingTextLabel.text = "Following"
+        followingTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        followingTextLabel.textColor = .gray
+        followingTextLabel.textAlignment = .center
+    }
+    
+    @objc func didTapFans() {
+        let userListVC = UserListViewController()
+            userListVC.isShowingFollowers = true // 表示要显示粉丝列表
+            userListVC.userId = self.userId
+            navigationController?.pushViewController(userListVC, animated: true)
+    }
 
-        headerView.addSubview(editButton)
-
-        // 設置 editButton 的約束
-        editButton.snp.makeConstraints { make in
-            make.leading.equalTo(userNameLabel.snp.trailing).offset(8) // 緊貼 userNameLabel 的右側
-            make.centerY.equalTo(userNameLabel) // 與 userNameLabel 垂直居中對齊
-            make.width.height.equalTo(30) // 設置固定的大小
-        }
-
+    @objc func didTapFollowing() {
+        let userListVC = UserListViewController()
+            userListVC.isShowingFollowers = false // 表示要显示关注列表
+            userListVC.userId = self.userId
+            navigationController?.pushViewController(userListVC, animated: true)
     }
     
     @objc func editUserName() {
@@ -603,7 +649,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 顯示彈窗
         present(alertController, animated: true, completion: nil)
     }
-
+    
     func updateUserNameInFirebase(_ newUserName: String) {
         guard let userId = userId else {
             print("未找到 userId，無法更新使用者名稱")

@@ -18,6 +18,7 @@
 		AC18F8472CAE9571004E8868 /* PoemMatchingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */; };
 		AC18F8492CAECE3D004E8868 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8482CAECE3D004E8868 /* SettingsViewController.swift */; };
 		AC18F84B2CAECF31004E8868 /* SettingsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */; };
+		AC18F84D2CAFD114004E8868 /* UserListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84C2CAFD114004E8868 /* UserListViewController.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -104,6 +105,7 @@
 		AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoemMatchingService.swift; sourceTree = "<group>"; };
 		AC18F8482CAECE3D004E8868 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTableViewCell.swift; sourceTree = "<group>"; };
+		AC18F84C2CAFD114004E8868 /* UserListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserListViewController.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -269,6 +271,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
 				AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */,
 				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
@@ -544,6 +547,7 @@
 				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
 				AC18F8492CAECE3D004E8868 /* SettingsViewController.swift in Sources */,
+				AC18F84D2CAFD114004E8868 /* UserListViewController.swift in Sources */,
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,
 				AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */,
 				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
