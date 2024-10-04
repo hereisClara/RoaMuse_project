@@ -20,6 +20,8 @@
 		AC18F84B2CAECF31004E8868 /* SettingsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */; };
 		AC18F84D2CAFD114004E8868 /* UserListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84C2CAFD114004E8868 /* UserListViewController.swift */; };
 		AC18F84F2CAFD871004E8868 /* BlockedListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */; };
+		AC18F8512CB00FDC004E8868 /* SlidingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8502CB00FDC004E8868 /* SlidingView.swift */; };
+		AC18F8532CB01F69004E8868 /* CollectionTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -108,6 +110,8 @@
 		AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTableViewCell.swift; sourceTree = "<group>"; };
 		AC18F84C2CAFD114004E8868 /* UserListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserListViewController.swift; sourceTree = "<group>"; };
 		AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockedListViewController.swift; sourceTree = "<group>"; };
+		AC18F8502CB00FDC004E8868 /* SlidingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingView.swift; sourceTree = "<group>"; };
+		AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionTableViewCell.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -268,6 +272,7 @@
 				AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */,
 				AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */,
 				AC9775742CA7E22100EF828A /* MapViewController.swift */,
+				AC18F8502CB00FDC004E8868 /* SlidingView.swift */,
 			);
 			path = UserVC;
 			sourceTree = "<group>";
@@ -275,6 +280,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */,
 				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
 				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
@@ -558,6 +564,7 @@
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
 				AC18F8452CAE93B8004E8868 /* BottomSheetManager.swift in Sources */,
+				AC18F8532CB01F69004E8868 /* CollectionTableViewCell.swift in Sources */,
 				AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,
@@ -582,6 +589,7 @@
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
 				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
 				AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */,
+				AC18F8512CB00FDC004E8868 /* SlidingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
