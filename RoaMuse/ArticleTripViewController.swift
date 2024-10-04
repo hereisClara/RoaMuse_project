@@ -24,7 +24,8 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     var annotations = [MKPointAnnotation]()
     var locationManager = LocationManager()
     var userLocation: CLLocationCoordinate2D?
-    
+    let activityIndicator = UIActivityIndicatorView(style: .large)
+
     var containerView = UIView()
     let generateView = UIView()
     let generateTitleLabel = UILabel()
@@ -57,11 +58,28 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         setupMapView()
         loadPlacesDataAndAnnotateMap()
         checkIfTripBookmarked()
+        
+        view.addSubview(activityIndicator)
+        setupActivityIndicator()
     }
     
+    func setupActivityIndicator() {
+        
+        activityIndicator.snp.makeConstraints { make in
+            make.center.equalTo(view) // 設置指示器在視圖的中央
+        }
+        
+        // 初始化時隱藏
+        activityIndicator.isHidden = true
+    }
+    
+    
     @objc func didTapGenerateView() {
-        // 禁用生成按钮，避免重复点击
+        
         generateView.isUserInteractionEnabled = false
+        
+        activityIndicator.startAnimating()
+        activityIndicator.isHidden = false
 
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
@@ -78,6 +96,8 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
             locationManager.requestWhenInUseAuthorization()
         } else {
             generateView.isUserInteractionEnabled = true
+            activityIndicator.stopAnimating()
+            activityIndicator.isHidden = true
         }
     }
     
@@ -102,12 +122,16 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                                     self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                                     self.trip = trip
                                     self.generateView.isUserInteractionEnabled = true
+                                    self.activityIndicator.stopAnimating()
+                                    self.activityIndicator.isHidden = true
                                 }
                             }
                         } else {
                             print("未能生成行程")
                             DispatchQueue.main.async {
                                 self.generateView.isUserInteractionEnabled = true
+                                self.activityIndicator.stopAnimating()
+                                self.activityIndicator.isHidden = true
                             }
                         }
                     }
@@ -330,29 +354,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         }
     }
     
-    func setupMapView() {
-        mapView.delegate = self
-        containerView.addSubview(mapView)
-        mapView.snp.makeConstraints { make in
-            make.centerX.equalTo(containerView)
-            make.width.equalTo(containerView).multipliedBy(0.95)
-            make.height.equalTo(containerView).multipliedBy(0.65)
-            make.bottom.equalTo(containerView).offset(-15)
-        }
-        mapView.layer.cornerRadius = 15
-        mapView.showsUserLocation = true
-        mapView.userTrackingMode = .follow
-    }
-    
-    func setupLocationManager() {
-        locationManager.onLocationUpdate = { [weak self] location in
-            guard let self = self else { return }
-            self.userLocation = location.coordinate  // 獲取當前使用者位置
-            print("User location updated: \(location.coordinate)")
-        }
-        locationManager.startUpdatingLocation()
-    }
-    
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (MKRoute?) -> Void) {
         let request = MKDirections.Request()
         let sourcePlacemark = MKPlacemark(coordinate: startLocation)
@@ -423,6 +424,29 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
 }
 
 extension ArticleTripViewController {
+    
+    func setupMapView() {
+        mapView.delegate = self
+        containerView.addSubview(mapView)
+        mapView.snp.makeConstraints { make in
+            make.centerX.equalTo(containerView)
+            make.width.equalTo(containerView).multipliedBy(0.95)
+            make.height.equalTo(containerView).multipliedBy(0.65)
+            make.bottom.equalTo(containerView).offset(-15)
+        }
+        mapView.layer.cornerRadius = 15
+        mapView.showsUserLocation = true
+        mapView.userTrackingMode = .follow
+    }
+    
+    func setupLocationManager() {
+        locationManager.onLocationUpdate = { [weak self] location in
+            guard let self = self else { return }
+            self.userLocation = location.coordinate  // 獲取當前使用者位置
+            print("User location updated: \(location.coordinate)")
+        }
+        locationManager.startUpdatingLocation()
+    }
     
     // 繪製路線的覆蓋層
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
@@ -524,7 +548,7 @@ extension ArticleTripViewController {
         
         // 設置標題
         generateView.addSubview(generateTitleLabel)
-        generateTitleLabel.text = "生成屬於你的 \(poemTitleLabel.text ?? "")"
+        generateTitleLabel.text = "生成屬於你的旅程"
         generateTitleLabel.textColor = .white
         generateTitleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
         generateTitleLabel.snp.makeConstraints { make in

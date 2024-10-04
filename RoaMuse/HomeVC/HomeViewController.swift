@@ -111,6 +111,19 @@ class HomeViewController: UIViewController {
         //        setupLocationUpdates()
         setupUserProfileImage()
         bottomSheetManager?.setupBottomSheet()
+        
+        view.addSubview(activityIndicator)
+        setupActivityIndicator()
+    }
+    
+    func setupActivityIndicator() {
+        // 設置 activityIndicator 的佈局
+        activityIndicator.snp.makeConstraints { make in
+            make.center.equalTo(view) // 設置指示器在視圖的中央
+        }
+        
+        // 初始化時隱藏
+        activityIndicator.isHidden = true
     }
     
     @objc func showBottomSheetButtonTapped() {
@@ -300,6 +313,9 @@ class HomeViewController: UIViewController {
         print("tap")
         recommendRandomTripView.isUserInteractionEnabled = false
         
+        activityIndicator.startAnimating()
+        activityIndicator.isHidden = false
+        
         locationManager.onLocationUpdate = { [weak self] location in
             print("onLocationUpdate called")
             guard let self = self else { return }
@@ -314,8 +330,10 @@ class HomeViewController: UIViewController {
         } else if authorizationStatus == .notDetermined {
             locationManager.requestWhenInUseAuthorization()
         } else {
-            print("定位权限被拒绝或受限")
             recommendRandomTripView.isUserInteractionEnabled = true
+            
+            activityIndicator.stopAnimating()
+            activityIndicator.isHidden = true
         }
     }
     

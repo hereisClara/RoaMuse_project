@@ -32,7 +32,7 @@ class EstablishViewController: UIViewController {
     private var styleTag = Int()
     private let popupView = PopUpView()
     let locationManager = LocationManager()
-    
+    let activityIndicator = UIActivityIndicatorView(style: .large)
     let searchRadius: CLLocationDistance = 15000
     var postsArray = [[String: Any]]()
     
@@ -56,9 +56,18 @@ class EstablishViewController: UIViewController {
         setupTableView()
         setupPullToRefresh()
         
+        view.addSubview(activityIndicator)
+        setupActivityIndicator()
     }
     
-    
+    func setupActivityIndicator() {
+        
+        activityIndicator.snp.makeConstraints { make in
+            make.center.equalTo(view) // 設置指示器在視圖的中央
+        }
+        
+        activityIndicator.isHidden = true
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -112,13 +121,13 @@ class EstablishViewController: UIViewController {
     @objc func randomTripEntryButtonDidTapped() {
         recommendRandomTripView.isUserInteractionEnabled = false
 
+        activityIndicator.startAnimating()
+        activityIndicator.isHidden = false
+        
         locationManager.onLocationUpdate = { [weak self] currentLocation in
-            print("onLocationUpdate 被调用")
             guard let self = self else {
-                print("self 为 nil，退出闭包")
                 return
             }
-            print("当前位置：\(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
             self.locationManager.onLocationUpdate = nil
 
             self.processWithCurrentLocation(currentLocation)
@@ -127,7 +136,12 @@ class EstablishViewController: UIViewController {
     }
 
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
-        // 将耗时操作放在后台线程中
+        
+        DispatchQueue.main.async {
+                self.activityIndicator.startAnimating()
+                self.activityIndicator.isHidden = false
+            }
+        
         DispatchQueue.global(qos: .userInitiated).async {
             FirebaseManager.shared.loadAllPoems { poems in
                 let filteredPoems = poems.filter { poem in
@@ -139,19 +153,21 @@ class EstablishViewController: UIViewController {
                         self.keywordToLineMap = keywordToLineMap
                         self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
                             if let trip = trip {
-                                print("成功生成 trip：\(trip)")
                                 let places = self.matchingPlaces.map { $0.place }
                                 self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
                                     DispatchQueue.main.async {
                                         self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                                         self.trip = trip
                                         self.recommendRandomTripView.isUserInteractionEnabled = true
+                                        self.activityIndicator.stopAnimating()
+                                        self.activityIndicator.isHidden = true
                                     }
                                 }
                             } else {
-                                print("生成 trip 失败，trip 为 nil")
                                 DispatchQueue.main.async {
                                     self.recommendRandomTripView.isUserInteractionEnabled = true
+                                    self.activityIndicator.stopAnimating()
+                                    self.activityIndicator.isHidden = true
                                 }
                             }
                         }
@@ -159,12 +175,14 @@ class EstablishViewController: UIViewController {
                 } else {
                     DispatchQueue.main.async {
                         self.recommendRandomTripView.isUserInteractionEnabled = true
+                        self.activityIndicator.stopAnimating()
+                        self.activityIndicator.isHidden = true
                     }
                 }
             }
         }
     }
-
+    
     func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -182,7 +200,6 @@ class EstablishViewController: UIViewController {
                     let keyword = prediction.label
                     allResults.append(keyword)
                     keywordToLineMap[keyword] = segment
-                    print("          ", keywordToLineMap)
                 } catch {
                     print("Error in prediction: \(error)")
                 }
@@ -192,7 +209,7 @@ class EstablishViewController: UIViewController {
             }
         }
     }
-
+    
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let dispatchGroup = DispatchGroup()
@@ -200,7 +217,7 @@ class EstablishViewController: UIViewController {
             self.city = ""
             self.districts.removeAll()
             self.matchingPlaces.removeAll()
-
+            
             for keyword in keywords {
                 dispatchGroup.enter()
                 self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, dispatchGroup: dispatchGroup) { validPlaceFound in
@@ -210,10 +227,9 @@ class EstablishViewController: UIViewController {
                     dispatchGroup.leave()
                 }
             }
-
+            
             dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
                 if foundValidPlace, self.matchingPlaces.count > 0 {
-                    print("matchingPlaces: \(self.matchingPlaces)")
                     self.saveTripToFirebase(poem: poem) { trip in
                         DispatchQueue.main.async {
                             completion(trip)
@@ -227,7 +243,7 @@ class EstablishViewController: UIViewController {
             }
         }
     }
-
+    
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
             // 找到所有附近的地点
@@ -238,11 +254,10 @@ class EstablishViewController: UIViewController {
             }
 
             if let randomPlace = nearbyPlaces.randomElement() {
-                print("隨機選擇的地點: \(randomPlace)")
                 if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
-                    print("將地點加入 matchingPlaces: \(randomPlace)")
+                
                     self.matchingPlaces.append((keyword: keyword, place: randomPlace))
-                    print("當前 matchingPlaces: \(self.matchingPlaces)")
+                    
                     let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
                     self.reverseGeocodeLocation(placeLocation) { city, district in
                         if let city = city, let district = district {
@@ -257,19 +272,17 @@ class EstablishViewController: UIViewController {
                     completion(true) // 标记为成功找到地点
                 } else {
                     completion(false) // 如果已经存在该地点
-                    print("地點已存在 matchingPlaces 中: \(randomPlace)")
+                    
                 }
             } else {
                 // 如果没有找到符合条件的地点，搜索并保存
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
-                    print("Found places from Google API: \(foundPlaces)")
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
                                 // 确保不重复添加地点
                                 if !self.matchingPlaces.contains(where: { $0.place.id == savedPlace.id }) {
                                     self.matchingPlaces.append((keyword: keyword, place: savedPlace))
-                                    print("Matching places after adding: \(self.matchingPlaces)")
                                 }
                                 completion(true)
                             } else {
@@ -369,7 +382,6 @@ class EstablishViewController: UIViewController {
                             stepInstructions.append(instruction)
                         }
                         nestedInstructions.append(stepInstructions)  // 加入嵌套數列
-                        print("從地點 \(num) 到地點 \(num + 1) 的導航指令已保存")
                     }
                     dispatchGroup.leave()
                 }
@@ -378,7 +390,6 @@ class EstablishViewController: UIViewController {
         
         // Step 3: 返回總時間和詳細導航指令
         dispatchGroup.notify(queue: .main) {
-            print("總交通時間：\(totalTime) 秒")
             completion(totalTime, nestedInstructions)
         }
     }
@@ -394,7 +405,6 @@ class EstablishViewController: UIViewController {
                 // 使用 administrativeArea 來獲取縣市，locality 或 subLocality 來獲取區域
                 let city = placemark.administrativeArea ?? "未知縣市"  // 縣市
                 let district = placemark.locality ?? placemark.subLocality ?? "未知區"  // 行政區
-                
                 completion(city, district)
             } else {
                 completion(nil, nil)
