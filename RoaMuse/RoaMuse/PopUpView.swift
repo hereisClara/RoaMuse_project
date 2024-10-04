@@ -30,7 +30,7 @@ class PopUpView {
     
     let versesStackView = UIStackView()
     let placesStackView = UIStackView()
-    let collectButton = UIButton()
+    
     let startButton = UIButton()
     let cityLabel = UILabel()   // 用来显示城市
     let districtsStackView = UIStackView()
@@ -56,7 +56,6 @@ class PopUpView {
         }
         
         self.tripId = trip.id
-        checkIfTripBookmarked()
         fromEstablishToTripDetail = trip
         
         versesStackView.removeAllArrangedSubviews()
@@ -143,7 +142,7 @@ class PopUpView {
         popupView.addSubview(tripStyleLabel)
         popupView.addSubview(versesStackView)
         popupView.addSubview(placesStackView)
-        popupView.addSubview(collectButton)
+        
         popupView.addSubview(startButton)
         popupView.addSubview(cityLabel)   // 添加城市标签
         popupView.addSubview(districtsStackView)
@@ -208,16 +207,10 @@ class PopUpView {
         placesStackView.spacing = 10
         placesStackView.alignment = .center
         
-        collectButton.snp.makeConstraints { make in
-            make.bottom.equalTo(popupView).offset(-50)
-            make.centerX.equalTo(popupView).offset(40)
-            make.width.height.equalTo(30)
-        }
-        
         startButton.snp.makeConstraints { make in
             make.bottom.equalTo(popupView).offset(-50)
-            make.centerX.equalTo(popupView).offset(-40)
-            make.width.height.equalTo(30)
+            make.centerX.equalTo(popupView)
+            make.width.height.equalTo(45)
         }
         
         titleLabel.textColor = .white
@@ -225,50 +218,16 @@ class PopUpView {
         tripStyleLabel.textColor = .white
         cityLabel.textColor = .white
         
-        // 設置按鈕圖標和顏色
-        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        collectButton.tintColor = .white
-        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
-        
-        collectButton.isEnabled = true
-        collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
-        
-        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
+//        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
         startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
         startButton.tintColor = .white
-        startButton.isEnabled = false
+        startButton.isEnabled = true
         startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
         
         matchingScoreLabel.backgroundColor = .accent
         matchingScoreLabel.textColor = .white
         
     }
-    
-    func checkIfTripBookmarked() {
-            guard let userId = UserDefaults.standard.string(forKey: "userId"),
-                  let tripId = tripId else {
-                print("無法獲取 userId 或 tripId")
-                return
-            }
-
-            let userRef = Firestore.firestore().collection("users").document(userId)
-            
-            userRef.getDocument { [weak self] (document, error) in
-                guard let self = self else { return }
-                if let document = document, document.exists {
-                    DispatchQueue.main.async {
-                        if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
-                            self.collectButton.isSelected = bookmarkTrips.contains(tripId)
-                            // 更新按鈕顏色
-                            self.collectButton.tintColor = self.collectButton.isSelected ? .accent : .white
-                            self.startButton.isEnabled = self.collectButton.isSelected
-                        }
-                    }
-                } else {
-                    print("無法獲取用戶資料")
-                }
-            }
-        }
 
     @objc func dismissPopup() {
         UIView.animate(withDuration: 0.3, animations: {
@@ -282,54 +241,38 @@ class PopUpView {
     }
     
     @objc func didTapStartButton() {
-        print("click")
-        popupView.removeFromSuperview()
-        self.backgroundView.removeFromSuperview()
-        
-        if let fromEstablishToTripDetail = fromEstablishToTripDetail {
-            onTripSelected?(fromEstablishToTripDetail)
-        }
-        
-        delegate?.navigateToTripDetailPage()
-    }
-    
-    @objc func didTapCollectButton() {
-        guard let userId = UserDefaults.standard.string(forKey: "userId"),
-              let tripId = tripId else {
-            print("無法獲取 userId 或 tripId")
-            return
-        }
-        
-        let userRef = Firestore.firestore().collection("users").document(userId)
-        
-        if collectButton.isSelected {
-            // 從 bookmarkTrip 中移除
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayRemove([tripId])
-            ]) { error in
-                if let error = error {
-                    print("從 bookmarkTrip 中移除 tripId 時出錯: \(error.localizedDescription)")
-                } else {
-                    print("成功將 tripId 從 bookmarkTrip 中移除")
+            // 移除popup视图
+            popupView.removeFromSuperview()
+            backgroundView.removeFromSuperview()
+            
+            // 執行收藏邏輯
+            if let tripId = tripId {
+                guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+                    print("無法獲取 userId 或 tripId")
+                    return
+                }
+                
+                let userRef = Firestore.firestore().collection("users").document(userId)
+                
+                // 添加到 bookmarkTrip
+                userRef.updateData([
+                    "bookmarkTrip": FieldValue.arrayUnion([tripId])
+                ]) { error in
+                    if let error = error {
+                        print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
+                    } else {
+                        print("成功將 tripId 添加到 bookmarkTrip 中")
+                    }
                 }
             }
-        } else {
-            // 添加到 bookmarkTrip
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayUnion([tripId])
-            ]) { error in
-                if let error = error {
-                    print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
-                } else {
-                    print("成功將 tripId 添加到 bookmarkTrip 中")
-                }
+            
+            // 執行原有的功能
+            if let fromEstablishToTripDetail = fromEstablishToTripDetail {
+                onTripSelected?(fromEstablishToTripDetail)
             }
+            
+            delegate?.navigateToTripDetailPage()
         }
-        
-        collectButton.isSelected.toggle()
-        collectButton.tintColor = collectButton.isSelected ? .accent : .white
-        startButton.isEnabled = collectButton.isSelected
-    }
     
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
