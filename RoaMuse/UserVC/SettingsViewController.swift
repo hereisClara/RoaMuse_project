@@ -151,8 +151,13 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             handleLogout()
         } else if selectedOption == "刪除帳號" {
             handleDeleteAccount()
+        } else if selectedOption == "封鎖名單" {
+            let blockedListVC = BlockedListViewController()
+            let navController = UINavigationController(rootViewController: blockedListVC)
+            self.present(navController, animated: true, completion: nil)
         }
     }
+
     
     // 處理登出邏輯
     func handleLogout() {

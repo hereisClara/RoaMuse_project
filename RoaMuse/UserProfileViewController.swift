@@ -420,7 +420,7 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             switch result {
             case .success(let data):
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                    // 使用 Kingfisher 加載圖片到 avatarImageView
+                    
                     DispatchQueue.main.async {
                         cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
@@ -430,7 +430,6 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             }
         }
         
-        // 檢查收藏狀態
         FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: post["id"] as? String ?? "") { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
@@ -523,22 +522,55 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             return
         }
         
-        let currentUserRef = Firestore.firestore().collection("users").document(currentUserId)
+        let db = Firestore.firestore()
+        let currentUserRef = db.collection("users").document(currentUserId)
+        let blockedUserRef = db.collection("users").document(blockedUserId)
         
-        // 将目标用户的 ID 添加到当前用户的 blockedUsers 数组中
         currentUserRef.updateData([
             "blockedUsers": FieldValue.arrayUnion([blockedUserId])
-        ]) { error in
+        ]) { [weak self] error in
             if let error = error {
                 print("封鎖用戶失敗: \(error.localizedDescription)")
+                return
             } else {
                 print("成功封鎖用戶")
-                DispatchQueue.main.async {
-                    self.userBottomSheetManager?.dismissBottomSheet()
-                    self.navigationController?.popViewController(animated: true)
+                
+                self?.removeFromFollowersAndFollowing(currentUserId: currentUserId, blockedUserId: blockedUserId) {
+                    DispatchQueue.main.async {
+                        self?.userBottomSheetManager?.dismissBottomSheet()
+                        self?.navigationController?.popViewController(animated: true)
+                    }
                 }
             }
         }
     }
 
+    func removeFromFollowersAndFollowing(currentUserId: String, blockedUserId: String, completion: @escaping () -> Void) {
+        let db = Firestore.firestore()
+        let currentUserRef = db.collection("users").document(currentUserId)
+        let blockedUserRef = db.collection("users").document(blockedUserId)
+        
+        blockedUserRef.updateData([
+            "following": FieldValue.arrayRemove([currentUserId]),
+            "followers": FieldValue.arrayRemove([currentUserId])
+        ]) { error in
+            if let error = error {
+                print("無法從封鎖對象的 following 和 followers 中移除當前用戶: \(error.localizedDescription)")
+            } else {
+                print("已從封鎖對象的 following 和 followers 中移除當前用戶")
+            }
+        }
+        
+        currentUserRef.updateData([
+            "following": FieldValue.arrayRemove([blockedUserId]),
+            "followers": FieldValue.arrayRemove([blockedUserId])
+        ]) { error in
+            if let error = error {
+                print("無法從當前用戶的 following 和 followers 中移除封鎖對象: \(error.localizedDescription)")
+            } else {
+                print("已從當前用戶的 following 和 followers 中移除封鎖對象")
+            }
+            completion()
+        }
+    }
 }
