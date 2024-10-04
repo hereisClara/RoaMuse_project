@@ -116,3 +116,18 @@ struct PlacePoemPair {
     let placeId: String
     let poemLine: String
 }
+
+struct Chat {
+    let userName: String
+    let lastMessage: String
+    let profileImage: String 
+}
+
+
+// 聊天訊息模型
+struct ChatMessage {
+    let text: String
+    let isFromCurrentUser: Bool
+    let timestamp: Date
+}
+

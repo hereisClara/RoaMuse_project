@@ -79,7 +79,6 @@ class HomeViewController: UIViewController {
             }
         }
         
-        // 在 viewDidLoad 中请求定位授权
         locationManager.requestWhenInUseAuthorization()
         
         self.navigationController?.setNavigationBarHidden(false, animated: false)
@@ -110,6 +109,7 @@ class HomeViewController: UIViewController {
         }
         //        setupLocationUpdates()
         setupUserProfileImage()
+        setupChatButton()
         bottomSheetManager?.setupBottomSheet()
         
         view.addSubview(activityIndicator)
@@ -134,7 +134,6 @@ class HomeViewController: UIViewController {
     func setupUserProfileImage() {
         let avatarImageView = UIImageView()
         
-        // 設定頭像的樣式
         avatarImageView.layer.cornerRadius = 20
         avatarImageView.layer.masksToBounds = true
         avatarImageView.layer.borderWidth = 0.5
@@ -149,7 +148,7 @@ class HomeViewController: UIViewController {
         avatarImageView.snp.makeConstraints { make in
             make.width.height.equalTo(40)
             make.top.equalTo(self.view.safeAreaLayoutGuide).offset(-50)  // 調整頂部偏移量
-            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
+            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-70)
         }
         
         // 確保從 UserDefaults 中獲取正確的 userId
@@ -181,6 +180,32 @@ class HomeViewController: UIViewController {
                 print("無法獲取照片 URL")
             }
         }
+    }
+    
+//    MARK: chat
+    func setupChatButton() {
+        let chatButton = UIButton()
+        chatButton.setImage(UIImage(systemName: "bubble.left.and.bubble.right"), for: .normal)
+        self.view.addSubview(chatButton)
+        
+        chatButton.snp.makeConstraints { make in
+            make.width.height.equalTo(40)
+            make.top.equalTo(self.view.safeAreaLayoutGuide)  // 調整頂部偏移量
+            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
+        }
+        
+        chatButton.addTarget(self, action: #selector(toChatPage), for: .touchUpInside)
+    }
+    
+    @objc func toChatPage() {
+        
+        if self.navigationController == nil {
+            print("This view controller is not inside a navigation controller.")
+        }
+        
+        let chatListVC = ChatListViewController()
+        self.navigationController?.pushViewController(chatListVC, animated: true)
+        
     }
     
     func observeLikeCountChanges() {
@@ -240,11 +265,7 @@ class HomeViewController: UIViewController {
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
-        view.addSubview(activityIndicator)
-        view.bringSubviewToFront(activityIndicator)
-        //TODO: indicator not show
         
-        // 添加圓角效果
         recommendRandomTripView.layer.cornerRadius = 20
         recommendRandomTripView.layer.masksToBounds = true
         
@@ -280,10 +301,6 @@ class HomeViewController: UIViewController {
         descriptionLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(10)
             make.leading.equalTo(titleLabel)
-        }
-        
-        activityIndicator.snp.makeConstraints { make in
-            make.center.equalTo(view)  // 設置指示器在視圖的中央
         }
     }
     

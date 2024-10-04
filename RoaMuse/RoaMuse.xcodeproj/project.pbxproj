@@ -23,6 +23,10 @@
 		AC18F8512CB00FDC004E8868 /* SlidingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8502CB00FDC004E8868 /* SlidingView.swift */; };
 		AC18F8532CB01F69004E8868 /* CollectionTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */; };
 		AC18F8552CB02D01004E8868 /* PoemCollectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */; };
+		AC18F8572CB05E9C004E8868 /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8562CB05E9C004E8868 /* ChatViewController.swift */; };
+		AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8582CB06031004E8868 /* ChatListViewController.swift */; };
+		AC18F85B2CB06057004E8868 /* ChatListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85A2CB06057004E8868 /* ChatListCell.swift */; };
+		AC18F85D2CB06167004E8868 /* ChatMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -114,6 +118,10 @@
 		AC18F8502CB00FDC004E8868 /* SlidingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingView.swift; sourceTree = "<group>"; };
 		AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionTableViewCell.swift; sourceTree = "<group>"; };
 		AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoemCollectionManager.swift; sourceTree = "<group>"; };
+		AC18F8562CB05E9C004E8868 /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
+		AC18F8582CB06031004E8868 /* ChatListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewController.swift; sourceTree = "<group>"; };
+		AC18F85A2CB06057004E8868 /* ChatListCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListCell.swift; sourceTree = "<group>"; };
+		AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageCell.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -282,6 +290,10 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */,
+				AC18F8582CB06031004E8868 /* ChatListViewController.swift */,
+				AC18F85A2CB06057004E8868 /* ChatListCell.swift */,
+				AC18F8562CB05E9C004E8868 /* ChatViewController.swift */,
 				AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */,
 				AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */,
 				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
@@ -542,14 +554,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC18F85B2CB06057004E8868 /* ChatListCell.swift in Sources */,
 				AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */,
 				AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */,
 				AC18F8412CAD1200004E8868 /* ArticleTripViewController.swift in Sources */,
 				AC18F8472CAE9571004E8868 /* PoemMatchingService.swift in Sources */,
+				AC18F85D2CB06167004E8868 /* ChatMessageCell.swift in Sources */,
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
+				AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
 				AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */,
+				AC18F8572CB05E9C004E8868 /* ChatViewController.swift in Sources */,
 				AC18F84B2CAECF31004E8868 /* SettingsTableViewCell.swift in Sources */,
 				AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */,
 				AC7A2A6C2C984853003FA811 /* firebaseManager.swift in Sources */,

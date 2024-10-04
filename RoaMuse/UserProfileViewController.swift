@@ -41,6 +41,7 @@ class UserProfileViewController: UIViewController {
         checkIfFollowing()
         setupTableView()
         setupUI()
+        setupChatButton()
         setupRefreshControl()
         guard let userId = userId else {
             print("無法獲取 userId")
@@ -382,6 +383,106 @@ class UserProfileViewController: UIViewController {
                 }
             }
         }
+    }
+
+}
+
+extension UserProfileViewController {
+    func setupChatButton() {
+        let chatButton = UIButton()
+        chatButton.setImage(UIImage(systemName: "bubble.left.and.bubble.right"), for: .normal)
+        self.view.addSubview(chatButton)
+        
+        chatButton.snp.makeConstraints { make in
+            make.width.height.equalTo(45)
+            make.top.equalTo(followButton).offset(24)  // 調整頂部偏移量
+            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
+        }
+        
+        chatButton.addTarget(self, action: #selector(toChatPage), for: .touchUpInside)
+    }
+    
+    @objc func toChatPage() {
+        // 获取当前用户的 userId 和被聊天的对象 userId
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId"),
+              let chatUserId = userId else { return }
+        
+        // 通过现有数据库去检查是否已有聊天会话，若无则创建
+        fetchOrCreateChatSession(currentUserId: currentUserId, chatUserId: chatUserId) { chatId in
+            let chatVC = ChatViewController()
+            chatVC.chatId = chatId  // 传递聊天会话的 chatId
+            chatVC.chatUserId = chatUserId
+            self.navigationController?.pushViewController(chatVC, animated: true)
+        }
+    }
+    
+    func fetchOrCreateChatSession(currentUserId: String, chatUserId: String, completion: @escaping (String) -> Void) {
+        let chatRef = Firestore.firestore().collection("chats")
+        let userRef = Firestore.firestore().collection("users")
+        
+        // Step 1: 檢查是否已經存在聊天會話
+        chatRef
+            .whereField("participants", arrayContains: currentUserId)
+            .getDocuments { (snapshot, error) in
+                if let error = error {
+                    print("查詢聊天會話失敗: \(error)")
+                    return
+                }
+                
+                // 遍歷所有會話，檢查是否有相同參與者
+                if let documents = snapshot?.documents {
+                    for document in documents {
+                        let data = document.data()
+                        let participants = data["participants"] as? [String] ?? []
+                        
+                        if participants.contains(chatUserId) {
+                            // 如果會話已經存在，返回 chatId
+                            completion(document.documentID)
+                            return
+                        }
+                    }
+                }
+                
+                // Step 2: 如果沒有找到，創建新的會話
+                let chatId = chatRef.document().documentID // 自定義生成的 chatId
+                
+                // 獲取當前用戶和聊天對象的頭像
+                userRef.document(chatUserId).getDocument { (chatUserSnapshot, error) in
+                    guard let chatUserData = chatUserSnapshot?.data(),
+                          let chatUserAvatar = chatUserData["photo"] as? String else {
+                        print("無法獲取聊天對象頭像")
+                        return
+                    }
+                    
+                    userRef.document(currentUserId).getDocument { (currentUserSnapshot, error) in
+                        guard let currentUserData = currentUserSnapshot?.data(),
+                              let currentUserAvatar = currentUserData["photo"] as? String else {
+                            print("無法獲取當前用戶頭像")
+                            return
+                        }
+                        
+                        // 準備新的聊天數據
+                        let newChatData: [String: Any] = [
+                            "participants": [currentUserId, chatUserId],
+                            "lastMessage": "",
+                            "lastMessageTime": FieldValue.serverTimestamp(),
+                            "chatUserProfileImage": chatUserAvatar,   // 保存聊天對象頭像
+                            "currentUserProfileImage": currentUserAvatar // 保存當前用戶頭像
+                        ]
+                        
+                        // Step 3: 將聊天數據上傳到 Firestore，指定 chatId
+                        chatRef.document(chatId).setData(newChatData) { error in
+                            if let error = error {
+                                print("創建新的聊天會話失敗: \(error)")
+                            } else {
+                                print("新的聊天會話創建成功，chatId: \(chatId)")
+                                // 返回 chatId
+                                completion(chatId)
+                            }
+                        }
+                    }
+                }
+            }
     }
 
 }
