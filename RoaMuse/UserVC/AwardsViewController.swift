@@ -37,12 +37,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
 
     let awardSections = ["踩點總集", "風格master", "有始有終"]
     
-        // 模擬的進度數據
-        let progressValues: [[Float]] = [
-            [0.8],   // 第 1 個 section
-            [0.7, 0.6, 0.3],        // 第 2 個 section
-            [0.9]              // 第 3 個 section
-        ]
+    let milestones: [Float] = [0.3, 0.6, 1.0]
     
         var taskSets: [[TaskSet]] = [
             [TaskSet(totalTasks: 30, completedTasks: 30)],  // 第 1 个任务集合（cell）
@@ -53,8 +48,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
              TaskSet(totalTasks: 50, completedTasks: 50)]   // 第 3 个任务集合（cell）
         ]
     
-    // 模擬的里程碑數據
-    let milestones: [Float] = [0.3, 0.6, 1.0]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -191,15 +184,15 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             } else {
                 print("無法解析 completedTrip 資料")
             }
-//           MARK: totalTask
+            
+            // 更新動態的任務集合
             self.dynamicTaskSets = [
                 [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
                 [],
                 [TaskSet(totalTasks: 6, completedTasks: totalTripsCompleted)]
             ]
-
+            
             self.categorizePlacesByTag { categorizedPlaces in
-                // 確保 Section 1 有三個 row，即便分類結果為空
                 let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
                 self.dynamicTaskSets[1].append(TaskSet(totalTasks: 10, completedTasks: tagZeroPlacesAmount))
                 
@@ -209,69 +202,56 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
                 self.dynamicTaskSets[1].append(TaskSet(totalTasks: 10, completedTasks: tagTwoPlacesAmount))
                 
+                // 計算所有稱號的進度，並直接更新 dropDown
+                self.calculateTitlesAndUpdateDropDown()
+                
                 DispatchQueue.main.async {
-                    self.tableView.reloadData()  // 重新加載數據
-                    
-                    for section in 0..<self.dynamicTaskSets.count {
-                        for row in 0..<self.dynamicTaskSets[section].count {
-                            let taskSet = self.dynamicTaskSets[section][row]
-                            self.updateCellProgress(section: section, row: row, completedTasks: taskSet.completedTasks, totalTasks: taskSet.totalTasks)
-                        }
-                    }
-                    self.dropdownMenu.items = self.currentTitles
+                    self.tableView.reloadData()  // 確保所有 `cell` 被重新加載
                 }
             }
         }
+    }
+
+    // 新增方法，根據數據計算稱號並更新 dropDown
+    func calculateTitlesAndUpdateDropDown() {
+        for section in 0..<self.dynamicTaskSets.count {
+            for row in 0..<self.dynamicTaskSets[section].count {
+                let taskSet = self.dynamicTaskSets[section][row]
+                let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
+                
+                // 計算稱號
+                let titlesForRow = awardTitles[section][row]
+                var obtainedTitles: [String] = []
+                
+                if isProgressEqualOrGreater(progress, than: 1.0) {
+                    obtainedTitles = titlesForRow
+                } else if isProgressEqualOrGreater(progress, than: 0.6) {
+                    obtainedTitles = Array(titlesForRow[0...1])
+                } else if isProgressEqualOrGreater(progress, than: 0.3) {
+                    obtainedTitles = [titlesForRow[0]]
+                }
+                
+                // 將獲得的稱號加入 dropDown
+                for title in obtainedTitles {
+                    if !currentTitles.contains(title) {
+                        currentTitles.append(title)
+                    }
+                }
+            }
+        }
+        
+        // 更新下拉選單
+        dropdownMenu.items = currentTitles
+        print("更新後的稱號: \(currentTitles)")
     }
     
-    func updateCellProgress(section: Int, row: Int, completedTasks: Int, totalTasks: Int) {
-        let progress = Float(completedTasks) / Float(totalTasks)
-        
-        print("Updating progress for section: \(section), row: \(row), progress: \(progress)")
-        
-        let indexPath = IndexPath(row: row, section: section)
-        if let cell = tableView.cellForRow(at: indexPath) as? AwardTableViewCell {
-            cell.milestoneProgressView.progress = progress
-            
-            let titlesForRow = awardTitles[section][row]
-            print("我不相信！", awardTitles)
-            print("Checking titles for section: \(section), row: \(row), titles: \(titlesForRow)")
-            
-            var obtainedTitles: [String] = []
-            
-            if isProgressEqualOrGreater(progress, than: 1.0) {
-                obtainedTitles = titlesForRow
-                print("Progress is >= 1.0, obtained all titles for section: \(section), row: \(row)")
-            } else if isProgressEqualOrGreater(progress, than: 0.6) {
-                obtainedTitles = Array(titlesForRow[0...1])
-                print("Progress is >= 0.6, obtained two titles for section: \(section), row: \(row)")
-            } else if isProgressEqualOrGreater(progress, than: 0.3) {
-                obtainedTitles = [titlesForRow[0]]
-                print("Progress is >= 0.3, obtained one title for section: \(section), row: \(row)")
-            } else {
-                print("Progress is less than 0.3, no titles obtained for section: \(section), row: \(row)")
-            }
-
-            // 更新称号
-            for title in obtainedTitles {
-                if !currentTitles.contains(title) {
-                    print("Adding title: \(title) for section: \(section), row: \(row)")
-                    currentTitles.append(title)
-                }
-            }
-            
-            // 更新下拉菜单
-            dropdownMenu.items = currentTitles
-            print("Dropdown items: \(dropdownMenu.items)")
-        }
-    }
-
+    // 保留現有的 isProgressEqualOrGreater 方法
     func isProgressEqualOrGreater(_ progress: Float, than value: Float) -> Bool {
         let epsilon: Float = 0.0001
         return progress > value - epsilon
     }
 
-    
+    // 保留 categorizePlacesByTag 的邏輯
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {
             print("無法獲取 userId")
@@ -331,45 +311,69 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             }
         }
     }
-    
-    // MARK: - UITableViewDataSource
-    
+
+    // 保留 tableView 的數據源和委託方法
     func numberOfSections(in tableView: UITableView) -> Int {
         return dynamicTaskSets.count
     }
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return dynamicTaskSets[section].count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "awardCell", for: indexPath) as? AwardTableViewCell else {
             return UITableViewCell()
         }
-        
+
         let awardTitle = awards[indexPath.section][indexPath.row]
         let awardDesc = awardsDescription[indexPath.section][indexPath.row]
-        
+
         cell.awardLabel.text = awardTitle
         cell.descriptionLabel.text = awardDesc
         cell.selectionStyle = .none
         cell.milestoneProgressView.milestones = milestones
-        
+
+        // 確保 progress 是根據資料正確設置的
         if indexPath.section < dynamicTaskSets.count && indexPath.row < dynamicTaskSets[indexPath.section].count {
-                let taskSet = self.dynamicTaskSets[indexPath.section][indexPath.row]
-                let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
-                cell.milestoneProgressView.progress = progress
-            } else {
-                // 當無數據時，將進度設置為 0
-                cell.milestoneProgressView.progress = 0.0
-            }
-        
+            let taskSet = self.dynamicTaskSets[indexPath.section][indexPath.row]
+            let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
+
+            // 更新進度條
+            cell.milestoneProgressView.progress = progress
+            updateAwardTitles(section: indexPath.section, row: indexPath.row, progress: progress)
+        } else {
+            // 當無數據時，將進度設置為 0
+            cell.milestoneProgressView.progress = 0.0
+        }
+
         return cell
     }
-
+    
+    func updateAwardTitles(section: Int, row: Int, progress: Float) {
+        let titlesForRow = awardTitles[section][row]
+        var obtainedTitles: [String] = []
+        
+        if isProgressEqualOrGreater(progress, than: 1.0) {
+            obtainedTitles = titlesForRow
+        } else if isProgressEqualOrGreater(progress, than: 0.6) {
+            obtainedTitles = Array(titlesForRow[0...1])
+        } else if isProgressEqualOrGreater(progress, than: 0.3) {
+            obtainedTitles = [titlesForRow[0]]
+        }
+        
+        for title in obtainedTitles {
+            if !currentTitles.contains(title) {
+                currentTitles.append(title)
+            }
+        }
+        
+        // 更新下拉選單
+        dropdownMenu.items = currentTitles
+    }
+    
     // MARK: - UITableViewDelegate
     
-    // 設置每個 section 的行高度
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 180 // 自定義行高度
     }

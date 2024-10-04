@@ -15,9 +15,11 @@ import MapKit
 
 class EstablishViewController: UIViewController {
     
+    var poemIdsInCollectionTripsHandler: (([String]) -> Void)?
+    
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
-    
+    var poemIdsInCollectionTrips = [String]()
     var trip: Trip?
     var city = String()
     var districts = [String]()
@@ -48,6 +50,7 @@ class EstablishViewController: UIViewController {
             ]
         }
         view.backgroundColor = UIColor(resource: .backgroundGray)
+        
         styleTableView.register(StyleTableViewCell.self, forCellReuseIdentifier: "styleCell")
         locationManager.requestWhenInUseAuthorization()
         popupView.delegate = self
@@ -58,6 +61,9 @@ class EstablishViewController: UIViewController {
         
         view.addSubview(activityIndicator)
         setupActivityIndicator()
+        
+        poemIdsInCollectionTripsHandler?(poemIdsInCollectionTrips)
+        print(poemIdsInCollectionTrips)
     }
     
     func setupActivityIndicator() {
@@ -73,7 +79,7 @@ class EstablishViewController: UIViewController {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = false
     }
-
+    
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
@@ -117,10 +123,10 @@ class EstablishViewController: UIViewController {
             self.styleTableView.mj_header?.endRefreshing()
         }
     }
-    
+//    MARK: work
     @objc func randomTripEntryButtonDidTapped() {
         recommendRandomTripView.isUserInteractionEnabled = false
-
+        
         activityIndicator.startAnimating()
         activityIndicator.isHidden = false
         
@@ -129,54 +135,61 @@ class EstablishViewController: UIViewController {
                 return
             }
             self.locationManager.onLocationUpdate = nil
-
+            
             self.processWithCurrentLocation(currentLocation)
         }
         locationManager.requestLocation()
     }
-
+    
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
         
-        DispatchQueue.main.async {
-                self.activityIndicator.startAnimating()
-                self.activityIndicator.isHidden = false
-            }
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            return
+        }
         
-        DispatchQueue.global(qos: .userInitiated).async {
-            FirebaseManager.shared.loadAllPoems { poems in
-                let filteredPoems = poems.filter { poem in
-                    return poem.tag == self.styleTag
-                }
-
-                if let randomPoem = filteredPoems.randomElement() {
-                    self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
-                        self.keywordToLineMap = keywordToLineMap
-                        self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
-                            if let trip = trip {
-                                let places = self.matchingPlaces.map { $0.place }
-                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+        DispatchQueue.main.async {
+            self.activityIndicator.startAnimating()
+            self.activityIndicator.isHidden = false
+        }
+        
+        PoemCollectionManager.shared.loadPoemIdsFromFirebase(forUserId: userId) {
+            DispatchQueue.global(qos: .userInitiated).async {
+                FirebaseManager.shared.loadAllPoems { poems in
+                    let filteredPoems = poems.filter { poem in
+                        return poem.tag == self.styleTag && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
+                    print("filter")
+                    }
+                    print("filter success")
+                    if let randomPoem = filteredPoems.randomElement() {
+                        self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                            self.keywordToLineMap = keywordToLineMap
+                            self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
+                                if let trip = trip {
+                                    let places = self.matchingPlaces.map { $0.place }
+                                    self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                        DispatchQueue.main.async {
+                                            self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                            self.trip = trip
+                                            self.recommendRandomTripView.isUserInteractionEnabled = true
+                                            self.activityIndicator.stopAnimating()
+                                            self.activityIndicator.isHidden = true
+                                        }
+                                    }
+                                } else {
                                     DispatchQueue.main.async {
-                                        self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
-                                        self.trip = trip
                                         self.recommendRandomTripView.isUserInteractionEnabled = true
                                         self.activityIndicator.stopAnimating()
                                         self.activityIndicator.isHidden = true
                                     }
                                 }
-                            } else {
-                                DispatchQueue.main.async {
-                                    self.recommendRandomTripView.isUserInteractionEnabled = true
-                                    self.activityIndicator.stopAnimating()
-                                    self.activityIndicator.isHidden = true
-                                }
                             }
                         }
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        self.recommendRandomTripView.isUserInteractionEnabled = true
-                        self.activityIndicator.stopAnimating()
-                        self.activityIndicator.isHidden = true
+                    } else {
+                        DispatchQueue.main.async {
+                            self.recommendRandomTripView.isUserInteractionEnabled = true
+                            self.activityIndicator.stopAnimating()
+                            self.activityIndicator.isHidden = true
+                        }
                     }
                 }
             }
@@ -252,10 +265,10 @@ class EstablishViewController: UIViewController {
                 let distance = currentLocation.distance(from: placeLocation)
                 return distance <= self.searchRadius
             }
-
+            
             if let randomPlace = nearbyPlaces.randomElement() {
                 if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
-                
+                    
                     self.matchingPlaces.append((keyword: keyword, place: randomPlace))
                     
                     let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
@@ -297,7 +310,7 @@ class EstablishViewController: UIViewController {
             }
         }
     }
-
+    
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
         let request = MKDirections.Request()
         
@@ -358,7 +371,6 @@ class EstablishViewController: UIViewController {
                         stepInstructions.append(instruction)
                     }
                     nestedInstructions.append(stepInstructions)  // 加入嵌套數列
-                    print("從當前位置到第一個地點的導航指令已保存")
                 }
                 dispatchGroup.leave()
             }
@@ -399,7 +411,6 @@ class EstablishViewController: UIViewController {
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
             if let error = error {
-                print("反向地理編碼失敗: \(error.localizedDescription)")
                 completion(nil, nil)
             } else if let placemark = placemarks?.first {
                 // 使用 administrativeArea 來獲取縣市，locality 或 subLocality 來獲取區域
@@ -444,14 +455,14 @@ extension EstablishViewController {
     func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
         
         let keywordPlaceIds = self.matchingPlaces.map { ["keyword": $0.keyword, "placeId": $0.place.id] }
-
+        
         let tripData: [String: Any] = [
             "poemId": poem.id,
             "placeIds": self.matchingPlaces.map { $0.place.id },
             "keywordPlaceIds": keywordPlaceIds,
             "tag": poem.tag
         ]
-
+        
         
         FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
             if exists, let existingTripId = existingTripId {
@@ -477,7 +488,7 @@ extension EstablishViewController {
                             completion(nil)
                             return
                         }
-
+                        
                         // 更新 tripId
                         documentRef?.updateData(["id": documentID]) { error in
                             if let error = error {
@@ -520,17 +531,17 @@ extension EstablishViewController: PopupViewDelegate {
         tripDetailVC.trip = trip
         tripDetailVC.matchingPlaces = self.matchingPlaces // 确保 TripDetailViewController 能处理新的数据结构
         tripDetailVC.keywordToLineMap = self.keywordToLineMap // 传递 keywordToLineMap
-
+        
         if let currentLocation = locationManager.currentLocation?.coordinate {
             let places = matchingPlaces.map { $0.place } // 提取 Place 数组
             calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { [weak self] totalTravelTime, nestedInstructions in
                 guard let self = self else { return }
-
+                
                 if let totalTravelTime = totalTravelTime, let nestedInstructions = nestedInstructions {
                     tripDetailVC.totalTravelTime = totalTravelTime // 传递总交通时间
                     tripDetailVC.nestedInstructions = nestedInstructions // 传递嵌套的导航指令数组
                 }
-
+                
                 // 跳转到 TripDetailViewController
                 DispatchQueue.main.async {
                     self.navigationController?.pushViewController(tripDetailVC, animated: true)
@@ -538,7 +549,7 @@ extension EstablishViewController: PopupViewDelegate {
             }
         }
     }
-
+    
 }
 
 extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
@@ -602,14 +613,12 @@ extension EstablishViewController {
                 placePoemPairs.append(placePoemPair)
             }
         }
-        
-        print("++++++  ", placePoemPairs)
     }
     
     func saveSimplePlacePoemPairsToFirebase(tripId: String, simplePairs: [PlacePoemPair], completion: @escaping (Bool) -> Void) {
         let db = Firestore.firestore()
         let tripRef = db.collection("trips").document(tripId)
-
+        
         let placePoemData = simplePairs.map { pair in
             return [
                 "placeId": pair.placeId,
@@ -629,5 +638,5 @@ extension EstablishViewController {
             }
         }
     }
-
+    
 }

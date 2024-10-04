@@ -36,6 +36,7 @@ class CollectionsViewController: UIViewController {
     let buttonContainer = UIStackView()
     var isExpanded = false
     var mainContainerWidthConstraint: Constraint?
+    var poemIdsInCollectionTrip = [String]()
     
     var incompletesPoemTitleArray: [String] = []
     var completesPoemTitleArray: [String] = []
@@ -66,6 +67,11 @@ class CollectionsViewController: UIViewController {
         setupSegmentedControl()
         setupRefreshControl()
         setupFilterButtons()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        loadInitialData()
     }
     
     func setupUI() {
@@ -169,6 +175,7 @@ class CollectionsViewController: UIViewController {
                     FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
                         let poemTitle = poem.title
                         self.incompletesPoemTitleArray[index] = poemTitle
+                        PoemCollectionManager.shared.addPoemId(trip.poemId)
                         dispatchGroup.leave()
                     }
                 }
@@ -192,6 +199,7 @@ class CollectionsViewController: UIViewController {
                     FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
                         let poemTitle = poem.title
                         self.completesPoemTitleArray[index] = poemTitle
+                        PoemCollectionManager.shared.addPoemId(trip.poemId)
                         dispatchGroup.leave()
                     }
                 }
@@ -205,6 +213,7 @@ class CollectionsViewController: UIViewController {
             parentDispatchGroup.notify(queue: .main) {
                 self.collectionsTableView.reloadData()
                 self.collectionsTableView.mj_header?.endRefreshing()
+                
             }
         }
     }
