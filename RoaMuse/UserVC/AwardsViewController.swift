@@ -35,7 +35,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         [["終點1", "終點2", "終點3"]]
     ]
 
-    
     let awardSections = ["踩點總集", "風格master", "有始有終"]
     
         // 模擬的進度數據
@@ -87,7 +86,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     func saveSelectedIndexesToFirebase(section: Int, row: Int, item: Int) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            print("無法取得 userId，無法保存到 Firebase")
             return
         }
         
@@ -160,7 +158,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     func fetchUserData() {
         guard let userId = userId else {
-            print("無法獲取 userId")
             return
         }
         
@@ -230,34 +227,50 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     func updateCellProgress(section: Int, row: Int, completedTasks: Int, totalTasks: Int) {
         let progress = Float(completedTasks) / Float(totalTasks)
         
+        print("Updating progress for section: \(section), row: \(row), progress: \(progress)")
+        
         let indexPath = IndexPath(row: row, section: section)
         if let cell = tableView.cellForRow(at: indexPath) as? AwardTableViewCell {
             cell.milestoneProgressView.progress = progress
             
             let titlesForRow = awardTitles[section][row]
+            print("我不相信！", awardTitles)
+            print("Checking titles for section: \(section), row: \(row), titles: \(titlesForRow)")
             
-            // 動態獲取稱號
             var obtainedTitles: [String] = []
             
-            if progress >= 1.0 {
-                obtainedTitles = titlesForRow // 獲得所有稱號
-            } else if progress >= 0.6 {
-                obtainedTitles = Array(titlesForRow[0...1]) // 獲得前兩個稱號
-            } else if progress >= 0.3 {
-                obtainedTitles = [titlesForRow[0]] // 獲得第一個稱號
+            if isProgressEqualOrGreater(progress, than: 1.0) {
+                obtainedTitles = titlesForRow
+                print("Progress is >= 1.0, obtained all titles for section: \(section), row: \(row)")
+            } else if isProgressEqualOrGreater(progress, than: 0.6) {
+                obtainedTitles = Array(titlesForRow[0...1])
+                print("Progress is >= 0.6, obtained two titles for section: \(section), row: \(row)")
+            } else if isProgressEqualOrGreater(progress, than: 0.3) {
+                obtainedTitles = [titlesForRow[0]]
+                print("Progress is >= 0.3, obtained one title for section: \(section), row: \(row)")
+            } else {
+                print("Progress is less than 0.3, no titles obtained for section: \(section), row: \(row)")
             }
-            
+
+            // 更新称号
             for title in obtainedTitles {
                 if !currentTitles.contains(title) {
+                    print("Adding title: \(title) for section: \(section), row: \(row)")
                     currentTitles.append(title)
                 }
             }
             
+            // 更新下拉菜单
             dropdownMenu.items = currentTitles
-            
-            print("現有稱號: \(currentTitles)")
+            print("Dropdown items: \(dropdownMenu.items)")
         }
     }
+
+    func isProgressEqualOrGreater(_ progress: Float, than value: Float) -> Bool {
+        let epsilon: Float = 0.0001
+        return progress > value - epsilon
+    }
+
     
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {
