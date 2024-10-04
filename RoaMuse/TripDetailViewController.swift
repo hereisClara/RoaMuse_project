@@ -301,6 +301,7 @@ class TripDetailViewController: UIViewController {
                         self.checkDistanceForCurrentTarget(from: currentLocation)
                     }
                 }
+            self.checkIfAllPlacesCompleted()
         }
     }
     
@@ -441,6 +442,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         // 设置 locateButton
         locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
         locationButton.tintColor = .white
+        locationButton.isSelected = false
         locationButton.backgroundColor = .systemGray4
         locationButton.layer.cornerRadius = 25
         locationButton.addTarget(self, action: #selector(didTapLocateButton(_:)), for: .touchUpInside)
@@ -509,19 +511,15 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             transportButtons.append(button)
         }
         
-        // 设置初始选中按钮为第一个
         selectedTransportButton = transportButtons.first
         selectedTransportButton?.backgroundColor = .deepBlue
         
-        // 将所有按钮添加到 buttonContainer
         for button in transportButtons {
             buttonContainer.addArrangedSubview(button)
         }
         
-        // 初始状态下，只显示 selectedTransportButton
         updateTransportButtonsDisplay()
         
-        // 保存背景视图，便于在其他方法中使用
         self.transportBackgroundView = backgroundView
         
         return buttonsView
@@ -564,10 +562,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc private func transportButtonTapped(_ sender: UIButton) {
         print("transportButtonTapped called")
         if sender == selectedTransportButton {
-            // 点击的是当前选中按钮，切换展开/收合
             toggleTransportButtons()
         } else {
-            // 更新选中按钮的背景颜色
             selectedTransportButton?.backgroundColor = .clear
             selectedTransportButton = sender
             sender.backgroundColor = .deepBlue
@@ -765,7 +761,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func didTapLocateButton(_ sender: UIButton) {
         isMapVisible.toggle()
         
-        sender.isSelected = isMapVisible
+        sender.isSelected.toggle()
         
         if sender.isSelected {
             sender.backgroundColor = .deepBlue
@@ -805,42 +801,36 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let place = places[sectionIndex]
         let placeId = place.id
 
-        // 检查翻转状态
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
         let isCompleted = completedPlaceIds.contains(placeId)
 
         if !isCompleted {
-            // 地点未完成，执行完成操作
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     DispatchQueue.main.async {
                         self.closeMapAndCollapseCell(at: sectionIndex)
 
-                        // 更新按钮为箭头
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                         }
 
-                        // 记录地点为已完成
                         self.completedPlaceIds.append(placeId)
                         self.isFlipped[sectionIndex] = false
                         
-                        // 展开下一个 section 的 cell（如果有的话）
                         if sectionIndex + 1 < self.places.count {
                             self.expandNextCell(at: sectionIndex + 1)
                         } else {
                             self.checkIfAllPlacesCompleted()
                         }
                     }
-                    // **重新启动位置更新**
+                    
                     self.locationManager.startUpdatingLocation()
                     self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                         guard let self = self else { return }
                         self.checkDistanceForCurrentTarget(from: currentLocation)
                     }
                     
-                    // **立即检查下一个地点的距离**
                     if let currentLocation = self.locationManager.currentLocation {
                         self.checkDistanceForCurrentTarget(from: currentLocation)
                     }
@@ -851,14 +841,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         } else {
             if let footerView = self.footerViews[sectionIndex] {
-                // **重新启动位置更新**
+                
                 self.locationManager.startUpdatingLocation()
                 self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                     guard let self = self else { return }
                     self.checkDistanceForCurrentTarget(from: currentLocation)
                 }
                 
-                // **立即检查下一个地点的距离**
                 if let currentLocation = self.locationManager.currentLocation {
                     self.checkDistanceForCurrentTarget(from: currentLocation)
                 }
@@ -873,9 +862,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         self.isFlipped[sectionIndex] = false
                     })
                 } else {
+//                    MARK: pair要從firebase拿
                     UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
                         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                            print("-----===", self.placePoemPairs)
                             if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+                                print("----------", poemPair.poemLine)
                                 placeLabel.text = poemPair.poemLine
                                 placeLabel.textColor = .systemGreen
                             }
@@ -902,7 +894,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
 
-            // 重新加载cell，使其高度变为0
             self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .none)
         }
     }
@@ -942,7 +933,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
 
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                 completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
-                completeButton.isEnabled = true // 确保按钮启用
+                completeButton.isEnabled = true
             }
         } else {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {

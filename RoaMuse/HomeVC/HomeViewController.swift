@@ -102,9 +102,9 @@ class HomeViewController: UIViewController {
     }
     
     @objc func showBottomSheetButtonTapped() {
-           // 顯示彈窗
-           bottomSheetManager?.showBottomSheet()
-       }
+        // 顯示彈窗
+        bottomSheetManager?.showBottomSheet()
+    }
     
     func setupUserProfileImage() {
         let avatarImageView = UIImageView()
@@ -782,7 +782,6 @@ extension HomeViewController {
                             PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                                 if let savedPlace = savedPlace {
                                     self.matchingPlaces.append((keyword: keyword, place: savedPlace))
-                                    
                                     completion(true)
                                 } else {
                                     completion(false)
@@ -817,6 +816,8 @@ extension HomeViewController {
         ]
         
         FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
+            print("=========", existingTripId)
+            print("=====", exists)
             if exists, let existingTripId = existingTripId {
                 let existingTrip = Trip(
                     poemId: poem.id,
@@ -829,6 +830,18 @@ extension HomeViewController {
                     startTime: nil
                 )
                 completion(existingTrip)
+                
+                self.getPoemPlacePair()
+                print("          ", self.placePoemPairs)
+                self.saveSimplePlacePoemPairsToFirebase(tripId: existingTripId, simplePairs: self.placePoemPairs) { success in
+                    if success {
+                        print("Successfully saved placePoemPairs to Firebase.")
+                    } else {
+                        print("Failed to save placePoemPairs to Firebase.")
+                    }
+                    completion(existingTrip)
+                }
+                
             } else {
                 print("else")
                 let db = Firestore.firestore()
@@ -841,9 +854,9 @@ extension HomeViewController {
                             completion(nil)
                             return
                         }
-                        
+                        print("Got documentID: \(documentID)")
                         // 更新 tripId
-                        documentRef?.updateData(["id": documentID]) { error in
+                        documentRef?.setData(["id": documentID], merge: true) { error in
                             if let error = error {
                                 completion(nil)
                             } else {
@@ -858,8 +871,8 @@ extension HomeViewController {
                                     startTime: nil
                                 )
                                 print("ready")
-                                self.getPoemPlacePair()  // Make sure placePoemPairs is populated
-                                print(self.placePoemPairs)
+                                self.getPoemPlacePair()
+                                print("          ", self.placePoemPairs)
                                 self.saveSimplePlacePoemPairsToFirebase(tripId: documentID, simplePairs: self.placePoemPairs) { success in
                                     if success {
                                         print("Successfully saved placePoemPairs to Firebase.")
@@ -876,10 +889,8 @@ extension HomeViewController {
         }
     }
     
-    // Helper function to get poem and place pairs
     func getPoemPlacePair() {
-        self.placePoemPairs.removeAll()  // 清除之前的配對，避免重複數據
-        print("~~~", matchingPlaces)
+        self.placePoemPairs.removeAll()
         for matchingPlace in matchingPlaces {
             let keyword = matchingPlace.keyword
             
@@ -892,7 +903,6 @@ extension HomeViewController {
         print("配對的地點和詩句: \(placePoemPairs)")
     }
     
-    // Helper function to save place and poem pairs to Firebase
     func saveSimplePlacePoemPairsToFirebase(tripId: String, simplePairs: [PlacePoemPair], completion: @escaping (Bool) -> Void) {
         let db = Firestore.firestore()
         let tripRef = db.collection("trips").document(tripId)
