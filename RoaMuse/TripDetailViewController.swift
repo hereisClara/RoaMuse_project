@@ -38,7 +38,7 @@ class TripDetailViewController: UIViewController {
     private let locationManager = LocationManager()
     private var places = [Place]()
     private var placeName = [String]()
-    let distanceThreshold: Double = 15000
+    let distanceThreshold: Double = 20000
     private var buttonState = [Bool]()
     var selectedIndexPath: IndexPath?
     var completedPlaceIds: [String] = []
@@ -694,7 +694,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let completeButton = UIButton(type: .system)
         completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
-        completeButton.isEnabled = !completedPlaceIds.contains(place.id)
+//        completeButton.isEnabled = !completedPlaceIds.contains(place.id)
         completeButton.tag = section
         completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
         footerView.addSubview(completeButton)
@@ -833,15 +833,37 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                             self.checkIfAllPlacesCompleted()
                         }
                     }
+                    // **重新启动位置更新**
+                    self.locationManager.startUpdatingLocation()
+                    self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+                        guard let self = self else { return }
+                        self.checkDistanceForCurrentTarget(from: currentLocation)
+                    }
+                    
+                    // **立即检查下一个地点的距离**
+                    if let currentLocation = self.locationManager.currentLocation {
+                        self.checkDistanceForCurrentTarget(from: currentLocation)
+                    }
+                    
                 } else {
                     print("更新失败")
                 }
             }
         } else {
-            // 地点已完成，执行翻转动画
             if let footerView = self.footerViews[sectionIndex] {
+                // **重新启动位置更新**
+                self.locationManager.startUpdatingLocation()
+                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+                    guard let self = self else { return }
+                    self.checkDistanceForCurrentTarget(from: currentLocation)
+                }
+                
+                // **立即检查下一个地点的距离**
+                if let currentLocation = self.locationManager.currentLocation {
+                    self.checkDistanceForCurrentTarget(from: currentLocation)
+                }
+                
                 if isCurrentlyFlipped {
-                    // 翻转回地点名称
                     UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
                         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                             placeLabel.text = place.name
@@ -851,7 +873,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         self.isFlipped[sectionIndex] = false
                     })
                 } else {
-                    // 翻转到诗句
                     UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
                         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                             if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
@@ -893,23 +914,20 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         currentTargetIndex = sectionIndex
         isMapVisible = true
 
-        // 重新加载下一个section并展开cell
         UIView.performWithoutAnimation {
             self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic)
         }
     }
 
-    // 检查是否所有地点都已完成
     func checkIfAllPlacesCompleted() {
         if completedPlaceIds.count == places.count {
             disableLocateButton()
         }
     }
 
-    // 禁用 locateButton
     func disableLocateButton() {
         locationButton.isEnabled = false
-        locationButton.backgroundColor = .systemGray5
+        locationButton.backgroundColor = .systemGray4
     }
 
     func updateFooterViewForFlippedState(_ footerView: UIView, sectionIndex: Int, place: Place) {
