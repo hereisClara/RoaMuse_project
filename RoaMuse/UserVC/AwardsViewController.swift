@@ -290,11 +290,11 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 switch result {
                 case .success(let awardTitle):
                     DispatchQueue.main.async {
-                        self.selectedTitle = awardTitle
+                        self.selectedTitle = awardTitle.0
                         self.titleLabel.text = self.selectedTitle
                         
                         // 查找選擇的 title 對應的索引，並更新樣式
-                        if let (section, row, item) = self.findIndexesForTitle(awardTitle) {
+                        if let (section, row, item) = self.findIndexesForTitle(awardTitle.0) {
                             self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
                         }
                     }

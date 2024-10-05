@@ -56,6 +56,7 @@ class AwardLabelView: UIView {
     
     // 更新標題文字
     func updateTitle(_ title: String) {
+        print("Updating title with: \(title)")
         titleLabel.text = title
     }
     

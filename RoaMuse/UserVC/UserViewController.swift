@@ -94,29 +94,27 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         avatarImageView.addGestureRecognizer(tapGestureRecognizer)
         avatarImageView.isUserInteractionEnabled = true
         
-        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
-                    switch result {
-                    case .success(let awardTitle):
-                        DispatchQueue.main.async {
-                            // 更新稱號
-                            self?.awardLabelView.updateTitle("\(awardTitle)")
-                            
-                            // 使用 AwardStyleManager 更新樣式
-                            AwardStyleManager.updateTitleContainerStyle(
-                                forTitle: awardTitle,
-                                titleContainerView: self?.awardLabelView ?? UIView(),
-                                titleLabel: self?.awardLabelView.titleLabel ?? UILabel(),
-                                dropdownButton: UIButton()  // 如果沒有 dropdownButton 可以忽略
-                            )
-                        }
-                    case .failure(let error):
-                        print("無法加載稱號: \(error.localizedDescription)")
-                    }
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { (result: Result<(String, Int), Error>) in
+            switch result {
+            case .success(let (awardTitle, item)):
+                let title = awardTitle
+                print("-----",title)
+                self.awardLabelView.updateTitle(title)
+                DispatchQueue.main.async {
+                    AwardStyleManager.updateTitleContainerStyle(
+                        forTitle: awardTitle,
+                        item: item,
+                        titleContainerView: self.awardLabelView,
+                        titleLabel: self.awardLabelView.titleLabel,
+                        dropdownButton: nil
+                    )
                 }
-            
-        
+                
+            case .failure(let error):
+                print("獲取稱號失敗: \(error.localizedDescription)")
+            }
+        }
         self.loadUserPosts()
-        //        setupLogoutButton()
         loadUserDataFromUserDefaults()
     }
     
@@ -124,7 +122,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         super.viewWillAppear(animated)
         
         guard let userId = userId else {
-            print("未找到 userId，請先登入")
             return
         }
         
@@ -169,14 +166,21 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             switch result {
             case .success(let awardTitle):
                 DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("\(awardTitle)")
+                    self?.awardLabelView.updateTitle("\(awardTitle.0)")
+                    
+                    AwardStyleManager.updateTitleContainerStyle(
+                        forTitle: awardTitle.0,
+                        item: awardTitle.1,
+                        titleContainerView: self?.awardLabelView ?? UIView(),
+                        titleLabel: self?.awardLabelView.titleLabel ?? UILabel(),
+                        dropdownButton: nil
+                    )
                 }
             case .failure(let error):
                 print("無法加載稱號: \(error.localizedDescription)")
             }
         }
         
-        // 每次頁面顯示時重新加載貼文數據
         loadUserPosts()
     }
     
@@ -193,7 +197,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     }
     
     func setupBottomSheet() {
-        // 初始化背景蒙層
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         backgroundView.frame = self.view.bounds
         backgroundView.alpha = 0
@@ -289,7 +292,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         deleteButton?.tag = indexPath.row  // 使用 `tag` 傳遞行號
     }
     
-    // 點擊背景或取消按鈕時呼叫此方法隱藏選單
     @objc func dismissBottomSheet() {
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: self.sheetHeight)
@@ -318,7 +320,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.userNameLabel.text = userName
                 }
                 
-                // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
                 }
@@ -347,18 +348,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
-    @objc func logout() {
-        // 清空 UserDefaults
-        UserDefaults.standard.removeObject(forKey: "userName")
-        UserDefaults.standard.removeObject(forKey: "userId")
-        UserDefaults.standard.removeObject(forKey: "email")
-        
-        print("已清空使用者資訊")
-        
-        // 跳轉到登入畫面
-        navigateToLoginScreen()
-    }
-    
     func navigateToLoginScreen() {
         let loginVC = LoginViewController()
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -368,7 +357,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
-    // 加載 UserDefaults 中的使用者資訊
     func loadUserDataFromUserDefaults() {
         if let savedUserName = UserDefaults.standard.string(forKey: "userName"),
            let savedUserId = UserDefaults.standard.string(forKey: "userId"),
@@ -376,9 +364,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             self.userName = savedUserName
             self.userNameLabel.text = savedUserName
-            // 這裡可以根據需要加載其他 UI 信息
             
-            print("加載到的使用者資訊：\(savedUserName), \(savedUserId), \(savedEmail)")
         } else {
             print("沒有找到使用者資訊，請登入")
         }
