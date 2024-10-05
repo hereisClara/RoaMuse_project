@@ -96,7 +96,6 @@ class TripDetailViewController: UIViewController {
         } else {
             print("未接收到行程數據")
         }
-        
         setupUI()
         setupTableView()
         //        setupTransportButtons()
@@ -189,8 +188,6 @@ class TripDetailViewController: UIViewController {
                 placePoemPairs.append(placePoemPair)
             }
         }
-        
-        print("++++++  ", placePoemPairs)
     }
     
     func updateProgress(for placeIndex: Int) {
@@ -205,7 +202,6 @@ class TripDetailViewController: UIViewController {
         self.navigationController?.pushViewController(imageUploadVC, animated: true)
     }
     
-    
     func loadPoemDataFromFirebase() {
         
         self.loadedPoem = nil
@@ -217,7 +213,6 @@ class TripDetailViewController: UIViewController {
             
             self.loadedPoem = poem
             
-            // 更新界面
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
@@ -231,9 +226,7 @@ class TripDetailViewController: UIViewController {
     func loadPlacesDataFromFirebase() {
         
         guard let trip = trip else { return }
-        
         self.places = self.matchingPlaces.map { $0.place }
-        
         self.places.sort { (place1, place2) -> Bool in
                 guard let index1 = trip.placeIds.firstIndex(of: place1.id),
                       let index2 = trip.placeIds.firstIndex(of: place2.id) else {
@@ -251,8 +244,6 @@ class TripDetailViewController: UIViewController {
         
         FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] (placesArray) in
             guard let self = self else { return }
-            
-            print("placesArray loaded from Firebase: \(placesArray)")
             
             self.matchingPlaces = trip.placeIds.compactMap { placeId in
                         if let place = placesArray.first(where: { $0.id == placeId }) {
@@ -323,7 +314,6 @@ class TripDetailViewController: UIViewController {
         if isWithinThreshold != buttonState[currentTargetIndex] {
                 buttonState[currentTargetIndex] = isWithinThreshold
                 
-                // Reload the specific section to update the button state
                 DispatchQueue.main.async {
                     self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .none)
                 }
@@ -587,7 +577,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 self.view.layoutIfNeeded()
             }
             
-            // 如果需要，根据新的交通方式更新地图或路线
             updateMapForSelectedTransportType()
         }
     }
@@ -617,12 +606,35 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     private func updateMapForSelectedTransportType() {
-        // 根据 selectedTransportType 更新地图上的路线
-        // 例如，重新计算路线并刷新地图
+        guard let startCoordinate = locationManager.currentLocation?.coordinate else { return }
         
-        // 如果地图当前可见，更新地图
-        if isMapVisible {
-            tableView.reloadRows(at: [IndexPath(row: 0, section: currentTargetIndex)], with: .none)
+        // 獲取當前導航目標地點的座標
+        let place = places[currentTargetIndex]
+        let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+        
+        // 設置方向請求
+        let directionRequest = MKDirections.Request()
+        directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate, addressDictionary: nil))
+        directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate, addressDictionary: nil))
+        directionRequest.transportType = selectedTransportType // 根據選擇的交通方式設置
+        
+        // 計算路線
+        let directions = MKDirections(request: directionRequest)
+        directions.calculate { [weak self] (response, error) in
+            guard let self = self, let response = response, error == nil else {
+                print("Error calculating directions: \(String(describing: error))")
+                return
+            }
+            
+            // 取得第一條路線並顯示在地圖上
+            let route = response.routes[0]
+            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: self.currentTargetIndex)) as? MapTableViewCell {
+                cell.showMap(from: startCoordinate, to: destinationCoordinate)
+                UIView.performWithoutAnimation {
+                    self.tableView.reloadRows(at: [IndexPath(row: 0, section: self.currentTargetIndex)], with: .none)
+                }
+
+            }
         }
     }
     
@@ -884,12 +896,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         })
 
-//        UIView.performWithoutAnimation {
+
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
 
             self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .fade)
-//        }
+
     }
 
     // 用于展开下一个 section 的 cell

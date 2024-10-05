@@ -45,11 +45,10 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        tabBarItem.title = nil
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 300)
         
         bottomSheetManager?.addActionButton(title: "隱藏貼文") {
-            print("隱藏貼文")
         }
         
         bottomSheetManager?.addActionButton(title: "檢舉貼文", textColor: .red) {
@@ -294,15 +293,30 @@ class HomeViewController: UIViewController {
         
         let descriptionLabel = UILabel()
         descriptionLabel.text = "下雨的時候就是要......"
-        descriptionLabel.font = UIFont(name: "NotoSerifHK-Medium", size: 20)
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Medium", size: 18)
         descriptionLabel.textColor = UIColor(resource: .deepBlue)
         recommendRandomTripView.addSubview(descriptionLabel)
+        
+        poemMatchingService.getSeasonAndTimeText { [weak self] finalText in
+            descriptionLabel.text = "\(finalText)的時候就是要......"
+        }
         
         descriptionLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(10)
             make.leading.equalTo(titleLabel)
         }
     }
+    
+    func updateRecommendViewWithSeasonAndTime() {
+        poemMatchingService.getSeasonAndTimeText { [weak self] finalText in
+            DispatchQueue.main.async {
+                if let descriptionLabel = self?.recommendRandomTripView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                    descriptionLabel.text = finalText
+                }
+            }
+        }
+    }
+
     
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
@@ -356,7 +370,9 @@ class HomeViewController: UIViewController {
     
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
         DispatchQueue.global(qos: .userInitiated).async {
-            self.poemMatchingService.findBestMatchedPoem(currentSeason: self.getCurrentSeason(), currentWeather: 0, currentTime: self.getCurrentTimeOfDay()) { matchedPoem, matchedScore in
+            let currentSeason = self.poemMatchingService.getCurrentSeason()
+            let currentTime = self.poemMatchingService.getCurrentTimeOfDay()
+            self.poemMatchingService.findBestMatchedPoem(currentSeason: currentSeason, currentWeather: 0, currentTime: currentTime) { matchedPoem, matchedScore in
                 if let matchedPoem = matchedPoem {
                     self.processPoemText(matchedPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                         self.keywordToLineMap = keywordToLineMap
@@ -518,7 +534,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             cell.dateLabel.text = createdAtString
         }
         
-        // 使用貼文的發布者 userId 來獲取發布者的頭像
         if let postUserId = postData["userId"] as? String {
             FirebaseManager.shared.fetchUserData(userId: postUserId) { result in
                 switch result {
@@ -528,10 +543,33 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                             cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                         }
                     }
+                    
+                    cell.userNameLabel.text = data["userName"] as? String
+                    
+                    FirebaseManager.shared.loadAwardTitle(forUserId: postUserId) { (result: Result<(String, Int), Error>) in
+                        switch result {
+                        case .success(let (awardTitle, item)):
+                            let title = awardTitle
+                            cell.awardLabelView.updateTitle(awardTitle)
+                            DispatchQueue.main.async {
+                                AwardStyleManager.updateTitleContainerStyle(
+                                    forTitle: awardTitle,
+                                    item: item,
+                                    titleContainerView: cell.awardLabelView,
+                                    titleLabel: cell.awardLabelView.titleLabel,
+                                    dropdownButton: nil
+                                )
+                            }
+                            
+                        case .failure(let error):
+                            print("獲取稱號失敗: \(error.localizedDescription)")
+                        }
+                    }
                 case .failure(let error):
                     print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
                 }
             }
+            
         } else {
             print("貼文缺少 userId")
         }
@@ -695,11 +733,9 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                             if let error = error {
                                 print("Failed to update bookmarkAccount: \(error)")
                             } else {
-                                print("收藏成功")
                             }
                         }
                     } else {
-                        print("收藏失敗")
                     }
                 }
             } else {
@@ -711,11 +747,9 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                             if let error = error {
                                 print("Failed to update bookmarkAccount: \(error)")
                             } else {
-                                print("取消收藏成功")
                             }
                         }
                     } else {
-                        print("取消收藏失敗")
                     }
                 }
             }
@@ -740,7 +774,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         
         dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
             if foundValidPlace, self.matchingPlaces.count >= 1 {
-                print("matchingPlaces: \(self.matchingPlaces)")
                 FirebaseManager.shared.saveTripToFirebase(poem: poem, matchingPlaces: self.matchingPlaces) { trip in
                     DispatchQueue.main.async {
                         completion(trip)
@@ -756,36 +789,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 extension HomeViewController {
-    
-    func getCurrentSeason() -> Int {
-        let month = Calendar.current.component(.month, from: Date())
-        
-        switch month {
-        case 3...5:
-            return 1 // 春天
-        case 6...8:
-            return 2 // 夏天
-        case 9...11:
-            return 3 // 秋天
-        default:
-            return 4 // 冬天
-        }
-    }
-    
-    func getCurrentTimeOfDay() -> Int {
-        let hour = Calendar.current.component(.hour, from: Date())
-        
-        switch hour {
-        case 5...11:
-            return 1 // 白天
-        case 12...17:
-            return 2 // 傍晚
-        case 18...23, 0...4:
-            return 3 // 晚上
-        default:
-            return 0 // 不限
-        }
-    }
     
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
@@ -862,8 +865,6 @@ extension HomeViewController {
         ]
         
         FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
-            print("=========", existingTripId)
-            print("=====", exists)
             if exists, let existingTripId = existingTripId {
                 let existingTrip = Trip(
                     poemId: poem.id,
@@ -878,7 +879,6 @@ extension HomeViewController {
                 completion(existingTrip)
                 
                 self.getPoemPlacePair()
-                print("          ", self.placePoemPairs)
                 self.saveSimplePlacePoemPairsToFirebase(tripId: existingTripId, simplePairs: self.placePoemPairs) { success in
                     if success {
                         print("Successfully saved placePoemPairs to Firebase.")
@@ -889,7 +889,6 @@ extension HomeViewController {
                 }
                 
             } else {
-                print("else")
                 let db = Firestore.firestore()
                 var documentRef: DocumentReference? = nil
                 documentRef = db.collection("trips").addDocument(data: tripData) { error in
@@ -900,7 +899,6 @@ extension HomeViewController {
                             completion(nil)
                             return
                         }
-                        print("Got documentID: \(documentID)")
                         // 更新 tripId
                         documentRef?.setData(["id": documentID], merge: true) { error in
                             if let error = error {
@@ -945,8 +943,6 @@ extension HomeViewController {
                 placePoemPairs.append(placePoemPair)
             }
         }
-        
-        print("配對的地點和詩句: \(placePoemPairs)")
     }
     
     func saveSimplePlacePoemPairsToFirebase(tripId: String, simplePairs: [PlacePoemPair], completion: @escaping (Bool) -> Void) {
@@ -964,10 +960,8 @@ extension HomeViewController {
             "placePoemPairs": placePoemData
         ]) { error in
             if let error = error {
-                print("更新文件時出現錯誤: \(error)")
                 completion(false)
             } else {
-                print("成功將 placePoemPairs 儲存到 Firebase")
                 completion(true)
             }
         }
@@ -980,11 +974,11 @@ extension HomeViewController {
             alertController.addAction(cancelAction)
             
             let confirmAction = UIAlertAction(title: "確定", style: .destructive) { _ in
-                print("已檢舉貼文")
                 self.bottomSheetManager?.dismissBottomSheet()
             }
             alertController.addAction(confirmAction)
             
             present(alertController, animated: true, completion: nil)
         }
+    
 }

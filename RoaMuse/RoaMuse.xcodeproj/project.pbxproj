@@ -21,7 +21,7 @@
 		AC18F84D2CAFD114004E8868 /* UserListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84C2CAFD114004E8868 /* UserListViewController.swift */; };
 		AC18F84F2CAFD871004E8868 /* BlockedListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */; };
 		AC18F8512CB00FDC004E8868 /* SlidingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8502CB00FDC004E8868 /* SlidingView.swift */; };
-		AC18F8532CB01F69004E8868 /* CollectionTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */; };
+		AC18F8532CB01F69004E8868 /* PhotoCollectionTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8522CB01F69004E8868 /* PhotoCollectionTableViewCell.swift */; };
 		AC18F8552CB02D01004E8868 /* PoemCollectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */; };
 		AC18F8572CB05E9C004E8868 /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8562CB05E9C004E8868 /* ChatViewController.swift */; };
 		AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8582CB06031004E8868 /* ChatListViewController.swift */; };
@@ -118,7 +118,7 @@
 		AC18F84C2CAFD114004E8868 /* UserListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserListViewController.swift; sourceTree = "<group>"; };
 		AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockedListViewController.swift; sourceTree = "<group>"; };
 		AC18F8502CB00FDC004E8868 /* SlidingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingView.swift; sourceTree = "<group>"; };
-		AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionTableViewCell.swift; sourceTree = "<group>"; };
+		AC18F8522CB01F69004E8868 /* PhotoCollectionTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCollectionTableViewCell.swift; sourceTree = "<group>"; };
 		AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoemCollectionManager.swift; sourceTree = "<group>"; };
 		AC18F8562CB05E9C004E8868 /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
 		AC18F8582CB06031004E8868 /* ChatListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewController.swift; sourceTree = "<group>"; };
@@ -301,7 +301,7 @@
 				AC18F85A2CB06057004E8868 /* ChatListCell.swift */,
 				AC18F8562CB05E9C004E8868 /* ChatViewController.swift */,
 				AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */,
-				AC18F8522CB01F69004E8868 /* CollectionTableViewCell.swift */,
+				AC18F8522CB01F69004E8868 /* PhotoCollectionTableViewCell.swift */,
 				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
 				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
@@ -590,7 +590,7 @@
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
 				AC18F8452CAE93B8004E8868 /* BottomSheetManager.swift in Sources */,
-				AC18F8532CB01F69004E8868 /* CollectionTableViewCell.swift in Sources */,
+				AC18F8532CB01F69004E8868 /* PhotoCollectionTableViewCell.swift in Sources */,
 				AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,

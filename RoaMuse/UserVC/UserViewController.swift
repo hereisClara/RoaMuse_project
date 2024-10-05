@@ -60,7 +60,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         setupRefreshControl()
         setupBottomSheet()
         guard let userId = userId else {
-            print("未找到 userId，請先登入")
             return
         }
         
@@ -72,7 +71,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.userNameLabel.text = userName
                 }
                 
-                // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
                 }
@@ -161,25 +159,25 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             }
         }
         
-        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { (result: Result<(String, Int), Error>) in
             switch result {
-            case .success(let awardTitle):
+            case .success(let (awardTitle, item)):
+                let title = awardTitle
+                self.awardLabelView.updateTitle(title)
                 DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("\(awardTitle.0)")
-                    
                     AwardStyleManager.updateTitleContainerStyle(
-                        forTitle: awardTitle.0,
-                        item: awardTitle.1,
-                        titleContainerView: self?.awardLabelView ?? UIView(),
-                        titleLabel: self?.awardLabelView.titleLabel ?? UILabel(),
+                        forTitle: awardTitle,
+                        item: item,
+                        titleContainerView: self.awardLabelView,
+                        titleLabel: self.awardLabelView.titleLabel,
                         dropdownButton: nil
                     )
                 }
+                
             case .failure(let error):
-                print("無法加載稱號: \(error.localizedDescription)")
+                print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-        
         loadUserPosts()
     }
     
@@ -241,7 +239,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     @objc func deletePost(_ sender: UIButton) {
         let post = posts[sender.tag]
         guard let postId = post["id"] as? String else {
-            print("無法獲取貼文ID")
             return
         }
         
@@ -255,7 +252,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 if let error = error {
                     print("刪除貼文失敗: \(error.localizedDescription)")
                 } else {
-                    print("貼文已成功刪除")
                     self?.posts.remove(at: sender.tag)
                     self?.tableView.deleteRows(at: [IndexPath(row: sender.tag, section: 0)], with: .fade)
                     self?.dismissBottomSheet()
@@ -328,17 +324,26 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             }
         }
         
-        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { (result: Result<(String, Int), Error>) in
             switch result {
-            case .success(let awardTitle):
+            case .success(let (awardTitle, item)):
+                let title = awardTitle
+                self.awardLabelView.updateTitle(title)
                 DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("\(awardTitle)")
+                    AwardStyleManager.updateTitleContainerStyle(
+                        forTitle: awardTitle,
+                        item: item,
+                        titleContainerView: self.awardLabelView,
+                        titleLabel: self.awardLabelView.titleLabel,
+                        dropdownButton: nil
+                    )
                 }
+                
             case .failure(let error):
-                print("無法加載稱號: \(error.localizedDescription)")
+                print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-        // 重新加載用戶貼文
+        
         loadUserPosts()
         
         // 結束刷新
@@ -365,7 +370,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             self.userNameLabel.text = savedUserName
             
         } else {
-            print("沒有找到使用者資訊，請登入")
         }
     }
     
@@ -386,7 +390,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     // 上傳圖片到 Firebase Storage
     func uploadImageToFirebaseStorage(_ image: UIImage) {
         guard let imageData = image.jpegData(compressionQuality: 0.75) else {
-            print("無法壓縮圖片")
             return
         }
         
@@ -398,18 +401,15 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         imageRef.putData(imageData, metadata: metadata) { metadata, error in
             if let error = error {
-                print("上傳失敗: \(error.localizedDescription)")
                 return
             }
             
             imageRef.downloadURL { url, error in
                 if let error = error {
-                    print("無法獲取下載 URL: \(error.localizedDescription)")
                     return
                 }
                 
                 if let downloadURL = url {
-                    //                    print("圖片下載 URL: \(downloadURL.absoluteString)")
                     self.saveImageUrlToFirestore(downloadURL.absoluteString)
                 }
             }
@@ -531,8 +531,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         awardLabelView.snp.makeConstraints { make in
             make.top.equalTo(userNameLabel.snp.bottom).offset(8)
             make.leading.equalTo(userNameLabel)
-            make.height.equalTo(40)
-            make.width.equalTo(180)
+            make.height.equalTo(24)
         }
         
         avatarImageView.snp.makeConstraints { make in
@@ -730,6 +729,28 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                     // 使用 Kingfisher 加載圖片到 avatarImageView
                     DispatchQueue.main.async {
                         cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                    }
+                }
+                
+                cell.userNameLabel.text = data["userName"] as? String
+                
+                FirebaseManager.shared.loadAwardTitle(forUserId: self.userId ?? "") { (result: Result<(String, Int), Error>) in
+                    switch result {
+                    case .success(let (awardTitle, item)):
+                        let title = awardTitle
+                        cell.awardLabelView.updateTitle(awardTitle)
+                        DispatchQueue.main.async {
+                            AwardStyleManager.updateTitleContainerStyle(
+                                forTitle: awardTitle,
+                                item: item,
+                                titleContainerView: cell.awardLabelView,
+                                titleLabel: cell.awardLabelView.titleLabel,
+                                dropdownButton: nil
+                            )
+                        }
+                        
+                    case .failure(let error):
+                        print("獲取稱號失敗: \(error.localizedDescription)")
                     }
                 }
             case .failure(let error):

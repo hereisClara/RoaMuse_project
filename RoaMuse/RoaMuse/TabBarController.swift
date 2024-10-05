@@ -12,9 +12,20 @@ class TabBarController: UITabBarController {
 
     override func viewDidLoad() {
         
+        if #available(iOS 13.0, *) {
+            let appearance = UITabBarAppearance()
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor.clear]
+            
+            tabBar.standardAppearance = appearance
+            if #available(iOS 15.0, *) {
+                tabBar.scrollEdgeAppearance = appearance
+            }
+        }
+        
         tabBar.tintColor = UIColor(resource: .deepBlue)
         tabBar.unselectedItemTintColor = UIColor.lightGray
-
+        
         let homeVC = HomeViewController()
         let homeNavController = UINavigationController(rootViewController: homeVC)
         homeVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "house"), tag: 0)
@@ -37,5 +48,7 @@ class TabBarController: UITabBarController {
         userVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "person"), tag: 4)
 
         self.viewControllers = [homeNavController, collectionsNavController, establishNavController, newsFeedNavController, userNavController]
+        
+        tabBarItem.imageInsets = UIEdgeInsets(top: 6, left: 0, bottom: -6, right: 0)  // 調整圖標位置
     }
 }

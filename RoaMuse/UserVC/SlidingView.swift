@@ -38,7 +38,7 @@ class SlidingView: UIView {
         tableView.dataSource = self
         tableView.delegate = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "TripIdCell")
-        tableView.register(CollectionTableViewCell.self, forCellReuseIdentifier: "CollectionTableViewCell")
+        tableView.register(PhotoCollectionTableViewCell.self, forCellReuseIdentifier: "CollectionTableViewCell")
         addSubview(tableView)
         
         // 使用 SnapKit 設置 tableView 的約束
@@ -83,21 +83,29 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             return cell
         } else {
             // 這裡處理 collectionView 的 cell
-            let cell = tableView.dequeueReusableCell(withIdentifier: "CollectionTableViewCell", for: indexPath) as? CollectionTableViewCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "CollectionTableViewCell", for: indexPath) as? PhotoCollectionTableViewCell
             cell?.updateImages(images)  // 更新圖片
             return cell ?? UITableViewCell()
         }
     }
     
-    // 設置每個 section 的高度
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section == 0 {
             return 80  // tripId 的 cell 高度
         } else {
-            return 140  // 包含 collectionView 的 cell 高度
+            // 如果没有图片，确保高度为0
+            guard !images.isEmpty else {
+                return 0
+            }
+
+            // 计算图片墙的高度，假设每张图片高度为100，行间距为10
+            let numberOfRows = ceil(Double(images.count) / 3.0) // 每行3个，计算总行数
+            let totalHeight = numberOfRows * 100.0 + (numberOfRows - 1) * 10.0 // 每张图片的高度为100，行间距为10
+            
+            return max(totalHeight, 0) // 确保返回的高度至少为0，防止负值
         }
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section == 0 {
 

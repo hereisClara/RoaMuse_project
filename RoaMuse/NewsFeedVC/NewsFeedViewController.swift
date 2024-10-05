@@ -479,6 +479,28 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                         cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
                 }
+                
+                cell.userNameLabel.text = data["userName"] as? String
+                
+                FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { (result: Result<(String, Int), Error>) in
+                    switch result {
+                    case .success(let (awardTitle, item)):
+                        let title = awardTitle
+                        cell.awardLabelView.updateTitle(awardTitle)
+                        DispatchQueue.main.async {
+                            AwardStyleManager.updateTitleContainerStyle(
+                                forTitle: awardTitle,
+                                item: item,
+                                titleContainerView: cell.awardLabelView,
+                                titleLabel: cell.awardLabelView.titleLabel,
+                                dropdownButton: nil
+                            )
+                        }
+                        
+                    case .failure(let error):
+                        print("獲取稱號失敗: \(error.localizedDescription)")
+                    }
+                }
             case .failure(let error):
                 print("加載貼文發佈者的頭像失敗: \(error.localizedDescription)")
             }
