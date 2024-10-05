@@ -112,7 +112,7 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.equalTo(contentLabel)
             make.trailing.equalTo(contentLabel)
-            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
+//            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
         }
         
         likeButton.snp.makeConstraints { make in
@@ -230,7 +230,8 @@ class UserTableViewCell: UITableViewCell {
                 photoStackView.addArrangedSubview(imageView)
 
                 imageView.snp.makeConstraints { make in
-                    make.width.height.equalTo(150)
+                    make.width.equalTo(150)
+                    make.height.equalTo(imageView.snp.width).multipliedBy(0.75) // 保持圖片比例
                 }
             }
 
@@ -244,8 +245,7 @@ class UserTableViewCell: UITableViewCell {
 
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
-            tableView.endUpdates()
+            tableView.endUpdates() // 確保表格更新行高
         }
     }
-
 }

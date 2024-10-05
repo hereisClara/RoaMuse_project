@@ -98,7 +98,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             switch result {
             case .success(let (awardTitle, item)):
                 let title = awardTitle
-                print("-----",title)
                 self.awardLabelView.updateTitle(title)
                 DispatchQueue.main.async {
                     AwardStyleManager.updateTitleContainerStyle(

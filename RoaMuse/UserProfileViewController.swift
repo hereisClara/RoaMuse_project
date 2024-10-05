@@ -102,14 +102,23 @@ class UserProfileViewController: UIViewController {
         
         loadUserPosts()
         
-        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
+        FirebaseManager.shared.loadAwardTitle(forUserId: userId) { (result: Result<(String, Int), Error>) in
             switch result {
-            case .success(let awardTitle):
+            case .success(let (awardTitle, item)):
+                let title = awardTitle
+                self.awardLabelView.updateTitle(title)
                 DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                    AwardStyleManager.updateTitleContainerStyle(
+                        forTitle: awardTitle,
+                        item: item,
+                        titleContainerView: self.awardLabelView,
+                        titleLabel: self.awardLabelView.titleLabel,
+                        dropdownButton: nil
+                    )
                 }
+                
             case .failure(let error):
-                print("無法加載稱號: \(error.localizedDescription)")
+                print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
     }
