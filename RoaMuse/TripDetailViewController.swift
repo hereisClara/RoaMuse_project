@@ -757,17 +757,16 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func didTapLocateButton(_ sender: UIButton) {
         isMapVisible.toggle()
         
-        sender.isSelected.toggle()
+        sender.isSelected = isMapVisible
         
-        if sender.isSelected {
+        if isMapVisible {
             sender.backgroundColor = .deepBlue
         } else {
             sender.backgroundColor = .systemGray4
         }
         
-        UIView.performWithoutAnimation {
-            tableView.reloadSections(IndexSet(integer: currentTargetIndex), with: .none)
-        }
+        let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
+        tableView.reloadRows(at: [indexPath], with: .fade)
     }
     
     func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
@@ -885,12 +884,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         })
 
-        UIView.performWithoutAnimation {
+//        UIView.performWithoutAnimation {
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
 
-            self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .none)
-        }
+            self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .fade)
+//        }
     }
 
     // 用于展开下一个 section 的 cell
@@ -900,9 +899,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         currentTargetIndex = sectionIndex
         isMapVisible = true
 
-        UIView.performWithoutAnimation {
-            self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic)
-        }
+        let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
+        tableView.reloadRows(at: [indexPath], with: .fade)
     }
 
     func checkIfAllPlacesCompleted() {
