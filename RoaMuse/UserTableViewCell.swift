@@ -32,6 +32,7 @@ class UserTableViewCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupCell()
         addActions()
+        setupRoundedCorners()
     }
     
     required init?(coder: NSCoder) {
@@ -40,8 +41,10 @@ class UserTableViewCell: UITableViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
+        avatarImageView.layer.cornerRadius = 25
         avatarImageView.layer.masksToBounds = true
+        let inset: CGFloat = 12
+        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset, left: inset / 2, bottom: inset, right: inset / 2))
     }
     
     // 設置 cell 內的內容
@@ -171,6 +174,13 @@ class UserTableViewCell: UITableViewCell {
         dateLabel.font = UIFont.systemFont(ofSize: 14)
         
         setupButtonStyle()
+    }
+    
+    func setupRoundedCorners() {
+        // 設置 contentView 的圓角效果
+        contentView.layer.cornerRadius = 15
+        contentView.layer.masksToBounds = true
+        contentView.backgroundColor = .white
     }
     
     func setupButtonStyle() {

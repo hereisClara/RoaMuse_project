@@ -481,6 +481,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         // 設置代理和資料來源
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.separatorStyle = .none
         
         tableView.snp.makeConstraints { make in
             make.width.equalTo(view).multipliedBy(0.9)
@@ -707,7 +708,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         cell.titleLabel.text = title
         cell.contentLabel.text = content
         cell.selectionStyle = .none
-        
+        cell.backgroundColor = .clear
         // 檢查按讚狀態
         let postId = post["id"] as? String ?? ""
         
@@ -771,6 +772,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
                 articleVC.tripId = post["tripId"] as? String ?? ""
+                articleVC.photoUrls = post["photoUrls"] as? [String] ?? []
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                     articleVC.articleDate = createdAtString

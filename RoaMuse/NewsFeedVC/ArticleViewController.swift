@@ -429,7 +429,7 @@ extension ArticleViewController {
     @objc func didTapSendButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
-            print("留言內容不能為空")
+            
             return
         }
         saveComment(userId: userId, postId: postId, commentContent: commentContent) { success in
@@ -437,7 +437,7 @@ extension ArticleViewController {
                 self.loadComments()
                 self.commentTextField.text = ""
             } else {
-                print("留言失敗")
+                
             }
         }
     }
@@ -447,7 +447,7 @@ extension ArticleViewController {
 extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     func setupTableView() {
-        print("撐開")
+        
         view.addSubview(tableView)
         
         tableView.delegate = self
@@ -577,11 +577,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         
-        
         headerView.addSubview(likeButton)
-        
         headerView.addSubview(commentButton)
-        
         headerView.addSubview(collectButton)
         
         setupButton()
@@ -660,7 +657,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPresent))
         tripView.addGestureRecognizer(tapGesture)
-        
     }
     
     func setupPhotos() {
@@ -784,7 +780,14 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         imageView.isUserInteractionEnabled = true
 
         if let url = URL(string: urlString) {
-            imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
+            imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: nil, completionHandler: { result in
+                switch result {
+                case .success(let value):
+                    print("圖片加載成功: \(value.source.url?.absoluteString ?? "")")
+                case .failure(let error):
+                    print("圖片加載失敗: \(error.localizedDescription)")
+                }
+            })
         }
 
         // 添加点击手势
@@ -853,7 +856,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
             if let error = error {
-                print("查詢行程時發生錯誤: \(error.localizedDescription)")
+                
                 return
             }
             
@@ -904,10 +907,10 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
 //                        self.popupView.showPopup(on: self.view, with: self.trip!)
                     }
                 } else {
-                    print("未找到對應的行程資料")
+                    
                 }
             } else {
-                print("未找到對應的行程")
+                
             }
         }
     }
@@ -972,7 +975,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 }
             }
         }
-        
         cell.setNeedsLayout()
         cell.layoutIfNeeded()
         
@@ -989,7 +991,6 @@ extension ArticleViewController: PopupViewDelegate {
                     print("Error: Trip is nil!")
                     return
                 }
-        
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
         navigationController?.pushViewController(tripDetailVC, animated: true)

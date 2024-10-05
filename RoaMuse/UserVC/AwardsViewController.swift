@@ -161,7 +161,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         tableView.delegate = self
         tableView.dataSource = self
-        
+        tableView.separatorStyle = .none
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
@@ -421,12 +421,12 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     // 添加 section 的表頭
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = .lightGray
+        headerView.backgroundColor = .white
         
         let headerLabel = UILabel()
         headerLabel.text = awardSections[section]
-        headerLabel.font = UIFont.boldSystemFont(ofSize: 24)
-        headerLabel.textColor = .black
+        headerLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
+        headerLabel.textColor = .deepBlue
         
         headerView.addSubview(headerLabel)
         
