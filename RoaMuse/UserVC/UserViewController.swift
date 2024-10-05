@@ -19,7 +19,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let headerView = UIView()
     let tableView = UITableView()
     let userNameLabel = UILabel()
-    let awardLabelView = AwardLabelView(title: "稱號：", backgroundColor: .systemGray)
+    let awardLabelView = AwardLabelView(title: "初心者", backgroundColor: .systemGray)
     let fansNumberLabel = UILabel()
     let followingNumberLabel = UILabel()
     var userName = String()
@@ -95,15 +95,25 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         avatarImageView.isUserInteractionEnabled = true
         
         FirebaseManager.shared.loadAwardTitle(forUserId: userId) { [weak self] result in
-            switch result {
-            case .success(let awardTitle):
-                DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                    switch result {
+                    case .success(let awardTitle):
+                        DispatchQueue.main.async {
+                            // 更新稱號
+                            self?.awardLabelView.updateTitle("\(awardTitle)")
+                            
+                            // 使用 AwardStyleManager 更新樣式
+                            AwardStyleManager.updateTitleContainerStyle(
+                                forTitle: awardTitle,
+                                titleContainerView: self?.awardLabelView ?? UIView(),
+                                titleLabel: self?.awardLabelView.titleLabel ?? UILabel(),
+                                dropdownButton: UIButton()  // 如果沒有 dropdownButton 可以忽略
+                            )
+                        }
+                    case .failure(let error):
+                        print("無法加載稱號: \(error.localizedDescription)")
+                    }
                 }
-            case .failure(let error):
-                print("無法加載稱號: \(error.localizedDescription)")
-            }
-        }
+            
         
         self.loadUserPosts()
         //        setupLogoutButton()
@@ -159,7 +169,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             switch result {
             case .success(let awardTitle):
                 DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                    self?.awardLabelView.updateTitle("\(awardTitle)")
                 }
             case .failure(let error):
                 print("無法加載稱號: \(error.localizedDescription)")
@@ -178,7 +188,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     @objc func updateAwardTitle(_ notification: Notification) {
         if let userInfo = notification.userInfo, let newTitle = userInfo["title"] as? String {
-            awardLabelView.updateTitle("稱號：\(newTitle)")
+            awardLabelView.updateTitle("\(newTitle)")
         }
     }
     
@@ -322,7 +332,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             switch result {
             case .success(let awardTitle):
                 DispatchQueue.main.async {
-                    self?.awardLabelView.updateTitle("稱號：\(awardTitle)")
+                    self?.awardLabelView.updateTitle("\(awardTitle)")
                 }
             case .failure(let error):
                 print("無法加載稱號: \(error.localizedDescription)")

@@ -27,6 +27,8 @@
 		AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8582CB06031004E8868 /* ChatListViewController.swift */; };
 		AC18F85B2CB06057004E8868 /* ChatListCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85A2CB06057004E8868 /* ChatListCell.swift */; };
 		AC18F85D2CB06167004E8868 /* ChatMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */; };
+		AC18F85F2CB10DAC004E8868 /* CircularProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */; };
+		AC18F8612CB12298004E8868 /* AwardStyleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8602CB12298004E8868 /* AwardStyleManager.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -122,6 +124,8 @@
 		AC18F8582CB06031004E8868 /* ChatListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewController.swift; sourceTree = "<group>"; };
 		AC18F85A2CB06057004E8868 /* ChatListCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListCell.swift; sourceTree = "<group>"; };
 		AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageCell.swift; sourceTree = "<group>"; };
+		AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressBar.swift; sourceTree = "<group>"; };
+		AC18F8602CB12298004E8868 /* AwardStyleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardStyleManager.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -276,6 +280,7 @@
 				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
 				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
 				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
+				AC18F8602CB12298004E8868 /* AwardStyleManager.swift */,
 				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
 				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
 				AC18F8482CAECE3D004E8868 /* SettingsViewController.swift */,
@@ -290,6 +295,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */,
 				AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */,
 				AC18F8582CB06031004E8868 /* ChatListViewController.swift */,
 				AC18F85A2CB06057004E8868 /* ChatListCell.swift */,
@@ -555,6 +561,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AC18F85B2CB06057004E8868 /* ChatListCell.swift in Sources */,
+				AC18F8612CB12298004E8868 /* AwardStyleManager.swift in Sources */,
 				AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */,
 				AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */,
 				AC18F8412CAD1200004E8868 /* ArticleTripViewController.swift in Sources */,
@@ -595,6 +602,7 @@
 				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
 				AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */,
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
+				AC18F85F2CB10DAC004E8868 /* CircularProgressBar.swift in Sources */,
 				AC9775772CA9831C00EF828A /* TripCallOutView.swift in Sources */,
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,

@@ -37,6 +37,7 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DropdownCell")
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.layer.cornerRadius = 12
         self.addSubview(tableView)
         
         tableView.snp.makeConstraints { make in

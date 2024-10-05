@@ -11,7 +11,7 @@ import UIKit
 class AwardLabelView: UIView {
     
     // 定義一個 UILabel
-    private let titleLabel = UILabel()
+    let titleLabel = UILabel()  // 讓 titleLabel 成為 public
     
     // 點擊手勢的回調
     var onTap: (() -> Void)?
@@ -57,5 +57,11 @@ class AwardLabelView: UIView {
     // 更新標題文字
     func updateTitle(_ title: String) {
         titleLabel.text = title
+    }
+    
+    // 新增方法來更新樣式
+    func updateStyle(backgroundColor: UIColor, textColor: UIColor) {
+        self.backgroundColor = backgroundColor
+        titleLabel.textColor = textColor
     }
 }
