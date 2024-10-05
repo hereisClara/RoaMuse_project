@@ -10,6 +10,7 @@ import CoreLocation
 class LocationManager: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     var onLocationUpdate: ((CLLocation) -> Void)?
+    var onHeadingUpdate: ((CLHeading) -> Void)?
     var currentLocation: CLLocation?
     var onAuthorizationChange: ((CLAuthorizationStatus) -> Void)?
 
@@ -35,6 +36,14 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func requestLocation() {
         locationManager.requestLocation()
     }
+    
+    func startUpdatingHeading() {
+            locationManager.startUpdatingHeading()  // 啟動方向更新
+        }
+
+        func stopUpdatingHeading() {
+            locationManager.stopUpdatingHeading()  // 停止方向更新
+        }
 
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         print("授权状态发生变化：\(status.rawValue)")
@@ -55,4 +64,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("位置获取失败: \(error.localizedDescription)")
     }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+            onHeadingUpdate?(newHeading)  // 使用新的方向數據
+        }
 }

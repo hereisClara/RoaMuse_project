@@ -407,7 +407,6 @@ class HomeViewController: UIViewController {
         DispatchQueue.global(qos: .userInitiated).async {
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             
-            // 确保NLP模型正常加载
             guard let model = try? poemLocationNLP3(configuration: .init()) else {
                 print("NLP 模型加载失败")
                 return
@@ -467,7 +466,6 @@ extension HomeViewController: PopupViewDelegate {
             }
         }
     }
-    
 }
 
 extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
@@ -478,7 +476,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         homeTableView.delegate = self
         
         homeTableView.rowHeight = UITableView.automaticDimension
-        homeTableView.estimatedRowHeight = 250
+        homeTableView.estimatedRowHeight = 400
         
         view.addSubview(homeTableView)
         homeTableView.snp.makeConstraints { make in

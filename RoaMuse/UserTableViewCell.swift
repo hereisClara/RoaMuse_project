@@ -74,7 +74,6 @@ class UserTableViewCell: UITableViewCell {
             make.height.equalTo(0)  // 初始高度為 0
         }
 
-
         photoStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
             make.height.equalToSuperview()
@@ -105,7 +104,7 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(avatarImageView.snp.bottom).offset(16)
             make.leading.equalTo(contentView).offset(16)
             make.trailing.equalTo(contentView).offset(-16)
-            make.height.lessThanOrEqualTo(120) // 例如限制为 100 点高度
+//            make.height.lessThanOrEqualTo(120) // 例如限制为 100 点高度
         }
         
         photoStackView.snp.makeConstraints { make in
@@ -163,14 +162,13 @@ class UserTableViewCell: UITableViewCell {
         contentLabel.lineBreakMode = .byWordWrapping
         contentLabel.textColor = .darkGray
         contentLabel.font = UIFont.systemFont(ofSize: 18, weight: .light)
+        contentLabel.numberOfLines = 6
+        contentLabel.lineBreakMode = .byTruncatingTail
         
         titleLabel.font = .boldSystemFont(ofSize: 22)
         titleLabel.textColor = .deepBlue
         
         dateLabel.textColor = .gray
-        
-        
-        
         dateLabel.font = UIFont.systemFont(ofSize: 14)
         
         setupButtonStyle()
@@ -231,7 +229,6 @@ class UserTableViewCell: UITableViewCell {
 
                 imageView.snp.makeConstraints { make in
                     make.width.equalTo(150)
-                    make.height.equalTo(imageView.snp.width).multipliedBy(0.75) // 保持圖片比例
                 }
             }
 

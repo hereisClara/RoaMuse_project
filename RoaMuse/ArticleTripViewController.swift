@@ -437,6 +437,7 @@ extension ArticleTripViewController {
         mapView.layer.cornerRadius = 15
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .follow
+        mapView.showsCompass = true
     }
     
     func setupLocationManager() {
@@ -446,6 +447,7 @@ extension ArticleTripViewController {
             print("User location updated: \(location.coordinate)")
         }
         locationManager.startUpdatingLocation()
+
     }
     
     // 繪製路線的覆蓋層
@@ -463,6 +465,12 @@ extension ArticleTripViewController {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         let identifier = "PlaceMarker"
         var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKPinAnnotationView
+        
+        if annotation is MKUserLocation {
+                // 使用系統預設的使用者位置圖標
+                return nil
+            }
+        
         if annotationView == nil {
             annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: identifier)
             annotationView?.canShowCallout = true
