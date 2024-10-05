@@ -61,7 +61,7 @@ class AwardTableViewCell: UITableViewCell {
         milestoneProgressView.snp.makeConstraints { make in
             make.width.equalTo(contentView).multipliedBy(0.85)
             make.centerX.equalTo(contentView)
-            make.height.equalTo(20)
+            make.height.equalTo(30)
             make.bottom.equalTo(contentView).offset(-10)
         }
         

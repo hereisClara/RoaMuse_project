@@ -48,11 +48,10 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
              TaskSet(totalTasks: 50, completedTasks: 50)]   // 第 3 个任务集合（cell）
         ]
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        fetchUserData()
+//        fetchUserData()
         setupTableView()
         setupTableViewHeader()
         self.navigationItem.largeTitleDisplayMode = .never
@@ -64,6 +63,11 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 print("已保存的索引: section = \(section), row = \(row), item = \(item)")
             }
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        fetchUserData()
     }
     
     func findIndexesForTitle(_ title: String) -> (Int, Int, Int)? {
@@ -97,7 +101,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             }
         }
     }
-
     
     func setupTableView() {
         view.addSubview(tableView)
