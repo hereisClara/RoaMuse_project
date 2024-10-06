@@ -56,7 +56,13 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-//        fetchUserData()
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar.barTintColor = UIColor.deepBlue
+        navigationController?.navigationBar.tintColor = UIColor.white
+        navigationController?.navigationBar.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.white,
+            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Bold", size: 18)
+        ]
         self.title = "成就"
         
         setupTableView()
@@ -77,7 +83,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         super.viewWillAppear(animated)
         fetchUserData()
 //        navigationController?.navigationBar.tintColor = .white
-        navigationController?.navigationBar.barTintColor = UIColor.deepBlue
 //        navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
 //            navigationController?.navigationBar.shadowImage = UIImage()
             navigationController?.navigationBar.isTranslucent = true

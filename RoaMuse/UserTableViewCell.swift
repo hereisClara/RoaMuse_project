@@ -188,6 +188,7 @@ class UserTableViewCell: UITableViewCell {
         dateLabel.textColor = .gray
         dateLabel.font = UIFont.systemFont(ofSize: 14)
         
+        awardLabelView.titleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 10)
     }
     
     func setupRoundedCorners() {

@@ -1,10 +1,5 @@
 import Foundation
 import UIKit
-import FirebaseAuth
-import FirebaseFirestore
-
-import Foundation
-import UIKit
 import FirebaseCore
 import FirebaseStorage
 import FirebaseFirestore
@@ -15,20 +10,25 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     let tableView = UITableView()
     let avatarImageView = UIImageView()
     let userNameLabel = UILabel()
+    var userName = String()
     let imagePicker = UIImagePickerController()
+    var introduction = String()
+    var region = String()
+    var userGender: String?
     
-    // 設定選項數據
-    let settingsOptions = ["封鎖名單", "刪除帳號", "登出"]
-    
+    let settingsOptions = ["個人名稱", "性別", "個人簡介", "地區", "封鎖名單", "刪除帳號", "登出"]
+
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        navigationItem.backButtonTitle = ""
+
         view.backgroundColor = UIColor.systemBackground
-        navigationController?.navigationBar.prefersLargeTitles = true
+        self.navigationItem.largeTitleDisplayMode = .never
+//        navigationController?.navigationBar.prefersLargeTitles = false
         self.title = "設定"
         
         imagePicker.delegate = self
@@ -43,103 +43,111 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         loadUserData(userId: userId)
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        guard let userId = userId else {
+            print("未找到 userId，請先登入")
+            return
+        }
+        
+        loadUserData(userId: userId)
+    }
+    
     func setupTableView() {
         view.addSubview(tableView)
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
         
-        // 註冊自定義的 cell
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "settingsCell")
+        tableView.rowHeight = UITableView.automaticDimension
+        
+        tableView.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            make.leading.trailing.bottom.equalToSuperview()
+        }
+        
+        tableView.register(SettingDetailCell.self, forCellReuseIdentifier: "SettingDetailCell")
         
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.rowHeight = 50
     }
+
     
-    // 設置頭部視圖
     func setupTableHeader() {
         let headerView = UIView()
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 150)
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 120)
         
         // 設置 avatarImageView
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         avatarImageView.isUserInteractionEnabled = true
         avatarImageView.backgroundColor = .systemGray4
-        avatarImageView.layer.cornerRadius = 45 // 圓形大頭貼
+        avatarImageView.layer.cornerRadius = 45
         headerView.addSubview(avatarImageView)
         
         // 設置相機圖示
         let cameraIcon = UIImageView(image: UIImage(systemName: "camera.circle"))
-        cameraIcon.tintColor = .systemBlue
+        cameraIcon.tintColor = .deepBlue
+        cameraIcon.backgroundColor = .white
         cameraIcon.isUserInteractionEnabled = true
+        cameraIcon.layer.cornerRadius = 12
         headerView.addSubview(cameraIcon)
-        
-        // 設置用戶名稱
-        userNameLabel.text = "使用者名稱"
-        userNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        headerView.addSubview(userNameLabel)
-        
-        // 設置鉛筆圖示
-        let editIcon = UIImageView(image: UIImage(systemName: "pencil.circle"))
-        editIcon.tintColor = .systemBlue
-        editIcon.isUserInteractionEnabled = true
-        headerView.addSubview(editIcon)
         
         // 點擊大頭貼打開相片庫
         let avatarTapGesture = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
         avatarImageView.addGestureRecognizer(avatarTapGesture)
         
-        // 點擊鉛筆圖示編輯名稱
-        let editTapGesture = UITapGestureRecognizer(target: self, action: #selector(editUserName))
-        editIcon.addGestureRecognizer(editTapGesture)
+        cameraIcon.snp.makeConstraints { make in
+            make.trailing.equalTo(avatarImageView.snp.trailing)
+            make.bottom.equalTo(avatarImageView.snp.bottom)
+            make.width.height.equalTo(24)
+        }
         
-        // 設置佈局
-        avatarImageView.translatesAutoresizingMaskIntoConstraints = false
-        cameraIcon.translatesAutoresizingMaskIntoConstraints = false
-        userNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        editIcon.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            avatarImageView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
-            avatarImageView.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
-            avatarImageView.widthAnchor.constraint(equalToConstant: 90),
-            avatarImageView.heightAnchor.constraint(equalToConstant: 90),
-            
-            cameraIcon.trailingAnchor.constraint(equalTo: avatarImageView.trailingAnchor),
-            cameraIcon.bottomAnchor.constraint(equalTo: avatarImageView.bottomAnchor),
-            cameraIcon.widthAnchor.constraint(equalToConstant: 25),
-            cameraIcon.heightAnchor.constraint(equalToConstant: 25),
-            
-            userNameLabel.leadingAnchor.constraint(equalTo: avatarImageView.trailingAnchor, constant: 20),
-            userNameLabel.centerYAnchor.constraint(equalTo: avatarImageView.centerYAnchor),
-            
-            editIcon.leadingAnchor.constraint(equalTo: userNameLabel.trailingAnchor, constant: 8),
-            editIcon.centerYAnchor.constraint(equalTo: userNameLabel.centerYAnchor),
-            editIcon.widthAnchor.constraint(equalToConstant: 25),
-            editIcon.heightAnchor.constraint(equalToConstant: 25)
-        ])
+        avatarImageView.snp.makeConstraints { make in
+            make.centerY.equalTo(headerView)
+            make.centerX.equalTo(headerView)
+            make.width.height.equalTo(90)
+        }
         
         tableView.tableHeaderView = headerView
     }
-    
+
     // MARK: - UITableViewDataSource
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return max(UITableView.automaticDimension, 60)
+    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return settingsOptions.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "settingsCell", for: indexPath)
-        cell.textLabel?.text = settingsOptions[indexPath.row]
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "SettingDetailCell", for: indexPath) as? SettingDetailCell else {
+            return UITableViewCell()
+        }
+        
+        let settingOption = settingsOptions[indexPath.row]
+        
+        switch settingOption {
+        case "個人名稱":
+            cell.configureCell(title: "個人名稱", detail: userName ?? "使用者名稱")
+        case "性別":
+            cell.configureCell(title: "性別", detail: userGender ?? "選擇性別")
+        case "個人簡介":
+            cell.configureCell(title: "個人簡介", detail: introduction)
+        case "地區":
+            cell.configureCell(title: "地區", detail: region)
+        case "封鎖名單":
+            cell.configureCell(title: "封鎖名單", detail: "")
+        case "刪除帳號":
+            cell.configureCell(title: "刪除帳號", detail: "")
+        case "登出":
+            cell.configureCell(title: "登出", detail: "")
+        default:
+            break
+        }
         return cell
     }
-    
+
     // MARK: - UITableViewDelegate
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -147,18 +155,31 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         
         let selectedOption = settingsOptions[indexPath.row]
         
-        if selectedOption == "登出" {
+        if selectedOption == "性別" {
+            showGenderSelection()
+        } else if selectedOption == "個人名稱" {
+            editUserName()
+        } else if selectedOption == "登出" {
             handleLogout()
         } else if selectedOption == "刪除帳號" {
             handleDeleteAccount()
-        } else if selectedOption == "封鎖名單" {
-            let blockedListVC = BlockedListViewController()
-            let navController = UINavigationController(rootViewController: blockedListVC)
+        } else if selectedOption == "個人簡介" {
+            let introVC = IntroductionViewController()
+            introVC.currentBio = introduction
+            introVC.delegate = self
+            let navController = UINavigationController(rootViewController: introVC)
             self.present(navController, animated: true, completion: nil)
+        } else if selectedOption == "地區" {
+            let regionVC = RegionSelectionViewController()
+            regionVC.delegate = self
+            let navController = UINavigationController(rootViewController: regionVC)
+            self.present(navController, animated: true, completion: nil)
+        } else if selectedOption == "封鎖名單" {
+            let blockVC = BlockedListViewController()
+            navigationController?.pushViewController(blockVC, animated: true)
         }
     }
 
-    
     // 處理登出邏輯
     func handleLogout() {
         let alert = UIAlertController(title: "登出", message: "你確定要登出嗎？", preferredStyle: .alert)
@@ -239,10 +260,17 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             if let document = document, document.exists {
                 if let userData = document.data(),
                    let userName = userData["userName"] as? String,
-                   let photoUrl = userData["photo"] as? String {
-                    self.userNameLabel.text = userName
+                   let photoUrl = userData["photo"] as? String,
+                   let region = userData["region"] as? String,
+                   let introduction = userData["introduction"] as? String,
+                   let gender = userData["gender"] as? String {
+                    self.userName = userName
+                    self.introduction = introduction
+                    self.region = region
+                    self.userGender = gender
                     self.loadAvatarImage(from: photoUrl)
                 }
+                self.tableView.reloadData()
             }
         }
     }
@@ -339,5 +367,99 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             }
         }
     }
+    
+    func loadCurrentUserBio() {
+        guard let userId = userId else { return }
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        
+        userRef.getDocument { document, error in
+            if let error = error {
+                print("加載個人簡介失敗: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists {
+                self.introduction = document.data()?["introduction"] as? String ?? ""
+                self.region = document.data()?["region"] as? String ?? ""
+            }
+        }
+    }
+    
+    func showGenderSelection() {
+        let alertController = UIAlertController(title: "選擇性別", message: nil, preferredStyle: .actionSheet)
+        
+        let maleAction = UIAlertAction(title: "男性", style: .default) { _ in
+            self.updateGender("男性")
+        }
+        
+        let femaleAction = UIAlertAction(title: "女性", style: .default) { _ in
+            self.updateGender("女性")
+        }
+        
+        let otherAction = UIAlertAction(title: "其他", style: .default) { _ in
+            self.updateGender("其他")
+        }
+        
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        
+        alertController.addAction(maleAction)
+        alertController.addAction(femaleAction)
+        alertController.addAction(otherAction)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    func updateGender(_ gender: String) {
+        self.userGender = gender
+        guard let userId = userId else { return }
+        
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        userRef.updateData(["gender": gender]) { error in
+            if let error = error {
+                print("保存性別失敗: \(error.localizedDescription)")
+            } else {
+                print("性別保存成功")
+                self.tableView.reloadData()
+            }
+        }
+    }
 }
 
+extension SettingsViewController: IntroductionViewControllerDelegate {
+    
+    func introductionViewControllerDidSave(_ intro: String) {
+        
+            guard let userId = userId else { return }
+            
+            let userRef = Firestore.firestore().collection("users").document(userId)
+            userRef.updateData(["introduction": intro]) { error in
+                if let error = error {
+                    print("保存個人簡介失敗: \(error.localizedDescription)")
+                } else {
+                    print("個人簡介保存成功")
+                    self.tableView.reloadData()
+            }
+        }
+    }
+}
+
+extension SettingsViewController: RegionSelectionDelegate {
+    
+    func didSelectRegion(_ region: String) {
+            // 保存到 Firebase Firestore
+            guard let userId = userId else { return }
+            let userRef = Firestore.firestore().collection("users").document(userId)
+            
+            userRef.updateData(["region": region]) { error in
+                if let error = error {
+                    print("保存地區失敗: \(error.localizedDescription)")
+                } else {
+                    print("地區保存成功")
+                    
+                    self.tableView.reloadData()
+                }
+            }
+        }
+    
+}

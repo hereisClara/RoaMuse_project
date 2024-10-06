@@ -41,7 +41,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .backgroundGray)
-        
+        navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "個人"
@@ -117,7 +117,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        tabBarController?.tabBar.isHidden = false
         guard let userId = userId else {
             return
         }
@@ -250,7 +250,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             Firestore.firestore().collection("posts").document(postId).delete { error in
                 if let error = error {
-                    print("刪除貼文失敗: \(error.localizedDescription)")
+                    
                 } else {
                     self?.posts.remove(at: sender.tag)
                     self?.tableView.deleteRows(at: [IndexPath(row: sender.tag, section: 0)], with: .fade)
@@ -425,15 +425,13 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             "photo": url
         ]) { error in
             if let error = error {
-                print("保存到 Firestore 失敗: \(error.localizedDescription)")
+                
             } else {
                 self.loadAvatarImage(from: url)
             }
         }
     }
     
-    
-    // 取消選擇圖片
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true, completion: nil)
     }
@@ -460,10 +458,9 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupTableView() {
         view.addSubview(tableView)
         
-        // 註冊自定義 cell
         tableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         tableView.backgroundColor = .clear
-        // 設置代理和資料來源
+        
         tableView.delegate = self
         tableView.dataSource = self
         tableView.separatorStyle = .none

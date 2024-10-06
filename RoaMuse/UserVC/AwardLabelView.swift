@@ -22,13 +22,13 @@ class AwardLabelView: UIView {
         
         // 設置背景顏色
         self.backgroundColor = backgroundColor
-        self.layer.cornerRadius = 8
+        self.layer.cornerRadius = 6
         self.clipsToBounds = true
         
         // 配置 titleLabel
         titleLabel.text = title
         titleLabel.textAlignment = .center
-        titleLabel.font = UIFont.systemFont(ofSize: 10, weight: .bold)
+        titleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 10)
         titleLabel.textColor = .white
         
         // 將 titleLabel 加入到視圖中
@@ -36,10 +36,10 @@ class AwardLabelView: UIView {
         
         // 設置 titleLabel 的 Auto Layout
         titleLabel.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(10)
-            make.trailing.equalToSuperview().offset(-10)
+            make.leading.equalToSuperview().offset(8)
+            make.trailing.equalToSuperview().offset(-8)
             make.centerY.equalToSuperview()
-            make.height.equalTo(14)
+            make.height.equalTo(16)
         }
         
         // 添加點擊手勢

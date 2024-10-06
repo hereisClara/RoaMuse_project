@@ -63,6 +63,11 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         setupActivityIndicator()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+    }
+    
     func setupActivityIndicator() {
         
         activityIndicator.snp.makeConstraints { make in
@@ -72,7 +77,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         // 初始化時隱藏
         activityIndicator.isHidden = true
     }
-    
     
     @objc func didTapGenerateView() {
         

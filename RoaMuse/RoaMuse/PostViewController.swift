@@ -39,6 +39,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        navigationItem.backButtonTitle = ""
         setupUI()
         setupDropdownTableView()
         self.navigationItem.largeTitleDisplayMode = .never

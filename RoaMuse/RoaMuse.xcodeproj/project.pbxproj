@@ -42,6 +42,9 @@
 		AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */; };
 		AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC42C93006A00B73485 /* UserViewController.swift */; };
 		AC75D0F02CB267B9005258EA /* MapTripTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */; };
+		AC75D0F22CB27E75005258EA /* IntroductionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */; };
+		AC75D0F42CB28382005258EA /* RegionSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */; };
+		AC75D0F62CB285FC005258EA /* SettingDetailCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
@@ -137,6 +140,9 @@
 		AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsFeedViewController.swift; sourceTree = "<group>"; };
 		AC27ACC42C93006A00B73485 /* UserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewController.swift; sourceTree = "<group>"; };
 		AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTripTableViewCell.swift; sourceTree = "<group>"; };
+		AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroductionViewController.swift; sourceTree = "<group>"; };
+		AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelectionViewController.swift; sourceTree = "<group>"; };
+		AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingDetailCell.swift; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
@@ -290,6 +296,7 @@
 				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
 				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
 				AC18F8482CAECE3D004E8868 /* SettingsViewController.swift */,
+				AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */,
 				AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */,
 				AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */,
 				AC9775742CA7E22100EF828A /* MapViewController.swift */,
@@ -301,6 +308,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */,
+				AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */,
 				AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */,
 				AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */,
 				AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */,
@@ -590,6 +599,7 @@
 				AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */,
 				AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */,
 				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
+				AC75D0F22CB27E75005258EA /* IntroductionViewController.swift in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
 				AC18F8652CB25E2E004E8868 /* ImageViewController.swift in Sources */,
 				AC18F8492CAECE3D004E8868 /* SettingsViewController.swift in Sources */,
@@ -599,9 +609,11 @@
 				AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */,
 				AC18F8432CAD6C61004E8868 /* MapTableViewCell.swift in Sources */,
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
+				AC75D0F42CB28382005258EA /* RegionSelectionViewController.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
 				AC18F8452CAE93B8004E8868 /* BottomSheetManager.swift in Sources */,
 				AC18F8532CB01F69004E8868 /* PhotoCollectionTableViewCell.swift in Sources */,
+				AC75D0F62CB285FC005258EA /* SettingDetailCell.swift in Sources */,
 				AC9775732CA6F08B00EF828A /* PhotoUploadViewController.swift in Sources */,
 				ACFCA35B2C916C8F00643A2E /* RoaMuse.xcdatamodeld in Sources */,
 				AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */,

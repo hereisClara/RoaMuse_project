@@ -26,6 +26,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         tabBarController?.tabBar.isHidden = true
+        navigationItem.backButtonTitle = ""
         mapView = MKMapView(frame: view.bounds)
         mapView.delegate = self
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
@@ -38,11 +39,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         setupFullScreenImageView()
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        tabBarController?.tabBar.isHidden = false
-    }
-    
     func setupSlidingView() {
         slidingView = SlidingView(frame: CGRect(x: 0, y: view.bounds.height, width: view.bounds.width, height: 600), parentViewController: self)
         view.addSubview(slidingView)
@@ -53,7 +49,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         fullScreenImageView.contentMode = .scaleAspectFit
         fullScreenImageView.backgroundColor = .black
         fullScreenImageView.isUserInteractionEnabled = true
-        fullScreenImageView.alpha = 0 // 初始隱藏
+        fullScreenImageView.alpha = 0 
         
         // 添加手勢識別器
         let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeToNextImage))
@@ -173,7 +169,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     return
                 }
                 
-                // 添加標註點
                 let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = location

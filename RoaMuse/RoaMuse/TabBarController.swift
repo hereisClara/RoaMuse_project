@@ -19,10 +19,14 @@ class TabBarController: UITabBarController {
             
             tabBar.standardAppearance = appearance
             if #available(iOS 15.0, *) {
+                appearance.shadowImage = nil
+                appearance.shadowColor = nil
                 tabBar.scrollEdgeAppearance = appearance
             }
         }
         
+        tabBar.barTintColor = .backgroundGray
+        tabBar.backgroundColor = .backgroundGray
         tabBar.tintColor = UIColor(resource: .deepBlue)
         tabBar.unselectedItemTintColor = UIColor.lightGray
         
@@ -30,7 +34,6 @@ class TabBarController: UITabBarController {
         let homeNavController = UINavigationController(rootViewController: homeVC)
         homeVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "house"), tag: 0)
         
-
         let collectionsVC = CollectionsViewController()
         let collectionsNavController = UINavigationController(rootViewController: collectionsVC)
         collectionsVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "bookmark"), tag: 1)

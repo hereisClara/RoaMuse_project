@@ -46,6 +46,7 @@ class HomeViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         tabBarItem.title = nil
+        navigationItem.backButtonTitle = ""
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 300)
         
         bottomSheetManager?.addActionButton(title: "隱藏貼文") {
@@ -477,7 +478,7 @@ extension HomeViewController: PopupViewDelegate {
                     }
                     tripDetailVC.nestedInstructions = nestedInstructions
                 }
-                
+                self.hidesBottomBarWhenPushed = true
                 self.navigationController?.pushViewController(tripDetailVC, animated: true)
             }
         }
@@ -524,7 +525,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeCountLabel.text = likeCount
         cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
-        
+        cell.awardLabelView.titleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 10)
         cell.configureMoreButton {
             self.bottomSheetManager?.showBottomSheet()
         }

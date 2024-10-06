@@ -1,4 +1,5 @@
 import Foundation
+import Kingfisher
 import UIKit
 import SnapKit
 import FirebaseFirestore
@@ -47,6 +48,9 @@ class ArticleViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        tabBarController?.tabBar.isHidden = true
         self.navigationItem.largeTitleDisplayMode = .never
         getTripData()
         observeLikeCountChanges()
@@ -65,9 +69,19 @@ class ArticleViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        if let tabBarController = self.tabBarController {
+                tabBarController.tabBar.isHidden = true
+            } else {
+                print("tabBarController is nil")
+            }
         observeLikeCountChanges()
         checkBookmarkStatus()
         loadComments()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     override func viewWillLayoutSubviews() {
@@ -666,22 +680,22 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
 
         let numberOfPhotos = photoUrls.count
 
+        // 動態生成 UI 並添加點擊手勢
         if numberOfPhotos == 1 {
-            let imageView = createImageView(urlString: photoUrls[0])
+            let imageView = createImageView(urlString: photoUrls[0], index: 0)
             photoContainerView.addSubview(imageView)
             imageView.snp.makeConstraints { make in
                 make.edges.equalToSuperview()
                 make.height.equalTo(200)
             }
         } else if numberOfPhotos == 2 {
-            // 两张图片，水平平分
             let stackView = UIStackView()
             stackView.axis = .horizontal
             stackView.spacing = 8
             stackView.distribution = .fillEqually
 
-            for url in photoUrls {
-                let imageView = createImageView(urlString: url)
+            for (index, url) in photoUrls.enumerated() {
+                let imageView = createImageView(urlString: url, index: index)
                 stackView.addArrangedSubview(imageView)
             }
 
@@ -691,14 +705,13 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 make.height.equalTo(150)
             }
         } else if numberOfPhotos == 3 {
-            // 三张图片，水平平分
             let stackView = UIStackView()
             stackView.axis = .horizontal
             stackView.spacing = 8
             stackView.distribution = .fillEqually
 
-            for url in photoUrls {
-                let imageView = createImageView(urlString: url)
+            for (index, url) in photoUrls.enumerated() {
+                let imageView = createImageView(urlString: url, index: index)
                 stackView.addArrangedSubview(imageView)
             }
 
@@ -707,35 +720,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 make.edges.equalToSuperview()
                 make.height.equalTo(150)
             }
-        } else if numberOfPhotos == 4 {
-            let gridStackView = UIStackView()
-            gridStackView.axis = .vertical
-            gridStackView.spacing = 8
-            gridStackView.distribution = .fillEqually
-
-            for num in 0..<2 {
-                let rowStackView = UIStackView()
-                rowStackView.axis = .horizontal
-                rowStackView.spacing = 8
-                rowStackView.distribution = .fillEqually
-
-                for num2 in 0..<2 {
-                    let index = num * 2 + num2
-                    if index < photoUrls.count {
-                        let imageView = createImageView(urlString: photoUrls[index])
-                        rowStackView.addArrangedSubview(imageView)
-                    }
-                }
-
-                gridStackView.addArrangedSubview(rowStackView)
-            }
-
-            photoContainerView.addSubview(gridStackView)
-            gridStackView.snp.makeConstraints { make in
-                make.edges.equalToSuperview()
-                make.height.equalTo(200)
-            }
         } else {
+            // 根據照片數量創建多行多列的網格視圖
             let columns = 3
             let rows = Int(ceil(Double(numberOfPhotos) / Double(columns)))
             let gridStackView = UIStackView()
@@ -752,10 +738,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 for column in 0..<columns {
                     let index = row * columns + column
                     if index < photoUrls.count {
-                        let imageView = createImageView(urlString: photoUrls[index])
+                        let imageView = createImageView(urlString: photoUrls[index], index: index)
                         rowStackView.addArrangedSubview(imageView)
                     } else {
-                        // 如果图片数量不足，在布局中添加空白视图占位
                         let placeholderView = UIView()
                         rowStackView.addArrangedSubview(placeholderView)
                     }
@@ -771,8 +756,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             }
         }
     }
-
-    func createImageView(urlString: String) -> UIImageView {
+    
+    func createImageView(urlString: String, index: Int) -> UIImageView {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
@@ -780,52 +765,52 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         imageView.isUserInteractionEnabled = true
 
         if let url = URL(string: urlString) {
-            imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: nil, completionHandler: { result in
-                switch result {
-                case .success(let value):
-                    print("圖片加載成功: \(value.source.url?.absoluteString ?? "")")
-                case .failure(let error):
-                    print("圖片加載失敗: \(error.localizedDescription)")
-                }
-            })
+            imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
         }
 
-        // 添加点击手势
+        // 添加點擊手勢
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapImage(_:)))
         imageView.addGestureRecognizer(tapGesture)
+        imageView.tag = index // 設定當前圖片的索引
 
         return imageView
     }
-
+    
     @objc func didTapImage(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? UIImageView else { return }
-        let fullScreenImageView = UIImageView()
-        fullScreenImageView.contentMode = .scaleAspectFit
-        fullScreenImageView.image = imageView.image
-        fullScreenImageView.backgroundColor = .black
-        fullScreenImageView.isUserInteractionEnabled = true
+        let index = imageView.tag // 獲取當前點擊圖片的索引
 
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            window.addSubview(fullScreenImageView)
-            fullScreenImageView.frame = window.frame
+        // 準備 UIImage 陣列
+        var uiImages: [UIImage] = []
+        let dispatchGroup = DispatchGroup()
 
-            // 添加关闭按钮
-            let closeButton = UIButton(type: .system)
-            closeButton.setTitle("×", for: .normal)
-            closeButton.titleLabel?.font = UIFont.systemFont(ofSize: 30)
-            closeButton.setTitleColor(.white, for: .normal)
-            closeButton.addTarget(self, action: #selector(dismissFullScreenImage(_:)), for: .touchUpInside)
-            fullScreenImageView.addSubview(closeButton)
-            closeButton.snp.makeConstraints { make in
-                make.top.equalTo(fullScreenImageView).offset(40)
-                make.trailing.equalTo(fullScreenImageView).offset(-20)
-                make.width.height.equalTo(40)
+        // 使用同步隊列保護數組的修改
+        let syncQueue = DispatchQueue(label: "com.example.imageSyncQueue")
+
+        for urlString in photoUrls {
+            if let url = URL(string: urlString) {
+                dispatchGroup.enter()
+                KingfisherManager.shared.retrieveImage(with: url, options: nil, progressBlock: nil) { result in
+                    switch result {
+                    case .success(let value):
+                        syncQueue.sync {
+                            uiImages.append(value.image)
+                        }
+                    case .failure(let error):
+                        print("圖片加載失敗: \(error.localizedDescription)")
+                    }
+                    dispatchGroup.leave()
+                }
             }
+        }
 
-            // 添加点击手势，点击图片本身也可以关闭
-            let dismissTapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullScreenImage(_:)))
-            fullScreenImageView.addGestureRecognizer(dismissTapGesture)
+        dispatchGroup.notify(queue: .main) {
+            // 當所有圖片加載完畢後，跳轉到 FullScreenImageViewController
+            let fullScreenVC = FullScreenImageViewController()
+            fullScreenVC.images = uiImages // 傳遞已下載的 UIImage 數據
+            fullScreenVC.startingIndex = index // 設定從哪一張圖片開始顯示
+
+            self.navigationController?.pushViewController(fullScreenVC, animated: true)
         }
     }
 

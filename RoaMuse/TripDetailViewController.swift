@@ -60,8 +60,9 @@ class TripDetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        navigationController?.navigationBar.barTintColor = UIColor.white
+        navigationController?.navigationBar.barTintColor = UIColor.backgroundGray
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        navigationItem.backButtonTitle = ""
         self.buttonState = []
         getPoemPlacePair()
         if let nestedInstructions = nestedInstructions {
@@ -96,7 +97,7 @@ class TripDetailViewController: UIViewController {
         } else {
             print("未接收到行程數據")
         }
-        setupUI()
+        
         setupTableView()
         //        setupTransportButtons()
         loadPlacesDataFromFirebase()
@@ -129,51 +130,6 @@ class TripDetailViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.tabBarController?.tabBar.isHidden = false
-    }
-    
-    func setupUI() {
-        view.addSubview(progressView)
-        
-        progressView.backgroundColor = .clear // Transparent background
-        progressView.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(20)
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-            make.width.equalTo(20) // Width of the progress bar
-        }
-    }
-    
-    func setupProgressDots() {
-        // 移除之前的进度点
-        for dot in progressDots {
-            dot.removeFromSuperview()
-        }
-        progressDots.removeAll()
-        
-        // 添加新的进度点
-        for _ in 0..<places.count {
-            let dot = UIView()
-            dot.backgroundColor = .lightGray
-            dot.layer.cornerRadius = 5 // Circular dots
-            progressView.addSubview(dot)
-            
-            dot.snp.makeConstraints { make in
-                make.width.height.equalTo(10) // Size of dots
-                make.centerX.equalToSuperview()
-            }
-            
-            progressDots.append(dot)
-        }
-        
-        for (index, dot) in progressDots.enumerated() {
-            dot.snp.makeConstraints { make in
-                if index == 0 {
-                    make.top.equalToSuperview().offset(20)
-                } else {
-                    make.top.equalTo(progressDots[index - 1].snp.bottom).offset(30)
-                }
-            }
-        }
     }
     
     func getPoemPlacePair() {
@@ -269,7 +225,6 @@ class TripDetailViewController: UIViewController {
                     
                     // Initialize buttonState with the correct count
                     self.buttonState = Array(repeating: false, count: self.places.count)
-                    self.setupProgressDots()
                     
                     // 重新加载表格视图
                     self.tableView.reloadData()
