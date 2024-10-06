@@ -22,6 +22,11 @@ class FullScreenImageViewController: UIViewController, UIPageViewControllerDataS
         setupPageViewController()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+    }
+    
     func setupPageViewController() {
         pageViewController = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal, options: nil)
         pageViewController.dataSource = self
@@ -39,7 +44,6 @@ class FullScreenImageViewController: UIViewController, UIPageViewControllerDataS
         }
     }
     
-    // 创建每个图片页面的视图控制器
     func viewControllerForPage(at index: Int) -> ImageViewController {
         let imageVC = ImageViewController()
         imageVC.image = images[index]

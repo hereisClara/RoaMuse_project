@@ -17,6 +17,7 @@ class SlidingView: UIView {
     var images: [UIImage] = []  // 圖片數據源
     var tableView: UITableView!
     var currentPlaceId: String?
+    var isExpanded: Bool = false
     
     init(frame: CGRect, parentViewController: UIViewController) {
             self.parentViewController = parentViewController
@@ -29,21 +30,23 @@ class SlidingView: UIView {
     }
     
     func setupUI() {
-        self.backgroundColor = .white
+        self.backgroundColor = .backgroundGray
         self.layer.cornerRadius = 15
         self.layer.masksToBounds = true
         
-        // 設置 tableView
         tableView = UITableView(frame: .zero, style: .plain)
         tableView.dataSource = self
+        tableView.backgroundColor = .clear
         tableView.delegate = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "TripIdCell")
+        tableView.separatorStyle = .none
+        tableView.register(MapTripTableViewCell.self, forCellReuseIdentifier: "TripIdCell")
         tableView.register(PhotoCollectionTableViewCell.self, forCellReuseIdentifier: "CollectionTableViewCell")
         addSubview(tableView)
         
         // 使用 SnapKit 設置 tableView 的約束
         tableView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(10)
+            make.top.bottom.equalToSuperview().inset(15)
+            make.leading.trailing.equalToSuperview().inset(24)
         }
     }
 }
@@ -51,12 +54,77 @@ class SlidingView: UIView {
 extension SlidingView: UITableViewDataSource, UITableViewDelegate {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 2  // 第一個 section 顯示 tripId，第二個 section 顯示 collectionView
+        return 2
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        if section == 0 {
+            let headerView = UIView()
+            headerView.backgroundColor = .backgroundGray
+            
+            let titleLabel = UILabel()
+            titleLabel.text = "旅行記憶"
+            titleLabel.textColor = .deepBlue
+            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 28)
+            
+            let showMoreButton = UIButton(type: .system)
+            showMoreButton.setTitle("查看更多", for: .normal)
+            showMoreButton.addTarget(self, action: #selector(handleShowMoreTapped), for: .touchUpInside)
+            
+            headerView.addSubview(showMoreButton)
+            headerView.addSubview(titleLabel)
+            
+            titleLabel.snp.makeConstraints { make in
+                make.centerY.equalTo(headerView)
+                make.leading.equalTo(headerView).offset(16)
+            }
+            
+            showMoreButton.snp.makeConstraints { make in
+                make.trailing.equalTo(headerView).offset(-16)
+                make.centerY.equalTo(headerView)
+            }
+            
+            if isExpanded == false {
+                showMoreButton.isHidden = false
+            } else {
+                showMoreButton.isHidden = true
+            }
+            
+            return headerView
+        } else {
+            
+            let headerView = UIView()
+            headerView.backgroundColor = .backgroundGray
+            
+            let titleLabel = UILabel()
+            titleLabel.text = "時光印痕"
+            titleLabel.textColor = .deepBlue
+            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 28)
+            
+            headerView.addSubview(titleLabel)
+            
+            titleLabel.snp.makeConstraints { make in
+                make.centerY.equalTo(headerView)
+                make.leading.equalTo(headerView).offset(16)
+            }
+            
+            return headerView
+        }
+        
+        return nil
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 44
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
-            return tripIds.count
+            if isExpanded || tripIds.count <= 3 {
+                return tripIds.count
+            } else {
+                return 3 // 限制最多显示5行
+            }
         } else {
             return 1
         }
@@ -64,45 +132,44 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 {
-            // 這裡處理 tripId 的 cell
-            let cell = tableView.dequeueReusableCell(withIdentifier: "TripIdCell", for: indexPath)
+            
+            let cell = tableView.dequeueReusableCell(withIdentifier: "TripIdCell", for: indexPath) as? MapTripTableViewCell
             let tripId = tripIds[indexPath.row]
             
-            cell.selectionStyle = .none
-            // 使用 tripId 去 Firestore 中查找對應的詩的名字
+            cell?.selectionStyle = .none
+            cell?.backgroundColor = .clear
             fetchPoemTitleAndPoemLine(tripId: tripId) { poemTitle, poemLine in
                 DispatchQueue.main.async {
-                    // 在 cell 的 textLabel 中顯示詩名
-                    cell.textLabel?.text = poemTitle
                     
-                    cell.detailTextLabel?.text = poemLine
-                    print("===", poemLine)
+                    cell?.titleLabel.text = poemTitle
+                    cell?.poemLineLabel.text = poemLine
                 }
             }
             
-            return cell
+            return cell ?? UITableViewCell()
+            
         } else {
-            // 這裡處理 collectionView 的 cell
+            
             let cell = tableView.dequeueReusableCell(withIdentifier: "CollectionTableViewCell", for: indexPath) as? PhotoCollectionTableViewCell
+            cell?.backgroundColor = .clear
             cell?.updateImages(images)  // 更新圖片
+            cell?.parentViewController = self.parentViewController
             return cell ?? UITableViewCell()
         }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section == 0 {
-            return 80  // tripId 的 cell 高度
+            return 100  // tripId 的 cell 高度
         } else {
-            // 如果没有图片，确保高度为0
             guard !images.isEmpty else {
                 return 0
             }
 
-            // 计算图片墙的高度，假设每张图片高度为100，行间距为10
-            let numberOfRows = ceil(Double(images.count) / 3.0) // 每行3个，计算总行数
-            let totalHeight = numberOfRows * 100.0 + (numberOfRows - 1) * 10.0 // 每张图片的高度为100，行间距为10
+            let numberOfRows = ceil(Double(images.count) / 3.0)
+            let totalHeight = numberOfRows * 100.0 + (numberOfRows - 1) * 10.0
             
-            return max(totalHeight, 0) // 确保返回的高度至少为0，防止负值
+            return max(totalHeight, 0)
         }
     }
 
@@ -117,7 +184,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
                         print("無法獲取 trip 資料")
                         return
                     }
-                    print("naviii")
+
                     self.navigateToTripDetailPage(selectedTrip: trip)
                 }
             }
@@ -179,4 +246,10 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             }
         }
     }
+    
+    @objc func handleShowMoreTapped() {
+        isExpanded = true
+        tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+    }
+
 }
