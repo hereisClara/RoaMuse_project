@@ -29,6 +29,8 @@
 		AC18F85D2CB06167004E8868 /* ChatMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */; };
 		AC18F85F2CB10DAC004E8868 /* CircularProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */; };
 		AC18F8612CB12298004E8868 /* AwardStyleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8602CB12298004E8868 /* AwardStyleManager.swift */; };
+		AC18F8632CB25DEB004E8868 /* FullScreenImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8622CB25DEB004E8868 /* FullScreenImageViewController.swift */; };
+		AC18F8652CB25E2E004E8868 /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8642CB25E2E004E8868 /* ImageViewController.swift */; };
 		AC27ACAF2C91E16B00B73485 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACAE2C91E16B00B73485 /* Alamofire */; };
 		AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB12C91E17400B73485 /* SnapKit */; };
 		AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AC27ACB42C91E26900B73485 /* FirebaseAuth */; };
@@ -126,6 +128,8 @@
 		AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessageCell.swift; sourceTree = "<group>"; };
 		AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircularProgressBar.swift; sourceTree = "<group>"; };
 		AC18F8602CB12298004E8868 /* AwardStyleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardStyleManager.swift; sourceTree = "<group>"; };
+		AC18F8622CB25DEB004E8868 /* FullScreenImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageViewController.swift; sourceTree = "<group>"; };
+		AC18F8642CB25E2E004E8868 /* ImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
 		AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		AC27ACBC2C92FB9300B73485 /* CollectionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionsViewController.swift; sourceTree = "<group>"; };
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
@@ -302,6 +306,8 @@
 				AC18F8562CB05E9C004E8868 /* ChatViewController.swift */,
 				AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */,
 				AC18F8522CB01F69004E8868 /* PhotoCollectionTableViewCell.swift */,
+				AC18F8622CB25DEB004E8868 /* FullScreenImageViewController.swift */,
+				AC18F8642CB25E2E004E8868 /* ImageViewController.swift */,
 				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
 				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
@@ -571,6 +577,7 @@
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
+				AC18F8632CB25DEB004E8868 /* FullScreenImageViewController.swift in Sources */,
 				AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */,
 				AC18F8572CB05E9C004E8868 /* ChatViewController.swift in Sources */,
 				AC18F84B2CAECF31004E8868 /* SettingsTableViewCell.swift in Sources */,
@@ -581,6 +588,7 @@
 				AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */,
 				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
+				AC18F8652CB25E2E004E8868 /* ImageViewController.swift in Sources */,
 				AC18F8492CAECE3D004E8868 /* SettingsViewController.swift in Sources */,
 				AC18F84D2CAFD114004E8868 /* UserListViewController.swift in Sources */,
 				AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */,

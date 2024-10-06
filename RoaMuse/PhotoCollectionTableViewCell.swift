@@ -14,6 +14,7 @@ class PhotoCollectionTableViewCell: UITableViewCell {
     var collectionView: UICollectionView!
     var images: [UIImage] = []  // 圖片數據源
     var collectionViewHeightConstraint: Constraint? // 保存高度约束
+    weak var parentViewController: UIViewController?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -29,19 +30,18 @@ class PhotoCollectionTableViewCell: UITableViewCell {
         layout.scrollDirection = .vertical // 垂直滚动
         layout.minimumLineSpacing = 10
         layout.minimumInteritemSpacing = 10
-        layout.itemSize = CGSize(width: (UIScreen.main.bounds.width - 40) / 3, height: 100) // 每行3个item，宽度为屏幕宽度减去间距
+        layout.itemSize = CGSize(width: (UIScreen.main.bounds.width - 40) / 3, height: 100)
         
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.dataSource = self
         collectionView.delegate = self
-        collectionView.isScrollEnabled = false // 禁用滚动
+        collectionView.isScrollEnabled = false
         collectionView.register(ImageCollectionViewCell.self, forCellWithReuseIdentifier: "ImageCell")
         contentView.addSubview(collectionView)
         
-        // 使用 SnapKit 设置 collectionView 的约束
         collectionView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
-            self.collectionViewHeightConstraint = make.height.equalTo(0).constraint // 设置初始高度约束为0
+            self.collectionViewHeightConstraint = make.height.equalTo(0).constraint
         }
     }
     
@@ -50,9 +50,8 @@ class PhotoCollectionTableViewCell: UITableViewCell {
         self.images = images
         collectionView.reloadData()
         
-        // 动态更新高度
-        let numberOfRows = ceil(Double(images.count) / 3.0) // 每行3个，计算总行数
-        let totalHeight = numberOfRows * 100.0 + (numberOfRows - 1) * 10.0 // 每张图片的高度为100，行间距为10
+        let numberOfRows = ceil(Double(images.count) / 3.0) 
+        let totalHeight = numberOfRows * 100.0 + (numberOfRows - 1) * 10.0
         collectionView.snp.updateConstraints { make in
             make.height.equalTo(totalHeight)
         }
@@ -69,11 +68,28 @@ extension PhotoCollectionTableViewCell: UICollectionViewDataSource, UICollection
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCell", for: indexPath) as? ImageCollectionViewCell
         cell?.imageView.image = images[indexPath.item]
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
+        cell?.imageView.isUserInteractionEnabled = true
+        cell?.imageView.addGestureRecognizer(tapGesture)
         return cell ?? UICollectionViewCell()
     }
+    
+    @objc func handleImageTap(_ sender: UITapGestureRecognizer) {
+            guard let tappedImageView = sender.view as? UIImageView,
+                  let parentVC = parentViewController else { return }
+
+            guard let tappedCell = sender.view?.superview?.superview as? UICollectionViewCell,
+                  let indexPath = collectionView.indexPath(for: tappedCell) else { return }
+            
+            let fullScreenVC = FullScreenImageViewController()
+            fullScreenVC.images = images
+            fullScreenVC.startingIndex = indexPath.item
+            
+            parentVC.navigationController?.pushViewController(fullScreenVC, animated: true)
+        }
 }
 
-// ImageCollectionViewCell 用于显示单张图片
 class ImageCollectionViewCell: UICollectionViewCell {
     var imageView: UIImageView!
     
