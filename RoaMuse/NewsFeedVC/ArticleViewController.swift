@@ -31,7 +31,7 @@ class ArticleViewController: UIViewController {
     let tripView = UIView()
     let avatarImageView = UIImageView()
     var isUpdatingLikeStatus = false
-    
+    let awardLabelView = AwardLabelView(title: "Award Title")
     let titleLabel = UILabel()
     let authorLabel = UILabel()
     let contentLabel = UILabel()
@@ -65,6 +65,26 @@ class ArticleViewController: UIViewController {
         setupCommentInput()
         updateLikesData()
         setupTripViewAction()
+        
+        FirebaseManager.shared.loadAwardTitle(forUserId: authorId) { (result: Result<(String, Int), Error>) in
+            switch result {
+            case .success(let (awardTitle, item)):
+                let title = awardTitle
+                self.awardLabelView.updateTitle(awardTitle)
+                DispatchQueue.main.async {
+                    AwardStyleManager.updateTitleContainerStyle(
+                        forTitle: awardTitle,
+                        item: item,
+                        titleContainerView: self.awardLabelView,
+                        titleLabel: self.awardLabelView.titleLabel,
+                        dropdownButton: nil
+                    )
+                }
+                
+            case .failure(let error):
+                print("獲取稱號失敗: \(error.localizedDescription)")
+            }
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -106,12 +126,10 @@ class ArticleViewController: UIViewController {
             }
             
             if let error = error {
-                print("監聽按讚數量變化時出錯: \(error.localizedDescription)")
                 return
             }
             
             guard let data = snapshot?.data(), let likesAccount = data["likesAccount"] as? [String] else {
-                print("無法加載按讚數據")
                 return
             }
             
@@ -169,16 +187,13 @@ class ArticleViewController: UIViewController {
             "comments": FieldValue.arrayUnion([commentData])
         ]) { error in
             if let error = error {
-                print("保存留言失敗: \(error.localizedDescription)")
                 completion(false)
             } else {
-                //                print("留言保存成功")
                 completion(true)
             }
         }
     }
     
-    // MARK: 加載更新後的留言
     func loadComments() {
         print("Loading comments...")
         
@@ -193,7 +208,6 @@ class ArticleViewController: UIViewController {
                 return
             }
             
-            // 將每個 comment 進行解碼處理，儲存在 comments 數組中
             var decodedComments: [[String: Any]] = []
             
             let dispatchGroup = DispatchGroup()  // 使用 DispatchGroup 確保所有的異步加載完成後再繼續
@@ -201,12 +215,10 @@ class ArticleViewController: UIViewController {
             for var comment in loadedComments {
                 dispatchGroup.enter()
                 
-                // 先解碼 userId 對應的 username
                 let userId = comment["userId"] as? String ?? ""
                 FirebaseManager.shared.fetchUserNameByUserId(userId: userId) { username in
                     comment["username"] = username  // 將取得的 username 存入 comment 中
                     
-                    // 同時解碼用戶大頭貼的 URL
                     FirebaseManager.shared.fetchUserData(userId: userId) { result in
                         switch result {
                         case .success(let data):
@@ -223,12 +235,10 @@ class ArticleViewController: UIViewController {
                 }
             }
             
-            // 當所有的資料解碼完成後，更新 UI
             dispatchGroup.notify(queue: .main) {
                 self.comments = decodedComments  // 將解碼後的資料賦值給 self.comments
                 print("Decoded comments: \(self.comments)")  // 打印解碼後的資料
                 
-                // 設定 tableView 並重新整理 UI
                 self.setupTableView()
                 self.tableView.reloadData()
             }
@@ -273,11 +283,9 @@ class ArticleViewController: UIViewController {
             }
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
-                // 更新 likeCountLabel
                 self.likeCountLabel.text = String(likesAccount.count)
                 self.likeButton.isSelected = likesAccount.contains(self.authorId)
             } else {
-                // 如果沒有找到相應的貼文，或者 likesAccount 為空
                 self.likeCountLabel.text = "0"
                 self.likeButton.isSelected = false
             }
@@ -300,10 +308,8 @@ class ArticleViewController: UIViewController {
                         "bookmarkPost": FieldValue.arrayUnion([postId])
                     ]) { error in
                         if let error = error {
-                            print("用戶收藏更新失敗: \(error.localizedDescription)")
                             completion(false)
                         } else {
-                            print("收藏成功，已更新資料")
                             completion(true)
                         }
                     }
@@ -346,7 +352,6 @@ class ArticleViewController: UIViewController {
                 }
                 
             } else {
-                // 如果沒有找到相應的貼文，或者 bookmarkAccounts 為空
                 DispatchQueue.main.async {
                     self.collectButton.isSelected = false
                 }
@@ -389,16 +394,12 @@ extension ArticleViewController {
     @objc func didTapLikeButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         
-        // 暫停監聽
         isUpdatingLikeStatus = true
-        
         sender.isSelected.toggle()
-        
         saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
             if success {
                 self.updateLikesData()
             } else {
-                print("取消按讚失敗")
                 sender.isSelected.toggle()
             }
             
@@ -443,7 +444,6 @@ extension ArticleViewController {
     @objc func didTapSendButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
-            
             return
         }
         saveComment(userId: userId, postId: postId, commentContent: commentContent) { success in
@@ -451,11 +451,9 @@ extension ArticleViewController {
                 self.loadComments()
                 self.commentTextField.text = ""
             } else {
-                
             }
         }
     }
-    
 }
 
 extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
@@ -491,7 +489,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     func createHeaderView() -> UIView {
         let headerView = UIView()
-        
         setupHeaderView(in: headerView)
         setupActionButtons(in: headerView)
         
@@ -500,22 +497,16 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     func setupHeaderView(in headerView: UIView) {
         
+        headerView.addSubview(awardLabelView)
+        
         titleLabel.text = articleTitle
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 24)
         titleLabel.numberOfLines = 0
+        titleLabel.textColor = .deepBlue
         headerView.addSubview(titleLabel)
         
-        authorLabel.text = "作者: \(articleAuthor)"
-        authorLabel.font = UIFont.systemFont(ofSize: 16)
+        authorLabel.text = articleAuthor
         authorLabel.numberOfLines = 0
         headerView.addSubview(authorLabel)
-        
-        contentLabel.text = articleContent
-        contentLabel.font = UIFont.systemFont(ofSize: 18)
-        contentLabel.numberOfLines = 0
-        contentLabel.lineBreakMode = .byWordWrapping
-        contentLabel.textColor = .darkGray
-        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
         headerView.addSubview(contentLabel)
 
         dateLabel.text = articleDate
@@ -527,7 +518,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         setupAvatar()
         headerView.addSubview(avatarImageView)
         
-        // 設置 TripView
         tripView.backgroundColor = .deepBlue
         tripView.layer.cornerRadius = 20
         headerView.addSubview(tripView)
@@ -536,35 +526,36 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         tripTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         tripView.addSubview(tripTitleLabel)
         
-        // 使用 SnapKit 設置布局
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(headerView).offset(16)
-            make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(headerView).offset(-16)
         }
         
         authorLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
-            make.trailing.equalTo(titleLabel)
+            make.top.equalTo(avatarImageView).offset(-10)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(15)
+        }
+        
+        awardLabelView.snp.makeConstraints { make in
+            make.top.equalTo(authorLabel.snp.bottom).offset(6)
+            make.leading.equalTo(authorLabel)
+            make.height.equalTo(20)
         }
         
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(authorLabel.snp.bottom).offset(16)
-            make.width.equalTo(headerView).multipliedBy(0.9)
-            make.centerX.equalTo(headerView)
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.leading.equalTo(titleLabel)
+            make.trailing.equalTo(headerView).offset(-16)
         }
         
-        // 添加 photoContainerView
             headerView.addSubview(photoContainerView)
             photoContainerView.snp.makeConstraints { make in
                 make.top.equalTo(contentLabel.snp.bottom).offset(12)
                 make.width.equalTo(headerView).multipliedBy(0.9)
                 make.centerX.equalTo(headerView)
-                // 高度稍后根据图片数量动态调整
             }
 
-            // 将 tripView 的顶部约束修改为相对于 photoContainerView
             tripView.snp.makeConstraints { make in
                 make.top.equalTo(photoContainerView.snp.bottom).offset(12)
                 make.width.equalTo(headerView).multipliedBy(0.9)
@@ -624,6 +615,22 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.leading.equalTo(likeButton.snp.trailing).offset(10)
             make.centerY.equalTo(likeButton)
         }
+        
+        setupLabel()
+    }
+    
+    func setupLabel() {
+        
+        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 26)
+        authorLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        contentLabel.lineSpacing = 7
+        contentLabel.text = articleContent
+        contentLabel.numberOfLines = 0
+        contentLabel.lineBreakMode = .byWordWrapping
+        contentLabel.textColor = .darkGray
+        contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
+        tripTitleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
     }
     
     func setupButton() {
@@ -651,7 +658,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         }
     }
 
-    
     func setupActionButtons(in headerView: UIView) {
         
         likeButton.tintColor = UIColor.systemBlue
@@ -680,7 +686,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
 
         let numberOfPhotos = photoUrls.count
 
-        // 動態生成 UI 並添加點擊手勢
         if numberOfPhotos == 1 {
             let imageView = createImageView(urlString: photoUrls[0], index: 0)
             photoContainerView.addSubview(imageView)
@@ -721,7 +726,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 make.height.equalTo(150)
             }
         } else {
-            // 根據照片數量創建多行多列的網格視圖
             let columns = 3
             let rows = Int(ceil(Double(numberOfPhotos) / Double(columns)))
             let gridStackView = UIStackView()
@@ -768,10 +772,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
         }
 
-        // 添加點擊手勢
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapImage(_:)))
         imageView.addGestureRecognizer(tapGesture)
-        imageView.tag = index // 設定當前圖片的索引
+        imageView.tag = index
 
         return imageView
     }
@@ -780,11 +783,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         guard let imageView = sender.view as? UIImageView else { return }
         let index = imageView.tag // 獲取當前點擊圖片的索引
 
-        // 準備 UIImage 陣列
         var uiImages: [UIImage] = []
         let dispatchGroup = DispatchGroup()
 
-        // 使用同步隊列保護數組的修改
         let syncQueue = DispatchQueue(label: "com.example.imageSyncQueue")
 
         for urlString in photoUrls {
@@ -805,10 +806,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         }
 
         dispatchGroup.notify(queue: .main) {
-            // 當所有圖片加載完畢後，跳轉到 FullScreenImageViewController
             let fullScreenVC = FullScreenImageViewController()
-            fullScreenVC.images = uiImages // 傳遞已下載的 UIImage 數據
-            fullScreenVC.startingIndex = index // 設定從哪一張圖片開始顯示
+            fullScreenVC.images = uiImages
+            fullScreenVC.startingIndex = index
 
             self.navigationController?.pushViewController(fullScreenVC, animated: true)
         }
@@ -841,7 +841,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
             if let error = error {
-                
                 return
             }
             
@@ -886,11 +885,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                         weather: weather,
                         startTime: startTime
                     )
-
-                    
-                    DispatchQueue.main.async {
-//                        self.popupView.showPopup(on: self.view, with: self.trip!)
-                    }
                 } else {
                     
                 }
@@ -911,14 +905,12 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                         self.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
                 } else {
-                    print("無法加載貼文作者的照片")
                 }
             case .failure(let error):
                 print("加載貼文作者的資料失敗: \(error.localizedDescription)")
             }
         }
         
-        // 為頭像添加點擊手勢
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapAvatar))
         avatarImageView.isUserInteractionEnabled = true
         avatarImageView.addGestureRecognizer(tapGesture)
@@ -946,7 +938,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             let comment = comments[indexPath.row]
             
             cell.contentLabel.text = comment["content"] as? String
-            
             cell.usernameLabel.text = comment["username"] as? String
             
             if let createdAtTimestamp = comment["createdAt"] as? Timestamp {
@@ -965,7 +956,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         return cell
     }
-
 }
 
 extension ArticleViewController: PopupViewDelegate {

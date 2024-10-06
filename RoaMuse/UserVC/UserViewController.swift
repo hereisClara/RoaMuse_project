@@ -33,6 +33,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let bottomSheetView = UIView()
     let backgroundView = UIView()
     let sheetHeight: CGFloat = 250
+    let introductionLabel = UILabel()
     
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
@@ -83,14 +84,15 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.followingNumberLabel.text = String(followings.count)
                 }
                 
+                if let region = data["region"] as? String,
+                   let introduction = data["introduction"] as? String {
+                    self?.introductionLabel.text = introduction
+                }
+                
             case .failure(let error):
                 print("Error fetching user data: \(error.localizedDescription)")
             }
         }
-        
-        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
-        avatarImageView.addGestureRecognizer(tapGestureRecognizer)
-        avatarImageView.isUserInteractionEnabled = true
         
         FirebaseManager.shared.loadAwardTitle(forUserId: userId) { (result: Result<(String, Int), Error>) in
             switch result {
@@ -373,69 +375,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
-    @objc func openPhotoLibrary() {
-        imagePicker.sourceType = .photoLibrary
-        self.present(imagePicker, animated: true, completion: nil)
-    }
-    
-    // 相片選擇完成後的回調
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let image = info[.originalImage] as? UIImage {
-            selectedImage = image
-            uploadImageToFirebaseStorage(image)
-        }
-        dismiss(animated: true, completion: nil)
-    }
-    
-    // 上傳圖片到 Firebase Storage
-    func uploadImageToFirebaseStorage(_ image: UIImage) {
-        guard let imageData = image.jpegData(compressionQuality: 0.75) else {
-            return
-        }
-        
-        let storageRef = Storage.storage().reference()
-        let imageRef = storageRef.child("images/\(UUID().uuidString).jpg")
-        
-        let metadata = StorageMetadata()
-        metadata.contentType = "image/jpeg"
-        
-        imageRef.putData(imageData, metadata: metadata) { metadata, error in
-            if let error = error {
-                return
-            }
-            
-            imageRef.downloadURL { url, error in
-                if let error = error {
-                    return
-                }
-                
-                if let downloadURL = url {
-                    self.saveImageUrlToFirestore(downloadURL.absoluteString)
-                }
-            }
-        }
-    }
-    
-    // 將圖片的下載 URL 保存到 Firestore
-    func saveImageUrlToFirestore(_ url: String) {
-        let db = Firestore.firestore()
-        let userRef = db.collection("users").document(userId ?? "")  // 根據 userId 獲取使用者文件
-        
-        userRef.updateData([
-            "photo": url
-        ]) { error in
-            if let error = error {
-                
-            } else {
-                self.loadAvatarImage(from: url)
-            }
-        }
-    }
-    
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true, completion: nil)
-    }
-    
     func loadAvatarImage(from urlString: String) {
         guard let url = URL(string: urlString) else { return }
         let avatarUrl = URL(string: urlString)
@@ -460,7 +399,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         tableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         tableView.backgroundColor = .clear
-        
         tableView.delegate = self
         tableView.dataSource = self
         tableView.separatorStyle = .none
@@ -472,15 +410,16 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
         
+        setupHeaderView()
+    }
+    
+    func setupHeaderView() {
+        
         headerView.backgroundColor = .systemGray5
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width , height: 210)
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 280)
         headerView.layer.cornerRadius = 20  // 設置所需的圓角半徑
         headerView.layer.masksToBounds = true
-        
-        userNameLabel.text = "新用戶"
-        userNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         headerView.addSubview(userNameLabel)
-        
         headerView.addSubview(awardLabelView)
         
         avatarImageView.backgroundColor = .blue
@@ -492,8 +431,16 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         headerView.addSubview(followingTextLabel)
         headerView.addSubview(fansNumberLabel)
         headerView.addSubview(followingNumberLabel)
-        
+        headerView.addSubview(introductionLabel)
         setupFollowersAndFollowing()
+        setupLabel()
+        
+        introductionLabel.snp.makeConstraints { make in
+            make.top.equalTo(avatarImageView.snp.bottom).offset(20)
+            make.leading.equalTo(avatarImageView).offset(8)
+            make.trailing.equalTo(headerView).offset(-16)
+            make.height.equalTo(70)
+        }
         
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
         followingStackView.axis = .vertical
@@ -501,28 +448,24 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         followingStackView.spacing = 0
         headerView.addSubview(followingStackView)
         
-        // 新增「行走地圖」按鈕
         let mapButton = UIButton()
-        let mapIcon = UIImage(systemName: "map.circle.fill") // 使用 SF Symbols
-        mapButton.setImage(mapIcon, for: .normal) // 設置圖標
-        mapButton.tintColor = .deepBlue // 背景顏色
-        mapButton.imageView?.contentMode = .scaleAspectFit // 圖標大小適應
+        mapButton.setImage(UIImage(systemName: "map"), for: .normal) // 設置圖標
+        mapButton.backgroundColor = .deepBlue
+        mapButton.tintColor = .white
         mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
         headerView.addSubview(mapButton)
         
         let awardsButton = UIButton()
-        let awardsIcon = UIImage(systemName: "trophy.circle.fill") // 使用 SF Symbols
-        awardsButton.setImage(awardsIcon, for: .normal) // 設置圖標
-        awardsButton.tintColor = .deepBlue // 背景顏色
-        awardsButton.imageView?.contentMode = .scaleAspectFit // 圖標大小適應
+        awardsButton.setImage(UIImage(systemName: "trophy"), for: .normal) // 設置圖標
+        awardsButton.tintColor = .white
+        awardsButton.backgroundColor = .deepBlue
         awardsButton.addTarget(self, action: #selector(handleAwardsButtonTapped), for: .touchUpInside)
         headerView.addSubview(awardsButton)
         
-        // 設置約束
         userNameLabel.snp.makeConstraints { make in
-            make.top.equalTo(headerView).offset(16)
+            make.top.equalTo(headerView).offset(8)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(16)
-            make.height.equalTo(30)
+            make.height.equalTo(50)
         }
         
         awardLabelView.snp.makeConstraints { make in
@@ -532,24 +475,26 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         avatarImageView.snp.makeConstraints { make in
-            make.width.height.equalTo(110)
-            make.top.equalTo(userNameLabel)
-            make.leading.equalTo(headerView).offset(15)
+            make.width.height.equalTo(100)
+            make.top.equalTo(headerView).offset(16)
+            make.leading.equalTo(headerView).offset(16)
         }
         
-        avatarImageView.layer.cornerRadius = 55
+        avatarImageView.layer.cornerRadius = 50
         
         awardsButton.snp.makeConstraints { make in
-            make.bottom.equalTo(headerView).offset(-16)
+            make.bottom.equalTo(avatarImageView)
             make.trailing.equalTo(headerView.snp.trailing).offset(-16)
-            make.width.height.equalTo(60)
+            make.width.height.equalTo(40)
         }
+        awardsButton.layer.cornerRadius = 20
         
         mapButton.snp.makeConstraints { make in
-            make.bottom.equalTo(awardsButton) // 與 awardsButton 水平對齊
-            make.trailing.equalTo(awardsButton.snp.leading).offset(-16) // 在 awardsButton 左邊，留出 16 的間隔
-            make.width.height.equalTo(60) // 設置大小
+            make.bottom.equalTo(awardsButton)
+            make.trailing.equalTo(awardsButton.snp.leading).offset(-8)
+            make.width.height.equalTo(40) // 設置大小
         }
+        mapButton.layer.cornerRadius = 20
         
         let fansStackView = UIStackView(arrangedSubviews: [fansNumberLabel, fansTextLabel])
         fansStackView.axis = .vertical
@@ -557,14 +502,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         fansStackView.spacing = 0
         headerView.addSubview(fansStackView)
         
-        // 設置 fansStackView 的約束
         fansStackView.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.top.equalTo(introductionLabel.snp.bottom).offset(20)
             make.centerX.equalTo(avatarImageView) // 垂直居中在 avatarImageView
         }
         
         followingStackView.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.top.equalTo(introductionLabel.snp.bottom).offset(20)
             make.leading.equalTo(fansStackView.snp.trailing).offset(40) // 與 followers 保持一定間隔
         }
         
@@ -580,13 +524,24 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
     }
     
+    func setupLabel() {
+        
+        userNameLabel.text = "新用戶"
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
+        userNameLabel.textColor = .deepBlue
+        introductionLabel.numberOfLines = 3
+        introductionLabel.lineSpacing = 6
+        introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        introductionLabel.textColor = .darkGray
+    }
+    
     func setupFollowersAndFollowing() {
         
         fansNumberLabel.text = "0"
         fansNumberLabel.font = UIFont.systemFont(ofSize: 16)
         
         fansTextLabel.text = "Followers"
-        fansTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular) // 設定"Followers"字樣的字體和大小
+        fansTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         fansTextLabel.textColor = .gray
         fansTextLabel.textAlignment = .center
         
@@ -601,7 +556,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func didTapFans() {
         let userListVC = UserListViewController()
-            userListVC.isShowingFollowers = true // 表示要显示粉丝列表
+            userListVC.isShowingFollowers = true
             userListVC.userId = self.userId
             navigationController?.pushViewController(userListVC, animated: true)
     }
@@ -611,51 +566,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             userListVC.isShowingFollowers = false // 表示要显示关注列表
             userListVC.userId = self.userId
             navigationController?.pushViewController(userListVC, animated: true)
-    }
-    
-    @objc func editUserName() {
-        let alertController = UIAlertController(title: "編輯使用者名稱", message: "請輸入新的名稱", preferredStyle: .alert)
-        
-        // 在彈窗中添加一個文字輸入框
-        alertController.addTextField { textField in
-            textField.text = self.userNameLabel.text // 預設為當前的使用者名稱
-        }
-        
-        // 添加「取消」按鈕
-        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
-        alertController.addAction(cancelAction)
-        
-        // 添加「確認」按鈕
-        let confirmAction = UIAlertAction(title: "確認", style: .default) { [weak self] _ in
-            // 獲取輸入框中的文字
-            if let newUserName = alertController.textFields?.first?.text, !newUserName.isEmpty {
-                // 更新本地 userNameLabel
-                self?.userNameLabel.text = newUserName
-                self?.userName = newUserName
-                // 上傳新的 userName 到 Firebase
-                self?.updateUserNameInFirebase(newUserName)
-            }
-        }
-        alertController.addAction(confirmAction)
-        
-        // 顯示彈窗
-        present(alertController, animated: true, completion: nil)
-    }
-    
-    func updateUserNameInFirebase(_ newUserName: String) {
-        guard let userId = userId else {
-            print("未找到 userId，無法更新使用者名稱")
-            return
-        }
-        
-        let userRef = Firestore.firestore().collection("users").document(userId)
-        userRef.updateData(["userName": newUserName]) { error in
-            if let error = error {
-                print("更新使用者名稱失敗: \(error.localizedDescription)")
-            } else {
-                print("使用者名稱更新成功")
-            }
-        }
     }
     
     @objc func handleMapButtonTapped() {

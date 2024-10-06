@@ -81,7 +81,6 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(userNameLabel.snp.bottom).offset(6)
             make.leading.equalTo(userNameLabel)
             make.height.equalTo(20) // 設置適當的高度
-//            make.width.equalTo(110)
         }
         
         photoStackView.snp.makeConstraints { make in
