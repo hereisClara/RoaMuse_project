@@ -48,6 +48,7 @@
 		AC75D0F82CB2C977005258EA /* Extension+UILabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */; };
 		AC75D0FA2CB3C316005258EA /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F92CB3C316005258EA /* NotificationViewController.swift */; };
 		AC75D0FC2CB3C3D8005258EA /* NotificationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */; };
+		AC75D0FE2CB41C85005258EA /* OpenAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
@@ -149,6 +150,7 @@
 		AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UILabel.swift"; sourceTree = "<group>"; };
 		AC75D0F92CB3C316005258EA /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
 		AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTableViewCell.swift; sourceTree = "<group>"; };
+		AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIManager.swift; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 		AC7A2A632C97C63D003FA811 /* Manager */ = {
 			isa = PBXGroup;
 			children = (
+				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC18F83A2CABDA28004E8868 /* LocationService.swift */,
 				AC7A2A6B2C984853003FA811 /* firebaseManager.swift */,
@@ -336,7 +339,6 @@
 				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
 				AC9775762CA9831C00EF828A /* TripCallOutView.swift */,
 				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
-				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
 				AC9775702CA551CB00EF828A /* Config.plist */,
 				AC97756D2CA52A9300EF828A /* Config.xcconfig */,
 				AC9775652CA43B4900EF828A /* TestVC.swift */,
@@ -353,6 +355,7 @@
 				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
 				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
 				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
+				AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */,
 				AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */,
 				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
 				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
@@ -600,6 +603,7 @@
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
 				AC18F8632CB25DEB004E8868 /* FullScreenImageViewController.swift in Sources */,
 				AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */,
+				AC75D0FE2CB41C85005258EA /* OpenAIManager.swift in Sources */,
 				AC18F8572CB05E9C004E8868 /* ChatViewController.swift in Sources */,
 				AC18F84B2CAECF31004E8868 /* SettingsTableViewCell.swift in Sources */,
 				AC7A2A762C9A6857003FA811 /* ArticleViewController.swift in Sources */,

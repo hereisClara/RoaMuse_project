@@ -19,6 +19,7 @@ class PlaceDataManager {
            let config = NSDictionary(contentsOfFile: path),
            let googlePlacesAPIKey = config["GOOGLE_PLACES_API_KEY"] as? String {
             self.apiKey = googlePlacesAPIKey
+            print("~~~", self.apiKey)
         } else {
             self.apiKey = ""  // 如果金鑰未設置，設置為空字符串（需要處理錯誤情況）
             print("Google Places API Key is missing!")

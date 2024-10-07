@@ -647,13 +647,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         placeLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
-            make.centerY.equalToSuperview()
+            make.centerY.equalToSuperview().offset(-20)
         }
         
         let completeButton = UIButton(type: .system)
         completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
-//        completeButton.isEnabled = !completedPlaceIds.contains(place.id)
         completeButton.tag = section
         completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
         footerView.addSubview(completeButton)
@@ -663,8 +662,19 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerY.equalToSuperview()
         }
         
+        let descriptionLabel = UILabel()
+        descriptionLabel.tag = 100 + section
+        footerView.addSubview(descriptionLabel)
+        descriptionLabel.text = "openAI將生成提示語"
+        descriptionLabel.snp.makeConstraints { make in
+            make.leading.equalTo(placeLabel)
+            make.top.equalTo(placeLabel.snp.bottom).offset(12)
+            make.trailing.equalToSuperview().offset(-20)
+        }
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
+        
         // 设置按钮和标签的初始状态
-            let isCompleted = completedPlaceIds.contains(place.id)
+        let isCompleted = completedPlaceIds.contains(place.id)
         let isWithinRange = (section < buttonState.count) ? buttonState[section] : false
             
             if isCompleted {
@@ -675,11 +685,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             } else {
                 // 地点未完成
                 if section == currentTargetIndex && isWithinRange {
-                    // 用户在指定范围内，可以完成地点
+                    
                     completeButton.isEnabled = true
                     completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
                 } else {
-                    // 用户不在范围内，按钮禁用
+                    
                     completeButton.isEnabled = false
                     completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
                 }
@@ -826,9 +836,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 } else {
                     UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
                         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                            print("-----===", self.placePoemPairs)
                             if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
-                                print("----------", poemPair.poemLine)
                                 placeLabel.text = poemPair.poemLine
                                 placeLabel.textColor = .systemGreen
                             }
@@ -851,7 +859,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         })
 
-
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
 
@@ -859,7 +866,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
 
     }
 
-    // 用于展开下一个 section 的 cell
     func expandNextCell(at sectionIndex: Int) {
         guard sectionIndex < places.count else { return }
 
@@ -888,26 +894,52 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
                     placeLabel.text = poemPair.poemLine
                     placeLabel.textColor = .systemGreen
+                    if let descriptionLabel = footerView.viewWithTag(sectionIndex) as? UILabel {
+                        descriptionLabel.text = "生成中..."
+                        descriptionLabel.textColor = .systemGray
+                        print("找到 descriptionLabel")
+                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+                            switch result {
+                            case .success(let suggestion):
+                                DispatchQueue.main.async {
+                                    descriptionLabel.text = suggestion
+                                    print("====---- ", suggestion)
+                                }
+                            case .failure(let error):
+                                DispatchQueue.main.async {
+                                    descriptionLabel.text = "無法生成描述"
+                                    print("Error fetching suggestion: \(error.localizedDescription)")
+                                }
+                            }
+                        }
+                    }
                 }
             }
-
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                 completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                 completeButton.isEnabled = true
+            }
+            
+            if let footerView = footerViews[sectionIndex] {
+                updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
             }
         } else {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                 placeLabel.text = place.name
                 placeLabel.textColor = .black
+                
+                if let descriptionLabel = footerView.subviews.first(where: { $0 is UILabel && $0 != placeLabel }) as? UILabel {
+                    descriptionLabel.text = ""
+                }
             }
 
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                 if completedPlaceIds.contains(place.id) {
-                    // 地点已完成，按钮为箭头
+                    
                     completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                     completeButton.isEnabled = true
                 } else {
-                    // 地点未完成，按钮为勾勾，是否启用取决于用户位置
+                    
                     let isWithinRange = buttonState[sectionIndex]
                     completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
                     completeButton.isEnabled = isWithinRange
