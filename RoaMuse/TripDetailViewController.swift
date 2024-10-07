@@ -313,7 +313,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         return containerView
     }
     
-    // 拆分函數，用於創建加載中的標題視圖
     private func createLoadingHeaderView() -> UIView {
         let headerView = UIView()
         headerView.backgroundColor = .deepBlue
@@ -328,7 +327,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         return headerView
     }
     
-    // 拆分函數，用於創建標題視圖
     private func createHeaderView(poem: Poem) -> UIView {
         let headerView = UIView()
         headerView.backgroundColor = UIColor(resource: .deepBlue)
@@ -366,7 +364,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         return headerView
     }
     
-    // 拆分函數，用於創建通用的標籤
     private func createLabel(text: String, font: UIFont) -> UILabel {
         let label = UILabel()
         label.text = text
@@ -380,7 +377,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let buttonsView = UIView()
         buttonsView.isUserInteractionEnabled = true
         
-        // 设置 locateButton
         locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
         locationButton.tintColor = .white
         locationButton.isSelected = false
@@ -397,7 +393,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.width.height.equalTo(50)
         }
         
-        // 创建用于放置交通工具按钮的容器视图
         let transportButtonsView = UIView()
         transportButtonsView.isUserInteractionEnabled = true
         buttonsView.addSubview(transportButtonsView)
@@ -406,7 +401,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.leading.equalTo(locationButton.snp.trailing).offset(12)
             make.centerY.equalToSuperview()
             make.height.equalTo(50)
-            // 添加宽度约束，初始为单个按钮的宽度
             transportButtonsViewWidthConstraint = make.width.equalTo(50).constraint
         }
         
@@ -416,14 +410,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         backgroundView.layer.cornerRadius = 25
         backgroundView.isHidden = true // 初始隐藏
         transportButtonsView.addSubview(backgroundView)
-        // 将背景视图放在所有按钮的后面
         transportButtonsView.sendSubviewToBack(backgroundView)
         
         backgroundView.snp.makeConstraints { make in
             make.edges.equalTo(transportButtonsView)
         }
-        
-        // 创建按钮容器 StackView
+
         buttonContainer = UIStackView()
         buttonContainer.axis = .horizontal
         buttonContainer.distribution = .fillEqually
@@ -435,7 +427,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.edges.equalToSuperview()
         }
         
-        // 创建交通工具按钮
         let transportOptions = ["car.fill", "bicycle", "tram.fill", "figure.walk"]
         transportButtons = []
         
@@ -447,7 +438,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             button.layer.cornerRadius = 25
             button.tag = index
             button.isUserInteractionEnabled = true
-            // 添加点击事件处理器
             button.addTarget(self, action: #selector(transportButtonTapped(_:)), for: .touchUpInside)
             transportButtons.append(button)
         }
@@ -458,7 +448,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         for button in transportButtons {
             buttonContainer.addArrangedSubview(button)
         }
-        
         updateTransportButtonsDisplay()
         
         self.transportBackgroundView = backgroundView
@@ -476,22 +465,18 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             // 显示背景视图
             transportBackgroundView?.isHidden = false
             
-            // 计算总宽度
             let buttonWidth: CGFloat = 50
             let buttonSpacing: CGFloat = 12
             let totalWidth = CGFloat(transportButtons.count) * buttonWidth + CGFloat(transportButtons.count - 1) * buttonSpacing
             
-            // 更新宽度约束
             transportButtonsViewWidthConstraint?.update(offset: totalWidth)
         } else {
-            // 只显示选中的按钮
+            
             for button in transportButtons {
                 button.isHidden = (button != selectedTransportButton)
             }
-            // 隐藏背景视图
-            transportBackgroundView?.isHidden = true
             
-            // 更新宽度约束为单个按钮的宽度
+            transportBackgroundView?.isHidden = true
             transportButtonsViewWidthConstraint?.update(offset: 50)
         }
         UIView.animate(withDuration: 0.3) {
@@ -509,15 +494,13 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             selectedTransportButton = sender
             sender.backgroundColor = .deepBlue
             
-            // 更新选中的交通方式
             selectedTransportType = transportTypeForIndex(sender.tag)
             
-            // 将选中按钮移动到第一个位置
             if let index = transportButtons.firstIndex(of: sender) {
                 transportButtons.remove(at: index)
                 transportButtons.insert(sender, at: 0)
             }
-            // 重新排列按钮
+
             for button in buttonContainer.arrangedSubviews {
                 buttonContainer.removeArrangedSubview(button)
                 button.removeFromSuperview()
@@ -544,7 +527,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
-    
     private func transportTypeForIndex(_ index: Int) -> MKDirectionsTransportType {
         switch index {
         case 0:
@@ -563,11 +545,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     private func updateMapForSelectedTransportType() {
         guard let startCoordinate = locationManager.currentLocation?.coordinate else { return }
         
-        // 獲取當前導航目標地點的座標
         let place = places[currentTargetIndex]
         let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
         
-        // 設置方向請求
         let directionRequest = MKDirections.Request()
         directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate, addressDictionary: nil))
         directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate, addressDictionary: nil))
@@ -581,7 +561,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 return
             }
             
-            // 取得第一條路線並顯示在地圖上
             let route = response.routes[0]
             if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: self.currentTargetIndex)) as? MapTableViewCell {
                 cell.showMap(from: startCoordinate, to: destinationCoordinate)
@@ -592,7 +571,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
     }
-    
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return section == 0 ? UITableView.automaticDimension : 0
@@ -664,12 +642,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let descriptionLabel = UILabel()
         descriptionLabel.tag = 100 + section
+        descriptionLabel.numberOfLines = 2
+        descriptionLabel.lineSpacing = 3
         footerView.addSubview(descriptionLabel)
         descriptionLabel.text = "openAI將生成提示語"
         descriptionLabel.snp.makeConstraints { make in
             make.leading.equalTo(placeLabel)
             make.top.equalTo(placeLabel.snp.bottom).offset(12)
-            make.trailing.equalToSuperview().offset(-20)
+            make.trailing.equalToSuperview().offset(-30)
         }
         descriptionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
         
@@ -683,7 +663,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                 updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
             } else {
-                // 地点未完成
                 if section == currentTargetIndex && isWithinRange {
                     
                     completeButton.isEnabled = true
@@ -785,6 +764,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                            self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
                         }
 
                         self.completedPlaceIds.append(placeId)
@@ -812,40 +792,62 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             }
         } else {
+            
             if let footerView = self.footerViews[sectionIndex] {
-                
-                self.locationManager.startUpdatingLocation()
-                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-                    guard let self = self else { return }
-                    self.checkDistanceForCurrentTarget(from: currentLocation)
-                }
-                
-                if let currentLocation = self.locationManager.currentLocation {
-                    self.checkDistanceForCurrentTarget(from: currentLocation)
-                }
-                
-                if isCurrentlyFlipped {
-                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
-                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                            placeLabel.text = place.name
-                            placeLabel.textColor = .black
-                        }
-                    }, completion: { _ in
-                        self.isFlipped[sectionIndex] = false
-                    })
-                } else {
-                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
-                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                            if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
-                                placeLabel.text = poemPair.poemLine
-                                placeLabel.textColor = .systemGreen
-                            }
-                        }
-                    }, completion: { _ in
-                        self.isFlipped[sectionIndex] = true
-                    })
-                }
-            }
+                        self.startUpdatingLocationIfNeeded()
+                        
+                        UIView.transition(with: footerView, duration: 0.5, options: isCurrentlyFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
+                            self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                        }, completion: { _ in
+                            self.isFlipped[sectionIndex]?.toggle()
+                        })
+                    }
+//            if let footerView = self.footerViews[sectionIndex] {
+//                
+//                self.locationManager.startUpdatingLocation()
+//                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+//                    guard let self = self else { return }
+//                    self.checkDistanceForCurrentTarget(from: currentLocation)
+//                }
+//                
+//                if let currentLocation = self.locationManager.currentLocation {
+//                    self.checkDistanceForCurrentTarget(from: currentLocation)
+//                }
+//                
+//                if isCurrentlyFlipped {
+//                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
+//                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+//                            placeLabel.text = place.name
+//                            placeLabel.textColor = .black
+//                        }
+//                    }, completion: { _ in
+//                        self.isFlipped[sectionIndex] = false
+//                    })
+//                } else {
+//                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
+//                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+//                            if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+//                                placeLabel.text = poemPair.poemLine
+//                                placeLabel.textColor = .systemGreen
+//                            }
+//                        }
+//                    }, completion: { _ in
+//                        self.isFlipped[sectionIndex] = true
+//                    })
+//                }
+//            }
+        }
+    }
+    
+    func startUpdatingLocationIfNeeded() {
+        self.locationManager.startUpdatingLocation()
+        self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+            guard let self = self else { return }
+            self.checkDistanceForCurrentTarget(from: currentLocation)
+        }
+
+        if let currentLocation = self.locationManager.currentLocation {
+            self.checkDistanceForCurrentTarget(from: currentLocation)
         }
     }
 
@@ -890,11 +892,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func updateFooterViewForFlippedState(_ footerView: UIView, sectionIndex: Int, place: Place) {
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
         if isCurrentlyFlipped {
+            print("Footer subviews: \(footerView.subviews)")
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                 if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
                     placeLabel.text = poemPair.poemLine
                     placeLabel.textColor = .systemGreen
-                    if let descriptionLabel = footerView.viewWithTag(sectionIndex) as? UILabel {
+                    if let descriptionLabel = footerView.viewWithTag(100 + sectionIndex) as? UILabel {
                         descriptionLabel.text = "生成中..."
                         descriptionLabel.textColor = .systemGray
                         print("找到 descriptionLabel")
@@ -918,10 +921,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                 completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                 completeButton.isEnabled = true
-            }
-            
-            if let footerView = footerViews[sectionIndex] {
-                updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
             }
         } else {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
@@ -954,13 +953,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         tripRef.getDocument { (document, error) in
             if let error = error {
-                print("Error getting document: \(error)")
                 completion(nil)
                 return
             }
             
             guard let document = document, document.exists, let data = document.data() else {
-                print("Document does not exist or has no data")
                 completion(nil)
                 return
             }
@@ -978,7 +975,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 completion(placePoemPairs)
             } else {
-                print("No placePoemPairs field found in the document")
                 completion(nil)
             }
         }
