@@ -16,7 +16,7 @@ class AwardStyleManager {
         switch item {
         case 0:
             // 設置樣式 for item == 0
-            titleContainerView.backgroundColor = UIColor.brown // 深棕色
+            titleContainerView.backgroundColor = UIColor.forBronze
             titleContainerView.layer.borderColor = UIColor.lightGray.cgColor // 編框淺灰色
             titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
             titleLabel.textColor = .white

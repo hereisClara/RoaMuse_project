@@ -33,7 +33,7 @@ class HomeViewController: UIViewController {
     
     private var randomTrip: Trip?
     var postsArray = [[String: Any]]()
-    
+    var notificationButton = UIButton()
     var matchingPlaces: [(keyword: String, place: Place)] = []
     var keywordToLineMap = [String: String]()
     var placePoemPairs = [PlacePoemPair]()
@@ -132,24 +132,25 @@ class HomeViewController: UIViewController {
     }
     
     func setupUserProfileImage() {
-        let avatarImageView = UIImageView()
         
-        avatarImageView.layer.cornerRadius = 20
-        avatarImageView.layer.masksToBounds = true
-        avatarImageView.layer.borderWidth = 0.5
-        avatarImageView.layer.borderColor = UIColor.deepBlue.cgColor
-        avatarImageView.contentMode = .scaleAspectFill
-        avatarImageView.clipsToBounds = true
+        guard let navigationBar = self.navigationController?.navigationBar else {
+                return
+            }
         
-        // 將頭像圖片視圖添加到主視圖中
-        self.view.addSubview(avatarImageView)
+        notificationButton.layer.masksToBounds = true
+        notificationButton.contentMode = .scaleAspectFill
+        notificationButton.clipsToBounds = true
         
-        // 設置位置約束
-        avatarImageView.snp.makeConstraints { make in
-            make.width.height.equalTo(40)
-            make.top.equalTo(self.view.safeAreaLayoutGuide).offset(-50)  // 調整頂部偏移量
-            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-70)
+        navigationBar.addSubview(notificationButton)
+        
+        notificationButton.snp.makeConstraints { make in
+            make.width.height.equalTo(25)
+            make.trailing.equalTo(navigationBar.snp.trailing).offset(-16)
+            make.bottom.equalTo(navigationBar.snp.bottom).offset(-15)
         }
+        
+        notificationButton.setImage(UIImage(named: "normal_heart"), for: .normal)
+        notificationButton.addTarget(self, action: #selector(didTapNotificationButton), for: .touchUpInside)
         
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else {
             return
@@ -165,15 +166,12 @@ class HomeViewController: UIViewController {
             guard let document = documentSnapshot, document.exists, let data = document.data() else {
                 return
             }
-            
-            // 獲取 photo URL 並更新頭像
-            if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                DispatchQueue.main.async {
-                    avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
-                }
-            } else {
-            }
         }
+    }
+    
+    @objc func didTapNotificationButton() {
+        let notificationVC = NotificationViewController()
+        navigationController?.pushViewController(notificationVC, animated: true)
     }
     
 //    MARK: chat
@@ -241,6 +239,11 @@ class HomeViewController: UIViewController {
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        notificationButton.isHidden = false
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -255,6 +258,7 @@ class HomeViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: false)
+        notificationButton.isHidden = true
     }
     
     func setupUI() {
@@ -596,6 +600,8 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         }
         
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        cell.layoutIfNeeded()
+
         return cell
     }
     

@@ -25,22 +25,20 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.backButtonTitle = ""
-
-        view.backgroundColor = UIColor.systemBackground
-        self.navigationItem.largeTitleDisplayMode = .never
-//        navigationController?.navigationBar.prefersLargeTitles = false
-        self.title = "設定"
-        
-        imagePicker.delegate = self
-        setupTableView()
-        setupTableHeader()
-        
         guard let userId = userId else {
             print("未找到 userId，請先登入")
             return
         }
         
         loadUserData(userId: userId)
+        view.backgroundColor = UIColor.systemBackground
+        self.navigationItem.largeTitleDisplayMode = .never
+
+        self.title = "設定"
+        
+        imagePicker.delegate = self
+        setupTableView()
+        setupTableHeader()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -50,8 +48,13 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             print("未找到 userId，請先登入")
             return
         }
-        
+        tabBarController?.tabBar.isHidden = true
         loadUserData(userId: userId)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     func setupTableView() {
@@ -79,7 +82,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         avatarImageView.isUserInteractionEnabled = true
-        avatarImageView.backgroundColor = .systemGray4
+        avatarImageView.image = UIImage(named: "user-placeholder")
         avatarImageView.layer.cornerRadius = 45
         headerView.addSubview(avatarImageView)
         
@@ -269,9 +272,9 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                     self.region = region
                     self.userGender = gender
                     self.loadAvatarImage(from: photoUrl)
-                    
-                    self.tableView.reloadData()
                 }
+                
+                self.tableView.reloadData()
             }
         }
     }
@@ -439,6 +442,7 @@ extension SettingsViewController: IntroductionViewControllerDelegate {
                     print("保存個人簡介失敗: \(error.localizedDescription)")
                 } else {
                     print("個人簡介保存成功")
+                    self.introduction = intro
                     self.tableView.reloadData()
             }
         }
@@ -457,7 +461,7 @@ extension SettingsViewController: RegionSelectionDelegate {
                     print("保存地區失敗: \(error.localizedDescription)")
                 } else {
                     print("地區保存成功")
-                    
+                    self.region = region
                     self.tableView.reloadData()
                 }
             }

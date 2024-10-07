@@ -19,6 +19,9 @@ class IntroductionViewController: UIViewController {
     let textView = UITextView()
     weak var delegate: IntroductionViewControllerDelegate?
     var currentBio: String = ""
+    var userId: String? {
+        return UserDefaults.standard.string(forKey: "userId")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,6 +31,10 @@ class IntroductionViewController: UIViewController {
         setupNavigationBar()
         
         textView.text = currentBio
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
     }
 
     func setupTextView() {

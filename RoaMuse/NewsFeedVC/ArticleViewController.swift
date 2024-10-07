@@ -89,10 +89,12 @@ class ArticleViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         if let tabBarController = self.tabBarController {
             tabBarController.tabBar.isHidden = true
         } else {
         }
+        
         observeLikeCountChanges()
         checkBookmarkStatus()
         loadComments()
@@ -117,7 +119,7 @@ class ArticleViewController: UIViewController {
             guard let self = self else { return }
             
             if self.isUpdatingLikeStatus { return }
-
+            
             if let error = error { return }
             
             guard let data = snapshot?.data(), let likesAccount = data["likesAccount"] as? [String] else { return }
@@ -185,42 +187,46 @@ class ArticleViewController: UIViewController {
     
     func loadComments() {
         Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, error in
-            if let error = error {
-                return
-            }
+            if let error = error { return }
             
             guard let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] else {
                 return
             }
             
             var decodedComments: [[String: Any]] = []
-            let dispatchGroup = DispatchGroup()  // 使用 DispatchGroup 確保所有的異步加載完成後再繼續
+            let dispatchGroup = DispatchGroup()
             
             for var comment in loadedComments {
                 dispatchGroup.enter()
                 
                 let userId = comment["userId"] as? String ?? ""
                 FirebaseManager.shared.fetchUserNameByUserId(userId: userId) { username in
-                    comment["username"] = username  // 將取得的 username 存入 comment 中
+                    comment["username"] = username
                     
                     FirebaseManager.shared.fetchUserData(userId: userId) { result in
                         switch result {
                         case .success(let data):
                             if let photoUrlString = data["photo"] as? String {
-                                comment["avatarUrl"] = photoUrlString  // 存入大頭貼 URL
+                                comment["avatarUrl"] = photoUrlString
                             }
                         case .failure(let error):
                             print("Error loading user avatar: \(error.localizedDescription)")
                         }
                         
                         decodedComments.append(comment)
-                        dispatchGroup.leave()  // 當這條 comment 的解碼完成後，leave group
+                        dispatchGroup.leave()
                     }
                 }
             }
             
             dispatchGroup.notify(queue: .main) {
-                self.comments = decodedComments  // 將解碼後的資料賦值給 self.comments
+                // 對 comments 根據 createdAt 進行由舊到新的排序
+                self.comments = decodedComments.sorted {
+                    let date1 = ($0["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+                    let date2 = ($1["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+                    return date1 < date2
+                }
+                
                 self.setupTableView()
                 self.tableView.reloadData()
             }
@@ -403,7 +409,6 @@ extension ArticleViewController {
             } else {
                 sender.isSelected.toggle()
             }
-            
             self.isUpdatingLikeStatus = false
         }
     }
@@ -503,12 +508,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         headerView.frame = frame
         tableView.tableHeaderView = headerView
         tableView.layoutIfNeeded()
-        
         tableView.register(CommentTableViewCell.self, forCellReuseIdentifier: "CommentCell")
-        
         tableView.estimatedRowHeight = 180
         tableView.rowHeight = UITableView.automaticDimension
-        
         tableView.snp.makeConstraints { make in
             make.top.leading.trailing.equalTo(view.safeAreaLayoutGuide)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-60)
@@ -519,7 +521,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         let headerView = UIView()
         setupHeaderView(in: headerView)
         setupActionButtons(in: headerView)
-        
         return headerView
     }
     
@@ -546,7 +547,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         headerView.addSubview(avatarImageView)
         
         tripView.backgroundColor = .deepBlue
-        tripView.layer.cornerRadius = 20
+        tripView.layer.cornerRadius = 25
         headerView.addSubview(tripView)
         
         tripTitleLabel.textColor = .white
@@ -586,7 +587,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         tripView.snp.makeConstraints { make in
             make.top.equalTo(photoContainerView.snp.bottom).offset(12)
             make.width.equalTo(headerView).multipliedBy(0.9)
-            make.height.equalTo(60)
+            make.height.equalTo(50)
             make.centerX.equalTo(headerView)
         }
         
@@ -606,6 +607,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             make.width.height.equalTo(50)
         }
         
+        avatarImageView.image = UIImage(named: "user-placeholder")
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         
@@ -649,7 +651,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 26)
         authorLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
-        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
         contentLabel.lineSpacing = 7
         contentLabel.text = articleContent
         contentLabel.numberOfLines = 0
@@ -688,15 +690,13 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         likeButton.tintColor = UIColor.systemBlue
         likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
-        
+        likeCountLabel.text = "0"
+        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
         commentButton.tintColor = UIColor.systemGreen
         commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
         
         collectButton.tintColor = UIColor.systemPink
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
-        
-        likeCountLabel.text = "0"
-        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
     }
     
     func setupTripViewAction() {
@@ -807,7 +807,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     @objc func didTapImage(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? UIImageView else { return }
-        let index = imageView.tag // 獲取當前點擊圖片的索引
+        let index = imageView.tag
         
         var uiImages: [UIImage] = []
         let dispatchGroup = DispatchGroup()
@@ -960,6 +960,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         if comments.count > 0 {
             let comment = comments[indexPath.row]
             
+            cell.avatarImageView.image = UIImage(named: "user-placeholder")
             cell.contentLabel.text = comment["content"] as? String
             cell.usernameLabel.text = comment["username"] as? String
             

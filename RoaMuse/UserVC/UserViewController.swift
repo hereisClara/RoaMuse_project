@@ -16,6 +16,8 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    let awardsButton = UIButton()
+    let mapButton = UIButton()
     let newView = UIView()
     let headerView = UIView()
     let tableView = UITableView()
@@ -44,6 +46,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewDidLoad() {
         super.viewDidLoad()
+//        tableView.estimatedSectionHeaderHeight = 250
+//        tableView.sectionHeaderHeight = UITableView.automaticDimension
         view.backgroundColor = UIColor(resource: .backgroundGray)
         navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.prefersLargeTitles = true
@@ -94,8 +98,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 
                 if let introduction = data["introduction"] as? String {
                     self?.introductionLabel.text = introduction
-//                    self?.updateMoreButtonVisibility()
-                    self?.updateHeaderViewLayout()
                 }
                 
             case .failure(let error):
@@ -155,10 +157,12 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.followingNumberLabel.text = String(followings.count)
                 }
                 
-                if let region = data["region"] as? String,
-                   let introduction = data["introduction"] as? String {
-                    self?.introductionLabel.text = introduction
+                if let region = data["region"] as? String {
                     self?.regionLabel.text = region
+                }
+                
+                if let introduction = data["introduction"] as? String {
+                    self?.introductionLabel.text = introduction
                 }
                 
             case .failure(let error):
@@ -196,6 +200,15 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             }
         }
         loadUserPosts()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
     }
     
     @objc func navigateToSettings() {
@@ -424,52 +437,43 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupHeaderView() {
         
         headerView.backgroundColor = .systemGray5
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 240)
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 270)
         headerView.layer.cornerRadius = 20
         headerView.layer.masksToBounds = true
         
-        avatarImageView.backgroundColor = .blue
+        avatarImageView.image = UIImage(named: "user-placeholder")
         avatarImageView.isUserInteractionEnabled = true
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         [ userNameLabel, awardLabelView, avatarImageView, fansTextLabel, followingTextLabel, 
-          fansNumberLabel, followingNumberLabel, introductionLabel, moreButton, newView ].forEach { headerView.addSubview($0) }
+          fansNumberLabel, followingNumberLabel, introductionLabel, newView, mapButton, awardsButton ].forEach { headerView.addSubview($0) }
 
         setupFollowersAndFollowing()
         setupLabel()
-        newView.backgroundColor = .lightGray // 设置背景颜色便于观察
+        newView.backgroundColor = .lightGray
         newView.layer.cornerRadius = 6
+        
         introductionLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(20)
-            make.leading.equalTo(avatarImageView).offset(8)
+            make.leading.equalTo(headerView).offset(16)
             make.trailing.equalTo(headerView).offset(-16)
         }
-        
-        moreButton.snp.makeConstraints { make in
-            make.top.equalTo(introductionLabel.snp.bottom).offset(8)
-            make.leading.equalTo(introductionLabel)
-            make.height.equalTo(20)
-        }
-        
+
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
         followingStackView.axis = .vertical
         followingStackView.alignment = .center
         followingStackView.spacing = 0
         headerView.addSubview(followingStackView)
         
-        let mapButton = UIButton()
         mapButton.setImage(UIImage(systemName: "map"), for: .normal) // 設置圖標
         mapButton.backgroundColor = .deepBlue
         mapButton.tintColor = .white
         mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
-        headerView.addSubview(mapButton)
         
-        let awardsButton = UIButton()
         awardsButton.setImage(UIImage(systemName: "trophy"), for: .normal) // 設置圖標
         awardsButton.tintColor = .white
         awardsButton.backgroundColor = .deepBlue
         awardsButton.addTarget(self, action: #selector(handleAwardsButtonTapped), for: .touchUpInside)
-        headerView.addSubview(awardsButton)
         
         userNameLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView).offset(8)
@@ -524,13 +528,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         headerView.addSubview(fansStackView)
         
         fansStackView.snp.makeConstraints { make in
-            make.top.equalTo(introductionLabel.snp.bottom).offset(20)
-            make.centerX.equalTo(avatarImageView) // 垂直居中在 avatarImageView
+            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
+            make.centerX.equalTo(avatarImageView)
         }
         
         followingStackView.snp.makeConstraints { make in
-            make.top.equalTo(introductionLabel.snp.bottom).offset(20)
-            make.leading.equalTo(fansStackView.snp.trailing).offset(40) // 與 followers 保持一定間隔
+            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
+            make.leading.equalTo(fansStackView.snp.trailing).offset(40)
         }
         
         let fansTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFans))
@@ -541,8 +545,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         followingStackView.addGestureRecognizer(followingTapGesture)
         followingStackView.isUserInteractionEnabled = true
         
+        headerView.setNeedsLayout()
+        headerView.layoutIfNeeded()
+
         tableView.tableHeaderView = headerView
-        
     }
     
     func setupLabel() {
@@ -550,61 +556,24 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         userNameLabel.text = "新用戶"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
         userNameLabel.textColor = .deepBlue
-        introductionLabel.numberOfLines = 4
-        introductionLabel.lineSpacing = 6
         introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        introductionLabel.numberOfLines = 3
         introductionLabel.textColor = .darkGray
+        introductionLabel.lineBreakMode = .byTruncatingTail
+        introductionLabel.setContentHuggingPriority(.required, for: .vertical)
+        introductionLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         regionLabel.textColor = .white
         regionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
-        moreButton.setTitle("...更多", for: .normal)
-        moreButton.setTitleColor(.systemBlue, for: .normal)
-        moreButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-        moreButton.addTarget(self, action: #selector(handleMoreButtonTapped), for: .touchUpInside)
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6
         
-        updateMoreButtonVisibility()
-    }
-    
-    func updateMoreButtonVisibility() {
-        let labelSize = introductionLabel.sizeThatFits(CGSize(width: introductionLabel.frame.width, height: CGFloat.greatestFiniteMagnitude))
-        let numberOfLines = Int(labelSize.height / introductionLabel.font.lineHeight)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: introductionLabel.font!,
+            .paragraphStyle: paragraphStyle
+        ]
         
-        if numberOfLines > 4 {
-            moreButton.isHidden = false
-        } else {
-            moreButton.isHidden = true
-        }
-        updateHeaderViewLayout()
-    }
-
-    
-    @objc func handleMoreButtonTapped() {
-        isExpanded.toggle()
-        introductionLabel.numberOfLines = isExpanded ? 0 : 3
-        moreButton.setTitle(isExpanded ? "收起" : "...更多", for: .normal)
-        
-        UIView.animate(withDuration: 0.3) {
-            self.updateHeaderViewLayout()
-        }
-    }
-    
-    func updateHeaderViewLayout() {
-        // 確保子視圖完成佈局
-        headerView.setNeedsLayout()
-        headerView.layoutIfNeeded()
-        
-        // 動態計算 headerView 的高度，確保計算正確
-        let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
-        
-        // 防止高度為 0，給一個最小值
-        let adjustedHeight = max(headerHeight, 200) // 100 為最小高度，視情況修改
-        
-        var frame = headerView.frame
-        frame.size.height = adjustedHeight
-        headerView.frame = frame
-        
-        // 重新設置 tableHeaderView
-        self.tableView.tableHeaderView = headerView
-        self.tableView.layoutIfNeeded()
+        let attributedText = NSAttributedString(string: introductionLabel.text ?? "", attributes: attributes)
+        introductionLabel.attributedText = attributedText
     }
     
     func setupFollowersAndFollowing() {
@@ -635,7 +604,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func didTapFollowing() {
         let userListVC = UserListViewController()
-        userListVC.isShowingFollowers = false // 表示要显示关注列表
+        userListVC.isShowingFollowers = false
         userListVC.userId = self.userId
         navigationController?.pushViewController(userListVC, animated: true)
     }
@@ -652,12 +621,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         self.navigationController?.pushViewController(awardsViewController, animated: true)
     }
     
-    // UITableViewDataSource - 設定 cell 的數量
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         posts.count
     }
     
-    // UITableViewDataSource - 設定每個 cell 的樣式
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell
         
@@ -667,12 +634,11 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let title = post["title"] as? String ?? "無標題"
         let content = post["content"] as? String ?? "no text"
         
-        // 設置 cell 的文章標題
         cell.titleLabel.text = title
         cell.contentLabel.text = content
         cell.selectionStyle = .none
         cell.backgroundColor = .clear
-        // 檢查按讚狀態
+        
         let postId = post["id"] as? String ?? ""
         
         cell.configurePhotoStackView(with: post["photoUrls"] as? [String] ?? [])
@@ -887,5 +853,21 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             }
         }
+    }
+    
+    func actualLineHeight() -> CGFloat {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6 // 您设置的行间距
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: introductionLabel.font!,
+            .paragraphStyle: paragraphStyle
+        ]
+
+        let text = "A" // 任意字符
+        let attributedText = NSAttributedString(string: text, attributes: attributes)
+        let size = attributedText.boundingRect(with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
+                                               options: .usesLineFragmentOrigin, context: nil).size
+        return ceil(size.height)
     }
 }

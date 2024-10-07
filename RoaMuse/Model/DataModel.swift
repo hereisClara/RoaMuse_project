@@ -1,4 +1,5 @@
 import Foundation
+import FirebaseCore
 
 // 定義簡化的 PlaceIdentifier 結構，保存地點的 id 和完成狀態
 
@@ -143,18 +144,43 @@ struct Notification: Codable {
     var message: String? // 通知的具體內容
     var actionUrl: String? // 點擊後跳轉的URL
     var createdAt: Date
-    var isRead: Bool = false // 默認為未讀
+    var isRead: Int = 0 // 默認為未讀
     var status: String = "pending" // 默認狀態為 pending
     var priority: Int = 0 // 默認優先級為普通
     var id: String? // Firestore 自動生成的 ID
 }
 
 extension Notification {
-    func asDictionary() throws -> [String: Any] {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        let data = try encoder.encode(self)
-        let dictionary = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-        return dictionary ?? [:]
+    func asDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "to": to,
+            "from": from,
+            "type": type,
+            "createdAt": Timestamp(date: createdAt), // 将 Date 转换为 Timestamp
+            "isRead": isRead,
+            "status": status,
+            "priority": priority
+        ]
+        
+        if let postId = postId {
+            dict["postId"] = postId
+        }
+        if let subType = subType {
+            dict["subType"] = subType
+        }
+        if let title = title {
+            dict["title"] = title
+        }
+        if let message = message {
+            dict["message"] = message
+        }
+        if let actionUrl = actionUrl {
+            dict["actionUrl"] = actionUrl
+        }
+        if let id = id {
+            dict["id"] = id
+        }
+        return dict
     }
 }
+

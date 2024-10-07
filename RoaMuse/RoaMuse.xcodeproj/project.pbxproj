@@ -46,6 +46,8 @@
 		AC75D0F42CB28382005258EA /* RegionSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */; };
 		AC75D0F62CB285FC005258EA /* SettingDetailCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */; };
 		AC75D0F82CB2C977005258EA /* Extension+UILabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */; };
+		AC75D0FA2CB3C316005258EA /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F92CB3C316005258EA /* NotificationViewController.swift */; };
+		AC75D0FC2CB3C3D8005258EA /* NotificationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
@@ -145,6 +147,8 @@
 		AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelectionViewController.swift; sourceTree = "<group>"; };
 		AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingDetailCell.swift; sourceTree = "<group>"; };
 		AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Extension+UILabel.swift"; sourceTree = "<group>"; };
+		AC75D0F92CB3C316005258EA /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
+		AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTableViewCell.swift; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
@@ -232,6 +236,8 @@
 			isa = PBXGroup;
 			children = (
 				ACFCA3542C916C8F00643A2E /* HomeViewController.swift */,
+				AC75D0F92CB3C316005258EA /* NotificationViewController.swift */,
+				AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */,
 			);
 			path = HomeVC;
 			sourceTree = "<group>";
@@ -634,9 +640,11 @@
 				AC7A2A662C97D28E003FA811 /* PostsTableViewCell.swift in Sources */,
 				AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */,
 				AC75D0F02CB267B9005258EA /* MapTripTableViewCell.swift in Sources */,
+				AC75D0FC2CB3C3D8005258EA /* NotificationTableViewCell.swift in Sources */,
 				AC9775792CA987F900EF828A /* AwardsViewController.swift in Sources */,
 				AC7A2A532C9587F9003FA811 /* TripDetailViewController.swift in Sources */,
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
+				AC75D0FA2CB3C316005258EA /* NotificationViewController.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
 				AC7A2A832C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift in Sources */,
 				AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */,

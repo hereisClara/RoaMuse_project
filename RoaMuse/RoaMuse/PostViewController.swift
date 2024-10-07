@@ -86,7 +86,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             make.trailing.equalTo(contentTextView)
         }
         
-        avatarImageView.backgroundColor = .systemGray5
+        avatarImageView.image = UIImage(named: "user-placeholder")
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 27
         avatarImageView.clipsToBounds = true

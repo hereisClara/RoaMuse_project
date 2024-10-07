@@ -55,7 +55,7 @@ class UserTableViewCell: UITableViewCell {
         userNameLabel.text = "UserName"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        avatarImageView.backgroundColor = .blue
+        avatarImageView.image = UIImage(named: "user-placeholder")
 //        awardLabelView.updateTitle("Award Title")
         
         [
@@ -103,12 +103,14 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(avatarImageView.snp.bottom).offset(12)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
+            make.height.equalTo(40)
         }
         
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(8)
             make.leading.equalTo(titleLabel)
             make.trailing.equalTo(contentView).offset(-16)
+            make.bottom.equalTo(photoStackView.snp.top).offset(-10)
             //                    make.height.lessThanOrEqualTo(120)
         }
         
@@ -121,6 +123,7 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.equalTo(contentLabel)
             make.trailing.equalTo(contentLabel)
+            make.bottom.equalToSuperview().offset(-16)
             //            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
         }
         
@@ -184,6 +187,8 @@ class UserTableViewCell: UITableViewCell {
         
         titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
         titleLabel.textColor = .deepBlue
+        titleLabel.numberOfLines = 1
+        titleLabel.lineBreakMode = .byWordWrapping
         
         dateLabel.textColor = .gray
         dateLabel.font = UIFont.systemFont(ofSize: 14)

@@ -36,7 +36,6 @@ class UserProfileViewController: UIViewController {
         self.navigationItem.rightBarButtonItem = moreButton
         
         if let currentUserId = UserDefaults.standard.string(forKey: "userId"), currentUserId == userId {
-            // 如果是自己，则隐藏追踪按钮
             followButton.isHidden = true
         }
         
@@ -88,6 +87,15 @@ class UserProfileViewController: UIViewController {
                     self?.followingNumberLabel.text = String(followings.count)
                 }
                 
+                if let region = data["region"] as? String {
+                    self?.regionLabel.text = region
+                    print("====", region)
+                }
+                
+                if let introduction = data["introduction"] as? String {
+                    self?.introductionLabel.text = introduction
+                }
+                
             case .failure(let error):
                 print("獲取用戶資料失敗: \(error.localizedDescription)")
             }
@@ -128,7 +136,6 @@ class UserProfileViewController: UIViewController {
             return
         }
         
-        // 重新加載用戶資料
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
             case .success(let data):
@@ -146,6 +153,15 @@ class UserProfileViewController: UIViewController {
                 
                 if let followings = data["following"] as? [String] {
                     self?.followingNumberLabel.text = String(followings.count)
+                }
+                
+                if let region = data["region"] as? String {
+                    self?.regionLabel.text = region
+                    print("====", region)
+                }
+                
+                if let introduction = data["introduction"] as? String {
+                    self?.introductionLabel.text = introduction
                 }
                 
             case .failure(let error):
@@ -168,12 +184,12 @@ class UserProfileViewController: UIViewController {
         headerView.backgroundColor = .systemGray5
         headerView.layer.cornerRadius = 20
         headerView.layer.masksToBounds = true
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 220)
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 270)
         
         // Avatar image view
         avatarImageView.layer.cornerRadius = 50
         avatarImageView.clipsToBounds = true
-        avatarImageView.backgroundColor = .blue
+        avatarImageView.image = UIImage(named: "user-placeholder")
         headerView.addSubview(avatarImageView)
         
         userNameLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
@@ -234,12 +250,12 @@ class UserProfileViewController: UIViewController {
         }
         
         fansStackView.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
             make.centerX.equalTo(avatarImageView)
         }
         
         followingStackView.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
             make.leading.equalTo(fansStackView.snp.trailing).offset(40)
         }
         
@@ -250,9 +266,11 @@ class UserProfileViewController: UIViewController {
             make.top.equalTo(awardLabelView.snp.bottom).offset(4)
         }
         newView.addSubview(regionLabel)
+        newView.backgroundColor = .gray
+        newView.layer.cornerRadius = 6
         regionLabel.snp.makeConstraints { make in
-            make.leading.equalTo(newView).offset(6)
-            make.trailing.equalTo(newView).offset(-6)
+            make.leading.equalTo(newView).offset(8)
+            make.trailing.equalTo(newView).offset(-8)
             make.centerY.equalTo(newView)
         }
         
@@ -293,7 +311,7 @@ class UserProfileViewController: UIViewController {
         userNameLabel.text = "新用戶"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
         userNameLabel.textColor = .deepBlue
-        introductionLabel.numberOfLines = 4
+        introductionLabel.numberOfLines = 3
         introductionLabel.lineSpacing = 6
         introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
         introductionLabel.textColor = .darkGray
@@ -394,36 +412,6 @@ class UserProfileViewController: UIViewController {
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-    
-    func checkIfFollowing() {
-        guard let userId = userId, let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
-        
-        // 如果是自己的頁面，隱藏追蹤按鈕
-        if currentUserId == userId {
-            followButton.isHidden = true
-            return
-        }
-        
-        // 檢查是否已經追蹤該用戶
-        let currentUserRef = Firestore.firestore().collection("users").document(currentUserId)
-        currentUserRef.getDocument { snapshot, error in
-            if let error = error {
-                return
-            }
-            
-            guard let data = snapshot?.data(), let following = data["following"] as? [String] else {
-                return
-            }
-            
-            DispatchQueue.main.async {
-                // 如果當前用戶已經追蹤該用戶，則設置為已選擇狀態
-                self.followButton.isSelected = following.contains(userId)
-                if self.followButton.isSelected {
-                    self.followButton.setTitle("已追蹤", for: .selected)
                 }
             }
         }
@@ -718,6 +706,37 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
                 print("已從當前用戶的 following 和 followers 中移除封鎖對象")
             }
             completion()
+        }
+    }
+}
+
+extension UserProfileViewController {
+    
+    func checkIfFollowing() {
+        guard let userId = userId, let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
+        if currentUserId == userId {
+            followButton.isHidden = true
+            return
+        }
+        
+        let currentUserRef = Firestore.firestore().collection("users").document(currentUserId)
+        currentUserRef.getDocument { snapshot, error in
+            if let error = error {
+                return
+            }
+            
+            guard let data = snapshot?.data(), let following = data["following"] as? [String] else {
+                return
+            }
+            
+            DispatchQueue.main.async {
+                // 如果當前用戶已經追蹤該用戶，則設置為已選擇狀態
+                self.followButton.isSelected = following.contains(userId)
+                if self.followButton.isSelected {
+                    self.followButton.setTitle("已追蹤", for: .selected)
+                }
+            }
         }
     }
 }
