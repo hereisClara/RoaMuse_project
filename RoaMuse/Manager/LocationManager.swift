@@ -31,10 +31,12 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     func requestWhenInUseAuthorization() {
         locationManager.requestWhenInUseAuthorization()
+        print("requestWhenInUseAuthorization")
     }
 
     func requestLocation() {
         locationManager.requestLocation()
+        print("request location")
     }
     
     func startUpdatingHeading() {

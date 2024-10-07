@@ -851,73 +851,78 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
     
     @objc func openPresent() {
-        
-        getTripDataById()
-        let articleTripVC = ArticleTripViewController()
-        articleTripVC.modalPresentationStyle = .pageSheet
-        articleTripVC.tripId = self.tripId
-        articleTripVC.poemId = self.poemId
-        articleTripVC.postUsernameLabel.text = self.articleAuthor
-        articleTripVC.poemTitleLabel.text = "〈\(self.poemTitle)〉之旅"
-        navigationController?.pushViewController(articleTripVC, animated: true)
-    }
-    
-    func getTripDataById() {
-        let db = Firestore.firestore()
-        
-        db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
-            if let error = error {
-                return
-            }
-            
-            if let documents = snapshot?.documents, let document = documents.first {
-                
-                let data = document.data()
-                if let poemData = data["poem"] as? [String: Any],
-                   let title = poemData["title"] as? String,
-                   let poetry = poemData["poetry"] as? String,
-                   let original = poemData["original"] as? [String],
-                   let translation = poemData["translation"] as? [String],
-                   let secretTexts = poemData["secretTexts"] as? [String],
-                   let situationText = poemData["situationText"] as? [String],
-                   let placesData = data["places"] as? [[String: Any]],
-                   let tag = data["tag"] as? Int,
-                   let season = data["season"] as? Int,
-                   let weather = data["weather"] as? Int,
-                   let startTime = (data["startTime"] as? Timestamp)?.dateValue() {
-                    
-                    let places = placesData.compactMap { placeDict in
-                        return placeDict["id"] as? String
-                    }
-                    
-                    let poem = Poem(
-                        id: poemData["id"] as? String ?? "",  // 加入 poem 的 ID
-                        title: title,
-                        poetry: poetry,
-                        content: original, // 假設 content 是來自 original
-                        tag: tag,
-                        season: poemData["season"] as? Int,  // 加入 season
-                        weather: poemData["weather"] as? Int, // 加入 weather
-                        time: poemData["time"] as? Int // 加入 time
-                    )
-                    
-                    let trip = Trip(
-                        poemId: poem.id,  // 使用 poemId
-                        id: self.tripId,
-                        placeIds: places,
-                        keywordPlaceIds: nil,
-                        tag: tag,
-                        season: season,
-                        weather: weather,
-                        startTime: startTime
-                    )
-                } else {
-                }
-            } else {
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.getTripDataById()
+            DispatchQueue.main.async {
+                let articleTripVC = ArticleTripViewController()
+                articleTripVC.modalPresentationStyle = .pageSheet
+                articleTripVC.tripId = self.tripId
+                articleTripVC.poemId = self.poemId
+                articleTripVC.postUsernameLabel.text = self.articleAuthor
+                articleTripVC.poemTitleLabel.text = "〈\(self.poemTitle)〉之旅"
+                self.navigationController?.pushViewController(articleTripVC, animated: true)
             }
         }
     }
     
+    func getTripDataById() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let db = Firestore.firestore()
+            
+            db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
+                if let error = error {
+                    return
+                }
+                
+                if let documents = snapshot?.documents, let document = documents.first {
+                    
+                    let data = document.data()
+                    if let poemData = data["poem"] as? [String: Any],
+                       let title = poemData["title"] as? String,
+                       let poetry = poemData["poetry"] as? String,
+                       let original = poemData["original"] as? [String],
+                       let translation = poemData["translation"] as? [String],
+                       let secretTexts = poemData["secretTexts"] as? [String],
+                       let situationText = poemData["situationText"] as? [String],
+                       let placesData = data["places"] as? [[String: Any]],
+                       let tag = data["tag"] as? Int,
+                       let season = data["season"] as? Int,
+                       let weather = data["weather"] as? Int,
+                       let startTime = (data["startTime"] as? Timestamp)?.dateValue() {
+                        
+                        let places = placesData.compactMap { placeDict in
+                            return placeDict["id"] as? String
+                        }
+                        
+                        let poem = Poem(
+                            id: poemData["id"] as? String ?? "",  // 加入 poem 的 ID
+                            title: title,
+                            poetry: poetry,
+                            content: original, // 假設 content 是來自 original
+                            tag: tag,
+                            season: poemData["season"] as? Int,  // 加入 season
+                            weather: poemData["weather"] as? Int, // 加入 weather
+                            time: poemData["time"] as? Int // 加入 time
+                        )
+                        
+                        let trip = Trip(
+                            poemId: poem.id,  // 使用 poemId
+                            id: self.tripId,
+                            placeIds: places,
+                            keywordPlaceIds: nil,
+                            tag: tag,
+                            season: season,
+                            weather: weather,
+                            startTime: startTime
+                        )
+                    } else {
+                    }
+                } else {
+                }
+            }
+        }
+    }
+        
     func setupAvatar() {
         
         FirebaseManager.shared.fetchUserData(userId: authorId) { result in

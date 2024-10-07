@@ -10,7 +10,9 @@ import UIKit
 import MapKit
 import FirebaseFirestore
 
-class ArticleTripViewController: UIViewController, MKMapViewDelegate {
+class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate  {
+    
+    var nlpModel: poemLocationNLP3?
     
     var tripId = String()
     var poemId = String()
@@ -22,6 +24,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     var mapView = MKMapView()
     let db = Firestore.firestore()
     var annotations = [MKPointAnnotation]()
+//    var locationManager = LocationManager()
     var locationManager = LocationManager()
     var userLocation: CLLocationCoordinate2D?
     let activityIndicator = UIActivityIndicatorView(style: .large)
@@ -46,12 +49,10 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         super.viewDidLoad()
         view.backgroundColor = .white
         
-        guard !tripId.isEmpty else {
-            return
-        }
-        
+        guard !tripId.isEmpty else { return }
+        generateView.isUserInteractionEnabled = false
         popUpView.delegate = self
-        
+//        locationManager.delegate = self
         setupContainerView()
         setupGenerateView()
         setupLocationManager()
@@ -61,6 +62,23 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         
         view.addSubview(activityIndicator)
         setupActivityIndicator()
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                self.nlpModel = try poemLocationNLP3(configuration: .init())
+                print("NLP 模型加载成功")
+                DispatchQueue.main.async {
+                    self.generateView.isUserInteractionEnabled = true  // 允许用户交互
+                }
+            } catch {
+                print("NLP 模型加载失败：\(error)")
+                DispatchQueue.main.async {
+                    // 可以提示用户，或者处理加载失败的情况
+                    self.generateView.isUserInteractionEnabled = true  // 即使加载失败，也需要避免界面卡死
+                }
+            }
+        }
+
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -74,12 +92,17 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
             make.center.equalTo(view) // 設置指示器在視圖的中央
         }
         
-        // 初始化時隱藏
         activityIndicator.isHidden = true
     }
     
     @objc func didTapGenerateView() {
         
+        guard let _ = self.nlpModel else {
+                print("NLP 模型尚未加载完成")
+                return
+            }
+        
+        print("start")
         generateView.isUserInteractionEnabled = false
         
         activityIndicator.startAnimating()
@@ -89,10 +112,10 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
             guard let self = self else { return }
             self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
-
+print("process")
             self.processWithCurrentLocation(currentLocation)
         }
-
+print("no process")
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             locationManager.requestLocation()
@@ -106,37 +129,36 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     }
     
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            FirebaseManager.shared.loadPoemById(self.poemId) { poem in
-                if poem.content.isEmpty {
-                    DispatchQueue.main.async {
-                        self.generateView.isUserInteractionEnabled = true
-                    }
-                    return
+        print("start2")
+        FirebaseManager.shared.loadPoemById(self.poemId) { poem in
+            if poem.content.isEmpty {
+                DispatchQueue.main.async {
+                    self.generateView.isUserInteractionEnabled = true
                 }
+                return
+            }
 
-                self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
-                    self.keywordToLineMap = keywordToLineMap
-                    self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
-                        if let trip = trip {
-                            print("成功生成 trip：\(trip)")
-                            let places = self.matchingPlaces.map { $0.place }
-                            self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
-                                DispatchQueue.main.async {
-                                    self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
-                                    self.trip = trip
-                                    self.generateView.isUserInteractionEnabled = true
-                                    self.activityIndicator.stopAnimating()
-                                    self.activityIndicator.isHidden = true
-                                }
-                            }
-                        } else {
-                            print("未能生成行程")
+            self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                print("start3")
+                self.keywordToLineMap = keywordToLineMap
+                self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
+                    print("start4")
+                    if let trip = trip {
+                        let places = self.matchingPlaces.map { $0.place }
+                        self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
                             DispatchQueue.main.async {
+                                self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                self.trip = trip
                                 self.generateView.isUserInteractionEnabled = true
                                 self.activityIndicator.stopAnimating()
                                 self.activityIndicator.isHidden = true
                             }
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self.generateView.isUserInteractionEnabled = true
+                            self.activityIndicator.stopAnimating()
+                            self.activityIndicator.isHidden = true
                         }
                     }
                 }
@@ -150,19 +172,25 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         self.city = ""
         self.districts.removeAll()
         self.matchingPlaces.removeAll()
-        let searchRadius: Double = 15000 // 定义搜索半径
+        let searchRadius: Double = 10000 // 定义搜索半径
 
         let maxKeywords = 3
         let limitedKeywords = Array(keywords.prefix(maxKeywords))
         let keywordQueue = DispatchQueue(label: "keywordQueue", attributes: .concurrent)
+        let syncQueue = DispatchQueue(label: "com.yourapp.syncQueue") // Serial queue for synchronization
 
         for keyword in limitedKeywords {
             dispatchGroup.enter()
             keywordQueue.async {
-                self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, searchRadius: searchRadius, dispatchGroup: dispatchGroup) { validPlaceFound in
+                self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, searchRadius: searchRadius, syncQueue: syncQueue) { validPlaceFound in
                     if validPlaceFound {
-                        foundValidPlace = true
+                        syncQueue.async {
+                            foundValidPlace = true
+                        }
+                    } else {
+                        print("Error processing keyword")
                     }
+                    dispatchGroup.leave()
                 }
             }
         }
@@ -175,14 +203,13 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                     }
                 }
             } else {
-                DispatchQueue.main.async {
-                    completion(nil)
-                }
+                print("No valid places found or an error occurred.")
+                DispatchQueue.main.async { completion(nil) }
             }
         }
     }
 
-    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
+    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, syncQueue: DispatchQueue, completion: @escaping (Bool) -> Void) {
         print("Start processing keyword: \(keyword)")
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
             let nearbyPlaces = places.filter { place in
@@ -193,12 +220,16 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
 
             if !nearbyPlaces.isEmpty {
                 if let randomPlace = nearbyPlaces.randomElement() {
-                    if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
-                        self.matchingPlaces.append((keyword: keyword, place: randomPlace))
+                    syncQueue.async {
+                        if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
+                            self.matchingPlaces.append((keyword: keyword, place: randomPlace))
+                        }
+                    }
 
-                        let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
-                        self.reverseGeocodeLocation(placeLocation) { (city, district) in
-                            if let city = city, let district = district {
+                    let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                    self.reverseGeocodeLocation(placeLocation) { (city, district) in
+                        if let city = city, let district = district {
+                            syncQueue.async {
                                 if self.city.isEmpty {
                                     self.city = city
                                 }
@@ -206,17 +237,11 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                                     self.districts.append(district)
                                 }
                             }
-                            completion(true)
-                            dispatchGroup.leave()
                         }
-                    } else {
                         completion(true)
-                        dispatchGroup.leave()
                     }
                 } else {
-                    // 如果 randomPlace 为 nil
                     completion(false)
-                    dispatchGroup.leave()
                 }
             } else {
                 // 调用 PlaceDataManager 搜索
@@ -224,16 +249,16 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
-                                self.matchingPlaces.append((keyword: keyword, place: savedPlace))
+                                syncQueue.async {
+                                    self.matchingPlaces.append((keyword: keyword, place: savedPlace))
+                                }
                                 completion(true)
                             } else {
                                 completion(false)
                             }
-                            dispatchGroup.leave()
                         }
                     } else {
                         completion(false)
-                        dispatchGroup.leave()
                     }
                 }
             }
@@ -255,9 +280,16 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
     
     func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
-            let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            let maxSegments = 5
+            let textSegments = inputText.components(separatedBy: CharacterSet.newlines)
+                .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                .prefix(maxSegments)
             
             guard let model = try? poemLocationNLP3(configuration: .init()) else {
+                print("NLP 模型加载失败")
+                DispatchQueue.main.async {
+                    completion([], [:])  // 返回空结果，避免异步链条断裂
+                }
                 return
             }
             
@@ -270,35 +302,16 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                     allResults.append(landscape)
                     keywordToLineMap[landscape] = segment
                 } catch {
-
+                    print("分析失败：\(error.localizedDescription)")
                 }
             }
             
-            // 返回不重复的关键字
             DispatchQueue.main.async {
                 completion(Array(Set(allResults)), keywordToLineMap)
             }
         }
     }
-    
-    func displayPlacesInLabel() {
-        var placeDisplayText = ""
-        print(placeNames)
-        for (index, placeName) in placeNames.enumerated() {
-            placeDisplayText += placeName
-            if index < placeNames.count - 1 {
-                placeDisplayText += " → "
-            }
-        }
-        
-        placeLabel.text = placeDisplayText
-    }
-    
-    func updateTransportTimeLabel(totalTime: TimeInterval) {
-        let minutes = Int(totalTime / 60)
-        transportTimeLabel.text = "預計交通時間：\(minutes) 分鐘"
-    }
-    
+
     @objc func didTapCollectButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return
@@ -332,30 +345,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
         
         collectButton.isSelected.toggle()
         collectButton.tintColor = collectButton.isSelected ? .systemBlue : .white
-    }
-    
-    func checkIfTripBookmarked() {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            
-            return
-        }
-        
-        let userRef = Firestore.firestore().collection("users").document(userId)
-        
-        userRef.getDocument { [weak self] (document, error) in
-            guard let self = self else { return }
-            if let document = document, document.exists {
-                DispatchQueue.main.async {
-                    if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
-                        self.collectButton.isSelected = bookmarkTrips.contains(self.tripId)
-                        // 更新按鈕顏色
-                        self.collectButton.tintColor = self.collectButton.isSelected ? .systemBlue : .white
-                    }
-                }
-            } else {
-                print("無法獲取用戶資料")
-            }
-        }
     }
     
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (MKRoute?) -> Void) {
@@ -412,7 +401,9 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate {
                 calculateRoute(from: startLocation, to: endLocation) { route in
                     if let route = route {
                         totalTime += route.expectedTravelTime
-                        self.mapView.addOverlay(route.polyline)  // 绘制每段路径
+                        DispatchQueue.main.async {
+                            self.mapView.addOverlay(route.polyline)
+                        }
                         placeOrder.append(endPlace.name)
                     }
                     dispatchGroup.leave()
@@ -445,12 +436,12 @@ extension ArticleTripViewController {
     }
     
     func setupLocationManager() {
-        locationManager.onLocationUpdate = { [weak self] location in
-            guard let self = self else { return }
-            self.userLocation = location.coordinate  // 獲取當前使用者位置
-            print("User location updated: \(location.coordinate)")
-        }
-        locationManager.startUpdatingLocation()
+//        locationManager.onLocationUpdate = { [weak self] location in
+//            guard let self = self else { return }
+//            self.userLocation = location.coordinate  // 獲取當前使用者位置
+//            print("User location updated: \(location.coordinate)")
+//        }
+//        locationManager.startUpdatingLocation()
 
     }
     
@@ -483,6 +474,45 @@ extension ArticleTripViewController {
             annotationView?.annotation = annotation
         }
         return annotationView
+    }
+    
+    func checkIfTripBookmarked() {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        
+        userRef.getDocument { [weak self] (document, error) in
+            guard let self = self else { return }
+            if let document = document, document.exists {
+                DispatchQueue.main.async {
+                    if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
+                        self.collectButton.isSelected = bookmarkTrips.contains(self.tripId)
+                        // 更新按鈕顏色
+                        self.collectButton.tintColor = self.collectButton.isSelected ? .systemBlue : .white
+                    }
+                }
+            } else {
+                print("無法獲取用戶資料")
+            }
+        }
+    }
+    
+    func displayPlacesInLabel() {
+        var placeDisplayText = ""
+        print(placeNames)
+        for (index, placeName) in placeNames.enumerated() {
+            placeDisplayText += placeName
+            if index < placeNames.count - 1 {
+                placeDisplayText += " → "
+            }
+        }
+        
+        placeLabel.text = placeDisplayText
+    }
+    
+    func updateTransportTimeLabel(totalTime: TimeInterval) {
+        let minutes = Int(totalTime / 60)
+        transportTimeLabel.text = "預計交通時間：\(minutes) 分鐘"
     }
     
 }
