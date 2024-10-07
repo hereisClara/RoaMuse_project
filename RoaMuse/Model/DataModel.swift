@@ -2,6 +2,8 @@ import Foundation
 
 // 定義簡化的 PlaceIdentifier 結構，保存地點的 id 和完成狀態
 
+let notifyType = ["說你的貼文讚", "已回應貼文", "開始追蹤你"]
+
 struct Style {
     let name: String
     let introduction: String
@@ -131,3 +133,28 @@ struct ChatMessage {
     let timestamp: Date
 }
 
+struct Notification: Codable {
+    var to: String
+    var from: String
+    var postId: String? // postId 是可選的
+    var type: Int
+    var subType: String? // 類型的細分 (可選)
+    var title: String? // 通知的標題
+    var message: String? // 通知的具體內容
+    var actionUrl: String? // 點擊後跳轉的URL
+    var createdAt: Date
+    var isRead: Bool = false // 默認為未讀
+    var status: String = "pending" // 默認狀態為 pending
+    var priority: Int = 0 // 默認優先級為普通
+    var id: String? // Firestore 自動生成的 ID
+}
+
+extension Notification {
+    func asDictionary() throws -> [String: Any] {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(self)
+        let dictionary = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+        return dictionary ?? [:]
+    }
+}

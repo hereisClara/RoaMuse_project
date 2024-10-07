@@ -151,23 +151,18 @@ class HomeViewController: UIViewController {
             make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-70)
         }
         
-        // 確保從 UserDefaults 中獲取正確的 userId
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else {
-            print("未找到當前用戶的 userId")
             return
         }
         
-        // 使用 Firebase 的 addSnapshotListener 來監聽 photo 字段變化
         let userRef = FirebaseManager.shared.db.collection("users").document(currentUserId)
         
         userRef.addSnapshotListener { documentSnapshot, error in
             if let error = error {
-                print("監聽用戶資料失敗: \(error.localizedDescription)")
                 return
             }
             
             guard let document = documentSnapshot, document.exists, let data = document.data() else {
-                print("無法找到用戶資料")
                 return
             }
             
@@ -177,7 +172,6 @@ class HomeViewController: UIViewController {
                     avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                 }
             } else {
-                print("無法獲取照片 URL")
             }
         }
     }
@@ -425,7 +419,6 @@ class HomeViewController: UIViewController {
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             
             guard let model = try? poemLocationNLP3(configuration: .init()) else {
-                print("NLP 模型加载失败")
                 return
             }
             
@@ -442,13 +435,11 @@ class HomeViewController: UIViewController {
                 }
             }
             
-            // 返回不重复的关键字
             DispatchQueue.main.async {
                 completion(Array(Set(allResults)), keywordToLineMap)
             }
         }
     }
-    
 }
 
 extension HomeViewController: PopupViewDelegate {
@@ -525,7 +516,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.likeCountLabel.text = likeCount
         cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
-        cell.awardLabelView.titleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 10)
         cell.configureMoreButton {
             self.bottomSheetManager?.showBottomSheet()
         }
@@ -609,7 +599,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         return cell
     }
     
-    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let post = postsArray[indexPath.row]
@@ -647,7 +636,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
     @objc func didTapLikeButton(_ sender: UIButton) {
         sender.isSelected.toggle()
         
-        // 暫停監聽
         isUpdatingLikeStatus = true
         
         let point = sender.convert(CGPoint.zero, to: homeTableView)
@@ -655,22 +643,45 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         if let indexPath = homeTableView.indexPathForRow(at: point) {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
+            let postOwnerId = postData["userId"] as? String ?? ""
             
             guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-                print("未找到 userId")
                 return
             }
             
             saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
                 if success {
-                    print("按讚成功")
                     self.observeLikeCountChanges()  // 恢復監聽
-                    
+                    if sender.isSelected {
+                        FirebaseManager.shared.fetchUserData(userId: postOwnerId) { result in
+                            switch result {
+                            case .success(let data):
+                            let userName = data["userName"] as? String ?? ""
+                            FirebaseManager.shared.saveNotification(
+                                to: postOwnerId,
+                                from: userId,
+                                postId: postId,
+                                type: 0,
+                                subType: nil, title: "你的日記被按讚了！",
+                                message: "\(userName) 按讚了你的日記",
+                                actionUrl: nil, priority: 0
+                            ) { result in
+                                switch result {
+                                case .success:
+                                    print("通知发送成功")
+                                case .failure(let error):
+                                    print("通知发送失败: \(error.localizedDescription)")
+                                }
+                            }
+                            case .failure(let error):
+                                print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
+                            }
+                        }
+                    }
                 } else {
                     print("取消按讚失敗")
                     sender.isSelected.toggle()
                 }
-                // 完成後恢復監聽
                 self.isUpdatingLikeStatus = false
             }
         }
@@ -680,7 +691,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
         if isLiked {
-            // 使用 arrayUnion 將 userId 添加到 likesAccount 列表中
             postRef.updateData([
                 "likesAccount": FieldValue.arrayUnion([userId])
             ]) { error in
@@ -693,7 +703,6 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
                 }
             }
         } else {
-            // 使用 arrayRemove 將 userId 從 likesAccount 列表中移除
             postRef.updateData([
                 "likesAccount": FieldValue.arrayRemove([userId])
             ]) { error in
@@ -981,5 +990,4 @@ extension HomeViewController {
             
             present(alertController, animated: true, completion: nil)
         }
-    
 }

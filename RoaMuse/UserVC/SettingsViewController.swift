@@ -269,8 +269,9 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                     self.region = region
                     self.userGender = gender
                     self.loadAvatarImage(from: photoUrl)
+                    
+                    self.tableView.reloadData()
                 }
-                self.tableView.reloadData()
             }
         }
     }

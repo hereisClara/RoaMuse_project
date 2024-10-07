@@ -322,93 +322,124 @@ class NewsFeedViewController: UIViewController {
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
         
-        if isLiked {
-            // 使用 arrayUnion 將 userId 添加到 likesAccount 列表中
-            postRef.updateData([
-                "likesAccount": FieldValue.arrayUnion([userId])
-            ]) { error in
-                if let error = error {
-                    print("按讚失敗: \(error.localizedDescription)")
+        postRef.getDocument { document, error in
+            if let document = document, document.exists {
+                guard let postOwnerId = document.data()?["userId"] as? String else {
+                    print("未能找到貼文擁有者")
                     completion(false)
+                    return
+                }
+                
+                if isLiked {
+                    postRef.updateData([
+                        "likesAccount": FieldValue.arrayUnion([userId])
+                    ]) { error in
+                        if let error = error {
+                            print("按讚失敗: \(error.localizedDescription)")
+                            completion(false)
+                        } else {
+                            completion(true)
+                            
+                            FirebaseManager.shared.fetchUserData(userId: userId) { result in
+                                switch result {
+                                case .success(let data):
+                                let userName = data["userName"] as? String ?? ""
+                                FirebaseManager.shared.saveNotification(
+                                    to: postOwnerId,
+                                    from: userId,
+                                    postId: postId,
+                                    type: 0,
+                                    subType: nil, title: "你的日記被按讚了！",
+                                    message: "\(userName) 按讚了你的日記",
+                                    actionUrl: nil, priority: 0
+                                ) { result in
+                                    switch result {
+                                    case .success:
+                                        print("通知发送成功")
+                                    case .failure(let error):
+                                        print("通知发送失败: \(error.localizedDescription)")
+                                    }
+                                }
+                                case .failure(let error):
+                                    print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
+                                }
+                            }
+                        }
+                    }
                 } else {
-                    //                    print("按讚成功，已更新資料")
-                    completion(true)
+                    postRef.updateData([
+                        "likesAccount": FieldValue.arrayRemove([userId])
+                    ]) { error in
+                        if let error = error {
+                            print("取消按讚失敗: \(error.localizedDescription)")
+                            completion(false)
+                        } else {
+                            //                    print("取消按讚成功，已更新資料")
+                            completion(true)
+                        }
+                    }
                 }
             }
-        } else {
-            // 使用 arrayRemove 將 userId 從 likesAccount 列表中移除
-            postRef.updateData([
-                "likesAccount": FieldValue.arrayRemove([userId])
-            ]) { error in
-                if let error = error {
-                    print("取消按讚失敗: \(error.localizedDescription)")
-                    completion(false)
+        }
+        
+    }
+        @objc func didTapCollectButton(_ sender: UIButton) {
+            // 獲取按鈕點擊所在的行
+            let point = sender.convert(CGPoint.zero, to: postsTableView)
+            
+            if let indexPath = postsTableView.indexPathForRow(at: point) {
+                let postData = postsArray[indexPath.row]
+                let postId = postData["id"] as? String ?? ""
+                guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+                
+                // 獲取當前的 bookmarkAccount
+                var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
+                
+                if sender.isSelected {
+                    // 如果按鈕已選中，取消收藏並移除 userId
+                    bookmarkAccount.removeAll { $0 == userId }
+                    
+                    FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
+                        if success {
+                            // 更新 Firestore 中的 bookmarkAccount 字段
+                            self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                                if let error = error {
+                                    print("Failed to update bookmarkAccount: \(error)")
+                                } else {
+                                    // 成功取消收藏
+                                }
+                            }
+                        } else {
+                            print("取消收藏失敗")
+                        }
+                    }
                 } else {
-                    //                    print("取消按讚成功，已更新資料")
-                    completion(true)
+                    // 如果按鈕未選中，進行收藏並加入 userId
+                    if !bookmarkAccount.contains(userId) {
+                        bookmarkAccount.append(userId)
+                    }
+                    
+                    FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
+                        if success {
+                            // 更新 Firestore 中的 bookmarkAccount 字段
+                            self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                                if let error = error {
+                                    print("Failed to update bookmarkAccount: \(error)")
+                                } else {
+                                    // 成功添加收藏
+                                }
+                            }
+                        } else {
+                            print("收藏失敗")
+                        }
+                    }
                 }
+                // 更新按鈕選中狀態
+                sender.isSelected.toggle()
             }
         }
     }
     
-    @objc func didTapCollectButton(_ sender: UIButton) {
-        // 獲取按鈕點擊所在的行
-        let point = sender.convert(CGPoint.zero, to: postsTableView)
-        
-        if let indexPath = postsTableView.indexPathForRow(at: point) {
-            let postData = postsArray[indexPath.row]
-            let postId = postData["id"] as? String ?? ""
-            guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-            
-            
-            // 獲取當前的 bookmarkAccount
-            var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
-            
-            if sender.isSelected {
-                // 如果按鈕已選中，取消收藏並移除 userId
-                bookmarkAccount.removeAll { $0 == userId }
-                
-                FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
-                    if success {
-                        // 更新 Firestore 中的 bookmarkAccount 字段
-                        self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
-                            if let error = error {
-                                print("Failed to update bookmarkAccount: \(error)")
-                            } else {
-                                //                                print("取消收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
-                            }
-                        }
-                    } else {
-                        print("取消收藏失敗")
-                    }
-                }
-            } else {
-                // 如果按鈕未選中，進行收藏並加入 userId
-                if !bookmarkAccount.contains(userId) {
-                    bookmarkAccount.append(userId)
-                }
-                
-                FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
-                    if success {
-                        // 更新 Firestore 中的 bookmarkAccount 字段
-                        self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
-                            if let error = error {
-                                print("Failed to update bookmarkAccount: \(error)")
-                            } else {
-                                //                                print("收藏成功，當前收藏使用者數：\(bookmarkAccount.count)")
-                            }
-                        }
-                    } else {
-                        print("收藏失敗")
-                    }
-                }
-            }
-            // 更新按鈕選中狀態
-            sender.isSelected.toggle()
-        }
-    }
-}
-
 extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setupPostsTableView() {
@@ -560,3 +591,4 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
 }
+

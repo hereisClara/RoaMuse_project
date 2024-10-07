@@ -16,8 +16,10 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    let newView = UIView()
     let headerView = UIView()
     let tableView = UITableView()
+    let regionLabel = UILabel()
     let userNameLabel = UILabel()
     let awardLabelView = AwardLabelView(title: "初心者", backgroundColor: .systemGray)
     let fansNumberLabel = UILabel()
@@ -34,7 +36,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let backgroundView = UIView()
     let sheetHeight: CGFloat = 250
     let introductionLabel = UILabel()
-    
+    let moreButton = UIButton()
+    var isExpanded = false
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
@@ -84,9 +87,15 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.followingNumberLabel.text = String(followings.count)
                 }
                 
-                if let region = data["region"] as? String,
-                   let introduction = data["introduction"] as? String {
+                if let region = data["region"] as? String {
+                    self?.regionLabel.text = region
+                    print("====", region)
+                }
+                
+                if let introduction = data["introduction"] as? String {
                     self?.introductionLabel.text = introduction
+//                    self?.updateMoreButtonVisibility()
+                    self?.updateHeaderViewLayout()
                 }
                 
             case .failure(let error):
@@ -146,6 +155,12 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.followingNumberLabel.text = String(followings.count)
                 }
                 
+                if let region = data["region"] as? String,
+                   let introduction = data["introduction"] as? String {
+                    self?.introductionLabel.text = introduction
+                    self?.regionLabel.text = region
+                }
+                
             case .failure(let error):
                 print("Error fetching user data: \(error.localizedDescription)")
             }
@@ -187,12 +202,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         let settingsViewController = SettingsViewController()
         settingsViewController.title = "設定"
         navigationController?.pushViewController(settingsViewController, animated: true)
-    }
-    
-    @objc func updateAwardTitle(_ notification: Notification) {
-        if let userInfo = notification.userInfo, let newTitle = userInfo["title"] as? String {
-            awardLabelView.updateTitle("\(newTitle)")
-        }
     }
     
     func setupBottomSheet() {
@@ -409,37 +418,37 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerX.equalTo(view)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
-        
         setupHeaderView()
     }
     
     func setupHeaderView() {
         
         headerView.backgroundColor = .systemGray5
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 280)
-        headerView.layer.cornerRadius = 20  // 設置所需的圓角半徑
+        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 240)
+        headerView.layer.cornerRadius = 20
         headerView.layer.masksToBounds = true
-        headerView.addSubview(userNameLabel)
-        headerView.addSubview(awardLabelView)
         
         avatarImageView.backgroundColor = .blue
         avatarImageView.isUserInteractionEnabled = true
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
-        headerView.addSubview(avatarImageView)
-        headerView.addSubview(fansTextLabel)
-        headerView.addSubview(followingTextLabel)
-        headerView.addSubview(fansNumberLabel)
-        headerView.addSubview(followingNumberLabel)
-        headerView.addSubview(introductionLabel)
+        [ userNameLabel, awardLabelView, avatarImageView, fansTextLabel, followingTextLabel, 
+          fansNumberLabel, followingNumberLabel, introductionLabel, moreButton, newView ].forEach { headerView.addSubview($0) }
+
         setupFollowersAndFollowing()
         setupLabel()
-        
+        newView.backgroundColor = .lightGray // 设置背景颜色便于观察
+        newView.layer.cornerRadius = 6
         introductionLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(20)
             make.leading.equalTo(avatarImageView).offset(8)
             make.trailing.equalTo(headerView).offset(-16)
-            make.height.equalTo(70)
+        }
+        
+        moreButton.snp.makeConstraints { make in
+            make.top.equalTo(introductionLabel.snp.bottom).offset(8)
+            make.leading.equalTo(introductionLabel)
+            make.height.equalTo(20)
         }
         
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
@@ -469,9 +478,21 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         awardLabelView.snp.makeConstraints { make in
-            make.top.equalTo(userNameLabel.snp.bottom).offset(8)
+            make.top.equalTo(userNameLabel.snp.bottom).offset(4)
             make.leading.equalTo(userNameLabel)
             make.height.equalTo(24)
+        }
+        
+        newView.snp.makeConstraints { make in
+            make.leading.equalTo(awardLabelView)
+            make.height.equalTo(24)
+            make.top.equalTo(awardLabelView.snp.bottom).offset(4)
+        }
+        newView.addSubview(regionLabel)
+        regionLabel.snp.makeConstraints { make in
+            make.leading.equalTo(newView).offset(6)
+            make.trailing.equalTo(newView).offset(-6)
+            make.centerY.equalTo(newView)
         }
         
         avatarImageView.snp.makeConstraints { make in
@@ -529,10 +550,61 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         userNameLabel.text = "新用戶"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
         userNameLabel.textColor = .deepBlue
-        introductionLabel.numberOfLines = 3
+        introductionLabel.numberOfLines = 4
         introductionLabel.lineSpacing = 6
         introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
         introductionLabel.textColor = .darkGray
+        regionLabel.textColor = .white
+        regionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+        moreButton.setTitle("...更多", for: .normal)
+        moreButton.setTitleColor(.systemBlue, for: .normal)
+        moreButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        moreButton.addTarget(self, action: #selector(handleMoreButtonTapped), for: .touchUpInside)
+        
+        updateMoreButtonVisibility()
+    }
+    
+    func updateMoreButtonVisibility() {
+        let labelSize = introductionLabel.sizeThatFits(CGSize(width: introductionLabel.frame.width, height: CGFloat.greatestFiniteMagnitude))
+        let numberOfLines = Int(labelSize.height / introductionLabel.font.lineHeight)
+        
+        if numberOfLines > 4 {
+            moreButton.isHidden = false
+        } else {
+            moreButton.isHidden = true
+        }
+        updateHeaderViewLayout()
+    }
+
+    
+    @objc func handleMoreButtonTapped() {
+        isExpanded.toggle()
+        introductionLabel.numberOfLines = isExpanded ? 0 : 3
+        moreButton.setTitle(isExpanded ? "收起" : "...更多", for: .normal)
+        
+        UIView.animate(withDuration: 0.3) {
+            self.updateHeaderViewLayout()
+        }
+    }
+    
+    func updateHeaderViewLayout() {
+        // 確保子視圖完成佈局
+        headerView.setNeedsLayout()
+        headerView.layoutIfNeeded()
+        
+        // 動態計算 headerView 的高度，確保計算正確
+        let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+        
+        // 防止高度為 0，給一個最小值
+        let adjustedHeight = max(headerHeight, 200) // 100 為最小高度，視情況修改
+        
+        var frame = headerView.frame
+        frame.size.height = adjustedHeight
+        headerView.frame = frame
+        
+        // 重新設置 tableHeaderView
+        self.tableView.tableHeaderView = headerView
+        self.tableView.layoutIfNeeded()
     }
     
     func setupFollowersAndFollowing() {
@@ -556,16 +628,16 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func didTapFans() {
         let userListVC = UserListViewController()
-            userListVC.isShowingFollowers = true
-            userListVC.userId = self.userId
-            navigationController?.pushViewController(userListVC, animated: true)
+        userListVC.isShowingFollowers = true
+        userListVC.userId = self.userId
+        navigationController?.pushViewController(userListVC, animated: true)
     }
-
+    
     @objc func didTapFollowing() {
         let userListVC = UserListViewController()
-            userListVC.isShowingFollowers = false // 表示要显示关注列表
-            userListVC.userId = self.userId
-            navigationController?.pushViewController(userListVC, animated: true)
+        userListVC.isShowingFollowers = false // 表示要显示关注列表
+        userListVC.userId = self.userId
+        navigationController?.pushViewController(userListVC, animated: true)
     }
     
     @objc func handleMapButtonTapped() {
@@ -723,7 +795,32 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         if let indexPath = tableView.indexPathForRow(at: point) {
             let post = posts[indexPath.row]
             let postId = post["id"] as? String ?? ""
+            let postOwnerId = post["userId"] as? String ?? ""
             
+            FirebaseManager.shared.fetchUserData(userId: userId ?? "") { result in
+                switch result {
+                case .success(let data):
+                let userName = data["userName"] as? String ?? ""
+                FirebaseManager.shared.saveNotification(
+                    to: postOwnerId,
+                    from: self.userId ?? "",
+                    postId: postId,
+                    type: 0,
+                    subType: nil, title: "你的日記被按讚了！",
+                    message: "\(userName) 按讚了你的日記",
+                    actionUrl: nil, priority: 0
+                ) { result in
+                    switch result {
+                    case .success:
+                        print("通知发送成功")
+                    case .failure(let error):
+                        print("通知发送失败: \(error.localizedDescription)")
+                    }
+                }
+                case .failure(let error):
+                    print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
+                }
+            }
             updateLikeStatus(postId: postId, isLiked: sender.isSelected)
         }
     }

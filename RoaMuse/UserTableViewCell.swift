@@ -20,7 +20,7 @@ class UserTableViewCell: UITableViewCell {
     let bookmarkCountLabel = UILabel()
     let contentLabel = UILabel()
     let avatarImageView = UIImageView()
-    let awardLabelView = AwardLabelView(title: "Award Title")
+    let awardLabelView = AwardLabelView(title: "初心者")
     let dateLabel = UILabel()
     let userNameLabel = UILabel()
     let moreButton = UIButton()
@@ -56,7 +56,7 @@ class UserTableViewCell: UITableViewCell {
         userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         avatarImageView.backgroundColor = .blue
-        awardLabelView.updateTitle("Award Title")
+//        awardLabelView.updateTitle("Award Title")
         
         [
             moreButton, titleLabel, dateLabel, contentLabel, avatarImageView, userNameLabel,
@@ -176,22 +176,21 @@ class UserTableViewCell: UITableViewCell {
         
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
-        contentLabel.textColor = .darkGray
-        contentLabel.font = UIFont.systemFont(ofSize: 18, weight: .light)
+        contentLabel.textColor = .gray
+        contentLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 18)
         contentLabel.numberOfLines = 6
+        contentLabel.lineSpacing = 6
         contentLabel.lineBreakMode = .byTruncatingTail
         
-        titleLabel.font = .boldSystemFont(ofSize: 22)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
         titleLabel.textColor = .deepBlue
         
         dateLabel.textColor = .gray
         dateLabel.font = UIFont.systemFont(ofSize: 14)
-        
-        awardLabelView.titleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 10)
     }
     
     func setupRoundedCorners() {
-        // 設置 contentView 的圓角效果
+
         contentView.layer.cornerRadius = 15
         contentView.layer.masksToBounds = true
         contentView.backgroundColor = .white
@@ -252,13 +251,13 @@ class UserTableViewCell: UITableViewCell {
             scrollView.contentSize = CGSize(width: totalWidth, height: 150)
             
             scrollView.snp.updateConstraints { make in
-                make.height.equalTo(150)  // 有圖片時高度設置為 150
+                make.height.equalTo(150)
             }
         }
         
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
-            tableView.endUpdates() // 確保表格更新行高
+            tableView.endUpdates() 
         }
     }
 }
