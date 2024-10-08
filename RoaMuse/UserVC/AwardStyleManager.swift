@@ -20,7 +20,7 @@ class AwardStyleManager {
             titleContainerView.layer.borderColor = UIColor.lightGray.cgColor // 編框淺灰色
             titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
             titleLabel.textColor = .white
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
             dropdownButton?.tintColor = .white
             
         case 1:
@@ -29,7 +29,7 @@ class AwardStyleManager {
             titleContainerView.layer.borderColor = UIColor.deepBlue.cgColor // 編框 .deepBlue
             titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
             titleLabel.textColor = .deepBlue
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
             dropdownButton?.tintColor = .deepBlue
             
         case 2:
@@ -37,7 +37,7 @@ class AwardStyleManager {
             titleContainerView.backgroundColor = UIColor.accent // 底色為 .accent
             titleContainerView.layer.borderWidth = 0.0 // 沒有邊框
             titleLabel.textColor = .white
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
             dropdownButton?.tintColor = .white
             
         default:
@@ -45,7 +45,7 @@ class AwardStyleManager {
             titleContainerView.backgroundColor = UIColor.systemBackground
             titleContainerView.layer.borderWidth = 0.0
             titleLabel.textColor = .black
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
         }
     }
 }

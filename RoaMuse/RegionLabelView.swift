@@ -31,7 +31,7 @@ class RegionLabelView: UIView {
         self.clipsToBounds = true
 
         // 設置 regionLabel
-        regionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+        regionLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
         regionLabel.textColor = .white
         regionLabel.textAlignment = .center
         addSubview(regionLabel)

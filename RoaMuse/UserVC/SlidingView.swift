@@ -65,7 +65,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             let titleLabel = UILabel()
             titleLabel.text = "旅行記憶"
             titleLabel.textColor = .deepBlue
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 28)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 28)
             
             let showMoreButton = UIButton(type: .system)
             showMoreButton.setTitle("查看更多", for: .normal)
@@ -99,7 +99,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             let titleLabel = UILabel()
             titleLabel.text = "時光印痕"
             titleLabel.textColor = .deepBlue
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 28)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 28)
             
             headerView.addSubview(titleLabel)
             

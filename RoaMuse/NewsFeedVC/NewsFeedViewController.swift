@@ -62,7 +62,6 @@ class NewsFeedViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        // 每次回到這個頁面時重新加載資料
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             self?.postsArray = postsArray
             DispatchQueue.main.async {
@@ -117,8 +116,10 @@ class NewsFeedViewController: UIViewController {
         // 設置點擊手勢
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapPostView))
         postView.addGestureRecognizer(tapGesture)
-        postView.layer.cornerRadius = 20
+        postView.layer.cornerRadius = 30
         postView.backgroundColor = .white
+        postView.layer.borderColor = UIColor.deepBlue.cgColor
+        postView.layer.borderWidth = 2
         
         postView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide)
@@ -127,24 +128,22 @@ class NewsFeedViewController: UIViewController {
             make.height.equalTo(60) // 設置高度
         }
         
-        // Avatar ImageView
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         avatarImageView.layer.cornerRadius = 25
-        avatarImageView.image = UIImage(named: "placeholder") // 可以替換成實際的 avatar 圖片
+        avatarImageView.image = UIImage(named: "user-placeholder") // 可以替換成實際的 avatar 圖片
         postView.addSubview(avatarImageView)
         
         avatarImageView.snp.makeConstraints { make in
             make.centerY.equalTo(postView)
-            make.leading.equalTo(postView)
+            make.leading.equalTo(postView).offset(6)
             make.width.height.equalTo(50) // 設置為圓形
         }
         
-        // 中間的 "想說些什麼" Label
         let postLabel = UILabel()
         postLabel.text = "想說些什麼？"
         postLabel.textColor = .lightGray
-        postLabel.font = UIFont.systemFont(ofSize: 16)
+        postLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         postView.addSubview(postLabel)
         
         postLabel.snp.makeConstraints { make in
@@ -158,7 +157,6 @@ class NewsFeedViewController: UIViewController {
     @objc func didTapPostView() {
         navigationController?.pushViewController(postViewController, animated: true)
     }
-    
     
     func setupBottomSheet() {
         // 初始化背景蒙層
@@ -219,7 +217,6 @@ class NewsFeedViewController: UIViewController {
         }
     }
     
-    // 隱藏彈窗
     @objc func dismissBottomSheet() {
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height, width: self.view.frame.width, height: self.sheetHeight)
@@ -246,41 +243,6 @@ class NewsFeedViewController: UIViewController {
         
         navigationController?.pushViewController(postViewController, animated: true)
         
-    }
-    
-    func getNewData() {
-        
-        var postsIdArray = [String]()
-        
-        db.collection("posts").getDocuments { querySnapshot, error in
-            if error != nil {
-                //                print("錯錯錯")
-            } else {
-                
-                for num in 0 ..< self.postsArray.count {
-                    
-                    let postId = self.postsArray[num]["id"] as? String
-                    postsIdArray.append(postId ?? "")
-                }
-                
-                for document in querySnapshot!.documents {
-                    if !postsIdArray.contains(document.data()["id"] as? String ?? "") {
-                        self.postsArray.insert(document.data(), at: 0)
-                    }
-                }
-                
-                self.postsTableView.reloadData()
-                self.postsTableView.mj_header?.endRefreshing()
-            }
-        }
-    }
-    
-    func setupRefreshControl() {
-        // 使用 MJRefreshNormalHeader，當下拉時觸發的刷新動作
-        postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
-            guard let self = self else { return }
-            self.getNewData() // 在刷新時重新加載數據
-        })
     }
     
     @objc func didTapLikeButton(_ sender: UIButton) {
@@ -454,7 +416,8 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         postsTableView.rowHeight = UITableView.automaticDimension
         postsTableView.estimatedRowHeight = 250
-        
+        postsTableView.layer.borderColor = UIColor.deepBlue.cgColor
+        postsTableView.layer.borderWidth = 2
         postsTableView.layer.cornerRadius = 20
         postsTableView.layer.masksToBounds = true
         postsTableView.allowsSelection = true
@@ -592,3 +555,65 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+extension NewsFeedViewController {
+    func getNewData() {
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            return
+        }
+        
+        // 首先，取得使用者的 following 名單
+        db.collection("users").document(userId).addSnapshotListener { [weak self] documentSnapshot, error in
+            guard let self = self else { return }
+            guard let document = documentSnapshot, let data = document.data() else {
+                print("Error fetching user data: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+            
+            // 從用戶資料中提取 following 名單
+            if let followingArray = data["following"] as? [String] {
+                var postsArray = [Dictionary<String, Any>]()
+                let dispatchGroup = DispatchGroup()  // 使用 DispatchGroup 來同步多個資料庫請求
+
+                for followingUserId in followingArray {
+                    dispatchGroup.enter()  // 進入一個異步請求
+                    
+                    // 為每個 following 的使用者加上貼文監聽
+                    db.collection("posts").whereField("userId", isEqualTo: followingUserId).addSnapshotListener { querySnapshot, error in
+                        if let error = error {
+                            print("Error fetching posts: \(error.localizedDescription)")
+                        } else {
+                            for document in querySnapshot!.documents {
+                                postsArray.append(document.data())
+                            }
+                        }
+                        dispatchGroup.leave()  // 當前請求完成
+                    }
+                }
+                
+                // 當所有請求完成後，進行排序並更新 TableView
+                dispatchGroup.notify(queue: .main) {
+                    // 依照貼文創建時間進行排序
+                    self.postsArray = postsArray.sorted(by: { (post1, post2) -> Bool in
+                        if let createdAt1 = post1["createdAt"] as? Timestamp, let createdAt2 = post2["createdAt"] as? Timestamp {
+                            return createdAt1.dateValue() > createdAt2.dateValue()
+                        }
+                        return false
+                    })
+                    
+                    // 更新 UI
+                    self.postsTableView.reloadData()
+                    self.postsTableView.mj_header?.endRefreshing()
+                }
+            }
+        }
+    }
+
+    
+    func setupRefreshControl() {
+        // 使用 MJRefreshNormalHeader，當下拉時觸發的刷新動作
+        postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
+            guard let self = self else { return }
+            self.getNewData() // 在刷新時重新加載數據
+        })
+    }
+}

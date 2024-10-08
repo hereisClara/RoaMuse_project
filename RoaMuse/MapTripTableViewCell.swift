@@ -43,9 +43,9 @@ class MapTripTableViewCell: UITableViewCell {
             make.top.equalTo(contentView.snp.centerY).offset(4)
         }
         
-        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         titleLabel.textColor = .deepBlue
-        poemLineLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        poemLineLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         poemLineLabel.textColor = .systemGray2
     }
     

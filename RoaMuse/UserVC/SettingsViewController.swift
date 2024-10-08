@@ -17,11 +17,11 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     var userGender: String?
     
     let settingsOptions = ["個人名稱", "性別", "個人簡介", "地區", "封鎖名單", "刪除帳號", "登出"]
-
+    
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.backButtonTitle = ""
@@ -33,7 +33,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         loadUserData(userId: userId)
         view.backgroundColor = UIColor.systemBackground
         self.navigationItem.largeTitleDisplayMode = .never
-
+        
         self.title = "設定"
         
         imagePicker.delegate = self
@@ -72,7 +72,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.delegate = self
         tableView.dataSource = self
     }
-
+    
     
     func setupTableHeader() {
         let headerView = UIView()
@@ -112,7 +112,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         
         tableView.tableHeaderView = headerView
     }
-
+    
     // MARK: - UITableViewDataSource
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -150,7 +150,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         }
         return cell
     }
-
+    
     // MARK: - UITableViewDelegate
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -182,7 +182,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             navigationController?.pushViewController(blockVC, animated: true)
         }
     }
-
+    
     // 處理登出邏輯
     func handleLogout() {
         let alert = UIAlertController(title: "登出", message: "你確定要登出嗎？", preferredStyle: .alert)
@@ -254,33 +254,51 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     // MARK: - 用戶資料加載
     func loadUserData(userId: String) {
         let userRef = Firestore.firestore().collection("users").document(userId)
-        userRef.getDocument { document, error in
+        
+        // 使用 Firestore 的 addSnapshotListener 來監聽資料變化
+        userRef.addSnapshotListener { [weak self] documentSnapshot, error in
+            guard let self = self else { return }
+            
             if let error = error {
                 print("加載用戶資料失敗: \(error.localizedDescription)")
                 return
             }
             
-            if let document = document, document.exists {
-                if let userData = document.data(),
-                   let userName = userData["userName"] as? String,
-                   let photoUrl = userData["photo"] as? String,
-                   let region = userData["region"] as? String,
-                   let introduction = userData["introduction"] as? String,
-                   let gender = userData["gender"] as? String {
+            guard let document = documentSnapshot, document.exists else {
+                print("文檔不存在")
+                return
+            }
+            
+            // 從 document 中提取用戶數據
+            if let userData = document.data() {
+                if let userName = userData["userName"] as? String {
                     self.userName = userName
-                    self.introduction = introduction
-                    self.region = region
-                    self.userGender = gender
-                    self.loadAvatarImage(from: photoUrl)
-                    
-                    DispatchQueue.main.async {
-                                    self.tableView.reloadData()
-                                }
                 }
                 
+                if let photoUrl = userData["photo"] as? String {
+                    self.loadAvatarImage(from: photoUrl)
+                }
+                
+                if let region = userData["region"] as? String {
+                    self.region = region
+                }
+                
+                if let introduction = userData["introduction"] as? String {
+                    self.introduction = introduction
+                }
+                
+                if let gender = userData["gender"] as? String {
+                    self.userGender = gender
+                }
+                
+                // 刷新 tableView，顯示更新後的數據
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
             }
         }
     }
+
     
     func loadAvatarImage(from urlString: String) {
         guard let url = URL(string: urlString) else { return }
@@ -437,18 +455,18 @@ extension SettingsViewController: IntroductionViewControllerDelegate {
     
     func introductionViewControllerDidSave(_ intro: String) {
         
-            guard let userId = userId else { return }
-            
-            let userRef = Firestore.firestore().collection("users").document(userId)
-            userRef.updateData(["introduction": intro]) { error in
-                if let error = error {
-                    print("保存個人簡介失敗: \(error.localizedDescription)")
-                } else {
-                    print("個人簡介保存成功")
-                    self.introduction = intro
-                    DispatchQueue.main.async {
-                                    self.tableView.reloadData()
-                                }
+        guard let userId = userId else { return }
+        
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        userRef.updateData(["introduction": intro]) { error in
+            if let error = error {
+                print("保存個人簡介失敗: \(error.localizedDescription)")
+            } else {
+                print("個人簡介保存成功")
+                self.introduction = intro
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
             }
         }
     }
@@ -457,21 +475,21 @@ extension SettingsViewController: IntroductionViewControllerDelegate {
 extension SettingsViewController: RegionSelectionDelegate {
     
     func didSelectRegion(_ region: String) {
-            // 保存到 Firebase Firestore
-            guard let userId = userId else { return }
-            let userRef = Firestore.firestore().collection("users").document(userId)
-            
-            userRef.updateData(["region": region]) { error in
-                if let error = error {
-                    print("保存地區失敗: \(error.localizedDescription)")
-                } else {
-                    print("地區保存成功")
-                    self.region = region
-                    DispatchQueue.main.async {
-                                    self.tableView.reloadData()
-                                }
+        // 保存到 Firebase Firestore
+        guard let userId = userId else { return }
+        let userRef = Firestore.firestore().collection("users").document(userId)
+        
+        userRef.updateData(["region": region]) { error in
+            if let error = error {
+                print("保存地區失敗: \(error.localizedDescription)")
+            } else {
+                print("地區保存成功")
+                self.region = region
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
                 }
             }
         }
+    }
     
 }

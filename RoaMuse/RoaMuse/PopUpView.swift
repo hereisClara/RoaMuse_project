@@ -76,7 +76,7 @@ class PopUpView {
 
             popupView.snp.makeConstraints { make in
                 make.center.equalTo(backgroundView)
-                make.width.equalTo(backgroundView).multipliedBy(0.85)
+                make.width.equalTo(backgroundView).multipliedBy(0.88)
                 make.height.equalTo(600)
             }
         
@@ -95,7 +95,7 @@ class PopUpView {
                     let verseLabel = UILabel()
                     verseLabel.text = verse
                     verseLabel.textColor = .accent
-                    verseLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
+                    verseLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
                     self.versesStackView.addArrangedSubview(verseLabel)
                 }
             }
@@ -111,7 +111,7 @@ class PopUpView {
                     let placeLabel = UILabel()
                     placeLabel.text = place.name
                     placeLabel.textColor = .backgroundGray
-                    placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
+                    placeLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
                     self.placesStackView.addArrangedSubview(placeLabel)
 
                     // 進行反向編碼
@@ -119,12 +119,12 @@ class PopUpView {
                     self.reverseGeocodeLocation(location) { city, district in
                         if let city = city, let district = district {
                             self.cityLabel.text = "\(city)"
-                            self.cityLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
+                            self.cityLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
                             self.cityLabel.textColor = .backgroundGray
                             let districtLabel = UILabel()
                             districtLabel.text = "#\(district)"
                             districtLabel.textColor = .backgroundGray
-                            districtLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+                            districtLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
 
                             self.districtsStackView.addArrangedSubview(districtLabel)
                         }
@@ -233,8 +233,8 @@ class PopUpView {
     func setupLabel() {
         
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 40)
-        poetryLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 22)
-        tripStyleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        poetryLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
+        tripStyleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         matchingScoreLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
     }
 

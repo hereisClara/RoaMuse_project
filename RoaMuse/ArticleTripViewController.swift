@@ -556,7 +556,7 @@ extension ArticleTripViewController {
             make.top.equalTo(postUsernameLabel.snp.bottom).offset(8)
         }
         poemTitleLabel.textColor = .deepBlue
-        poemTitleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        poemTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         
         containerView.addSubview(placeLabel)
         placeLabel.snp.makeConstraints { make in
@@ -592,7 +592,7 @@ extension ArticleTripViewController {
         generateView.addSubview(generateTitleLabel)
         generateTitleLabel.text = "生成屬於你的旅程"
         generateTitleLabel.textColor = .white
-        generateTitleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        generateTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         generateTitleLabel.snp.makeConstraints { make in
             make.centerY.equalTo(generateView)
             make.leading.equalTo(generateView).offset(15)

@@ -57,6 +57,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         if let trip = selectedTrip {
             var title = String()
             self.tripId = trip.id
+            print("////", tripId)
             FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
                 title = poem.title
                 self.dropdownButton.setTitle(title, for: .normal)
@@ -68,10 +69,11 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = true
-        resetPostForm()
+//        resetPostForm()
         if let sharedImage = sharedImage {
             addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
         }
+        validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -591,15 +593,12 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
 
 extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
     
-    // 當 TextField 文字改變時觸發
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        // 獲取更新後的文字
         let updatedText = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) ?? string
         validateInputs(title: updatedText, content: contentTextView.text)
         return true
     }
     
-    // 當 TextView 文字改變時觸發
     func textViewDidChange(_ textView: UITextView) {
         validateInputs(title: titleTextField.text ?? "", content: textView.text)
     }
@@ -608,27 +607,23 @@ extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
         let isTitleValid = !title.trimmingCharacters(in: .whitespaces).isEmpty
         let isContentValid = !content.trimmingCharacters(in: .whitespaces).isEmpty
         let isTripSelected = !tripId.isEmpty
-        
-        // 如果所有條件都滿足，啟用發文按鈕
+
         navigationItem.rightBarButtonItem?.isEnabled = isTitleValid && isContentValid && isTripSelected
     }
     
     func resetPostForm() {
-        // 清空文本输入
         titleTextField.text = ""
         contentTextView.text = ""
-        // 重置按钮状态
         navigationItem.rightBarButtonItem?.isEnabled = false
-        // 重置选择的图片
         selectedImages.removeAll()
-        // 移除 StackView 中的所有图片视图
         imagesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        // 重置下拉菜单选择
         dropdownButton.setTitle("選擇行程", for: .normal)
-        tripId = ""
-        // 重置下拉菜单的显示状态
+        if tripId.isEmpty {
+                dropdownButton.setTitle("選擇行程", for: .normal)
+            }
         isDropdownVisible = false
         dropdownHeightConstraint?.update(offset: 0)
         dropdownTableView.reloadData()
+        validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
 }

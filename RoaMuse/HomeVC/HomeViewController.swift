@@ -109,7 +109,7 @@ class HomeViewController: UIViewController {
         }
         //        setupLocationUpdates()
         setupUserProfileImage()
-        setupChatButton()
+//        setupChatButton()
         bottomSheetManager?.setupBottomSheet()
         
         view.addSubview(activityIndicator)
@@ -246,7 +246,7 @@ class HomeViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        tabBarController?.tabBar.isHidden = false
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             self?.postsArray = postsArray
             DispatchQueue.main.async {
@@ -271,29 +271,29 @@ class HomeViewController: UIViewController {
             make.top.equalTo(view.safeAreaLayoutGuide)
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(120)
+            make.height.equalTo(80)
         }
         
-        recommendRandomTripView.backgroundColor = .white
+        recommendRandomTripView.backgroundColor = .deepBlue
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
         
         // 在 recommendRandomTripView 裡面添加 UILabel
         let titleLabel = UILabel()
         titleLabel.text = "# 時令推薦"
-        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 26)
-        titleLabel.textColor = UIColor(resource: .deepBlue)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
+        titleLabel.textColor = UIColor(resource: .accent)
         recommendRandomTripView.addSubview(titleLabel)
         
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(recommendRandomTripView).offset(20)
-            make.leading.equalTo(recommendRandomTripView).offset(15)
+            make.top.equalTo(recommendRandomTripView).offset(8)
+            make.leading.equalTo(recommendRandomTripView).offset(20)
         }
         
         let descriptionLabel = UILabel()
         descriptionLabel.text = "下雨的時候就是要......"
-        descriptionLabel.font = UIFont(name: "NotoSerifHK-Medium", size: 18)
-        descriptionLabel.textColor = UIColor(resource: .deepBlue)
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Black", size: 17)
+        descriptionLabel.textColor = UIColor(resource: .backgroundGray)
         recommendRandomTripView.addSubview(descriptionLabel)
         
         poemMatchingService.getSeasonAndTimeText { [weak self] finalText in
@@ -301,7 +301,7 @@ class HomeViewController: UIViewController {
         }
         
         descriptionLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(10)
+            make.top.equalTo(titleLabel.snp.bottom).offset(2)
             make.leading.equalTo(titleLabel)
         }
     }
@@ -340,17 +340,14 @@ class HomeViewController: UIViewController {
     }
     
     @objc func randomTripEntryButtonDidTapped() {
-        print("tap")
         recommendRandomTripView.isUserInteractionEnabled = false
         
         activityIndicator.startAnimating()
         activityIndicator.isHidden = false
         
         locationManager.onLocationUpdate = { [weak self] location in
-            print("onLocationUpdate called")
             guard let self = self else { return }
             self.locationManager.onLocationUpdate = nil
-            
             self.processWithCurrentLocation(location)
         }
         
@@ -489,7 +486,8 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
         
         homeTableView.rowHeight = UITableView.automaticDimension
         homeTableView.estimatedRowHeight = 400
-        
+        homeTableView.layer.borderColor = UIColor.deepBlue.cgColor
+        homeTableView.layer.borderWidth = 2
         view.addSubview(homeTableView)
         homeTableView.snp.makeConstraints { make in
             make.top.equalTo(recommendRandomTripView.snp.bottom).offset(10)

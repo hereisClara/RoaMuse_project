@@ -95,12 +95,15 @@ class EstablishViewController: UIViewController {
         recommendRandomTripView.layer.cornerRadius = 20
         
         styleLabel.snp.makeConstraints { make in
-            make.center.equalTo(recommendRandomTripView)
+            make.top.leading.equalTo(recommendRandomTripView).offset(30)
         }
+        styleLabel.lineSpacing = 8
+        styleLabel.numberOfLines = 0
+        styleLabel.text = "今天我想來點⋯⋯"
+        styleLabel.textColor = .forBronze
+        styleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 28)
         
-        styleLabel.font = UIFont.systemFont(ofSize: 24)
-        
-        recommendRandomTripView.backgroundColor = .white
+        recommendRandomTripView.backgroundColor = .deepBlue
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
     }
@@ -131,9 +134,7 @@ class EstablishViewController: UIViewController {
         activityIndicator.isHidden = false
         
         locationManager.onLocationUpdate = { [weak self] currentLocation in
-            guard let self = self else {
-                return
-            }
+            guard let self = self else { return }
             self.locationManager.onLocationUpdate = nil
             
             self.processWithCurrentLocation(currentLocation)
@@ -157,9 +158,7 @@ class EstablishViewController: UIViewController {
                 FirebaseManager.shared.loadAllPoems { poems in
                     let filteredPoems = poems.filter { poem in
                         return poem.tag == self.styleTag && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
-                    print("filter")
                     }
-                    print("filter success")
                     if let randomPoem = filteredPoems.randomElement() {
                         self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                             self.keywordToLineMap = keywordToLineMap
@@ -591,10 +590,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
             // 在這裡執行你要對 cell 的操作
             selectionTitle = cell.titleLabel.text ?? "" // 改變 cell 的背景顏色
             styleTag = Int(indexPath.row)
-            styleLabel.text = selectionTitle
-            styleLabel.textColor = .deepBlue
-            styleLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
-            
+            updateStyleLabel(with: "＃\(selectionTitle)")
         }
     }
 }
@@ -639,4 +635,29 @@ extension EstablishViewController {
         }
     }
     
+    func updateStyleLabel(with title: String) {
+        let fullText = "今天我想來點\n\(title) 的風格"
+        
+        // 建立 NSMutableAttributedString 來應用樣式
+        let attributedString = NSMutableAttributedString(string: fullText)
+        
+        // 設定第一行的字體和顏色
+        let firstLineRange = (fullText as NSString).range(of: "今天我想來點")
+        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 28)!, range: firstLineRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor.backgroundGray, range: firstLineRange)
+        
+        // 設定選擇的風格的字體和顏色
+        let selectionRange = (fullText as NSString).range(of: title)
+        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 34)!, range: selectionRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor.accent, range: selectionRange)
+        
+        // 設定第三行 "的風格" 的字體和顏色
+        let thirdLineRange = (fullText as NSString).range(of: " 的風格")
+        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 28)!, range: thirdLineRange)
+        attributedString.addAttribute(.foregroundColor, value: UIColor.backgroundGray, range: thirdLineRange)
+        
+        // 將設定後的 attributed string 設定到 label
+        styleLabel.attributedText = attributedString
+    }
+
 }

@@ -36,7 +36,7 @@ class NotificationTableViewCell: UITableViewCell {
         contentView.addSubview(avatarImageView)
         
         // 配置標題
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 16)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         titleLabel.textColor = .black
         contentView.addSubview(titleLabel)
         

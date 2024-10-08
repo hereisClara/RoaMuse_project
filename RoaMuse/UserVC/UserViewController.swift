@@ -16,12 +16,13 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    let postsNumberLabel = UILabel()
+    let postsTextLabel = UILabel()
     let awardsButton = UIButton()
     let mapButton = UIButton()
     let regionLabelView = RegionLabelView(region: nil)
     let headerView = UIView()
     let tableView = UITableView()
-//    let regionLabel = UILabel()
     let userNameLabel = UILabel()
     let awardLabelView = AwardLabelView(title: "初心者", backgroundColor: .systemGray)
     let fansNumberLabel = UILabel()
@@ -46,8 +47,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        tableView.estimatedSectionHeaderHeight = 250
-//        tableView.sectionHeaderHeight = UITableView.automaticDimension
         view.backgroundColor = UIColor(resource: .backgroundGray)
         navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.prefersLargeTitles = true
@@ -431,6 +430,9 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 240
+        tableView.layer.cornerRadius = 20
+//        tableView.layer.borderColor = UIColor.deepBlue.cgColor
+//        tableView.layer.borderWidth = 2
         
         tableView.snp.makeConstraints { make in
             make.width.equalTo(view).multipliedBy(0.9)
@@ -440,13 +442,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         setupHeaderView()
     }
-    
+
     func setupHeaderView() {
-        
         headerView.backgroundColor = .systemGray5
         headerView.layer.cornerRadius = 20
         headerView.layer.masksToBounds = true
-
+        headerView.layer.borderColor = UIColor.deepBlue.cgColor
+        headerView.layer.borderWidth = 2
         avatarImageView.image = UIImage(named: "user-placeholder")
         avatarImageView.isUserInteractionEnabled = true
         avatarImageView.contentMode = .scaleAspectFill
@@ -456,6 +458,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
          followingNumberLabel, introductionLabel, mapButton, awardsButton].forEach { headerView.addSubview($0) }
 
         setupFollowersAndFollowing()
+        setupPostsStackView()  // 新增这一行来设置帖子数量视图
         setupLabel()
 
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
@@ -464,12 +467,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         followingStackView.spacing = 0
         headerView.addSubview(followingStackView)
         
-        mapButton.setImage(UIImage(systemName: "map"), for: .normal) // 設置圖標
+        mapButton.setImage(UIImage(systemName: "map"), for: .normal)
         mapButton.backgroundColor = .deepBlue
         mapButton.tintColor = .white
         mapButton.addTarget(self, action: #selector(handleMapButtonTapped), for: .touchUpInside)
         
-        awardsButton.setImage(UIImage(systemName: "trophy"), for: .normal) // 設置圖標
+        awardsButton.setImage(UIImage(systemName: "trophy"), for: .normal)
         awardsButton.tintColor = .white
         awardsButton.backgroundColor = .deepBlue
         awardsButton.addTarget(self, action: #selector(handleAwardsButtonTapped), for: .touchUpInside)
@@ -521,7 +524,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         fansStackView.alignment = .center
         fansStackView.spacing = 0
         headerView.addSubview(fansStackView)
-        
+
+        // 新增帖子数量的 StackView
+        let postStackView = UIStackView(arrangedSubviews: [postsNumberLabel, postsTextLabel])
+        postStackView.axis = .vertical
+        postStackView.alignment = .center
+        postStackView.spacing = 0
+        headerView.addSubview(postStackView)
+
         introductionLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(20)
             make.leading.equalTo(headerView).offset(16)
@@ -530,13 +540,18 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         fansStackView.snp.makeConstraints { make in
-            make.centerX.equalTo(avatarImageView)
-            make.bottom.equalTo(headerView.snp.bottom).offset(-16) 
+            make.centerX.equalTo(headerView)
+            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
+        }
+        
+        postStackView.snp.makeConstraints { make in
+            make.centerY.equalTo(fansStackView)
+            make.centerX.equalTo(fansStackView.snp.leading).offset(-80)  // 间距
         }
         
         followingStackView.snp.makeConstraints { make in
             make.centerY.equalTo(fansStackView)
-            make.leading.equalTo(fansStackView.snp.trailing).offset(40)
+            make.centerX.equalTo(fansStackView.snp.trailing).offset(80)  // 间距
         }
         
         let fansTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFans))
@@ -552,13 +567,24 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
 
         tableView.tableHeaderView = headerView
     }
+
+    // 新增 setupPostsStackView 方法
+    func setupPostsStackView() {
+        postsNumberLabel.text = String(posts.count)
+        postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        
+        postsTextLabel.text = "Posts"
+        postsTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        postsTextLabel.textColor = .gray
+        postsTextLabel.textAlignment = .center
+    }
     
     func setupLabel() {
         
         userNameLabel.text = "新用戶"
-        userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
         userNameLabel.textColor = .deepBlue
-        introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        introductionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         introductionLabel.numberOfLines = 0
         introductionLabel.textColor = .darkGray
         introductionLabel.lineBreakMode = .byTruncatingTail
@@ -747,6 +773,9 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: postId) { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
+        
+        cell.contentView.layer.borderColor = UIColor.deepBlue.cgColor
+        cell.contentView.layer.borderWidth = 2
 
         return cell
     }
@@ -785,22 +814,47 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func loadUserPosts() {
-        FirebaseManager.shared.loadSpecifyUserPost(forUserId: userId ?? "") { [weak self] postsArray in
-            guard let self = self else { return }
-            self.posts = postsArray.sorted(by: { (post1, post2) -> Bool in
-                if let createdAt1 = post1["createdAt"] as? Timestamp,
-                   let createdAt2 = post2["createdAt"] as? Timestamp {
-                    return createdAt1.dateValue() > createdAt2.dateValue()
-                }
-                return false
+        guard let userId = userId else { return }
+        
+        // 使用 Firestore 的 addSnapshotListener 來監聽帖子資料的變化
+        FirebaseManager.shared.db.collection("posts")
+            .whereField("userId", isEqualTo: userId)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
                 
-            })
-            DispatchQueue.main.async {
-                                self.tableView.reloadData()
-                            }
-//            setupTableView()
-        }
+                if let error = error {
+                    print("Error listening for post changes: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("No documents")
+                    return
+                }
+                
+                // 使用從快照中獲取的數據來更新 posts
+                self.posts = documents.map { document in
+                    var postData = document.data()
+                    postData["id"] = document.documentID // 将文档 ID 保存到 postData
+                    return postData
+                }
+                
+                // 按時間排序貼文
+                self.posts.sort(by: { (post1, post2) -> Bool in
+                    if let createdAt1 = post1["createdAt"] as? Timestamp,
+                       let createdAt2 = post2["createdAt"] as? Timestamp {
+                        return createdAt1.dateValue() > createdAt2.dateValue()
+                    }
+                    return false
+                })
+                
+                // 重新加载表格视图
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
     }
+
     
     @objc func didTapLikeButton(_ sender: UIButton) {
         sender.isSelected.toggle()

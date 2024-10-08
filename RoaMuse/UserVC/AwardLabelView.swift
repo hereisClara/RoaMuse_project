@@ -28,7 +28,7 @@ class AwardLabelView: UIView {
         // 配置 titleLabel
         titleLabel.text = title
         titleLabel.textAlignment = .center
-        titleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         titleLabel.textColor = .white
         
         // 將 titleLabel 加入到視圖中

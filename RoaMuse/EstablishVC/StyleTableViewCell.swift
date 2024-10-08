@@ -61,11 +61,11 @@ class StyleTableViewCell: UITableViewCell {
         }
         
         // 調整字體
-        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
         titleLabel.textColor = .deepBlue // 設置標題顏色
         
-        descriptionLabel.font = UIFont.systemFont(ofSize: 14)
-        descriptionLabel.textColor = UIColor.darkGray
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        descriptionLabel.textColor = UIColor.systemGray
         descriptionLabel.numberOfLines = 0 // 設置自適應行數
     }
 }

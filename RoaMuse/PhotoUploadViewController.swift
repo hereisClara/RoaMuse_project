@@ -11,7 +11,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     let uploadButton = UIButton(type: .system)
     let saveButton = UIButton(type: .system)
     let buttonStackView = UIStackView()
-    
+    let cameraButton = UIButton(type: .system)
     var lastScale: CGFloat = 1.0
     var initialCenter: CGPoint = .zero
     var transparentArea: CGRect!
@@ -73,50 +73,75 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     
     func setupButtons() {
             // 分享按鈕
-            shareButton.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
-            shareButton.tintColor = .systemBlue
+            shareButton.setImage(UIImage(systemName: "square.and.arrow.up.circle.fill"), for: .normal)
+            shareButton.tintColor = .deepBlue
             shareButton.addTarget(self, action: #selector(shareAction), for: .touchUpInside)
 
             // 上傳圖片按鈕
             uploadButton.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
-            uploadButton.tintColor = .systemBlue
+            uploadButton.tintColor = .deepBlue
             uploadButton.addTarget(self, action: #selector(uploadPhoto), for: .touchUpInside)
 
             // 保存圖片按鈕
             saveButton.setImage(UIImage(systemName: "arrow.down.circle.fill"), for: .normal)
-            saveButton.tintColor = .systemGreen
+            saveButton.tintColor = .accent
             saveButton.addTarget(self, action: #selector(saveToPhotoAlbum), for: .touchUpInside)
+        
+        cameraButton.setImage(UIImage(systemName: "camera.circle.fill"), for: .normal)
+        cameraButton.tintColor = .deepBlue
+        cameraButton.addTarget(self, action: #selector(openCamera), for: .touchUpInside)
         }
 
-        // 設置垂直的 StackView 來排列按鈕
-        func setupButtonStackView() {
-            buttonStackView.axis = .vertical
-            buttonStackView.alignment = .fill
-            buttonStackView.distribution = .equalSpacing
-            buttonStackView.spacing = 20
+    func setupButtonStackView() {
+        // 添加半透明的白色背景 View
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.8) // 设置半透明白色
+        backgroundView.layer.cornerRadius = 40 // 圆角为宽度的一半
+        backgroundView.layer.masksToBounds = true
+        view.addSubview(backgroundView)
+        
+        // 设置背景 View 的约束
+        backgroundView.snp.makeConstraints { make in
+            make.trailing.equalTo(view).offset(-20)
+            make.bottom.equalTo(view).offset(-50)
+            make.width.equalTo(80) // 宽度与按钮相同
+            make.height.equalTo(280) // 根据按钮数量设置高度
+        }
+        
+        // 继续设置垂直的 StackView 来排列按钮
+        buttonStackView.axis = .vertical
+        buttonStackView.alignment = .fill
+        buttonStackView.distribution = .equalSpacing
+        buttonStackView.spacing = 20
 
-            // 添加按鈕到 StackView
-            buttonStackView.addArrangedSubview(shareButton)
-            buttonStackView.addArrangedSubview(uploadButton)
-            buttonStackView.addArrangedSubview(saveButton)
+        // 添加按钮到 StackView
+        buttonStackView.addArrangedSubview(shareButton)
+        buttonStackView.addArrangedSubview(uploadButton)
+        buttonStackView.addArrangedSubview(cameraButton) // 新增的相机按钮
+        buttonStackView.addArrangedSubview(saveButton)
+        
+        view.addSubview(buttonStackView)
 
-            // 添加 StackView 到主視圖
-            view.addSubview(buttonStackView)
+        // 设置 StackView 的约束，使其位于背景 View 内
+        buttonStackView.snp.makeConstraints { make in
+            make.edges.equalTo(backgroundView).inset(10) // 让按钮距离背景 View 内边距 10 点
+        }
 
-            // 設置 StackView 的約束，使其位於右下角
-            buttonStackView.snp.makeConstraints { make in
-                make.trailing.equalTo(view).offset(-20)
-                make.bottom.equalTo(view).offset(-50)
-                make.width.equalTo(80) // 每個按鈕的寬度
-            }
-
-            // 設置每個按鈕的大小
-            [shareButton, uploadButton, saveButton].forEach { button in
-                button.snp.makeConstraints { make in
-                    make.width.height.equalTo(60)
-                }
+        // 设置每个按钮的大小
+        [shareButton, uploadButton, cameraButton, saveButton].forEach { button in
+            button.snp.makeConstraints { make in
+                make.width.height.equalTo(50)
             }
         }
+    }
+
+    @objc func openCamera() {
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = .camera
+        present(imagePicker, animated: true, completion: nil)
+    }
+
 
     @objc func uploadPhoto() {
         let imagePicker = UIImagePickerController()
@@ -197,8 +222,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         updateImageViewConstraints(width: newWidth, height: newHeight)
     }
 
-
-    // 设置 imageView 的约束
     func setupImageViewConstraints() {
         imageViewConstraints = []
         imageView.snp.makeConstraints { make in

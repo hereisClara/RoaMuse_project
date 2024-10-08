@@ -551,7 +551,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         headerView.addSubview(tripView)
         
         tripTitleLabel.textColor = .white
-        tripTitleLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        tripTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         tripView.addSubview(tripTitleLabel)
         
         titleLabel.snp.makeConstraints { make in
@@ -649,16 +649,16 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     
     func setupLabel() {
         
-        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 26)
-        authorLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
-        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
+        authorLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
+        contentLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         contentLabel.lineSpacing = 7
         contentLabel.text = articleContent
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
         contentLabel.textColor = .darkGray
         contentLabel.preferredMaxLayoutWidth = UIScreen.main.bounds.width * 0.9
-        tripTitleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
+        tripTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
     }
     
     func setupButton() {

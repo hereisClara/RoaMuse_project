@@ -374,7 +374,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         headerView.backgroundColor = UIColor(resource: .deepBlue)
         headerView.layer.cornerRadius = 20
         
-        let titleLabel = createLabel(text: poem.title, font: UIFont(name: "NotoSerifHK-Black", size: 22) ?? UIFont.systemFont(ofSize: 22))
+        let titleLabel = createLabel(text: poem.title, font: UIFont(name: "NotoSerifHK-Black", size: 24) ?? UIFont.systemFont(ofSize: 24))
         
         headerView.addSubview(titleLabel)
         
@@ -391,13 +391,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.leading.equalToSuperview().offset(12)
         }
         
-        let contentLabel = createLabel(text: poem.content.joined(separator: "\n"), font: UIFont(name: "NotoSerifHK-Regular", size: 18) ?? UIFont.systemFont(ofSize: 18))
+        let contentLabel = createLabel(text: poem.content.joined(separator: "\n"), font: UIFont(name: "NotoSerifHK-Black", size: 20) ?? UIFont.systemFont(ofSize: 20))
         contentLabel.numberOfLines = 0
         headerView.addSubview(contentLabel)
         
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(poetLabel.snp.bottom).offset(30)
-            make.centerX.equalToSuperview()
             make.leading.equalToSuperview().offset(12)
             make.trailing.equalToSuperview().offset(-12)
             make.bottom.equalToSuperview().offset(-16)
@@ -682,7 +681,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             make.top.equalTo(placeLabel.snp.bottom).offset(12)
             make.trailing.equalToSuperview().offset(-50)
         }
-        descriptionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         
         let isCompleted = completedPlaceIds.contains(place.id)
         let isWithinRange = (section < buttonState.count) ? buttonState[section] : false

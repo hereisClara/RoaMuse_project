@@ -43,17 +43,17 @@ class UserTableViewCell: UITableViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        avatarImageView.layer.cornerRadius = 25
+        avatarImageView.layer.cornerRadius = 30
         avatarImageView.layer.masksToBounds = true
         let inset: CGFloat = 12
-        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset, left: inset / 2, bottom: inset, right: inset / 2))
+        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset / 2 + 3, left: 0, bottom: inset / 4, right: 0))
     }
     
     // 設置 cell 內的內容
     func setupCell() {
         
         userNameLabel.text = "UserName"
-        userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         avatarImageView.image = UIImage(named: "user-placeholder")
 //        awardLabelView.updateTitle("Award Title")
@@ -96,15 +96,15 @@ class UserTableViewCell: UITableViewCell {
         avatarImageView.snp.makeConstraints { make in
             make.top.equalTo(contentView).offset(30)
             make.leading.equalTo(contentView).offset(15)
-            make.width.height.equalTo(50)
+            make.width.height.equalTo(60)
         }
     
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(12)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
-            make.height.equalTo(40)
         }
+        
         contentLabel.numberOfLines = 0
         contentLabel.text = "????????????????????????????????????????????????????????????????????"
         contentLabel.snp.makeConstraints { make in
@@ -180,19 +180,19 @@ class UserTableViewCell: UITableViewCell {
         
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
-        contentLabel.textColor = .gray
-        contentLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 18)
+        contentLabel.textColor = .darkGray
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         contentLabel.numberOfLines = 6
-        contentLabel.lineSpacing = 6
+        contentLabel.lineSpacing = 3
         contentLabel.lineBreakMode = .byTruncatingTail
         
-        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         titleLabel.textColor = .deepBlue
         titleLabel.numberOfLines = 1
         titleLabel.lineBreakMode = .byWordWrapping
         
         dateLabel.textColor = .gray
-        dateLabel.font = UIFont.systemFont(ofSize: 14)
+        dateLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
     }
     
     func setupRoundedCorners() {

@@ -57,7 +57,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         navigationController?.navigationBar.tintColor = UIColor.white
         navigationController?.navigationBar.titleTextAttributes = [
             NSAttributedString.Key.foregroundColor: UIColor.white,
-            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Bold", size: 18)
+            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
         ]
         self.title = "成就"
         
@@ -87,7 +87,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
         navigationController?.navigationBar.titleTextAttributes = [
             NSAttributedString.Key.foregroundColor: UIColor.white,
-            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Bold", size: 18)
+            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
         ]
         tabBarController?.tabBar.isHidden = false
     }
@@ -134,7 +134,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             titleContainerView.layer.borderColor = UIColor.lightGray.cgColor // 編框淺灰色
             titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
             titleLabel.textColor = .white
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .white
             
         case 1:
@@ -143,7 +143,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             titleContainerView.layer.borderColor = UIColor.deepBlue.cgColor // 編框 .deepBlue
             titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
             titleLabel.textColor = .deepBlue
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .deepBlue
             
         case 2:
@@ -151,14 +151,14 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             titleContainerView.backgroundColor = UIColor.accent // 底色為 .accent
             titleContainerView.layer.borderWidth = 0.0 // 沒有邊框
             titleLabel.textColor = .white
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .white
             
         default:
             // 預設情況，無邊框及默認顏色
             titleContainerView.backgroundColor = UIColor.systemBackground
             titleContainerView.layer.borderWidth = 0.0
-            titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         }
     }
 
@@ -199,11 +199,11 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         // 添加標題
         let headerLabel = UILabel()
         headerLabel.text = userName
-        headerLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 32)
+        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 32)
         headerLabel.textColor = .white
 
         titleLabel.text = selectedTitle
-        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         
         dropdownButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
         dropdownButton.addTarget(self, action: #selector(showDropdownMenu), for: .touchUpInside)
@@ -276,7 +276,8 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        userRef.getDocument { (documentSnapshot, error) in
+        // 使用 addSnapshotListener 監聽數據變化
+        userRef.addSnapshotListener { (documentSnapshot, error) in
             if let error = error {
                 print("獲取用戶數據時出錯: \(error.localizedDescription)")
                 return
@@ -297,7 +298,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                     DispatchQueue.main.async {
                         self.selectedTitle = awardTitle.0
                         self.titleLabel.text = self.selectedTitle
-                        self.titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+                        self.titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
                         // 查找選擇的 title 對應的索引，並更新樣式
                         if let (section, row, item) = self.findIndexesForTitle(awardTitle.0) {
                             self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
@@ -307,7 +308,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                     DispatchQueue.main.async {
                         self.selectedTitle = "初心者"
                         self.titleLabel.textColor = .white
-                        self.titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+                        self.titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
                         self.titleLabel.text = self.selectedTitle
                         self.dropdownButton.tintColor = .white
                         self.titleContainerView.backgroundColor = .lightGray
@@ -315,15 +316,15 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 }
             }
             
-            // 如果沒有 completedPlace 資料，則進度為 0
+            // 如果没有 completedPlace 数据，进度为 0
             let totalPlacesCompleted = (data["completedPlace"] as? [[String: Any]])?.reduce(0) { acc, placeEntry in
                 acc + ((placeEntry["placeIds"] as? [String])?.count ?? 0)
             } ?? 0
             
-            // 如果沒有 completedTrip 資料，則進度為 0
+            // 如果没有 completedTrip 数据，进度为 0
             let totalTripsCompleted = (data["completedTrip"] as? [String])?.count ?? 0
             
-            // 初始化動態的任務集合
+            // 初始化动态的任务集合
             self.dynamicTaskSets = [
                 [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
                 [TaskSet(totalTasks: 10, completedTasks: 0),
@@ -332,7 +333,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 [TaskSet(totalTasks: 6, completedTasks: totalTripsCompleted)]
             ]
             
-            // 分類地點並更新進度
+            // 分类地点并更新进度
             self.categorizePlacesByTag { categorizedPlaces in
                 let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
                 self.dynamicTaskSets[1][0] = TaskSet(totalTasks: 10, completedTasks: tagZeroPlacesAmount)
@@ -343,7 +344,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
                 self.dynamicTaskSets[1][2] = TaskSet(totalTasks: 10, completedTasks: tagTwoPlacesAmount)
                 
-                // 計算所有稱號的進度，並直接更新下拉選單
+                // 计算所有称号的进度，并直接更新下拉菜单
                 self.calculateTitlesAndUpdateDropDown()
                 
                 DispatchQueue.main.async {
@@ -353,6 +354,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             }
         }
     }
+
 
     func numberOfSections(in tableView: UITableView) -> Int {
         return dynamicTaskSets.count
@@ -426,7 +428,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         let headerLabel = UILabel()
         headerLabel.text = awardSections[section]
-        headerLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
+        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
         headerLabel.textColor = .deepBlue
         
         headerView.addSubview(headerLabel)

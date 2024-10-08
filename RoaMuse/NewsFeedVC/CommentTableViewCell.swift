@@ -14,7 +14,7 @@ class CommentTableViewCell: UITableViewCell {
     // 定義 username, content 和 createdAt 的 UILabel
     let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        label.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         label.numberOfLines = 1
         label.textColor = .deepBlue
         return label
@@ -22,7 +22,7 @@ class CommentTableViewCell: UITableViewCell {
     
     let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        label.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         label.numberOfLines = 0  // 支援多行
         label.lineSpacing = 3
         label.lineBreakMode = .byWordWrapping

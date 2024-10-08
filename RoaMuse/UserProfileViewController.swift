@@ -309,14 +309,14 @@ class UserProfileViewController: UIViewController {
         followingTextLabel.textAlignment = .center
         
         userNameLabel.text = "新用戶"
-        userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
         userNameLabel.textColor = .deepBlue
         introductionLabel.numberOfLines = 3
         introductionLabel.lineSpacing = 6
-        introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        introductionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         introductionLabel.textColor = .darkGray
         regionLabel.textColor = .white
-        regionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+        regionLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
     }
     
     @objc func didTapFans() {
