@@ -82,7 +82,6 @@ class TripDetailViewController: UIViewController {
         if let poemId = trip?.poemId {
             FirebaseManager.shared.loadPoemById(poemId) { [weak self] poem in
                 guard let self = self else { return }
-                // 獲取到的 poem 可以存到變數中供後續使用
                 self.updatePoemData(poem: poem)
             }
         }
@@ -92,14 +91,13 @@ class TripDetailViewController: UIViewController {
             fetchPlacePoemPairs(for: trip.id) { pair in
                 if let pair = pair {
                     self.placePoemPairs.append(contentsOf: pair)
+                    print(self.placePoemPairs)
                 }
             }
         } else {
-            print("未接收到行程數據")
+            
         }
-        
         setupTableView()
-        //        setupTransportButtons()
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
@@ -116,10 +114,15 @@ class TripDetailViewController: UIViewController {
                 }
             }
             DispatchQueue.main.async {
+                print(self.footerViews)
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                    }
+                }
                 self.tableView.reloadData()
             }
         }
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -184,17 +187,16 @@ class TripDetailViewController: UIViewController {
         guard let trip = trip else { return }
         self.places = self.matchingPlaces.map { $0.place }
         self.places.sort { (place1, place2) -> Bool in
-                guard let index1 = trip.placeIds.firstIndex(of: place1.id),
-                      let index2 = trip.placeIds.firstIndex(of: place2.id) else {
-                    return false
-                }
-                return index1 < index2
+            guard let index1 = trip.placeIds.firstIndex(of: place1.id),
+                  let index2 = trip.placeIds.firstIndex(of: place2.id) else {
+                return false
             }
+            return index1 < index2
+        }
         
         let placeIds = trip.placeIds
         
         if placeIds.isEmpty {
-            print("行程中無地點資料")
             return
         }
         
@@ -202,12 +204,12 @@ class TripDetailViewController: UIViewController {
             guard let self = self else { return }
             
             self.matchingPlaces = trip.placeIds.compactMap { placeId in
-                        if let place = placesArray.first(where: { $0.id == placeId }) {
-                            return (keyword: "未知关键字", place: place)
-                        } else {
-                            return nil
-                        }
-                    }
+                if let place = placesArray.first(where: { $0.id == placeId }) {
+                    return (keyword: "未知关键字", place: place)
+                } else {
+                    return nil
+                }
+            }
             self.places = self.matchingPlaces.map { $0.place }
             print("Sorted matchingPlaces: \(self.matchingPlaces)")
             
@@ -222,27 +224,23 @@ class TripDetailViewController: UIViewController {
             
             DispatchQueue.main.async {
                 self.places = self.matchingPlaces.map { $0.place }
-                    
-                    // Initialize buttonState with the correct count
-                    self.buttonState = Array(repeating: false, count: self.places.count)
-                    
-                    // 重新加载表格视图
-                    self.tableView.reloadData()
-                    
-                    // 检查已完成的地点并设置状态
-                    for (index, place) in self.places.enumerated() {
-                        if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
-                            self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
-                        }
-                    }
-                    
-                    // 开始位置更新
-                    self.locationManager.startUpdatingLocation()
-                    self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-                        guard let self = self else { return }
-                        self.checkDistanceForCurrentTarget(from: currentLocation)
+                
+                self.buttonState = Array(repeating: false, count: self.places.count)
+                
+                self.tableView.reloadData()
+                
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
                     }
                 }
+                
+                self.locationManager.startUpdatingLocation()
+                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+                    guard let self = self else { return }
+                    self.checkDistanceForCurrentTarget(from: currentLocation)
+                }
+            }
             self.checkIfAllPlacesCompleted()
         }
     }
@@ -255,7 +253,6 @@ class TripDetailViewController: UIViewController {
         }
         
         guard currentTargetIndex < buttonState.count else {
-            print("buttonState 未正确初始化")
             return
         }
         
@@ -267,14 +264,14 @@ class TripDetailViewController: UIViewController {
         let isWithinThreshold = distance <= distanceThreshold
         
         if isWithinThreshold != buttonState[currentTargetIndex] {
-                buttonState[currentTargetIndex] = isWithinThreshold
-                
-                DispatchQueue.main.async {
-                    self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .none)
-                }
+            buttonState[currentTargetIndex] = isWithinThreshold
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .none)
             }
+        }
     }
-
+    
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -415,7 +412,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         backgroundView.snp.makeConstraints { make in
             make.edges.equalTo(transportButtonsView)
         }
-
+        
         buttonContainer = UIStackView()
         buttonContainer.axis = .horizontal
         buttonContainer.distribution = .fillEqually
@@ -484,9 +481,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
-    
     @objc private func transportButtonTapped(_ sender: UIButton) {
-        print("transportButtonTapped called")
         if sender == selectedTransportButton {
             toggleTransportButtons()
         } else {
@@ -500,7 +495,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 transportButtons.remove(at: index)
                 transportButtons.insert(sender, at: 0)
             }
-
+            
             for button in buttonContainer.arrangedSubviews {
                 buttonContainer.removeArrangedSubview(button)
                 button.removeFromSuperview()
@@ -553,7 +548,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate, addressDictionary: nil))
         directionRequest.transportType = selectedTransportType // 根據選擇的交通方式設置
         
-        // 計算路線
         let directions = MKDirections(request: directionRequest)
         directions.calculate { [weak self] (response, error) in
             guard let self = self, let response = response, error == nil else {
@@ -567,7 +561,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 UIView.performWithoutAnimation {
                     self.tableView.reloadRows(at: [IndexPath(row: 0, section: self.currentTargetIndex)], with: .none)
                 }
-
             }
         }
     }
@@ -603,7 +596,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let containerView = UIView()
         containerView.backgroundColor = .clear
-
+        
         let footerView = UIView()
         footerView.backgroundColor = .systemGray3
         footerView.layer.cornerRadius = 20
@@ -653,32 +646,61 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         }
         descriptionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
         
-        // 设置按钮和标签的初始状态
         let isCompleted = completedPlaceIds.contains(place.id)
         let isWithinRange = (section < buttonState.count) ? buttonState[section] : false
-            
-            if isCompleted {
-                // 地点已完成
-                completeButton.isEnabled = true
-                completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
-                updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
-            } else {
-                if section == currentTargetIndex && isWithinRange {
-                    
-                    completeButton.isEnabled = true
-                    completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-                } else {
-                    
-                    completeButton.isEnabled = false
-                    completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-                }
-                placeLabel.text = place.name
-                placeLabel.textColor = .black
-            }
-            
-            footerViews[section] = footerView
         
+        if isCompleted {
+            completeButton.isEnabled = true
+            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+            updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
+        } else {
+            if section == currentTargetIndex && isWithinRange {
+                
+                completeButton.isEnabled = true
+                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            } else {
+                
+                completeButton.isEnabled = false
+                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            }
+            placeLabel.text = place.name
+            placeLabel.textColor = .black
+        }
+        
+        footerViews[section] = footerView
+        print("view for footer: \(footerViews)")
+        
+        if let userId = UserDefaults.standard.string(forKey: "userId") {
+            FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
+                guard let self = self else { return }
+                self.completedPlaceIds = []
+                
+                for completedPlace in completedPlaces {
+                    if let tripId = completedPlace["tripId"] as? String,
+                       let placeIds = completedPlace["placeIds"] as? [String],
+                       tripId == self.trip?.id {
+                        self.completedPlaceIds.append(contentsOf: placeIds)
+                    }
+                }
+                DispatchQueue.main.async {
+
+                    for (index, place) in self.places.enumerated() {
+                        if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                            self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                        }
+                    }
+                }
+            }
+        }
+
         return containerView
+    }
+    
+    func tableView(_ tableView: UITableView, didEndDisplayingFooterView view: UIView, forSection section: Int) {
+        if let footerView = self.footerViews[section] {
+            print("Footer View is ready for section: \(section)")
+            self.setupCompletedFooterView(footerView: footerView, sectionIndex: section)
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -721,23 +743,23 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             sender.backgroundColor = .systemGray4
         }
         
-        let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
+        let indexPath = IndexPath(row: 0, section: currentTargetIndex)
         tableView.reloadRows(at: [indexPath], with: .fade)
     }
     
     func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
-        return 60 // 給定合理的估計高度
+        return 60
     }
     
     func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
-        // 更新 footerView 的內容為「已完成」
+        isFlipped[sectionIndex] = false
         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-                placeLabel.text = places[sectionIndex].name
-                placeLabel.textColor = .black
-            }
+            placeLabel.text = places[sectionIndex].name
+            placeLabel.textColor = .black
+        }
         
         if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
-            completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
             completeButton.isEnabled = true
         }
     }
@@ -745,28 +767,28 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func didTapCompleteButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         guard let trip = trip else { return }
-
+        
         let sectionIndex = sender.tag
         guard sectionIndex < places.count else { return }
-
+        
         let place = places[sectionIndex]
         let placeId = place.id
-
+        
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
         let isCompleted = completedPlaceIds.contains(placeId)
-
+        
         if !isCompleted {
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     DispatchQueue.main.async {
                         self.closeMapAndCollapseCell(at: sectionIndex)
-
+                        
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                             self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
                         }
-
+                        
                         self.completedPlaceIds.append(placeId)
                         self.isFlipped[sectionIndex] = false
                         
@@ -794,48 +816,49 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         } else {
             
             if let footerView = self.footerViews[sectionIndex] {
-                        self.startUpdatingLocationIfNeeded()
-                        
-                        UIView.transition(with: footerView, duration: 0.5, options: isCurrentlyFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
-                            self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
-                        }, completion: { _ in
-                            self.isFlipped[sectionIndex]?.toggle()
-                        })
-                    }
-//            if let footerView = self.footerViews[sectionIndex] {
-//                
-//                self.locationManager.startUpdatingLocation()
-//                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-//                    guard let self = self else { return }
-//                    self.checkDistanceForCurrentTarget(from: currentLocation)
-//                }
-//                
-//                if let currentLocation = self.locationManager.currentLocation {
-//                    self.checkDistanceForCurrentTarget(from: currentLocation)
-//                }
-//                
-//                if isCurrentlyFlipped {
-//                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
-//                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-//                            placeLabel.text = place.name
-//                            placeLabel.textColor = .black
-//                        }
-//                    }, completion: { _ in
-//                        self.isFlipped[sectionIndex] = false
-//                    })
-//                } else {
-//                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
-//                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-//                            if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
-//                                placeLabel.text = poemPair.poemLine
-//                                placeLabel.textColor = .systemGreen
-//                            }
-//                        }
-//                    }, completion: { _ in
-//                        self.isFlipped[sectionIndex] = true
-//                    })
-//                }
-//            }
+                self.startUpdatingLocationIfNeeded()
+                
+                self.isFlipped[sectionIndex]?.toggle()
+                
+                UIView.transition(with: footerView, duration: 0.5, options: isCurrentlyFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
+                    self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                }, completion: nil)
+            }
+            
+            //            if let footerView = self.footerViews[sectionIndex] {
+            //
+            //                self.locationManager.startUpdatingLocation()
+            //                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+            //                    guard let self = self else { return }
+            //                    self.checkDistanceForCurrentTarget(from: currentLocation)
+            //                }
+            //
+            //                if let currentLocation = self.locationManager.currentLocation {
+            //                    self.checkDistanceForCurrentTarget(from: currentLocation)
+            //                }
+            //
+            //                if isCurrentlyFlipped {
+            //                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
+            //                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+            //                            placeLabel.text = place.name
+            //                            placeLabel.textColor = .black
+            //                        }
+            //                    }, completion: { _ in
+            //                        self.isFlipped[sectionIndex] = false
+            //                    })
+            //                } else {
+            //                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
+            //                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+            //                            if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+            //                                placeLabel.text = poemPair.poemLine
+            //                                placeLabel.textColor = .systemGreen
+            //                            }
+            //                        }
+            //                    }, completion: { _ in
+            //                        self.isFlipped[sectionIndex] = true
+            //                    })
+            //                }
+            //            }
         }
     }
     
@@ -845,54 +868,49 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             guard let self = self else { return }
             self.checkDistanceForCurrentTarget(from: currentLocation)
         }
-
+        
         if let currentLocation = self.locationManager.currentLocation {
             self.checkDistanceForCurrentTarget(from: currentLocation)
         }
     }
-
+    
     func closeMapAndCollapseCell(at sectionIndex: Int) {
         isMapVisible = false
-
+        
         UIView.animate(withDuration: 0.3, animations: {
             if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
                 cell.contentView.alpha = 0
                 cell.isHidden = true
             }
         })
-
-            self.tableView.beginUpdates()
-            self.tableView.endUpdates()
-
-            self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .fade)
-
+        
+        self.tableView.beginUpdates()
+        self.tableView.endUpdates()
+        self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .fade)
     }
-
+    
     func expandNextCell(at sectionIndex: Int) {
         guard sectionIndex < places.count else { return }
-
         currentTargetIndex = sectionIndex
         isMapVisible = true
-
         let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
         tableView.reloadRows(at: [indexPath], with: .fade)
     }
-
+    
     func checkIfAllPlacesCompleted() {
         if completedPlaceIds.count == places.count {
             disableLocateButton()
         }
     }
-
+    
     func disableLocateButton() {
         locationButton.isEnabled = false
         locationButton.backgroundColor = .systemGray4
     }
-
+    
     func updateFooterViewForFlippedState(_ footerView: UIView, sectionIndex: Int, place: Place) {
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
         if isCurrentlyFlipped {
-            print("Footer subviews: \(footerView.subviews)")
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                 if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
                     placeLabel.text = poemPair.poemLine
@@ -901,20 +919,20 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         descriptionLabel.text = "生成中..."
                         descriptionLabel.textColor = .systemGray
                         print("找到 descriptionLabel")
-                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
-                            switch result {
-                            case .success(let suggestion):
-                                DispatchQueue.main.async {
-                                    descriptionLabel.text = suggestion
-                                    print("====---- ", suggestion)
-                                }
-                            case .failure(let error):
-                                DispatchQueue.main.async {
-                                    descriptionLabel.text = "無法生成描述"
-                                    print("Error fetching suggestion: \(error.localizedDescription)")
-                                }
-                            }
-                        }
+                        //                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+                        //                            switch result {
+                        //                            case .success(let suggestion):
+                        //                                DispatchQueue.main.async {
+                        //                                    descriptionLabel.text = suggestion
+                        //                                    print("====---- ", suggestion)
+                        //                                }
+                        //                            case .failure(let error):
+                        //                                DispatchQueue.main.async {
+                        //                                    descriptionLabel.text = "無法生成描述"
+                        //                                    print("Error fetching suggestion: \(error.localizedDescription)")
+                        //                                }
+                        //                            }
+                        //                        }
                     }
                 }
             }
@@ -931,14 +949,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     descriptionLabel.text = ""
                 }
             }
-
+            
             if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
                 if completedPlaceIds.contains(place.id) {
-                    
                     completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                     completeButton.isEnabled = true
                 } else {
-                    
                     let isWithinRange = buttonState[sectionIndex]
                     completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
                     completeButton.isEnabled = isWithinRange
