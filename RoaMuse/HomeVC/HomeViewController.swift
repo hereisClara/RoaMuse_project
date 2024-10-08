@@ -381,7 +381,7 @@ class HomeViewController: UIViewController {
                                 let places = self.matchingPlaces.map { $0.place }
                                 self.locationService.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
                                     DispatchQueue.main.async {
-                                        self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
+                                        self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
                                         self.trip = trip
                                         self.recommendRandomTripView.isUserInteractionEnabled = true
                                         self.activityIndicator.stopAnimating()

@@ -642,7 +642,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         descriptionLabel.snp.makeConstraints { make in
             make.leading.equalTo(placeLabel)
             make.top.equalTo(placeLabel.snp.bottom).offset(12)
-            make.trailing.equalToSuperview().offset(-30)
+            make.trailing.equalToSuperview().offset(-40)
         }
         descriptionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
         
@@ -786,20 +786,32 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     DispatchQueue.main.async {
+                        self.completedPlaceIds.append(placeId)
+                        
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                            
                             self.mapVisibilityState[sectionIndex] = false
+                            self.closeMapAndCollapseCell(at: sectionIndex)
+                            
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
-                            self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                            
+//                            self.isFlipped[sectionIndex] = false
+                            self.isFlipped[sectionIndex] = true
+                            // 执行翻转动画并更新视图
+                            UIView.transition(with: footerView, duration: 0.5, options: .transitionFlipFromRight, animations: {
+                                
+                                self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                            }, completion: nil)
+                            
                         }
-                        self.completedPlaceIds.append(placeId)
-                        self.isFlipped[sectionIndex] = false
                         
                         if sectionIndex + 1 < self.places.count {
                             self.expandNextCell(at: sectionIndex + 1)
                         } else {
                             self.checkIfAllPlacesCompleted()
                         }
+                        self.closeMapAndCollapseCell(at: sectionIndex)
                     }
                     
                     self.locationManager.startUpdatingLocation()
@@ -823,9 +835,11 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 self.isFlipped[sectionIndex]?.toggle()
                 
-                UIView.transition(with: footerView, duration: 0.5, options: isCurrentlyFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
+                UIView.transition(with: footerView, duration: 0.5, options: self.isFlipped[sectionIndex]! ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
                     self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
-                }, completion: nil)
+                }, completion: { _ in
+                    self.closeMapAndCollapseCell(at: sectionIndex)
+                })
             }
         }
     }
@@ -843,11 +857,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func closeMapAndCollapseCell(at sectionIndex: Int) {
-        if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
-                cell.contentView.alpha = 0
-                cell.isHidden = true
-            }
-            
+//        if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
+//                cell.contentView.alpha = 0
+//                cell.isHidden = true
+//            }
+//            isMapVisible = false
+            mapVisibilityState[sectionIndex] = false
             self.tableView.beginUpdates()
             self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
             self.tableView.endUpdates()
@@ -856,13 +871,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func expandNextCell(at sectionIndex: Int) {
         guard sectionIndex < places.count else { return }
         currentTargetIndex = sectionIndex
-        isMapVisible = true
+//        isMapVisible = true
         mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
         let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
-        tableView.reloadRows(at: [indexPath], with: .fade)
+        self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
     }
 
-    
     func checkIfAllPlacesCompleted() {
         if completedPlaceIds.count == places.count {
             disableLocateButton()
@@ -885,20 +899,19 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         descriptionLabel.text = "生成中..."
                         descriptionLabel.textColor = .systemGray
                         print("找到 descriptionLabel")
-                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
-                            switch result {
-                            case .success(let suggestion):
-                                DispatchQueue.main.async {
-                                    descriptionLabel.text = suggestion
-                                    print("====---- ", suggestion)
-                                }
-                            case .failure(let error):
-                                DispatchQueue.main.async {
-                                    descriptionLabel.text = "無法生成描述"
-                                    print("Error fetching suggestion: \(error.localizedDescription)")
-                                }
-                            }
-                        }
+//                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+//                            switch result {
+//                            case .success(let suggestion):
+//                                DispatchQueue.main.async {
+//                                    descriptionLabel.text = suggestion
+//                                }
+//                            case .failure(let error):
+//                                DispatchQueue.main.async {
+//                                    descriptionLabel.text = "無法生成描述"
+//                                    print("Error fetching suggestion: \(error.localizedDescription)")
+//                                }
+//                            }
+//                        }
                     }
                 }
             }

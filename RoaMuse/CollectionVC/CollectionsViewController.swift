@@ -688,7 +688,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                             } else {
                                 self.completeTripsArray.remove(at: indexPath.row)
                             }
-                            self.collectionsTableView.reloadData()
+                            self.collectionsTableView.deleteRows(at: [indexPath], with: .automatic)
                         } else {
                             print("取消收藏失敗")
                         }
@@ -699,7 +699,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                             print("取消收藏成功")
                             self.bookmarkPostIdArray.removeAll { $0 == id }
                             self.postsArray.remove(at: indexPath.row)
-                            self.collectionsTableView.reloadData()
+                            self.collectionsTableView.deleteRows(at: [indexPath], with: .automatic)
                         } else {
                             print("取消收藏失敗")
                         }

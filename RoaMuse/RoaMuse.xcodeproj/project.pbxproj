@@ -284,6 +284,7 @@
 		AC7A2A632C97C63D003FA811 /* Manager */ = {
 			isa = PBXGroup;
 			children = (
+				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC18F83A2CABDA28004E8868 /* LocationService.swift */,
@@ -333,7 +334,6 @@
 				AC18F8622CB25DEB004E8868 /* FullScreenImageViewController.swift */,
 				AC18F8642CB25E2E004E8868 /* ImageViewController.swift */,
 				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
-				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
 				AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */,
 				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
