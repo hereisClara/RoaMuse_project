@@ -18,7 +18,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let titleTextField = UITextField()
     let contentTextView = UITextView()
     let postButton = UIButton(type: .system)
-    
+    var selectedTrip: Trip?
+    var sharedImage: UIImage?
     let dropdownButton = UIButton(type: .system)
     let dropdownTableView = UITableView()
     var isDropdownVisible = false // 用來記錄下拉選單的狀態
@@ -41,8 +42,10 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.backgroundColor = .backgroundGray
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
         navigationItem.backButtonTitle = ""
+        
         setupUI()
         setupDropdownTableView()
+        
         self.navigationItem.largeTitleDisplayMode = .never
         let postButtonItem = UIBarButtonItem(title: "發文", style: .done, target: self, action: #selector(handlePostAction))
         
@@ -53,13 +56,30 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         postButtonItem.isEnabled = false
         navigationItem.rightBarButtonItem = postButtonItem
         
-        // 加載該 userId 對應的行程數據
+        if let trip = selectedTrip {
+            var title = String()
+            self.tripId = trip.id
+            FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                title = poem.title
+                self.dropdownButton.setTitle(title, for: .normal)
+            }
+            
+        }
         loadTripsData(userId: userId)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
         resetPostForm()
+        if let sharedImage = sharedImage {
+                addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
+            }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     @objc func handlePostAction() {
@@ -67,11 +87,50 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         backToLastPage()    // 返回上一頁
     }
     
+    func addImageToStackView(_ image: UIImage) {
+        // 添加圖片到已選圖片數組
+        selectedImages.append(image)
+        
+        // 創建一個 UIView 作為圖片和按鈕的容器
+        let imageContainer = UIView()
+        imagesStackView.addArrangedSubview(imageContainer)
+        
+        // 創建縮圖
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        imageContainer.addSubview(imageView)
+        
+        imageView.snp.makeConstraints { make in
+            make.edges.equalToSuperview() // 讓 imageView 填滿容器
+            make.width.height.equalTo(60) // 設置固定大小
+        }
+        
+        // 創建一個 "叉叉" 按鈕
+        let removeButton = UIButton(type: .custom)
+        removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        removeButton.tintColor = .gray
+        removeButton.backgroundColor = .white
+        removeButton.layer.cornerRadius = 12
+        removeButton.clipsToBounds = true
+        imageContainer.addSubview(removeButton)
+        
+        removeButton.snp.makeConstraints { make in
+            make.top.equalTo(imageContainer.snp.top).offset(-8)  // 相對於父視圖的右上角
+            make.trailing.equalTo(imageContainer.snp.trailing).offset(8)
+            make.width.height.equalTo(24)
+        }
+        
+        // 設置按鈕的點擊事件來移除圖片
+        removeButton.addTarget(self, action: #selector(removeSelectedImage(_:)), for: .touchUpInside)
+        removeButton.tag = selectedImages.count - 1  // 標記此按鈕，對應圖片位置
+    }
+
     func setupUI() {
         view.addSubview(contentTextView)
         view.addSubview(titleTextField)
         view.addSubview(imageButton)
-        
         view.addSubview(imagesStackView)
         
         imagesStackView.axis = .horizontal
@@ -82,7 +141,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         imagesStackView.snp.makeConstraints { make in
             make.leading.equalTo(imageButton.snp.trailing).offset(12) // 與 contentTextView 左對齊
             make.centerY.equalTo(imageButton)
-            make.height.equalTo(60) // 設置 StackView 高度
+            make.height.equalTo(60)
             make.trailing.equalTo(contentTextView)
         }
         
@@ -202,6 +261,72 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         })
     }
     
+    func savePostData(userId: String, title: String, content: String, photoUrls: [String]) {
+        let posts = Firestore.firestore().collection("posts")
+        let document = posts.document()
+        
+        let data = [
+            "id": document.documentID,
+            "userId": userId,
+            "title": title,
+            "content": content,
+            "photoUrls": photoUrls, // 儲存圖片的 URLs 到 Firestore
+            "createdAt": Date(),
+            "bookmarkAccount": [String](),
+            "likesAccount": [String](),
+            "tripId": tripId
+        ] as [String : Any]
+        
+        document.setData(data) { error in
+            if let error = error {
+                print("發文失敗: \(error.localizedDescription)")
+            } else {
+            }
+        }
+    }
+    
+    @objc func backToLastPage() {
+        titleTextField.text = ""
+        contentTextView.text = ""
+        postButtonAction?()
+        navigationController?.popViewController(animated: true)
+    }
+    
+    @objc func toggleDropdown() {
+        isDropdownVisible.toggle() // 切換下拉選單的狀態
+        
+        if isDropdownVisible {
+            dropdownTableView.isHidden = false
+            dropdownHeightConstraint?.update(offset: CGFloat(tripsArray.count * 44))
+        } else {
+            dropdownHeightConstraint?.update(offset: 0)
+        }
+        
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    func loadTripsData(userId: String) {
+        self.tripsArray.removeAll()
+        
+        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
+            guard let self = self else { return }
+            
+            if !tripIds.isEmpty {
+                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
+                    self.tripsArray = filteredTrips
+                    self.dropdownTableView.reloadData()
+                }
+            } else {
+                self.dropdownTableView.reloadData()
+            }
+        }
+    }
+}
+
+extension PostViewController {
+    
     @objc func selectImage() {
         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
@@ -303,7 +428,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         imageRef.putData(imageData, metadata: nil) { metadata, error in
             if let error = error {
-                print("上傳圖片失敗: \(error.localizedDescription)")
                 completion(nil)
             } else {
                 imageRef.downloadURL { url, error in
@@ -359,7 +483,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 if let imageUrl = imageUrl {
                     uploadedUrls.append(imageUrl)
                 } else {
-                    print("圖片上傳失敗")
                 }
                 group.leave() // 圖片上傳結束
             }
@@ -375,12 +498,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
         
         // 從 UserDefaults 中獲取 userId
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            print("未找到 userId，請先登入")
-            return
-        }
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         
-        // 上傳所有圖片並獲取 URL
         uploadImagesToFirebase { [weak self] urls in
             guard let self = self, let urls = urls else {
                 return
@@ -388,70 +507,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             self.photoUrls = urls // 儲存圖片 URLs
             self.savePostData(userId: userId, title: title, content: content, photoUrls: urls)
-        }
-    }
-    
-    func savePostData(userId: String, title: String, content: String, photoUrls: [String]) {
-        let posts = Firestore.firestore().collection("posts")
-        let document = posts.document()
-        
-        let data = [
-            "id": document.documentID,
-            "userId": userId,
-            "title": title,
-            "content": content,
-            "photoUrls": photoUrls, // 儲存圖片的 URLs 到 Firestore
-            "createdAt": Date(),
-            "bookmarkAccount": [String](),
-            "likesAccount": [String](),
-            "tripId": tripId
-        ] as [String : Any]
-        
-        document.setData(data) { error in
-            if let error = error {
-                print("發文失敗: \(error.localizedDescription)")
-            } else {
-                print("發文成功")
-            }
-        }
-    }
-    
-    @objc func backToLastPage() {
-        titleTextField.text = ""
-        contentTextView.text = ""
-        postButtonAction?()
-        navigationController?.popViewController(animated: true)
-    }
-    
-    @objc func toggleDropdown() {
-        isDropdownVisible.toggle() // 切換下拉選單的狀態
-        
-        if isDropdownVisible {
-            dropdownTableView.isHidden = false
-            dropdownHeightConstraint?.update(offset: CGFloat(tripsArray.count * 44))
-        } else {
-            dropdownHeightConstraint?.update(offset: 0)
-        }
-        
-        UIView.animate(withDuration: 0.3) {
-            self.view.layoutIfNeeded()
-        }
-    }
-    
-    func loadTripsData(userId: String) {
-        self.tripsArray.removeAll()
-        
-        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
-            guard let self = self else { return }
-            
-            if !tripIds.isEmpty {
-                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
-                    self.tripsArray = filteredTrips
-                    self.dropdownTableView.reloadData()
-                }
-            } else {
-                self.dropdownTableView.reloadData()
-            }
         }
     }
 }

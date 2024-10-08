@@ -181,8 +181,30 @@ class TripDetailViewController: UIViewController {
     }
     
     @objc func shareButtonTapped() {
-        let imageUploadVC = PhotoUploadViewController()
-        self.navigationController?.pushViewController(imageUploadVC, animated: true)
+        let alertController = UIAlertController(title: nil, message: "選擇操作", preferredStyle: .actionSheet)
+        
+        let postAction = UIAlertAction(title: "撰寫日記", style: .default) { [weak self] _ in
+            let postVC = PostViewController()
+            postVC.selectedTrip = self?.trip
+            self?.navigationController?.pushViewController(postVC, animated: true)
+        }
+        
+        let shareAction = UIAlertAction(title: "分享小卡", style: .default) { [weak self] _ in
+            let photoVC = PhotoUploadViewController()
+            self?.navigationController?.pushViewController(photoVC, animated: true)
+        }
+        
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        
+        alertController.addAction(postAction)
+        alertController.addAction(shareAction)
+        alertController.addAction(cancelAction)
+        
+        if let popoverController = alertController.popoverPresentationController {
+            popoverController.barButtonItem = self.navigationItem.rightBarButtonItem
+        }
+        
+        self.present(alertController, animated: true, completion: nil)
     }
     
     func loadPoemDataFromFirebase() {
@@ -424,7 +446,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             transportButtonsViewWidthConstraint = make.width.equalTo(50).constraint
         }
         
-        // 添加背景视图
         let backgroundView = UIView()
         backgroundView.backgroundColor = .systemGray4
         backgroundView.layer.cornerRadius = 25
@@ -469,7 +490,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             buttonContainer.addArrangedSubview(button)
         }
         updateTransportButtonsDisplay()
-        
         self.transportBackgroundView = backgroundView
         
         return buttonsView
@@ -478,17 +498,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     private func updateTransportButtonsDisplay() {
         if isExpanded {
-            // 显示所有按钮
             for button in transportButtons {
                 button.isHidden = false
             }
-            // 显示背景视图
             transportBackgroundView?.isHidden = false
             
             let buttonWidth: CGFloat = 50
             let buttonSpacing: CGFloat = 12
             let totalWidth = CGFloat(transportButtons.count) * buttonWidth + CGFloat(transportButtons.count - 1) * buttonSpacing
-            
             transportButtonsViewWidthConstraint?.update(offset: totalWidth)
         } else {
             
@@ -511,7 +528,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             selectedTransportButton?.backgroundColor = .clear
             selectedTransportButton = sender
             sender.backgroundColor = .deepBlue
-            
             selectedTransportType = transportTypeForIndex(sender.tag)
             
             if let index = transportButtons.firstIndex(of: sender) {
@@ -565,7 +581,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let place = places[currentTargetIndex]
         let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
-        
         let directionRequest = MKDirections.Request()
         directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate, addressDictionary: nil))
         directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate, addressDictionary: nil))
@@ -574,7 +589,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let directions = MKDirections(request: directionRequest)
         directions.calculate { [weak self] (response, error) in
             guard let self = self, let response = response, error == nil else {
-                print("Error calculating directions: \(String(describing: error))")
                 return
             }
             
@@ -836,7 +850,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         self.closeMapAndCollapseCell(at: sectionIndex)
                     })
                 } else {
-                    // 如果 isFlipped 还没有值，先初始化为 false 或执行其他逻辑
                     self.isFlipped[sectionIndex] = false
                 }
             }

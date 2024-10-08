@@ -3,22 +3,23 @@ import SnapKit
 import Photos
 
 class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-
+    
     let imageView = UIImageView()
     let templateImageView = UIImageView()
-
+    
+    let shareButton = UIButton(type: .system)
     let uploadButton = UIButton(type: .system)
     let saveButton = UIButton(type: .system)
-    let shareButton = UIButton(type: .system)
-
+    let buttonStackView = UIStackView()
+    
     var lastScale: CGFloat = 1.0
     var initialCenter: CGPoint = .zero
     var transparentArea: CGRect!
-
+    
     var imageViewConstraints: [Constraint] = [] // 保存 ImageView 的約束
     let minWidthScale: CGFloat = UIScreen.main.bounds.width
     let minHeightScale: CGFloat = UIScreen.main.bounds.height
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
@@ -35,7 +36,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         view.insertSubview(imageView, belowSubview: templateImageView)  // 将图片视图置于模板下面
         setupImageViewConstraints()
         setupButtons()
-
+        setupButtonStackView()
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
         imageView.addGestureRecognizer(panGesture)
@@ -69,31 +70,51 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let yCoordinate = templateFrame.origin.y + (templateFrame.height - height) / 2
         transparentArea = CGRect(x: xCoordinate, y: yCoordinate, width: width, height: height)
     }
-
+    
     func setupButtons() {
-            // 更改 uploadButton 成 plus.circle.fill 圖標
+            // 分享按鈕
+            shareButton.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
+            shareButton.tintColor = .systemBlue
+            shareButton.addTarget(self, action: #selector(shareAction), for: .touchUpInside)
+
+            // 上傳圖片按鈕
             uploadButton.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
             uploadButton.tintColor = .systemBlue
             uploadButton.addTarget(self, action: #selector(uploadPhoto), for: .touchUpInside)
-            view.addSubview(uploadButton)
 
-            // 更改 saveButton 成 arrow.down.circle.fill 圖標
+            // 保存圖片按鈕
             saveButton.setImage(UIImage(systemName: "arrow.down.circle.fill"), for: .normal)
             saveButton.tintColor = .systemGreen
             saveButton.addTarget(self, action: #selector(saveToPhotoAlbum), for: .touchUpInside)
-            view.addSubview(saveButton)
+        }
 
-            // 增大按鈕大小，並平行放置在底部
-            uploadButton.snp.makeConstraints { make in
-                make.bottom.equalTo(view.snp.bottom).offset(-100)
-                make.leading.equalTo(view.snp.leading).offset(50)
-                make.width.height.equalTo(80)
+        // 設置垂直的 StackView 來排列按鈕
+        func setupButtonStackView() {
+            buttonStackView.axis = .vertical
+            buttonStackView.alignment = .fill
+            buttonStackView.distribution = .equalSpacing
+            buttonStackView.spacing = 20
+
+            // 添加按鈕到 StackView
+            buttonStackView.addArrangedSubview(shareButton)
+            buttonStackView.addArrangedSubview(uploadButton)
+            buttonStackView.addArrangedSubview(saveButton)
+
+            // 添加 StackView 到主視圖
+            view.addSubview(buttonStackView)
+
+            // 設置 StackView 的約束，使其位於右下角
+            buttonStackView.snp.makeConstraints { make in
+                make.trailing.equalTo(view).offset(-20)
+                make.bottom.equalTo(view).offset(-50)
+                make.width.equalTo(80) // 每個按鈕的寬度
             }
 
-            saveButton.snp.makeConstraints { make in
-                make.bottom.equalTo(view.snp.bottom).offset(-100)
-                make.trailing.equalTo(view.snp.trailing).offset(-50)
-                make.width.height.equalTo(80)
+            // 設置每個按鈕的大小
+            [shareButton, uploadButton, saveButton].forEach { button in
+                button.snp.makeConstraints { make in
+                    make.width.height.equalTo(60)
+                }
             }
         }
 
@@ -103,6 +124,56 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         imagePicker.sourceType = .photoLibrary
         self.present(imagePicker, animated: true, completion: nil)
     }
+    
+    @objc func shareAction() {
+        // 創建 AlertSheet
+        let alertSheet = UIAlertController(title: "分享", message: "選擇分享方式", preferredStyle: .actionSheet)
+        
+        // 添加分享到外部選項
+        let shareToExternalAction = UIAlertAction(title: "分享到外部", style: .default) { [weak self] _ in
+            self?.shareToExternal()
+        }
+        
+        // 添加分享到日記選項
+        let shareToDiaryAction = UIAlertAction(title: "分享到日記", style: .default) { [weak self] _ in
+            self?.shareToDiary()
+        }
+        
+        // 添加取消選項
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        
+        // 將選項添加到 AlertSheet
+        alertSheet.addAction(shareToExternalAction)
+        alertSheet.addAction(shareToDiaryAction)
+        alertSheet.addAction(cancelAction)
+        
+        // 顯示選項表
+        present(alertSheet, animated: true, completion: nil)
+    }
+
+    // 分享到外部的方法
+    func shareToExternal() {
+        // 分享操作，使用 captureScreenshotExcludingViews 捕捉當前畫面
+        if let image = captureScreenshotExcludingViews([buttonStackView]) {
+            let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+            self.present(activityVC, animated: true, completion: nil)
+        }
+    }
+
+    // 分享到日記的方法
+    func shareToDiary() {
+        // 將當前圖片傳遞到 PostViewController
+        guard let combinedImage = captureScreenshotExcludingViews([buttonStackView]) else {
+                print("无法捕捉合成后的图片")
+                return
+            }
+        let postVC = PostViewController()
+        
+        postVC.sharedImage = combinedImage
+
+        self.navigationController?.pushViewController(postVC, animated: true)
+    }
+
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let selectedImage = info[.originalImage] as? UIImage {
