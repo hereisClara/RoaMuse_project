@@ -23,7 +23,7 @@ class TripDetailViewController: UIViewController {
     var transportBackgroundView: UIView?
     var transportButtonsViewWidthConstraint: Constraint?
     let locationButton = UIButton()
-    
+    var mapVisibilityState: [Int: Bool] = [:]
     var keywordToLineMap = [String: String]()
     var matchingPlaces = [(keyword: String, place: Place)]()
     var placePoemPairs = [PlacePoemPair]()
@@ -574,10 +574,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        if isMapVisible && indexPath.section == currentTargetIndex {
-            return 200 // 顯示地圖的高度
+        if mapVisibilityState[indexPath.section] ?? false {
+            return 200 // 显示地图的高度
         } else {
-            return 0 // 隱藏cell時高度為0
+            return 0 // 隐藏cell时高度为0
         }
     }
     
@@ -707,13 +707,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? MapTableViewCell ?? MapTableViewCell()
         let place = places[indexPath.section]
         
-        if isMapVisible {
-            let startCoordinate = locationManager.currentLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
-            let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
-            cell.showMap(from: startCoordinate, to: destinationCoordinate)
-        } else {
-            cell.hideMap()
-        }
+        let isMapVisibleForSection = mapVisibilityState[indexPath.section] ?? false
+            if isMapVisibleForSection {
+                let startCoordinate = locationManager.currentLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
+                let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+                cell.showMap(from: startCoordinate, to: destinationCoordinate)
+            } else {
+                cell.hideMap()
+            }
         
         return cell
     }
@@ -735,8 +736,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func didTapLocateButton(_ sender: UIButton) {
         isMapVisible.toggle()
         
-        sender.isSelected = isMapVisible
+        mapVisibilityState[currentTargetIndex] = isMapVisible
         
+        sender.isSelected = isMapVisible
         if isMapVisible {
             sender.backgroundColor = .deepBlue
         } else {
@@ -756,6 +758,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
             placeLabel.text = places[sectionIndex].name
             placeLabel.textColor = .black
+            if let descriptionLabel = footerView.subviews.first(where: { $0 is UILabel && $0 != placeLabel }) as? UILabel {
+                descriptionLabel.text = ""
+            }
         }
         
         if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
@@ -781,14 +786,12 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
                 if success {
                     DispatchQueue.main.async {
-                        self.closeMapAndCollapseCell(at: sectionIndex)
-                        
                         if let footerView = self.footerViews[sectionIndex],
                            let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                            self.mapVisibilityState[sectionIndex] = false
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                             self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
                         }
-                        
                         self.completedPlaceIds.append(placeId)
                         self.isFlipped[sectionIndex] = false
                         
@@ -824,41 +827,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
                 }, completion: nil)
             }
-            
-            //            if let footerView = self.footerViews[sectionIndex] {
-            //
-            //                self.locationManager.startUpdatingLocation()
-            //                self.locationManager.onLocationUpdate = { [weak self] currentLocation in
-            //                    guard let self = self else { return }
-            //                    self.checkDistanceForCurrentTarget(from: currentLocation)
-            //                }
-            //
-            //                if let currentLocation = self.locationManager.currentLocation {
-            //                    self.checkDistanceForCurrentTarget(from: currentLocation)
-            //                }
-            //
-            //                if isCurrentlyFlipped {
-            //                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromRight], animations: {
-            //                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-            //                            placeLabel.text = place.name
-            //                            placeLabel.textColor = .black
-            //                        }
-            //                    }, completion: { _ in
-            //                        self.isFlipped[sectionIndex] = false
-            //                    })
-            //                } else {
-            //                    UIView.transition(with: footerView, duration: 0.5, options: [.transitionFlipFromLeft], animations: {
-            //                        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
-            //                            if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
-            //                                placeLabel.text = poemPair.poemLine
-            //                                placeLabel.textColor = .systemGreen
-            //                            }
-            //                        }
-            //                    }, completion: { _ in
-            //                        self.isFlipped[sectionIndex] = true
-            //                    })
-            //                }
-            //            }
         }
     }
     
@@ -875,27 +843,25 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func closeMapAndCollapseCell(at sectionIndex: Int) {
-        isMapVisible = false
-        
-        UIView.animate(withDuration: 0.3, animations: {
-            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
+        if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
                 cell.contentView.alpha = 0
                 cell.isHidden = true
             }
-        })
-        
-        self.tableView.beginUpdates()
-        self.tableView.endUpdates()
-        self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .fade)
+            
+            self.tableView.beginUpdates()
+            self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
+            self.tableView.endUpdates()
     }
     
     func expandNextCell(at sectionIndex: Int) {
         guard sectionIndex < places.count else { return }
         currentTargetIndex = sectionIndex
         isMapVisible = true
+        mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
         let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
         tableView.reloadRows(at: [indexPath], with: .fade)
     }
+
     
     func checkIfAllPlacesCompleted() {
         if completedPlaceIds.count == places.count {
@@ -919,20 +885,20 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         descriptionLabel.text = "生成中..."
                         descriptionLabel.textColor = .systemGray
                         print("找到 descriptionLabel")
-                        //                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
-                        //                            switch result {
-                        //                            case .success(let suggestion):
-                        //                                DispatchQueue.main.async {
-                        //                                    descriptionLabel.text = suggestion
-                        //                                    print("====---- ", suggestion)
-                        //                                }
-                        //                            case .failure(let error):
-                        //                                DispatchQueue.main.async {
-                        //                                    descriptionLabel.text = "無法生成描述"
-                        //                                    print("Error fetching suggestion: \(error.localizedDescription)")
-                        //                                }
-                        //                            }
-                        //                        }
+                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+                            switch result {
+                            case .success(let suggestion):
+                                DispatchQueue.main.async {
+                                    descriptionLabel.text = suggestion
+                                    print("====---- ", suggestion)
+                                }
+                            case .failure(let error):
+                                DispatchQueue.main.async {
+                                    descriptionLabel.text = "無法生成描述"
+                                    print("Error fetching suggestion: \(error.localizedDescription)")
+                                }
+                            }
+                        }
                     }
                 }
             }

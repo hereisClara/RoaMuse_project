@@ -32,36 +32,31 @@ class OpenAIManager {
         ]
 
         let parameters: [String: Any] = [
-                "model": "gpt-3.5-turbo",
-                "messages": [
-                    ["role": "system", "content": "你是一位創造詩句意境提示的助手"],
-                    ["role": "user", "content": """
+            "model": "gpt-4", // 將模型切換為 GPT-4
+                    "prompt": """
                     根據以下詩詞和地點名稱，生成一段最多 50 字的提示語，讓遊覽者感受到詩詞中的意境：
-                    
+
                     詩詞內容：『\(poemLine)』
                     地點名稱：\(placeName)
-                    """]
-                ],
-                "max_tokens": 50
+                    """,
+                    "max_tokens": 70
             ]
         
         AF.request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
-            .responseJSON { response in
-                switch response.result {
-                case .success(let value):
-                    print("API Response: \(value)")
-                    if let json = value as? [String: Any],
-                       let choices = json["choices"] as? [[String: Any]],
-                       let message = choices.first?["message"] as? [String: Any],
-                       let text = message["content"] as? String {
-                        completion(.success(text))
-                    } else {
-                        completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "無法解析資料"])))
+                .responseJSON { response in
+                    switch response.result {
+                    case .success(let value):
+                        if let json = value as? [String: Any],
+                           let choices = json["choices"] as? [[String: Any]],
+                           let text = choices.first?["text"] as? String {
+                            completion(.success(text.trimmingCharacters(in: .whitespacesAndNewlines)))
+                        } else {
+                            completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "無法解析資料"])))
+                        }
+                    case .failure(let error):
+                        completion(.failure(error))
                     }
-                case .failure(let error):
-                    completion(.failure(error))
                 }
-            }
     }
 }
 
