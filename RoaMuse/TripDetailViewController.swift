@@ -123,6 +123,30 @@ class TripDetailViewController: UIViewController {
                 self.tableView.reloadData()
             }
         }
+        
+        FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
+            guard let self = self else { return }
+            
+            self.completedPlaceIds = []
+            
+            for completedPlace in completedPlaces {
+                if let tripId = completedPlace["tripId"] as? String,
+                   let placeIds = completedPlace["placeIds"] as? [String],
+                   tripId == self.trip?.id {
+                    self.completedPlaceIds.append(contentsOf: placeIds)
+                }
+            }
+            
+            DispatchQueue.main.async {
+                // 遍歷所有 section 並設置已完成的地點
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                    }
+                }
+                self.tableView.reloadData()
+            }
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -271,7 +295,6 @@ class TripDetailViewController: UIViewController {
             }
         }
     }
-    
 }
 
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
@@ -598,7 +621,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         containerView.backgroundColor = .clear
         
         let footerView = UIView()
-        footerView.backgroundColor = .systemGray3
+        footerView.backgroundColor = .white
         footerView.layer.cornerRadius = 20
         footerView.layer.masksToBounds = true
         containerView.addSubview(footerView)
@@ -612,7 +635,8 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let placeLabel = UILabel()
         let place = places[section]
-        placeLabel.font = UIFont.systemFont(ofSize: 18)
+        placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        placeLabel.textColor = .deepBlue
         placeLabel.numberOfLines = 0
         footerView.addSubview(placeLabel)
         
@@ -625,6 +649,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
         completeButton.tag = section
+        completeButton.tintColor = .accent
         completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
         footerView.addSubview(completeButton)
         
@@ -638,11 +663,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         descriptionLabel.numberOfLines = 2
         descriptionLabel.lineSpacing = 3
         footerView.addSubview(descriptionLabel)
-        descriptionLabel.text = "openAI將生成提示語"
         descriptionLabel.snp.makeConstraints { make in
             make.leading.equalTo(placeLabel)
             make.top.equalTo(placeLabel.snp.bottom).offset(12)
-            make.trailing.equalToSuperview().offset(-40)
+            make.trailing.equalToSuperview().offset(-50)
         }
         descriptionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 14)
         
@@ -664,43 +688,14 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
             }
             placeLabel.text = place.name
-            placeLabel.textColor = .black
+            placeLabel.textColor = .deepBlue
+//            MARK: iiiiiiii
         }
         
         footerViews[section] = footerView
         print("view for footer: \(footerViews)")
-        
-        if let userId = UserDefaults.standard.string(forKey: "userId") {
-            FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
-                guard let self = self else { return }
-                self.completedPlaceIds = []
-                
-                for completedPlace in completedPlaces {
-                    if let tripId = completedPlace["tripId"] as? String,
-                       let placeIds = completedPlace["placeIds"] as? [String],
-                       tripId == self.trip?.id {
-                        self.completedPlaceIds.append(contentsOf: placeIds)
-                    }
-                }
-                DispatchQueue.main.async {
-
-                    for (index, place) in self.places.enumerated() {
-                        if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
-                            self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
-                        }
-                    }
-                }
-            }
-        }
 
         return containerView
-    }
-    
-    func tableView(_ tableView: UITableView, didEndDisplayingFooterView view: UIView, forSection section: Int) {
-        if let footerView = self.footerViews[section] {
-            print("Footer View is ready for section: \(section)")
-            self.setupCompletedFooterView(footerView: footerView, sectionIndex: section)
-        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -755,9 +750,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
         isFlipped[sectionIndex] = false
+        footerView.backgroundColor = .systemGray5
         if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
             placeLabel.text = places[sectionIndex].name
-            placeLabel.textColor = .black
+            placeLabel.textColor = .deepBlue
             if let descriptionLabel = footerView.subviews.first(where: { $0 is UILabel && $0 != placeLabel }) as? UILabel {
                 descriptionLabel.text = ""
             }
@@ -796,18 +792,17 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                             
                             completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
                             
-//                            self.isFlipped[sectionIndex] = false
                             self.isFlipped[sectionIndex] = true
-                            // 执行翻转动画并更新视图
+                            
                             UIView.transition(with: footerView, duration: 0.5, options: .transitionFlipFromRight, animations: {
-                                
                                 self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
                             }, completion: nil)
-                            
                         }
                         
                         if sectionIndex + 1 < self.places.count {
-                            self.expandNextCell(at: sectionIndex + 1)
+                            
+                                self.expandNextCell(at: sectionIndex + 1)
+                            
                         } else {
                             self.checkIfAllPlacesCompleted()
                         }
@@ -823,7 +818,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     if let currentLocation = self.locationManager.currentLocation {
                         self.checkDistanceForCurrentTarget(from: currentLocation)
                     }
-                    
                 } else {
                     print("更新失败")
                 }
@@ -835,11 +829,16 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 self.isFlipped[sectionIndex]?.toggle()
                 
-                UIView.transition(with: footerView, duration: 0.5, options: self.isFlipped[sectionIndex]! ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
-                    self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
-                }, completion: { _ in
-                    self.closeMapAndCollapseCell(at: sectionIndex)
-                })
+                if let isFlipped = self.isFlipped[sectionIndex] {
+                    UIView.transition(with: footerView, duration: 0.5, options: isFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
+                        self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                    }, completion: { _ in
+                        self.closeMapAndCollapseCell(at: sectionIndex)
+                    })
+                } else {
+                    // 如果 isFlipped 还没有值，先初始化为 false 或执行其他逻辑
+                    self.isFlipped[sectionIndex] = false
+                }
             }
         }
     }
@@ -866,13 +865,20 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             self.tableView.beginUpdates()
             self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
             self.tableView.endUpdates()
+        
+        if let currentLocation = self.locationManager.currentLocation {
+                self.checkDistanceForCurrentTarget(from: currentLocation)
+            }
     }
     
     func expandNextCell(at sectionIndex: Int) {
         guard sectionIndex < places.count else { return }
         currentTargetIndex = sectionIndex
 //        isMapVisible = true
-        mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
+        
+        if self.locationButton.isSelected {
+            mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
+        }
         let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
         self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
     }
@@ -892,26 +898,26 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
         if isCurrentlyFlipped {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                footerView.backgroundColor = .deepBlue
                 if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
                     placeLabel.text = poemPair.poemLine
-                    placeLabel.textColor = .systemGreen
+                    placeLabel.textColor = .white
                     if let descriptionLabel = footerView.viewWithTag(100 + sectionIndex) as? UILabel {
                         descriptionLabel.text = "生成中..."
-                        descriptionLabel.textColor = .systemGray
-                        print("找到 descriptionLabel")
-//                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
-//                            switch result {
-//                            case .success(let suggestion):
-//                                DispatchQueue.main.async {
-//                                    descriptionLabel.text = suggestion
-//                                }
-//                            case .failure(let error):
-//                                DispatchQueue.main.async {
-//                                    descriptionLabel.text = "無法生成描述"
-//                                    print("Error fetching suggestion: \(error.localizedDescription)")
-//                                }
-//                            }
-//                        }
+                        descriptionLabel.textColor = .backgroundGray
+                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+                            switch result {
+                            case .success(let suggestion):
+                                DispatchQueue.main.async {
+                                    descriptionLabel.text = suggestion
+                                }
+                            case .failure(let error):
+                                DispatchQueue.main.async {
+                                    descriptionLabel.text = "無法生成描述"
+                                    print("Error fetching suggestion: \(error.localizedDescription)")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -920,9 +926,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                 completeButton.isEnabled = true
             }
         } else {
+            footerView.backgroundColor = .systemGray5
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                 placeLabel.text = place.name
-                placeLabel.textColor = .black
+                placeLabel.textColor = .deepBlue
                 
                 if let descriptionLabel = footerView.subviews.first(where: { $0 is UILabel && $0 != placeLabel }) as? UILabel {
                     descriptionLabel.text = ""

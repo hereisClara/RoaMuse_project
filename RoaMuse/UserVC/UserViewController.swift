@@ -18,10 +18,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     let awardsButton = UIButton()
     let mapButton = UIButton()
-    let newView = UIView()
+    let regionLabelView = RegionLabelView(region: nil)
     let headerView = UIView()
     let tableView = UITableView()
-    let regionLabel = UILabel()
+//    let regionLabel = UILabel()
     let userNameLabel = UILabel()
     let awardLabelView = AwardLabelView(title: "初心者", backgroundColor: .systemGray)
     let fansNumberLabel = UILabel()
@@ -92,8 +92,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 }
                 
                 if let region = data["region"] as? String {
-                    self?.regionLabel.text = region
-                    print("====", region)
+                    self?.regionLabelView.updateRegion(region)
                 }
                 
                 if let introduction = data["introduction"] as? String {
@@ -158,7 +157,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 }
                 
                 if let region = data["region"] as? String {
-                    self?.regionLabel.text = region
+                    self?.regionLabelView.updateRegion(region)
                 }
                 
                 if let introduction = data["introduction"] as? String {
@@ -446,12 +445,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         [ userNameLabel, awardLabelView, avatarImageView, fansTextLabel, followingTextLabel, 
-          fansNumberLabel, followingNumberLabel, introductionLabel, newView, mapButton, awardsButton ].forEach { headerView.addSubview($0) }
+          fansNumberLabel, followingNumberLabel, introductionLabel, mapButton, awardsButton ].forEach { headerView.addSubview($0) }
 
         setupFollowersAndFollowing()
         setupLabel()
-        newView.backgroundColor = .lightGray
-        newView.layer.cornerRadius = 6
         
         introductionLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(20)
@@ -487,16 +484,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.height.equalTo(24)
         }
         
-        newView.snp.makeConstraints { make in
+        headerView.addSubview(regionLabelView)
+
+        regionLabelView.snp.makeConstraints { make in
             make.leading.equalTo(awardLabelView)
             make.height.equalTo(24)
             make.top.equalTo(awardLabelView.snp.bottom).offset(4)
-        }
-        newView.addSubview(regionLabel)
-        regionLabel.snp.makeConstraints { make in
-            make.leading.equalTo(newView).offset(6)
-            make.trailing.equalTo(newView).offset(-6)
-            make.centerY.equalTo(newView)
         }
         
         avatarImageView.snp.makeConstraints { make in
@@ -562,8 +555,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         introductionLabel.lineBreakMode = .byTruncatingTail
         introductionLabel.setContentHuggingPriority(.required, for: .vertical)
         introductionLabel.setContentCompressionResistancePriority(.required, for: .vertical)
-        regionLabel.textColor = .white
-        regionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 6
         

@@ -49,6 +49,7 @@
 		AC75D0FA2CB3C316005258EA /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F92CB3C316005258EA /* NotificationViewController.swift */; };
 		AC75D0FC2CB3C3D8005258EA /* NotificationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */; };
 		AC75D0FE2CB41C85005258EA /* OpenAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */; };
+		AC75D1002CB50060005258EA /* RegionLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FF2CB50060005258EA /* RegionLabelView.swift */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
@@ -151,6 +152,7 @@
 		AC75D0F92CB3C316005258EA /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
 		AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTableViewCell.swift; sourceTree = "<group>"; };
 		AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIManager.swift; sourceTree = "<group>"; };
+		AC75D0FF2CB50060005258EA /* RegionLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionLabelView.swift; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
@@ -320,6 +322,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
 				AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */,
 				AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */,
 				AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */,
@@ -601,6 +604,7 @@
 				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
+				AC75D1002CB50060005258EA /* RegionLabelView.swift in Sources */,
 				AC18F8632CB25DEB004E8868 /* FullScreenImageViewController.swift in Sources */,
 				AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */,
 				AC75D0FE2CB41C85005258EA /* OpenAIManager.swift in Sources */,

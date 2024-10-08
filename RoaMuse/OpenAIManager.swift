@@ -42,7 +42,7 @@ class OpenAIManager {
                     地點名稱：\(placeName)
                     """]
                 ],
-                "max_tokens": 60
+                "max_tokens": 45
             ]
         
         AF.request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)
