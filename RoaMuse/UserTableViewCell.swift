@@ -59,8 +59,8 @@ class UserTableViewCell: UITableViewCell {
 //        awardLabelView.updateTitle("Award Title")
         
         [
-            moreButton, titleLabel, dateLabel, contentLabel, avatarImageView, userNameLabel,
-            awardLabelView, bookmarkCountLabel, likeCountLabel, collectButton,
+            moreButton, userNameLabel, awardLabelView, titleLabel, avatarImageView, contentLabel, dateLabel,
+             bookmarkCountLabel, likeCountLabel, collectButton,
             likeButton, commentButton, photoStackView, scrollView
         ].forEach { contentView.addSubview($0) }
         
@@ -98,20 +98,21 @@ class UserTableViewCell: UITableViewCell {
             make.leading.equalTo(contentView).offset(15)
             make.width.height.equalTo(50)
         }
-        
+    
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(12)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
             make.height.equalTo(40)
         }
-        
+        contentLabel.numberOfLines = 0
+        contentLabel.text = "????????????????????????????????????????????????????????????????????"
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(8)
             make.leading.equalTo(titleLabel)
             make.trailing.equalTo(contentView).offset(-16)
-            make.bottom.equalTo(photoStackView.snp.top).offset(-10)
-            //                    make.height.lessThanOrEqualTo(120)
+            //make.height.equalTo(30)
+            //make.bottom.equalTo(photoStackView.snp.top).offset(-10)
         }
         
         dateLabel.snp.makeConstraints { make in

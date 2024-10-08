@@ -272,9 +272,12 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                     self.region = region
                     self.userGender = gender
                     self.loadAvatarImage(from: photoUrl)
+                    
+                    DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
                 }
                 
-                self.tableView.reloadData()
             }
         }
     }
@@ -443,7 +446,9 @@ extension SettingsViewController: IntroductionViewControllerDelegate {
                 } else {
                     print("個人簡介保存成功")
                     self.introduction = intro
-                    self.tableView.reloadData()
+                    DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
             }
         }
     }
@@ -462,7 +467,9 @@ extension SettingsViewController: RegionSelectionDelegate {
                 } else {
                     print("地區保存成功")
                     self.region = region
-                    self.tableView.reloadData()
+                    DispatchQueue.main.async {
+                                    self.tableView.reloadData()
+                                }
                 }
             }
         }

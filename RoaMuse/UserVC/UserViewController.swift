@@ -97,6 +97,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 
                 if let introduction = data["introduction"] as? String {
                     self?.introductionLabel.text = introduction
+//                    self?.updateTableHeaderViewHeight()
                 }
                 
             case .failure(let error):
@@ -162,6 +163,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 
                 if let introduction = data["introduction"] as? String {
                     self?.introductionLabel.text = introduction
+                    self?.updateTableHeaderViewHeight()
                 }
                 
             case .failure(let error):
@@ -208,6 +210,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        updateTableHeaderViewHeight()
     }
     
     @objc func navigateToSettings() {
@@ -276,8 +279,11 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     
                 } else {
                     self?.posts.remove(at: sender.tag)
-                    self?.tableView.deleteRows(at: [IndexPath(row: sender.tag, section: 0)], with: .fade)
-                    self?.dismissBottomSheet()
+                    self?.tableView.performBatchUpdates({
+                        self?.tableView.deleteRows(at: [IndexPath(row: sender.tag, section: 0)], with: .fade)
+                    }, completion: { _ in
+                        self?.dismissBottomSheet()
+                    })
                 }
             }
         }))
@@ -423,6 +429,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.separatorStyle = .none
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 240
         
         tableView.snp.makeConstraints { make in
             make.width.equalTo(view).multipliedBy(0.9)
@@ -436,25 +444,19 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupHeaderView() {
         
         headerView.backgroundColor = .systemGray5
-        headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 270)
         headerView.layer.cornerRadius = 20
         headerView.layer.masksToBounds = true
-        
+
         avatarImageView.image = UIImage(named: "user-placeholder")
         avatarImageView.isUserInteractionEnabled = true
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
-        [ userNameLabel, awardLabelView, avatarImageView, fansTextLabel, followingTextLabel, 
-          fansNumberLabel, followingNumberLabel, introductionLabel, mapButton, awardsButton ].forEach { headerView.addSubview($0) }
+        
+        [userNameLabel, awardLabelView, avatarImageView, fansTextLabel, followingTextLabel, fansNumberLabel,
+         followingNumberLabel, introductionLabel, mapButton, awardsButton].forEach { headerView.addSubview($0) }
 
         setupFollowersAndFollowing()
         setupLabel()
-        
-        introductionLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(20)
-            make.leading.equalTo(headerView).offset(16)
-            make.trailing.equalTo(headerView).offset(-16)
-        }
 
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
         followingStackView.axis = .vertical
@@ -510,7 +512,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         mapButton.snp.makeConstraints { make in
             make.bottom.equalTo(awardsButton)
             make.trailing.equalTo(awardsButton.snp.leading).offset(-8)
-            make.width.height.equalTo(40) // 設置大小
+            make.width.height.equalTo(40)
         }
         mapButton.layer.cornerRadius = 20
         
@@ -520,13 +522,20 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         fansStackView.spacing = 0
         headerView.addSubview(fansStackView)
         
+        introductionLabel.snp.makeConstraints { make in
+            make.top.equalTo(avatarImageView.snp.bottom).offset(20)
+            make.leading.equalTo(headerView).offset(16)
+            make.trailing.equalTo(headerView).offset(-16)
+            make.bottom.equalTo(fansStackView.snp.top).offset(-12)
+        }
+        
         fansStackView.snp.makeConstraints { make in
-            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
             make.centerX.equalTo(avatarImageView)
+            make.bottom.equalTo(headerView.snp.bottom).offset(-16) 
         }
         
         followingStackView.snp.makeConstraints { make in
-            make.bottom.equalTo(headerView.snp.bottom).offset(-16)
+            make.centerY.equalTo(fansStackView)
             make.leading.equalTo(fansStackView.snp.trailing).offset(40)
         }
         
@@ -550,13 +559,16 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         userNameLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 24)
         userNameLabel.textColor = .deepBlue
         introductionLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
-        introductionLabel.numberOfLines = 3
+        introductionLabel.numberOfLines = 0
         introductionLabel.textColor = .darkGray
         introductionLabel.lineBreakMode = .byTruncatingTail
         introductionLabel.setContentHuggingPriority(.required, for: .vertical)
         introductionLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 6
+        paragraphStyle.lineSpacing = 6 // 設置行間距
+        
+        // 計算實際的行高
+        let lineHeight = actualLineHeight()
         
         let attributes: [NSAttributedString.Key: Any] = [
             .font: introductionLabel.font!,
@@ -565,6 +577,42 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         let attributedText = NSAttributedString(string: introductionLabel.text ?? "", attributes: attributes)
         introductionLabel.attributedText = attributedText
+        
+    }
+    
+    func updateTableHeaderViewHeight() {
+        guard let header = tableView.tableHeaderView else { return }
+
+        header.setNeedsLayout()
+        header.layoutIfNeeded()
+
+        let newSize = header.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
+        var headerFrame = header.frame
+        headerFrame.size.height = newSize.height
+        header.frame = headerFrame
+        print("HeaderView frame: \(header.frame)")
+        tableView.tableHeaderView = header
+    }
+
+    func calculateIntroductionLabelHeight() -> CGFloat {
+        let maxWidth = tableView.frame.width - 32 // 假設左右間距是 16
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: introductionLabel.font!,
+            .paragraphStyle: paragraphStyle
+        ]
+        
+        let text = introductionLabel.text ?? ""
+        let boundingRect = (text as NSString).boundingRect(
+            with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude),
+            options: .usesLineFragmentOrigin,
+            attributes: attributes,
+            context: nil
+        )
+        
+        return ceil(boundingRect.height)
     }
     
     func setupFollowersAndFollowing() {
@@ -633,6 +681,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let postId = post["id"] as? String ?? ""
         
         cell.configurePhotoStackView(with: post["photoUrls"] as? [String] ?? [])
+        cell.layoutIfNeeded()
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         cell.configureMoreButton { [weak self] in
@@ -662,7 +711,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             switch result {
             case .success(let data):
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                    // 使用 Kingfisher 加載圖片到 avatarImageView
+                    
                     DispatchQueue.main.async {
                         cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
@@ -698,7 +747,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: postId) { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
-        
+
         return cell
     }
     
@@ -731,6 +780,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
+    }
+    
     func loadUserPosts() {
         FirebaseManager.shared.loadSpecifyUserPost(forUserId: userId ?? "") { [weak self] postsArray in
             guard let self = self else { return }
@@ -740,8 +793,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                     return createdAt1.dateValue() > createdAt2.dateValue()
                 }
                 return false
+                
             })
-            self.tableView.reloadData()
+            DispatchQueue.main.async {
+                                self.tableView.reloadData()
+                            }
+//            setupTableView()
         }
     }
     

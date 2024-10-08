@@ -49,7 +49,7 @@ class PopUpView {
         }
         
         if let matchingScore = matchingScore {
-            matchingScoreLabel.text = "匹配分數：\(matchingScore)%"
+            matchingScoreLabel.text = "\(matchingScore)% 匹配"
             matchingScoreLabel.isHidden = false
         } else {
             matchingScoreLabel.isHidden = true
@@ -94,7 +94,8 @@ class PopUpView {
                 for verse in poem.content {
                     let verseLabel = UILabel()
                     verseLabel.text = verse
-                    verseLabel.textColor = .white
+                    verseLabel.textColor = .accent
+                    verseLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
                     self.versesStackView.addArrangedSubview(verseLabel)
                 }
             }
@@ -109,17 +110,22 @@ class PopUpView {
                 for place in places {
                     let placeLabel = UILabel()
                     placeLabel.text = place.name
-                    placeLabel.textColor = .white
+                    placeLabel.textColor = .backgroundGray
+                    placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
                     self.placesStackView.addArrangedSubview(placeLabel)
 
                     // 進行反向編碼
                     let location = CLLocation(latitude: place.latitude, longitude: place.longitude)
                     self.reverseGeocodeLocation(location) { city, district in
                         if let city = city, let district = district {
-                            self.cityLabel.text = "城市: \(city)"
+                            self.cityLabel.text = "\(city)"
+                            self.cityLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
+                            self.cityLabel.textColor = .backgroundGray
                             let districtLabel = UILabel()
                             districtLabel.text = "#\(district)"
-                            districtLabel.textColor = .white
+                            districtLabel.textColor = .backgroundGray
+                            districtLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+
                             self.districtsStackView.addArrangedSubview(districtLabel)
                         }
                     }
@@ -148,85 +154,88 @@ class PopUpView {
         popupView.addSubview(districtsStackView)
         popupView.addSubview(matchingScoreLabel)
         
-        
         matchingScoreLabel.snp.makeConstraints { make in
-            make.centerX.equalTo(popupView)
-            make.bottom.equalTo(startButton.snp.top).offset(-40)
+            make.trailing.equalTo(popupView).offset(-20)
+            make.bottom.equalTo(popupView).offset(-60)
             make.width.equalTo(160)  // 設置寬度
             make.height.equalTo(60)  // 設置高度
         }
         
-        matchingScoreLabel.backgroundColor = .accent
-        matchingScoreLabel.textColor = .white
+        matchingScoreLabel.textColor = .accent
         matchingScoreLabel.textAlignment = .center
-        matchingScoreLabel.layer.cornerRadius = 15
         matchingScoreLabel.layer.masksToBounds = true
         
         cityLabel.snp.makeConstraints { make in
             make.top.equalTo(placesStackView.snp.bottom).offset(30)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         districtsStackView.snp.makeConstraints { make in
             make.top.equalTo(cityLabel.snp.bottom).offset(10)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
-        districtsStackView.spacing = 10
+        districtsStackView.spacing = 8
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(40)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(popupView).offset(20)
         }
         
         poetryLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(10)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         tripStyleLabel.snp.makeConstraints { make in
-            make.top.equalTo(poetryLabel.snp.bottom).offset(10)
-            make.centerX.equalTo(popupView)
+            make.bottom.equalTo(poetryLabel.snp.bottom)
+            make.leading.equalTo(poetryLabel.snp.trailing).offset(12)
         }
         
         versesStackView.snp.makeConstraints { make in
             make.top.equalTo(tripStyleLabel.snp.bottom).offset(30)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         versesStackView.axis = .vertical
         versesStackView.spacing = 10
-        versesStackView.alignment = .center
+        versesStackView.alignment = .leading
         
         placesStackView.snp.makeConstraints { make in
             make.top.equalTo(versesStackView.snp.bottom).offset(30)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         placesStackView.axis = .vertical
         placesStackView.spacing = 10
-        placesStackView.alignment = .center
+        placesStackView.alignment = .leading
         
         startButton.snp.makeConstraints { make in
-            make.bottom.equalTo(popupView).offset(-50)
-            make.centerX.equalTo(popupView)
+            make.bottom.equalTo(popupView).offset(-20)
+            make.trailing.equalTo(popupView).offset(-20)
             make.width.height.equalTo(45)
         }
         
-        titleLabel.textColor = .white
-        poetryLabel.textColor = .white
-        tripStyleLabel.textColor = .white
-        cityLabel.textColor = .white
+        titleLabel.textColor = .accent
+        poetryLabel.textColor = .backgroundGray
+        tripStyleLabel.textColor = .backgroundGray
+        cityLabel.textColor = .backgroundGray
         
 //        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
         startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
-        startButton.tintColor = .white
+        startButton.tintColor = .accent
         startButton.isEnabled = true
         startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
         
-        matchingScoreLabel.backgroundColor = .accent
-        matchingScoreLabel.textColor = .white
+        setupLabel()
+    }
+    
+    func setupLabel() {
         
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 40)
+        poetryLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 22)
+        tripStyleLabel.font = UIFont(name: "NotoSerifHK-SemiBold", size: 16)
+        matchingScoreLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
     }
 
     @objc func dismissPopup() {
@@ -245,7 +254,6 @@ class PopUpView {
             popupView.removeFromSuperview()
             backgroundView.removeFromSuperview()
             
-            // 執行收藏邏輯
             if let tripId = tripId {
                 guard let userId = UserDefaults.standard.string(forKey: "userId") else {
                     print("無法獲取 userId 或 tripId")
@@ -254,7 +262,6 @@ class PopUpView {
                 
                 let userRef = Firestore.firestore().collection("users").document(userId)
                 
-                // 添加到 bookmarkTrip
                 userRef.updateData([
                     "bookmarkTrip": FieldValue.arrayUnion([tripId])
                 ]) { error in

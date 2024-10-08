@@ -22,13 +22,11 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     var sharedImage: UIImage?
     let dropdownButton = UIButton(type: .system)
     let dropdownTableView = UITableView()
-    var isDropdownVisible = false // 用來記錄下拉選單的狀態
+    var isDropdownVisible = false
     var dropdownHeightConstraint: Constraint?
     var tripsArray = [Trip]()
     var tripId = String()
-    
     var postButtonAction: (() -> Void)?
-    
     let imageButton = UIButton(type: .system) // 用來選擇圖片的按鈕
     var selectedImage: UIImage? // 儲存選擇的圖片
     var imageUrl: String? // 儲存圖片上傳後的下載 URL
@@ -63,7 +61,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 title = poem.title
                 self.dropdownButton.setTitle(title, for: .normal)
             }
-            
         }
         loadTripsData(userId: userId)
     }
@@ -73,8 +70,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         tabBarController?.tabBar.isHidden = true
         resetPostForm()
         if let sharedImage = sharedImage {
-                addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
-            }
+            addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -111,7 +108,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
         imageView.isUserInteractionEnabled = true
         imageView.addGestureRecognizer(tapGesture)
-
+        
         // 創建一個 "叉叉" 按鈕
         let removeButton = UIButton(type: .custom)
         removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
@@ -137,15 +134,14 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
               let tappedIndex = imagesStackView.arrangedSubviews.firstIndex(where: { $0.subviews.contains(tappedImageView) }) else {
             return
         }
-
+        
         let fullScreenVC = FullScreenImageViewController()
         fullScreenVC.images = selectedImages // 将所有选中的图片传递过去
         fullScreenVC.startingIndex = tappedIndex // 设置从点击的图片开始展示
-
+        
         navigationController?.pushViewController(fullScreenVC, animated: true)
     }
-
-
+    
     func setupUI() {
         view.addSubview(contentTextView)
         view.addSubview(titleTextField)
@@ -180,8 +176,13 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         titleTextField.text = ""
         
         contentTextView.backgroundColor = .systemGray5
+        contentTextView.textContainerInset = UIEdgeInsets(top: 10, left: 15, bottom: 10, right: 15)
+        
         titleTextField.backgroundColor = .systemGray5
         titleTextField.layer.cornerRadius = 15
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: titleTextField.frame.height))
+        titleTextField.leftView = paddingView
+        titleTextField.leftViewMode = .always
         dropdownButton.setTitle("choose trip", for: .normal)
         dropdownButton.backgroundColor = .deepBlue
         dropdownButton.setTitleColor(.white, for: .normal)
@@ -206,7 +207,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         contentTextView.snp.makeConstraints { make in
             make.top.equalTo(titleTextField.snp.bottom).offset(12)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(view).multipliedBy(0.5)
+            make.height.equalTo(view).multipliedBy(0.58)
             make.centerX.equalTo(view)
         }
         
