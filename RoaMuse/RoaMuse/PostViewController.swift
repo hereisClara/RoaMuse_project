@@ -107,6 +107,11 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             make.width.height.equalTo(60) // 設置固定大小
         }
         
+        // 为每张图片添加点击手势
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(tapGesture)
+
         // 創建一個 "叉叉" 按鈕
         let removeButton = UIButton(type: .custom)
         removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
@@ -126,6 +131,20 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         removeButton.addTarget(self, action: #selector(removeSelectedImage(_:)), for: .touchUpInside)
         removeButton.tag = selectedImages.count - 1  // 標記此按鈕，對應圖片位置
     }
+    
+    @objc func handleImageTap(_ gesture: UITapGestureRecognizer) {
+        guard let tappedImageView = gesture.view as? UIImageView,
+              let tappedIndex = imagesStackView.arrangedSubviews.firstIndex(where: { $0.subviews.contains(tappedImageView) }) else {
+            return
+        }
+
+        let fullScreenVC = FullScreenImageViewController()
+        fullScreenVC.images = selectedImages // 将所有选中的图片传递过去
+        fullScreenVC.startingIndex = tappedIndex // 设置从点击的图片开始展示
+
+        navigationController?.pushViewController(fullScreenVC, animated: true)
+    }
+
 
     func setupUI() {
         view.addSubview(contentTextView)
