@@ -14,22 +14,25 @@ class CommentTableViewCell: UITableViewCell {
     // 定義 username, content 和 createdAt 的 UILabel
     let usernameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
+        label.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         label.numberOfLines = 1
+        label.textColor = .deepBlue
         return label
     }()
     
     let contentLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         label.numberOfLines = 0  // 支援多行
+        label.lineSpacing = 3
         label.lineBreakMode = .byWordWrapping
+        label.textColor = .darkGray
         return label
     }()
     
     let createdAtLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
+        label.font = UIFont.systemFont(ofSize: 14)
         label.textColor = .gray
         label.numberOfLines = 1
         return label
@@ -67,6 +70,7 @@ class CommentTableViewCell: UITableViewCell {
         }
         
         createdAtLabel.snp.makeConstraints { make in
+            make.top.equalTo(contentLabel.snp.bottom).offset(4)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
             make.bottom.equalTo(contentView).offset(-8) // 確保自適應
@@ -76,6 +80,8 @@ class CommentTableViewCell: UITableViewCell {
             make.leading.top.equalTo(contentView).offset(12)
             make.width.height.equalTo(30)
         }
+        
+        avatarImageView.layer.cornerRadius = 15
         
         usernameLabel.text = "username"
         contentLabel.text = "content"

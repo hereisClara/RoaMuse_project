@@ -14,6 +14,23 @@ import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
     
+    var savedSuggestions: [String: String] = [:]
+    var buttonContainer: UIStackView = UIStackView()
+    var transportButtons: [UIButton] = []
+    var selectedTransportButton: UIButton?
+    var isExpanded: Bool = false
+    var buttonsViewWidthConstraint: Constraint?
+    var selectedTransportType: MKDirectionsTransportType = .automobile
+    var transportBackgroundView: UIView?
+    var transportButtonsViewWidthConstraint: Constraint?
+    let locationButton = UIButton()
+    var mapVisibilityState: [Int: Bool] = [:]
+    var keywordToLineMap = [String: String]()
+    var matchingPlaces = [(keyword: String, place: Place)]()
+    var placePoemPairs = [PlacePoemPair]()
+    
+    let buttonTitles = ["car.fill", "figure.walk", "bicycle", "tram.fill"]
+    
     var currentTargetIndex: Int = 0
     var loadedPoem: Poem?
     var trip: Trip?
@@ -22,7 +39,7 @@ class TripDetailViewController: UIViewController {
     private let locationManager = LocationManager()
     private var places = [Place]()
     private var placeName = [String]()
-    let distanceThreshold: Double = 15000
+    let distanceThreshold: Double = 20000
     private var buttonState = [Bool]()
     var selectedIndexPath: IndexPath?
     var completedPlaceIds: [String] = []
@@ -37,11 +54,18 @@ class TripDetailViewController: UIViewController {
     var routesArray: [[MKRoute]]?
     var nestedInstructions: [[String]]?
     
+    var footerViews = [Int: UIView]()
+    
+    private var isMapVisible: Bool = false
+    var isFlipped: [Int: Bool] = [:]
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // 設定導航欄的背景顏色
-        navigationController?.navigationBar.barTintColor = UIColor.white
-        self.tabBarController?.tabBar.isHidden = true
+        navigationController?.navigationBar.barTintColor = UIColor.backgroundGray
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        navigationItem.backButtonTitle = ""
+        self.buttonState = []
+        getPoemPlacePair()
         if let nestedInstructions = nestedInstructions {
             for (index, steps) in nestedInstructions.enumerated() {
                 print("導航段落 \(index):")
@@ -59,17 +83,19 @@ class TripDetailViewController: UIViewController {
         if let poemId = trip?.poemId {
             FirebaseManager.shared.loadPoemById(poemId) { [weak self] poem in
                 guard let self = self else { return }
-                // 獲取到的 poem 可以存到變數中供後續使用
                 self.updatePoemData(poem: poem)
             }
         }
         
         if let trip = trip {
             print("成功接收到行程數據: \(trip)")
-        } else {
-            print("未接收到行程數據")
+            fetchPlacePoemPairs(for: trip.id) { pair in
+                if let pair = pair {
+                    self.placePoemPairs.append(contentsOf: pair)
+                    print(self.placePoemPairs)
+                }
+            }
         }
-        setupUI()
         setupTableView()
         loadPlacesDataFromFirebase()
         loadPoemDataFromFirebase()
@@ -77,10 +103,8 @@ class TripDetailViewController: UIViewController {
         FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
             guard let self = self else { return }
             
-            // 清空當前的 completedPlaceIds 列表
             self.completedPlaceIds = []
             
-            // 遍歷 completedPlaces，找到符合當前行程 tripId 的 completedPlace
             for completedPlace in completedPlaces {
                 if let tripId = completedPlace["tripId"] as? String,
                    let placeIds = completedPlace["placeIds"] as? [String],
@@ -89,56 +113,61 @@ class TripDetailViewController: UIViewController {
                 }
             }
             DispatchQueue.main.async {
+                print(self.footerViews)
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                    }
+                }
                 self.tableView.reloadData()
             }
         }
         
-        // 开始位置更新
-        self.locationManager.startUpdatingLocation()
-        self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+        FirebaseManager.shared.fetchCompletedPlaces(userId: userId) { [weak self] completedPlaces in
             guard let self = self else { return }
             
-            self.checkDistanceForCurrentTarget(from: currentLocation)
+            self.completedPlaceIds = []
+            
+            for completedPlace in completedPlaces {
+                if let tripId = completedPlace["tripId"] as? String,
+                   let placeIds = completedPlace["placeIds"] as? [String],
+                   tripId == self.trip?.id {
+                    self.completedPlaceIds.append(contentsOf: placeIds)
+                }
+            }
+            
+            DispatchQueue.main.async {
+                // 遍歷所有 section 並設置已完成的地點
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                    }
+                }
+                self.tableView.reloadData()
+            }
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.tabBarController?.tabBar.isHidden = true
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.tabBarController?.tabBar.isHidden = false
+//        self.tabBarController?.tabBar.isHidden = false
     }
     
-    func setupUI() {
-        view.addSubview(progressView)
+    func getPoemPlacePair() {
         
-        progressView.backgroundColor = .clear // Transparent background
-        progressView.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(20)
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-            make.width.equalTo(20) // Width of the progress bar
-        }
+        placePoemPairs.removeAll()
         
-        for _ in 0..<places.count {
-            let dot = UIView()
-            dot.backgroundColor = .lightGray
-            dot.layer.cornerRadius = 5 // Circular dots
-            progressView.addSubview(dot)
+        for matchingPlace in matchingPlaces {
+            let keyword = matchingPlace.keyword
             
-            dot.snp.makeConstraints { make in
-                make.width.height.equalTo(10) // Size of dots
-                make.centerX.equalToSuperview()
-            }
-            
-            progressDots.append(dot)
-        }
-        
-        for (index, dot) in progressDots.enumerated() {
-            dot.snp.makeConstraints { make in
-                if index == 0 {
-                    make.top.equalToSuperview().offset(20)
-                } else {
-                    make.top.equalTo(progressDots[index - 1].snp.bottom).offset(30)
-                }
+            if let poemLine = keywordToLineMap[keyword] {
+                let placePoemPair = PlacePoemPair(placeId: matchingPlace.place.id, poemLine: poemLine)
+                placePoemPairs.append(placePoemPair)
             }
         }
     }
@@ -151,10 +180,32 @@ class TripDetailViewController: UIViewController {
     }
     
     @objc func shareButtonTapped() {
-        let imageUploadVC = PhotoUploadViewController()
-        self.navigationController?.pushViewController(imageUploadVC, animated: true)
+        let alertController = UIAlertController(title: nil, message: "選擇操作", preferredStyle: .actionSheet)
+        
+        let postAction = UIAlertAction(title: "撰寫日記", style: .default) { [weak self] _ in
+            let postVC = PostViewController()
+            postVC.selectedTrip = self?.trip
+            self?.navigationController?.pushViewController(postVC, animated: true)
+        }
+        
+        let shareAction = UIAlertAction(title: "分享小卡", style: .default) { [weak self] _ in
+            let photoVC = PhotoUploadViewController()
+            photoVC.selectedTrip = self?.trip
+            self?.navigationController?.pushViewController(photoVC, animated: true)
+        }
+        
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        
+        alertController.addAction(postAction)
+        alertController.addAction(shareAction)
+        alertController.addAction(cancelAction)
+        
+        if let popoverController = alertController.popoverPresentationController {
+            popoverController.barButtonItem = self.navigationItem.rightBarButtonItem
+        }
+        
+        self.present(alertController, animated: true, completion: nil)
     }
-    
     
     func loadPoemDataFromFirebase() {
         
@@ -167,7 +218,6 @@ class TripDetailViewController: UIViewController {
             
             self.loadedPoem = poem
             
-            // 更新界面
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
@@ -180,26 +230,35 @@ class TripDetailViewController: UIViewController {
     
     func loadPlacesDataFromFirebase() {
         
-        self.places.removeAll()
-        
         guard let trip = trip else { return }
+        self.places = self.matchingPlaces.map { $0.place }
+        self.places.sort { (place1, place2) -> Bool in
+            guard let index1 = trip.placeIds.firstIndex(of: place1.id),
+                  let index2 = trip.placeIds.firstIndex(of: place2.id) else {
+                return false
+            }
+            return index1 < index2
+        }
         
         let placeIds = trip.placeIds
         
         if placeIds.isEmpty {
-            print("行程中無地點資料")
             return
         }
         
         FirebaseManager.shared.loadPlaces(placeIds: placeIds) { [weak self] (placesArray) in
             guard let self = self else { return }
             
-            print("placesArray loaded from Firebase: \(placesArray)")
-            self.places = trip.placeIds.compactMap { placeId in
-                return placesArray.first(where: { $0.id == placeId })
+            self.matchingPlaces = trip.placeIds.compactMap { placeId in
+                if let place = placesArray.first(where: { $0.id == placeId }) {
+                    return (keyword: "未知关键字", place: place)
+                } else {
+                    return nil
+                }
             }
+            self.places = self.matchingPlaces.map { $0.place }
+            print("Sorted matchingPlaces: \(self.matchingPlaces)")
             
-            print("Sorted places: \(self.places)")
             if let lastCompletedPlaceId = self.completedPlaceIds.last,
                let lastCompletedIndex = self.places.firstIndex(where: { $0.id == lastCompletedPlaceId }) {
                 self.currentTargetIndex = lastCompletedIndex + 1
@@ -209,16 +268,25 @@ class TripDetailViewController: UIViewController {
             self.placeName = self.places.map { $0.name }
             
             DispatchQueue.main.async {
-                if self.buttonState.count != self.places.count {
-                    self.buttonState = Array(repeating: false, count: self.places.count)
-                }
+                self.places = self.matchingPlaces.map { $0.place }
+                
+                self.buttonState = Array(repeating: false, count: self.places.count)
+                
                 self.tableView.reloadData()
+                
+                for (index, place) in self.places.enumerated() {
+                    if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
+                        self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
+                    }
+                }
+                
                 self.locationManager.startUpdatingLocation()
                 self.locationManager.onLocationUpdate = { [weak self] currentLocation in
                     guard let self = self else { return }
                     self.checkDistanceForCurrentTarget(from: currentLocation)
                 }
             }
+            self.checkIfAllPlacesCompleted()
         }
     }
     
@@ -229,19 +297,23 @@ class TripDetailViewController: UIViewController {
             return
         }
         
+        guard currentTargetIndex < buttonState.count else {
+            return
+        }
+        
         let place = places[currentTargetIndex]
         let targetLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
         let distance = currentLocation.distance(from: targetLocation)
         print("距离 \(place.name): \(distance) 米")
         
-        if distance <= distanceThreshold {
-            print("距离小于或等于 \(distanceThreshold) 米，地点 \(place.name) 可用")
-            buttonState[currentTargetIndex] = true
-            tableView.reloadRows(at: [IndexPath(row: currentTargetIndex, section: 0)], with: .none)
-        } else {
-            print("距离大于 \(distanceThreshold) 米，地点 \(place.name) 不可用")
-            buttonState[currentTargetIndex] = false
-            tableView.reloadRows(at: [IndexPath(row: currentTargetIndex, section: 0)], with: .none)
+        let isWithinThreshold = distance <= distanceThreshold
+        
+        if isWithinThreshold != buttonState[currentTargetIndex] {
+            buttonState[currentTargetIndex] = isWithinThreshold
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadSections(IndexSet(integer: self.currentTargetIndex), with: .none)
+            }
         }
     }
 }
@@ -249,168 +321,407 @@ class TripDetailViewController: UIViewController {
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        
         guard section == 0 else {
-                return nil
-            }
-        
-        guard let poem = loadedPoem else {
-            let headerView = UIView()
-            headerView.backgroundColor = .deepBlue
-            let label = UILabel()
-            label.text = "詩句加載中"
-            label.textAlignment = .center
-            label.font = UIFont.boldSystemFont(ofSize: 24)
-            headerView.addSubview(label)
-            label.snp.makeConstraints { make in
-                make.center.equalToSuperview()
-            }
-            return headerView
+            return nil
         }
         
+        guard let poem = loadedPoem else {
+            return createLoadingHeaderView()
+        }
+        
+        let containerView = UIView()
+        containerView.backgroundColor = .clear
+        containerView.isUserInteractionEnabled = true // 确保容器视图可以交互
+        
+        let headerView = createHeaderView(poem: poem)
+        headerView.isUserInteractionEnabled = true // 确保 headerView 可以交互
+        containerView.addSubview(headerView)
+        
+        headerView.snp.makeConstraints { make in
+            make.top.leading.trailing.equalToSuperview()
+        }
+        
+        let buttonsView = createButtonsView()
+        containerView.addSubview(buttonsView)
+        
+        buttonsView.snp.makeConstraints { make in
+            make.top.equalTo(headerView.snp.bottom).offset(12)
+            make.leading.trailing.equalToSuperview()
+            make.height.equalTo(50)
+            make.bottom.equalToSuperview().offset(-10)
+        }
+        
+        return containerView
+    }
+    
+    private func createLoadingHeaderView() -> UIView {
+        let headerView = UIView()
+        headerView.backgroundColor = .deepBlue
+        let label = UILabel()
+        label.text = "詩句加載中"
+        label.textAlignment = .center
+        label.font = UIFont.boldSystemFont(ofSize: 24)
+        headerView.addSubview(label)
+        label.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+        return headerView
+    }
+    
+    private func createHeaderView(poem: Poem) -> UIView {
         let headerView = UIView()
         headerView.backgroundColor = UIColor(resource: .deepBlue)
         headerView.layer.cornerRadius = 20
         
-        let titleLabel = UILabel()
-        titleLabel.text = poem.title
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 22)
-        titleLabel.textColor = .white
-        titleLabel.textAlignment = .center
+        let titleLabel = createLabel(text: poem.title, font: UIFont(name: "NotoSerifHK-Black", size: 24) ?? UIFont.systemFont(ofSize: 24))
+        
         headerView.addSubview(titleLabel)
+        
         titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.centerX.equalToSuperview()
+            make.top.equalToSuperview().offset(16)
+            make.leading.equalToSuperview().offset(12)
         }
         
-        // 詩人
-        let poetLabel = UILabel()
-        poetLabel.text = poem.poetry
-        poetLabel.font = UIFont.systemFont(ofSize: 18)
-        poetLabel.textColor = .white
-        poetLabel.textAlignment = .center
+        let poetLabel = createLabel(text: poem.poetry, font: UIFont(name: "NotoSerifHK-Bold", size: 20) ?? UIFont.systemFont(ofSize: 20))
         headerView.addSubview(poetLabel)
+        
         poetLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(5)
-            make.centerX.equalToSuperview()
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.leading.equalToSuperview().offset(12)
         }
         
-        // 詩的內容
-        let contentLabel = UILabel()
-        contentLabel.text = poem.content.joined(separator: "\n")
-        contentLabel.font = UIFont.systemFont(ofSize: 16)
-        contentLabel.textColor = .white
-        contentLabel.textAlignment = .center
+        let contentLabel = createLabel(text: poem.content.joined(separator: "\n"), font: UIFont(name: "NotoSerifHK-Black", size: 20) ?? UIFont.systemFont(ofSize: 20))
         contentLabel.numberOfLines = 0
         headerView.addSubview(contentLabel)
+        
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(poetLabel.snp.bottom).offset(10)
-            make.centerX.equalToSuperview()
-            make.leading.equalToSuperview().offset(16)
-            make.trailing.equalToSuperview().offset(-16)
-            make.bottom.equalToSuperview().offset(-10) // Add this line
+            make.top.equalTo(poetLabel.snp.bottom).offset(30)
+            make.leading.equalToSuperview().offset(12)
+            make.trailing.equalToSuperview().offset(-12)
+            make.bottom.equalToSuperview().offset(-16)
         }
         
         return headerView
     }
     
+    private func createLabel(text: String, font: UIFont) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.textColor = .white
+        label.textAlignment = .center
+        label.font = font
+        return label
+    }
+    
+    private func createButtonsView() -> UIView {
+        let buttonsView = UIView()
+        buttonsView.isUserInteractionEnabled = true
+        
+        locationButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
+        locationButton.tintColor = .white
+        locationButton.isSelected = false
+        locationButton.backgroundColor = .systemGray4
+        locationButton.layer.cornerRadius = 25
+        locationButton.addTarget(self, action: #selector(didTapLocateButton(_:)), for: .touchUpInside)
+        locationButton.isUserInteractionEnabled = true
+        
+        buttonsView.addSubview(locationButton)
+        
+        locationButton.snp.makeConstraints { make in
+            make.leading.equalToSuperview()
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(50)
+        }
+        
+        let transportButtonsView = UIView()
+        transportButtonsView.isUserInteractionEnabled = true
+        buttonsView.addSubview(transportButtonsView)
+        
+        transportButtonsView.snp.makeConstraints { make in
+            make.leading.equalTo(locationButton.snp.trailing).offset(12)
+            make.centerY.equalToSuperview()
+            make.height.equalTo(50)
+            transportButtonsViewWidthConstraint = make.width.equalTo(50).constraint
+        }
+        
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = .systemGray4
+        backgroundView.layer.cornerRadius = 25
+        backgroundView.isHidden = true // 初始隐藏
+        transportButtonsView.addSubview(backgroundView)
+        transportButtonsView.sendSubviewToBack(backgroundView)
+        
+        backgroundView.snp.makeConstraints { make in
+            make.edges.equalTo(transportButtonsView)
+        }
+        
+        buttonContainer = UIStackView()
+        buttonContainer.axis = .horizontal
+        buttonContainer.distribution = .fillEqually
+        buttonContainer.spacing = 12
+        buttonContainer.isUserInteractionEnabled = true
+        transportButtonsView.addSubview(buttonContainer)
+        
+        buttonContainer.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
+        let transportOptions = ["car.fill", "bicycle", "tram.fill", "figure.walk"]
+        transportButtons = []
+        
+        for (index, icon) in transportOptions.enumerated() {
+            let button = UIButton(type: .system)
+            button.setImage(UIImage(systemName: icon), for: .normal)
+            button.tintColor = .white
+            button.backgroundColor = .clear // 未选中时背景为透明
+            button.layer.cornerRadius = 25
+            button.tag = index
+            button.isUserInteractionEnabled = true
+            button.addTarget(self, action: #selector(transportButtonTapped(_:)), for: .touchUpInside)
+            transportButtons.append(button)
+        }
+        
+        selectedTransportButton = transportButtons.first
+        selectedTransportButton?.backgroundColor = .deepBlue
+        
+        for button in transportButtons {
+            buttonContainer.addArrangedSubview(button)
+        }
+        updateTransportButtonsDisplay()
+        self.transportBackgroundView = backgroundView
+        
+        return buttonsView
+    }
+    
+    
+    private func updateTransportButtonsDisplay() {
+        if isExpanded {
+            for button in transportButtons {
+                button.isHidden = false
+            }
+            transportBackgroundView?.isHidden = false
+            
+            let buttonWidth: CGFloat = 50
+            let buttonSpacing: CGFloat = 12
+            let totalWidth = CGFloat(transportButtons.count) * buttonWidth + CGFloat(transportButtons.count - 1) * buttonSpacing
+            transportButtonsViewWidthConstraint?.update(offset: totalWidth)
+        } else {
+            
+            for button in transportButtons {
+                button.isHidden = (button != selectedTransportButton)
+            }
+            
+            transportBackgroundView?.isHidden = true
+            transportButtonsViewWidthConstraint?.update(offset: 50)
+        }
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    @objc private func transportButtonTapped(_ sender: UIButton) {
+        if sender == selectedTransportButton {
+            toggleTransportButtons()
+        } else {
+            selectedTransportButton?.backgroundColor = .clear
+            selectedTransportButton = sender
+            sender.backgroundColor = .deepBlue
+            selectedTransportType = transportTypeForIndex(sender.tag)
+            
+            if let index = transportButtons.firstIndex(of: sender) {
+                transportButtons.remove(at: index)
+                transportButtons.insert(sender, at: 0)
+            }
+            
+            for button in buttonContainer.arrangedSubviews {
+                buttonContainer.removeArrangedSubview(button)
+                button.removeFromSuperview()
+            }
+            for button in transportButtons {
+                buttonContainer.addArrangedSubview(button)
+            }
+            // 收合按钮
+            isExpanded = false
+            UIView.animate(withDuration: 0.3) {
+                self.updateTransportButtonsDisplay()
+                self.view.layoutIfNeeded()
+            }
+            
+            updateMapForSelectedTransportType()
+        }
+    }
+    
+    @objc private func toggleTransportButtons() {
+        isExpanded.toggle()
+        UIView.animate(withDuration: 0.3) {
+            self.updateTransportButtonsDisplay()
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    private func transportTypeForIndex(_ index: Int) -> MKDirectionsTransportType {
+        switch index {
+        case 0:
+            return .automobile
+        case 1:
+            return .walking
+        case 2:
+            return .transit
+        case 3:
+            return .walking
+        default:
+            return .automobile
+        }
+    }
+    
+    private func updateMapForSelectedTransportType() {
+        guard let startCoordinate = locationManager.currentLocation?.coordinate else { return }
+        
+        let place = places[currentTargetIndex]
+        let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+        let directionRequest = MKDirections.Request()
+        directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate, addressDictionary: nil))
+        directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate, addressDictionary: nil))
+        directionRequest.transportType = selectedTransportType // 根據選擇的交通方式設置
+        
+        let directions = MKDirections(request: directionRequest)
+        directions.calculate { [weak self] (response, error) in
+            guard let self = self, let response = response, error == nil else {
+                return
+            }
+            
+            let route = response.routes[0]
+            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: self.currentTargetIndex)) as? MapTableViewCell {
+                cell.showMap(from: startCoordinate, to: destinationCoordinate)
+                UIView.performWithoutAnimation {
+                    self.tableView.reloadRows(at: [IndexPath(row: 0, section: self.currentTargetIndex)], with: .none)
+                }
+            }
+        }
+    }
+    
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-            return section == 0 ? UITableView.automaticDimension : 0
+        return section == 0 ? UITableView.automaticDimension : 0
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 150
+        return 180
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 35
+        if mapVisibilityState[indexPath.section] ?? false {
+            return 200 // 显示地图的高度
+        } else {
+            return 0 // 隐藏cell时高度为0
+        }
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        // 每個地點對應一個 section，根據嵌套數列的數量確定 section 數量
-        return nestedInstructions?.count ?? 0
+        places.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard section < places.count else {
-                return 0
-            }
-
-            if completedPlaceIds.contains(places[section].id) {
-                return 0
-            }
-
-            return nestedInstructions?[section].count ?? 0
+        1
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         guard section < places.count else {
             return nil
         }
-
-        // 創建透明的 containerView
-        let containerView = UIView()
-        containerView.backgroundColor = .clear // 透明背景
         
-        // 創建 footerView，並添加到 containerView 中
+        let containerView = UIView()
+        containerView.backgroundColor = .clear
+        
         let footerView = UIView()
-        footerView.backgroundColor = .systemGray3
+        footerView.backgroundColor = .white
         footerView.layer.cornerRadius = 20
-        footerView.layer.masksToBounds = true // 讓角落變成圓角
+        footerView.layer.masksToBounds = true
         containerView.addSubview(footerView)
-
-        // 設置 footerView 的內縮約束，讓它看起來內縮
+        
         footerView.snp.makeConstraints { make in
             make.top.equalTo(containerView).offset(10)
             make.bottom.equalTo(containerView).offset(-10)
             make.leading.equalTo(containerView)
             make.trailing.equalTo(containerView)
         }
-
-        // 創建 placeLabel 並加入 footerView
+        
         let placeLabel = UILabel()
         let place = places[section]
-        placeLabel.text = place.name
-        placeLabel.font = UIFont.systemFont(ofSize: 18)
+        placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 20)
+        placeLabel.textColor = .deepBlue
         placeLabel.numberOfLines = 0
         footerView.addSubview(placeLabel)
-
+        
         placeLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
-            make.centerY.equalToSuperview()
+            make.centerY.equalToSuperview().offset(-40)
         }
-
-        // 創建 completeButton 並加入 footerView
+        
         let completeButton = UIButton(type: .system)
-        completeButton.setTitle("完成", for: .normal)
-        completeButton.isEnabled = !completedPlaceIds.contains(place.id)
-        completeButton.tag = section // 將 section 設置為按鈕的 tag 以便識別
+        completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+        completeButton.setImage(UIImage(systemName: "checkmark.circle"), for: .disabled)
+        completeButton.tag = section
+        completeButton.tintColor = .accent
         completeButton.addTarget(self, action: #selector(didTapCompleteButton(_:)), for: .touchUpInside)
         footerView.addSubview(completeButton)
-
+        
         completeButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-20)
             make.centerY.equalToSuperview()
         }
+        
+        let descriptionLabel = UILabel()
+        descriptionLabel.tag = 100 + section
+        descriptionLabel.numberOfLines = 3
+        descriptionLabel.lineSpacing = 3
+        footerView.addSubview(descriptionLabel)
+        descriptionLabel.snp.makeConstraints { make in
+            make.leading.equalTo(placeLabel)
+            make.top.equalTo(placeLabel.snp.bottom).offset(12)
+            make.trailing.equalToSuperview().offset(-50)
+        }
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+        
+        let isCompleted = completedPlaceIds.contains(place.id)
+        let isWithinRange = (section < buttonState.count) ? buttonState[section] : false
+        
+        if isCompleted {
+            completeButton.isEnabled = true
+            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+            updateFooterViewForFlippedState(footerView, sectionIndex: section, place: place)
+        } else {
+            if section == currentTargetIndex && isWithinRange {
+                
+                completeButton.isEnabled = true
+                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            } else {
+                
+                completeButton.isEnabled = false
+                completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+            }
+            placeLabel.text = place.name
+            placeLabel.textColor = .deepBlue
+//            MARK: iiiiiiii
+        }
+        
+        footerViews[section] = footerView
+        print("view for footer: \(footerViews)")
 
         return containerView
     }
-
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "instructionCell", for: indexPath)
-        cell.selectionStyle = .none
-        if let instruction = nestedInstructions?[indexPath.section][indexPath.row] {
-            cell.textLabel?.text = instruction
-            cell.textLabel?.font = UIFont.systemFont(ofSize: 14, weight: .light)
-            cell.textLabel?.numberOfLines = 0 // 多行顯示導航指令
-        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? MapTableViewCell ?? MapTableViewCell()
+        let place = places[indexPath.section]
         
-        cell.contentView.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
-        cell.contentView.layer.cornerRadius = 10
-        cell.contentView.layer.masksToBounds = true
-        cell.contentView.backgroundColor = .clear
-        cell.backgroundColor = .clear
+        let isMapVisibleForSection = mapVisibilityState[indexPath.section] ?? false
+            if isMapVisibleForSection {
+                let startCoordinate = locationManager.currentLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
+                let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+                cell.showMap(from: startCoordinate, to: destinationCoordinate)
+            } else {
+                cell.hideMap()
+            }
         
         return cell
     }
@@ -423,9 +734,46 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.delegate = self
         tableView.dataSource = self
         tableView.contentInsetAdjustmentBehavior = .automatic
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "instructionCell")
+        tableView.register(MapTableViewCell.self, forCellReuseIdentifier: "MapCell")
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
+        }
+    }
+    
+    @objc func didTapLocateButton(_ sender: UIButton) {
+        isMapVisible.toggle()
+        
+        mapVisibilityState[currentTargetIndex] = isMapVisible
+        
+        sender.isSelected = isMapVisible
+        if isMapVisible {
+            sender.backgroundColor = .deepBlue
+        } else {
+            sender.backgroundColor = .systemGray4
+        }
+        
+        let indexPath = IndexPath(row: 0, section: currentTargetIndex)
+        tableView.reloadRows(at: [indexPath], with: .fade)
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
+        return 60
+    }
+    
+    func setupCompletedFooterView(footerView: UIView, sectionIndex: Int) {
+        isFlipped[sectionIndex] = false
+        footerView.backgroundColor = .systemGray5
+        if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+            placeLabel.text = places[sectionIndex].name
+            placeLabel.textColor = .deepBlue
+            if let descriptionLabel = footerView.subviews.first(where: { $0 is UILabel && $0 != placeLabel }) as? UILabel {
+                descriptionLabel.text = ""
+            }
+        }
+        
+        if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+            completeButton.isEnabled = true
         }
     }
     
@@ -434,36 +782,211 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         guard let trip = trip else { return }
         
         let sectionIndex = sender.tag
-        
-        guard sectionIndex < places.count else {
-            return
-        }
+        guard sectionIndex < places.count else { return }
         
         let place = places[sectionIndex]
         let placeId = place.id
         
-        guard sectionIndex == currentTargetIndex else {
-            return
-        }
+        let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
+        let isCompleted = completedPlaceIds.contains(placeId)
         
-        let tripId = trip.id
-        
-        FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
-            if success {
-                print("地点 \(placeId) 和行程 \(tripId) 成功更新")
-                
-                DispatchQueue.main.async {
-                    sender.isSelected = true
-                    sender.isEnabled = false
-                    self.completedPlaceIds.append(placeId)
-                    self.buttonState[self.currentTargetIndex] = false // 禁用已完成地点的按钮
-                    self.currentTargetIndex += 1 // 更新到下一個地點
-                    self.tableView.reloadSections(IndexSet(integer: sectionIndex), with: .automatic) // 更新當前 section
+        if !isCompleted {
+            FirebaseManager.shared.updateCompletedTripAndPlaces(for: userId, trip: trip, placeId: placeId) { success in
+                if success {
+                    DispatchQueue.main.async {
+                        self.completedPlaceIds.append(placeId)
+                        
+                        if let footerView = self.footerViews[sectionIndex],
+                           let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                            
+                            self.mapVisibilityState[sectionIndex] = false
+                            self.closeMapAndCollapseCell(at: sectionIndex)
+                            
+                            completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                            
+                            self.isFlipped[sectionIndex] = true
+                            
+                            UIView.transition(with: footerView, duration: 0.5, options: .transitionFlipFromRight, animations: {
+                                self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                            }, completion: nil)
+                        }
+                        
+                        if sectionIndex + 1 < self.places.count {
+                            
+                                self.expandNextCell(at: sectionIndex + 1)
+                            
+                        } else {
+                            self.checkIfAllPlacesCompleted()
+                        }
+                        self.closeMapAndCollapseCell(at: sectionIndex)
+                    }
+                    
+                    self.locationManager.startUpdatingLocation()
+                    self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+                        guard let self = self else { return }
+                        self.checkDistanceForCurrentTarget(from: currentLocation)
+                    }
+                    
+                    if let currentLocation = self.locationManager.currentLocation {
+                        self.checkDistanceForCurrentTarget(from: currentLocation)
+                    }
+                } else {
+                    print("更新失败")
                 }
-            } else {
-                print("更新失败")
+            }
+        } else {
+            
+            if let footerView = self.footerViews[sectionIndex] {
+                self.startUpdatingLocationIfNeeded()
+                
+                self.isFlipped[sectionIndex]?.toggle()
+                
+                if let isFlipped = self.isFlipped[sectionIndex] {
+                    UIView.transition(with: footerView, duration: 0.5, options: isFlipped ? [.transitionFlipFromRight] : [.transitionFlipFromLeft], animations: {
+                        self.updateFooterViewForFlippedState(footerView, sectionIndex: sectionIndex, place: place)
+                    }, completion: { _ in
+                        self.closeMapAndCollapseCell(at: sectionIndex)
+                    })
+                } else {
+                    self.isFlipped[sectionIndex] = false
+                }
             }
         }
     }
     
+    func startUpdatingLocationIfNeeded() {
+        self.locationManager.startUpdatingLocation()
+        self.locationManager.onLocationUpdate = { [weak self] currentLocation in
+            guard let self = self else { return }
+            self.checkDistanceForCurrentTarget(from: currentLocation)
+        }
+        
+        if let currentLocation = self.locationManager.currentLocation {
+            self.checkDistanceForCurrentTarget(from: currentLocation)
+        }
+    }
+    
+    func closeMapAndCollapseCell(at sectionIndex: Int) {
+            mapVisibilityState[sectionIndex] = false
+            self.tableView.beginUpdates()
+            self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
+            self.tableView.endUpdates()
+        
+        if let currentLocation = self.locationManager.currentLocation {
+                self.checkDistanceForCurrentTarget(from: currentLocation)
+            }
+    }
+    
+    func expandNextCell(at sectionIndex: Int) {
+        guard sectionIndex < places.count else { return }
+        currentTargetIndex = sectionIndex
+        if self.locationButton.isSelected {
+            mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
+        }
+        let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
+        self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
+    }
+
+    func checkIfAllPlacesCompleted() {
+        if completedPlaceIds.count == places.count {
+            disableLocateButton()
+        }
+    }
+    
+    func disableLocateButton() {
+        locationButton.isEnabled = false
+        locationButton.backgroundColor = .systemGray4
+    }
+    
+    func updateFooterViewForFlippedState(_ footerView: UIView, sectionIndex: Int, place: Place) {
+        let isCurrentlyFlipped = isFlipped[sectionIndex] ?? false
+        if isCurrentlyFlipped {
+            if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                footerView.backgroundColor = .deepBlue
+                if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+                    placeLabel.text = poemPair.poemLine
+                    placeLabel.textColor = .white
+                    if let descriptionLabel = footerView.viewWithTag(100 + sectionIndex) as? UILabel {
+                        if let savedSuggestion = savedSuggestions[place.id] {
+                            descriptionLabel.text = savedSuggestion
+                        } else {
+                            descriptionLabel.text = "生成中..."
+                            descriptionLabel.textColor = .backgroundGray
+                            OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+                                switch result {
+                                case .success(let suggestion):
+                                    DispatchQueue.main.async {
+                                        self.savedSuggestions[place.id] = suggestion
+                                        descriptionLabel.text = suggestion
+                                    }
+                                case .failure(let error):
+                                    DispatchQueue.main.async {
+                                        descriptionLabel.text = "無法生成描述"
+                                        print("Error fetching suggestion: \(error.localizedDescription)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                completeButton.isEnabled = true
+            }
+        } else {
+            footerView.backgroundColor = .systemGray5
+            if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
+                placeLabel.text = place.name
+                placeLabel.textColor = .deepBlue
+                
+                if let descriptionLabel = footerView.subviews.first(where: { $0 is UILabel && $0 != placeLabel }) as? UILabel {
+                    descriptionLabel.text = ""
+                }
+            }
+            
+            if let completeButton = footerView.subviews.first(where: { $0 is UIButton }) as? UIButton {
+                if completedPlaceIds.contains(place.id) {
+                    completeButton.setImage(UIImage(systemName: "arrowshape.turn.up.backward.circle.fill"), for: .normal)
+                    completeButton.isEnabled = true
+                } else {
+                    let isWithinRange = buttonState[sectionIndex]
+                    completeButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
+                    completeButton.isEnabled = isWithinRange
+                }
+            }
+        }
+    }
+    
+    func fetchPlacePoemPairs(for tripId: String, completion: @escaping ([PlacePoemPair]?) -> Void) {
+        let db = Firestore.firestore()
+        let tripRef = db.collection("trips").document(tripId)
+        
+        tripRef.getDocument { (document, error) in
+            if let error = error {
+                completion(nil)
+                return
+            }
+            
+            guard let document = document, document.exists, let data = document.data() else {
+                completion(nil)
+                return
+            }
+            
+            if let placePoemPairsData = data["placePoemPairs"] as? [[String: Any]] {
+                var placePoemPairs = [PlacePoemPair]()
+                
+                for pairData in placePoemPairsData {
+                    if let placeId = pairData["placeId"] as? String,
+                       let poemLine = pairData["poemLine"] as? String {
+                        let placePoemPair = PlacePoemPair(placeId: placeId, poemLine: poemLine)
+                        placePoemPairs.append(placePoemPair)
+                    }
+                }
+                completion(placePoemPairs)
+            } else {
+                completion(nil)
+            }
+        }
+    }
 }

@@ -37,6 +37,7 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DropdownCell")
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.layer.cornerRadius = 12
         self.addSubview(tableView)
         
         tableView.snp.makeConstraints { make in
@@ -67,8 +68,8 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         self.snp.makeConstraints { make in
             make.top.equalTo(anchorView.snp.bottom).offset(8)
             make.trailing.equalTo(anchorView)
-            make.width.equalTo(150)
-            make.height.equalTo(150)
+            make.width.equalTo(174)
+            make.height.equalTo(200)
         }
         
         self.alpha = 0

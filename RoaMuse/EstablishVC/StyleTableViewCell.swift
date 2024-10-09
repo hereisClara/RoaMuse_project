@@ -29,43 +29,42 @@ class StyleTableViewCell: UITableViewCell {
         backgroundColor = UIColor.clear
         contentView.backgroundColor = UIColor.clear
         
-        // 配置 containerView 用來內縮和設置圓角
         containerView.backgroundColor = UIColor.white
         containerView.layer.cornerRadius = 20
         containerView.layer.masksToBounds = true
+        containerView.layer.borderColor = UIColor.deepBlue.withAlphaComponent(0.7).cgColor
+        containerView.layer.borderWidth = 2
         contentView.addSubview(containerView)
         
-        // 設置 containerView 的內縮約束
         containerView.snp.makeConstraints { make in
-            make.top.bottom.equalTo(contentView).inset(8) // 四周內縮 10 點
+            make.top.equalTo(contentView).inset(8) // 四周內縮 10 點
             make.width.equalTo(contentView)
             make.centerX.equalTo(contentView)
+            make.bottom.equalTo(contentView)
         }
         
-        // 添加 titleLabel 和 descriptionLabel 到 containerView
         containerView.addSubview(titleLabel)
         containerView.addSubview(descriptionLabel)
         
-        // 設置標題和描述標籤的佈局
         titleLabel.snp.makeConstraints { make in
-            make.leading.equalTo(containerView).offset(20)
-            make.top.equalTo(containerView).offset(30)
-            make.trailing.equalTo(containerView).offset(-20) // 增加右側約束
+            make.leading.equalTo(containerView).offset(16)
+            make.top.equalTo(containerView).offset(15)
+            make.trailing.equalTo(containerView).offset(-16) // 增加右側約束
         }
         
         descriptionLabel.snp.makeConstraints { make in
             make.leading.equalTo(titleLabel)
-            make.top.equalTo(titleLabel.snp.bottom).offset(20) // 改小一點間距
-            make.trailing.equalTo(containerView).offset(-20) // 增加右側約束
-            make.bottom.equalTo(containerView).offset(-20) // 確保與單元格底部有距離
+            make.top.equalTo(titleLabel.snp.bottom).offset(8) // 改小一點間距
+            make.trailing.equalTo(containerView).offset(-16) // 增加右側約束
+            make.bottom.equalTo(containerView).offset(-16) // 確保與單元格底部有距離
         }
         
         // 調整字體
-        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
         titleLabel.textColor = .deepBlue // 設置標題顏色
         
-        descriptionLabel.font = UIFont.systemFont(ofSize: 14)
-        descriptionLabel.textColor = UIColor.darkGray
+        descriptionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        descriptionLabel.textColor = UIColor.systemGray
         descriptionLabel.numberOfLines = 0 // 設置自適應行數
     }
 }

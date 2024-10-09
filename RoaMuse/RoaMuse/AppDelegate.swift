@@ -20,7 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         IQKeyboardManager.shared.enable = true
         IQKeyboardManager.shared.resignOnTouchOutside = true
-
+        UITabBar.appearance().barTintColor = UIColor(named: "backgroundGray")
         return true
     }
 

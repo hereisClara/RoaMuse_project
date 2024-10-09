@@ -11,7 +11,7 @@ import UIKit
 class AwardLabelView: UIView {
     
     // 定義一個 UILabel
-    private let titleLabel = UILabel()
+    let titleLabel = UILabel()  // 讓 titleLabel 成為 public
     
     // 點擊手勢的回調
     var onTap: (() -> Void)?
@@ -22,13 +22,13 @@ class AwardLabelView: UIView {
         
         // 設置背景顏色
         self.backgroundColor = backgroundColor
-        self.layer.cornerRadius = 10
+        self.layer.cornerRadius = 6
         self.clipsToBounds = true
         
         // 配置 titleLabel
         titleLabel.text = title
         titleLabel.textAlignment = .center
-        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         titleLabel.textColor = .white
         
         // 將 titleLabel 加入到視圖中
@@ -36,7 +36,10 @@ class AwardLabelView: UIView {
         
         // 設置 titleLabel 的 Auto Layout
         titleLabel.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(10) // 標籤與邊框之間留一些間隙
+            make.leading.equalToSuperview().offset(8)
+            make.trailing.equalToSuperview().offset(-8)
+            make.centerY.equalToSuperview()
+            make.height.equalTo(16)
         }
         
         // 添加點擊手勢
@@ -55,6 +58,13 @@ class AwardLabelView: UIView {
     
     // 更新標題文字
     func updateTitle(_ title: String) {
+        print("Updating title with: \(title)")
         titleLabel.text = title
+    }
+    
+    // 新增方法來更新樣式
+    func updateStyle(backgroundColor: UIColor, textColor: UIColor) {
+        self.backgroundColor = backgroundColor
+        titleLabel.textColor = textColor
     }
 }

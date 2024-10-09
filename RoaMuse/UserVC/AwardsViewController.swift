@@ -8,7 +8,12 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     let dropdownButton = UIButton(type: .system)
     var dynamicTaskSets: [[TaskSet]] = []
     let tableView = UITableView()
+    let titleContainerView = UIView()
     var currentTitles: [String] = []
+    var userName = String()
+    var avatarImageUrl = String()
+    var selectedTitle = String()
+    var titleLabel = UILabel()
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
@@ -25,25 +30,15 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         ["有始有終，行萬卷書與你一起走過⋯⋯"]
     ]
     
-    let awardTitles: [[[String]]] = [
-        [["探索者", "街頭土行孫", "現世行腳仙"]],  // 第 1 個 row 的稱號
-        
-        [["浪漫1", "浪漫2", "浪漫3"],   // 第 2 個 row 的稱號
-        ["奇險1", "奇險2", "奇險3"],
-         ["田園1","田園2", "田園3"]],// 第 3 個 row 的稱號
-        
-        [["終點1", "終點2", "終點3"]]
+    let awardTitles = [
+        [["復得返自然", "人生如逆旅", "無事小神仙"]],
+        [["世間行樂亦如此", "落花踏盡游何處", "含光混世貴無名"], ["若個書生萬戶侯", "月寒日暖煎人壽", "走月逆行雲"], ["獨出前門望野田", "夕露沾我衣", "惟有幽人自來去"]],
+        [["且放白鹿青崖間", "大地有緣能自遇", "得似浮雲也自由"]]
     ]
 
-    
     let awardSections = ["踩點總集", "風格master", "有始有終"]
     
-        // 模擬的進度數據
-        let progressValues: [[Float]] = [
-            [0.8],   // 第 1 個 section
-            [0.7, 0.6, 0.3],        // 第 2 個 section
-            [0.9]              // 第 3 個 section
-        ]
+    let milestones: [Float] = [0.3, 0.6, 1.0]
     
         var taskSets: [[TaskSet]] = [
             [TaskSet(totalTasks: 30, completedTasks: 30)],  // 第 1 个任务集合（cell）
@@ -54,25 +49,47 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
              TaskSet(totalTasks: 50, completedTasks: 50)]   // 第 3 个任务集合（cell）
         ]
     
-    // 模擬的里程碑數據
-    let milestones: [Float] = [0.3, 0.6, 1.0]
-    
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .backgroundGray
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar.barTintColor = UIColor.deepBlue
+        navigationController?.navigationBar.tintColor = UIColor.white
+        navigationController?.navigationBar.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.white,
+            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
+        ]
+        self.title = "成就"
         
-        view.backgroundColor = .white
-        fetchUserData()
         setupTableView()
-        setupTableViewHeader()
         self.navigationItem.largeTitleDisplayMode = .never
         dropdownMenu.onItemSelected = { [weak self] selectedItem in
             guard let self = self else { return }
-            
+            self.titleLabel.text = selectedItem
             if let (section, row, item) = self.findIndexesForTitle(selectedItem) {
+                self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
                 self.saveSelectedIndexesToFirebase(section: section, row: row, item: item)
                 print("已保存的索引: section = \(section), row = \(row), item = \(item)")
             }
         }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        fetchUserData()
+        tabBarController?.tabBar.isHidden = true
+        navigationController?.navigationBar.isTranslucent = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.navigationBar.barTintColor = UIColor.backgroundGray
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        navigationController?.navigationBar.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.white,
+            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
+        ]
+        tabBarController?.tabBar.isHidden = false
     }
     
     func findIndexesForTitle(_ title: String) -> (Int, Int, Int)? {
@@ -83,11 +100,13 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 }
             }
         }
-        return nil  // 如果找不到则返回 nil
+        return nil
     }
     
     func saveSelectedIndexesToFirebase(section: Int, row: Int, item: Int) {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+            return
+        }
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
@@ -95,12 +114,49 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         userRef.setData(["selectedTitleIndex": indexArray], merge: true) { error in
             if let error = error {
-                print("保存到 Firebase 时出错: \(error)")
+                print("保存到 Firebase 時出錯: \(error.localizedDescription)")
             } else {
-                print("选定的 section, row 和 item 已成功保存")
+                print("成功保存到 Firebase: \(indexArray)")
+                let selectedTitle = self.awardTitles[section][row][item]
+                NotificationCenter.default.post(name: NSNotification.Name("awardUpdated"), object: nil, userInfo: ["title": selectedTitle])
             }
         }
     }
+    
+    func updateTitleContainerStyle(forProgressAt section: Int, row: Int, item: Int) {
+        switch item {
+        case 0:
+            // 進度點 1
+            titleContainerView.backgroundColor = UIColor.forBronze
+            titleLabel.textColor = .white
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+            dropdownButton.tintColor = .white
+            
+        case 1:
+            // 進度點 2
+            titleContainerView.backgroundColor = UIColor.systemBackground
+            titleContainerView.layer.borderColor = UIColor.deepBlue.cgColor // 編框 .deepBlue
+            titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
+            titleLabel.textColor = .deepBlue
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+            dropdownButton.tintColor = .deepBlue
+            
+        case 2:
+            // 進度點 3
+            titleContainerView.backgroundColor = UIColor.accent // 底色為 .accent
+            titleContainerView.layer.borderWidth = 0.0 // 沒有邊框
+            titleLabel.textColor = .white
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+            dropdownButton.tintColor = .white
+            
+        default:
+            // 預設情況，無邊框及默認顏色
+            titleContainerView.backgroundColor = UIColor.systemBackground
+            titleContainerView.layer.borderWidth = 0.0
+            titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+        }
+    }
+
     
     func setupTableView() {
         view.addSubview(tableView)
@@ -109,44 +165,100 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         tableView.delegate = self
         tableView.dataSource = self
-        
+        tableView.separatorStyle = .none
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
     }
-    
+
     func setupTableViewHeader() {
-        let tableHeaderView = UIView()
-        tableHeaderView.backgroundColor = .white
-        
+        // 創建一個包含進度條的Header View
+        let headerView = UIView()
+        headerView.backgroundColor = .deepBlue
+
+        // 設置圓角，只對下方兩個角進行圓角處理
+        headerView.layer.cornerRadius = 30
+        headerView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        headerView.layer.masksToBounds = true
+
+        // 設置圓形進度條
+        let circularProgressBar = CircularProgressBar(frame: CGRect(x: 0, y: 0, width: 160, height: 160))
+        if let url = URL(string: avatarImageUrl) {
+            circularProgressBar.setAvatarImage(from: url)
+        }
+        let completedTasks = currentTitles.count
+        let totalTasks = 15
+        circularProgressBar.progress = Float(completedTasks) / Float(totalTasks) // 設置進度
+        headerView.addSubview(circularProgressBar)
+
+        // 添加標題
         let headerLabel = UILabel()
-        headerLabel.text = "獎項進度總覽"
-        headerLabel.font = UIFont.boldSystemFont(ofSize: 32)
-        headerLabel.textColor = .black
+        headerLabel.text = userName
+        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 32)
+        headerLabel.textColor = .white
+
+        titleLabel.text = selectedTitle
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         
-        tableHeaderView.addSubview(headerLabel)
-        
-        headerLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.leading.equalToSuperview().offset(16)
-        }
-        
-        dropdownButton.setTitle("查看稱號", for: .normal)
+        dropdownButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
         dropdownButton.addTarget(self, action: #selector(showDropdownMenu), for: .touchUpInside)
-        
-        tableHeaderView.addSubview(dropdownButton)
-        dropdownButton.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.trailing.equalToSuperview().offset(-16)
+
+        titleContainerView.addSubview(titleLabel)
+        titleContainerView.addSubview(dropdownButton)
+        headerView.addSubview(headerLabel)
+        headerView.addSubview(titleContainerView)
+
+        headerLabel.snp.makeConstraints { make in
+            make.leading.equalTo(circularProgressBar.snp.trailing).offset(16)
+            make.top.equalTo(circularProgressBar).offset(20)
+        }
+
+        titleContainerView.snp.makeConstraints { make in
+            make.top.equalTo(headerLabel.snp.bottom).offset(8)
+            make.leading.equalTo(headerLabel)
+            make.width.equalTo(174)
+            make.height.equalTo(45)
         }
         
-        tableHeaderView.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 100)
-        tableView.tableHeaderView = tableHeaderView
+        titleContainerView.layer.cornerRadius = 15
+
+        // titleLabel 的佈局
+        titleLabel.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(12)
+            make.centerY.equalToSuperview()
+        }
+
+        // dropdownButton 的佈局，緊靠 titleLabel 並且距離右邊有 -12 的偏移
+        dropdownButton.snp.makeConstraints { make in
+            make.trailing.equalToSuperview().offset(-12)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(24)
+        }
+
+        // circularProgressBar 的佈局
+        circularProgressBar.snp.makeConstraints { make in
+            make.centerY.equalToSuperview().offset(30)
+            make.width.height.equalTo(160)
+            make.leading.equalToSuperview().offset(20)
+        }
+
+        // 設置背景延伸到 NavigationBar 區域
+        let extendedHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 200))
+        extendedHeaderView.backgroundColor = UIColor.clear
+        extendedHeaderView.addSubview(headerView)
+
+        headerView.snp.makeConstraints { make in
+            make.leading.trailing.equalToSuperview()
+            make.height.equalTo(300)
+            make.top.equalToSuperview().offset(-100)
+        }
+
+        tableView.tableHeaderView = extendedHeaderView
     }
-    
+
     @objc func showDropdownMenu() {
         if dropdownMenu.superview == nil {  // 如果還未顯示
-            dropdownMenu.show(in: self.view, anchorView: dropdownButton)
+            dropdownMenu.show(in: self.view, anchorView: titleContainerView)
         } else {
             dropdownMenu.hide()
         }
@@ -154,13 +266,13 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     func fetchUserData() {
         guard let userId = userId else {
-            print("無法獲取 userId")
             return
         }
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        userRef.getDocument { (documentSnapshot, error) in
+        // 使用 addSnapshotListener 監聽數據變化
+        userRef.addSnapshotListener { (documentSnapshot, error) in
             if let error = error {
                 print("獲取用戶數據時出錯: \(error.localizedDescription)")
                 return
@@ -171,83 +283,205 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 return
             }
             
-            var totalPlacesCompleted = 0
-            if let completedPlace = data["completedPlace"] as? [[String: Any]] {
-                for placeEntry in completedPlace {
-                    if let placeIds = placeEntry["placeIds"] as? [String] {
-                        totalPlacesCompleted += placeIds.count
-                    }
-                }
-            } else {
-                print("無法解析 completedPlace 資料")
-            }
+            self.userName = data["userName"] as? String ?? "使用者"
+            self.avatarImageUrl = data["photo"] as? String ?? ""
             
-            var totalTripsCompleted = 0
-            if let completedTrip = data["completedTrip"] as? [String] {
-                totalTripsCompleted = completedTrip.count
-            } else {
-                print("無法解析 completedTrip 資料")
-            }
-//           MARK: totalTask
-            self.dynamicTaskSets = [
-                [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
-                [],
-                [TaskSet(totalTasks: 30, completedTasks: totalTripsCompleted)]
-            ]
-
-            self.categorizePlacesByTag { categorizedPlaces in
-                // 確保 Section 1 有三個 row，即便分類結果為空
-                let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
-                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagZeroPlacesAmount))
-                
-                let tagOnePlacesAmount = categorizedPlaces[1]?.count ?? 0
-                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagOnePlacesAmount))
-                
-                let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
-                self.dynamicTaskSets[1].append(TaskSet(totalTasks: 30, completedTasks: tagTwoPlacesAmount))
-                
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()  // 重新加載數據
-                    
-                    for section in 0..<self.dynamicTaskSets.count {
-                        for row in 0..<self.dynamicTaskSets[section].count {
-                            let taskSet = self.dynamicTaskSets[section][row]
-                            self.updateCellProgress(section: section, row: row, completedTasks: taskSet.completedTasks, totalTasks: taskSet.totalTasks)
+            // 加載用戶的當前選擇的 title
+            FirebaseManager.shared.loadAwardTitle(forUserId: userId) { result in
+                switch result {
+                case .success(let awardTitle):
+                    DispatchQueue.main.async {
+                        self.selectedTitle = awardTitle.0
+                        self.titleLabel.text = self.selectedTitle
+                        self.titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+                        // 查找選擇的 title 對應的索引，並更新樣式
+                        if let (section, row, item) = self.findIndexesForTitle(awardTitle.0) {
+                            self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
                         }
                     }
-                    self.dropdownMenu.items = self.currentTitles
+                case .failure(let error):
+                    DispatchQueue.main.async {
+                        self.selectedTitle = "初心者"
+                        self.titleLabel.textColor = .white
+                        self.titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+                        self.titleLabel.text = self.selectedTitle
+                        self.dropdownButton.tintColor = .white
+                        self.titleContainerView.backgroundColor = .lightGray
+                    }
+                }
+            }
+            
+            // 如果没有 completedPlace 数据，进度为 0
+            let totalPlacesCompleted = (data["completedPlace"] as? [[String: Any]])?.reduce(0) { acc, placeEntry in
+                acc + ((placeEntry["placeIds"] as? [String])?.count ?? 0)
+            } ?? 0
+            
+            // 如果没有 completedTrip 数据，进度为 0
+            let totalTripsCompleted = (data["completedTrip"] as? [String])?.count ?? 0
+            
+            // 初始化动态的任务集合
+            self.dynamicTaskSets = [
+                [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
+                [TaskSet(totalTasks: 10, completedTasks: 0),
+                 TaskSet(totalTasks: 10, completedTasks: 0),
+                 TaskSet(totalTasks: 10, completedTasks: 0)],
+                [TaskSet(totalTasks: 6, completedTasks: totalTripsCompleted)]
+            ]
+            
+            // 分类地点并更新进度
+            self.categorizePlacesByTag { categorizedPlaces in
+                let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
+                self.dynamicTaskSets[1][0] = TaskSet(totalTasks: 10, completedTasks: tagZeroPlacesAmount)
+                
+                let tagOnePlacesAmount = categorizedPlaces[1]?.count ?? 0
+                self.dynamicTaskSets[1][1] = TaskSet(totalTasks: 10, completedTasks: tagOnePlacesAmount)
+                
+                let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
+                self.dynamicTaskSets[1][2] = TaskSet(totalTasks: 10, completedTasks: tagTwoPlacesAmount)
+                
+                // 计算所有称号的进度，并直接更新下拉菜单
+                self.calculateTitlesAndUpdateDropDown()
+                
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    self.setupTableViewHeader()
                 }
             }
         }
     }
-    
-    func updateCellProgress(section: Int, row: Int, completedTasks: Int, totalTasks: Int) {
-        let progress = Float(completedTasks) / Float(totalTasks)
-        
-        let indexPath = IndexPath(row: row, section: section)
-        if let cell = tableView.cellForRow(at: indexPath) as? AwardTableViewCell {
-            cell.milestoneProgressView.progress = progress
-            
-            let titlesForRow = awardTitles[section][row]
-            
-            var newTitle: String?
-            if progress >= 1.0 {
-                newTitle = titlesForRow[2]
-            } else if progress >= 0.6 {
-                newTitle = titlesForRow[1]
-            } else if progress >= 0.3 {
-                newTitle = titlesForRow[0]
-            }
-            
-            if let title = newTitle, !currentTitles.contains(title) {
-                currentTitles.append(title)
-            }
-            
-            print("現有稱號: \(currentTitles)")
-        }
+
+
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return dynamicTaskSets.count
     }
 
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return dynamicTaskSets[section].count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "awardCell", for: indexPath) as? AwardTableViewCell else {
+            return UITableViewCell()
+        }
+
+        let awardTitle = awards[indexPath.section][indexPath.row]
+        let awardDesc = awardsDescription[indexPath.section][indexPath.row]
+
+        cell.awardLabel.text = awardTitle
+        cell.descriptionLabel.text = awardDesc
+        cell.selectionStyle = .none
+        cell.milestoneProgressView.milestones = milestones
+
+        // 確保 progress 是根據資料正確設置的
+        if indexPath.section < dynamicTaskSets.count && indexPath.row < dynamicTaskSets[indexPath.section].count {
+            let taskSet = self.dynamicTaskSets[indexPath.section][indexPath.row]
+            let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
+
+            // 更新進度條
+            cell.milestoneProgressView.progress = progress
+            updateAwardTitles(section: indexPath.section, row: indexPath.row, progress: progress)
+        } else {
+            // 當無數據時，將進度設置為 0
+            cell.milestoneProgressView.progress = 0.0
+        }
+
+        return cell
+    }
     
+    func updateAwardTitles(section: Int, row: Int, progress: Float) {
+        let titlesForRow = awardTitles[section][row]
+        var obtainedTitles: [String] = []
+        
+        if isProgressEqualOrGreater(progress, than: 1.0) {
+            obtainedTitles = titlesForRow
+        } else if isProgressEqualOrGreater(progress, than: 0.6) {
+            obtainedTitles = Array(titlesForRow[0...1])
+        } else if isProgressEqualOrGreater(progress, than: 0.3) {
+            obtainedTitles = [titlesForRow[0]]
+        }
+        
+        for title in obtainedTitles {
+            if !currentTitles.contains(title) {
+                currentTitles.append(title)
+            }
+        }
+        
+        // 更新下拉選單
+        dropdownMenu.items = currentTitles
+    }
+    
+    // MARK: - UITableViewDelegate
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 180 // 自定義行高度
+    }
+    
+    // 添加 section 的表頭
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView()
+        headerView.backgroundColor = .white
+        
+        let headerLabel = UILabel()
+        headerLabel.text = awardSections[section]
+        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
+        headerLabel.textColor = .deepBlue
+        
+        headerView.addSubview(headerLabel)
+        
+        headerLabel.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()  // 垂直居中
+            make.leading.equalToSuperview().offset(16)  // 與左邊距離 16 點
+        }
+        
+        return headerView
+    }
+    
+    // 設置 section 表頭的高度
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 50 // 自定義表頭高度
+    }
+    
+}
+
+extension AwardsViewController {
+    // 新增方法，根據數據計算稱號並更新 dropDown
+    func calculateTitlesAndUpdateDropDown() {
+        for section in 0..<self.dynamicTaskSets.count {
+            for row in 0..<self.dynamicTaskSets[section].count {
+                let taskSet = self.dynamicTaskSets[section][row]
+                let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
+                
+                // 計算稱號
+                let titlesForRow = awardTitles[section][row]
+                var obtainedTitles: [String] = []
+                
+                if isProgressEqualOrGreater(progress, than: 1.0) {
+                    obtainedTitles = titlesForRow
+                } else if isProgressEqualOrGreater(progress, than: 0.6) {
+                    obtainedTitles = Array(titlesForRow[0...1])
+                } else if isProgressEqualOrGreater(progress, than: 0.3) {
+                    obtainedTitles = [titlesForRow[0]]
+                }
+                
+                // 將獲得的稱號加入 dropDown
+                for title in obtainedTitles {
+                    if !currentTitles.contains(title) {
+                        currentTitles.append(title)
+                    }
+                }
+            }
+        }
+        
+        dropdownMenu.items = currentTitles
+    }
+    
+    // 保留現有的 isProgressEqualOrGreater 方法
+    func isProgressEqualOrGreater(_ progress: Float, than value: Float) -> Bool {
+        let epsilon: Float = 0.0001
+        return progress > value - epsilon
+    }
+
+    // 保留 categorizePlacesByTag 的邏輯
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {
             print("無法獲取 userId")
@@ -258,12 +492,14 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         userRef.getDocument { (documentSnapshot, error) in
             if let error = error {
                 print("獲取用戶數據時出錯: \(error.localizedDescription)")
+                completion([:])
                 return
             }
             
             guard let document = documentSnapshot, let data = document.data(),
                   let completedPlace = data["completedPlace"] as? [[String: Any]] else {
                 print("無法解析 completedPlace 資料")
+                completion([:])
                 return
             }
             
@@ -307,72 +543,5 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             }
         }
     }
-    
-    // MARK: - UITableViewDataSource
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return dynamicTaskSets.count
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dynamicTaskSets[section].count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "awardCell", for: indexPath) as? AwardTableViewCell else {
-            return UITableViewCell()
-        }
-        
-        let awardTitle = awards[indexPath.section][indexPath.row]
-        let awardDesc = awardsDescription[indexPath.section][indexPath.row]
-        
-        cell.awardLabel.text = awardTitle
-        cell.descriptionLabel.text = awardDesc
-        cell.selectionStyle = .none
-        cell.milestoneProgressView.milestones = milestones
-        
-        if indexPath.section < dynamicTaskSets.count && indexPath.row < dynamicTaskSets[indexPath.section].count {
-                let taskSet = self.dynamicTaskSets[indexPath.section][indexPath.row]
-                let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
-                cell.milestoneProgressView.progress = progress
-            } else {
-                // 當無數據時，將進度設置為 0
-                cell.milestoneProgressView.progress = 0.0
-            }
-        
-        return cell
-    }
 
-    // MARK: - UITableViewDelegate
-    
-    // 設置每個 section 的行高度
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 180 // 自定義行高度
-    }
-    
-    // 添加 section 的表頭
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        let headerView = UIView()
-        headerView.backgroundColor = .lightGray
-        
-        let headerLabel = UILabel()
-        headerLabel.text = awardSections[section]
-        headerLabel.font = UIFont.boldSystemFont(ofSize: 24)
-        headerLabel.textColor = .black
-        
-        headerView.addSubview(headerLabel)
-        
-        headerLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()  // 垂直居中
-            make.leading.equalToSuperview().offset(16)  // 與左邊距離 16 點
-        }
-        
-        return headerView
-    }
-    
-    // 設置 section 表頭的高度
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 50 // 自定義表頭高度
-    }
-    
 }
