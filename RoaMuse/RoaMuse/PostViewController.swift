@@ -9,6 +9,7 @@ import UIKit
 import SnapKit
 import FirebaseFirestore
 import FirebaseStorage
+import Kingfisher
 
 class PostViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -17,20 +18,19 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let titleTextField = UITextField()
     let contentTextView = UITextView()
     let postButton = UIButton(type: .system)
-    
+    var selectedTrip: Trip?
+    var sharedImage: UIImage?
     let dropdownButton = UIButton(type: .system)
     let dropdownTableView = UITableView()
-    var isDropdownVisible = false // 用來記錄下拉選單的狀態
+    var isDropdownVisible = false
     var dropdownHeightConstraint: Constraint?
     var tripsArray = [Trip]()
     var tripId = String()
-    
     var postButtonAction: (() -> Void)?
-    
     let imageButton = UIButton(type: .system) // 用來選擇圖片的按鈕
     var selectedImage: UIImage? // 儲存選擇的圖片
     var imageUrl: String? // 儲存圖片上傳後的下載 URL
-    
+    let avatarImageView = UIImageView()
     var selectedImages = [UIImage]() // 用來存儲選擇的圖片
     let imagesStackView = UIStackView() // StackView 用來顯示縮圖
     var photoUrls = [String]()
@@ -38,27 +38,46 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        navigationItem.backButtonTitle = ""
+        
         setupUI()
         setupDropdownTableView()
+        
         self.navigationItem.largeTitleDisplayMode = .never
         let postButtonItem = UIBarButtonItem(title: "發文", style: .done, target: self, action: #selector(handlePostAction))
         
-        postButtonItem.isEnabled = false
-            navigationItem.rightBarButtonItem = postButtonItem
-        
-        // 從 UserDefaults 中讀取 userId
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            print("未找到 userId，請先登入")
             return
         }
+        loadAvatarImageForPostView(userId: userId)
+        postButtonItem.isEnabled = false
+        navigationItem.rightBarButtonItem = postButtonItem
         
-        // 加載該 userId 對應的行程數據
+        if let trip = selectedTrip {
+            var title = String()
+            self.tripId = trip.id
+            FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                title = poem.title
+                self.dropdownButton.setTitle(title, for: .normal)
+            }
+        }
         loadTripsData(userId: userId)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        resetPostForm()
+        tabBarController?.tabBar.isHidden = true
+//        resetPostForm()
+        if let sharedImage = sharedImage {
+            addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
+        }
+        validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+//        tabBarController?.tabBar.isHidden = false
     }
     
     @objc func handlePostAction() {
@@ -66,51 +85,112 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         backToLastPage()    // 返回上一頁
     }
     
+    func addImageToStackView(_ image: UIImage) {
+        // 添加圖片到已選圖片數組
+        selectedImages.append(image)
+        
+        // 創建一個 UIView 作為圖片和按鈕的容器
+        let imageContainer = UIView()
+        imagesStackView.addArrangedSubview(imageContainer)
+        
+        // 創建縮圖
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        imageContainer.addSubview(imageView)
+        
+        imageView.snp.makeConstraints { make in
+            make.edges.equalToSuperview() // 讓 imageView 填滿容器
+            make.width.height.equalTo(60) // 設置固定大小
+        }
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(tapGesture)
+        
+        let removeButton = UIButton(type: .custom)
+        removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        removeButton.tintColor = .gray
+        removeButton.backgroundColor = .white
+        removeButton.layer.cornerRadius = 12
+        removeButton.clipsToBounds = true
+        imageContainer.addSubview(removeButton)
+        
+        removeButton.snp.makeConstraints { make in
+            make.top.equalTo(imageContainer.snp.top).offset(-8)  // 相對於父視圖的右上角
+            make.trailing.equalTo(imageContainer.snp.trailing).offset(8)
+            make.width.height.equalTo(24)
+        }
+        
+        removeButton.addTarget(self, action: #selector(removeSelectedImage(_:)), for: .touchUpInside)
+        removeButton.tag = selectedImages.count - 1  // 標記此按鈕，對應圖片位置
+    }
+    
+    @objc func handleImageTap(_ gesture: UITapGestureRecognizer) {
+        guard let tappedImageView = gesture.view as? UIImageView,
+              let tappedIndex = imagesStackView.arrangedSubviews.firstIndex(where: { $0.subviews.contains(tappedImageView) }) else {
+            return
+        }
+        
+        let fullScreenVC = FullScreenImageViewController()
+        fullScreenVC.images = selectedImages // 将所有选中的图片传递过去
+        fullScreenVC.startingIndex = tappedIndex // 设置从点击的图片开始展示
+        
+        navigationController?.pushViewController(fullScreenVC, animated: true)
+    }
+    
     func setupUI() {
         view.addSubview(contentTextView)
         view.addSubview(titleTextField)
-//        view.addSubview(postButton)
-        
         view.addSubview(imageButton)
-        
         view.addSubview(imagesStackView)
-            
-            imagesStackView.axis = .horizontal
-            imagesStackView.spacing = 8
-            imagesStackView.alignment = .center
-            imagesStackView.distribution = .fillEqually
-            
-            imagesStackView.snp.makeConstraints { make in
-                make.leading.equalTo(imageButton.snp.trailing).offset(12) // 與 contentTextView 左對齊
-                make.centerY.equalTo(imageButton)
-                make.height.equalTo(60) // 設置 StackView 高度
-                make.trailing.equalTo(contentTextView)
-            }
         
-        let avatarView = UIView() // 新增的 avatar 方框
-        avatarView.backgroundColor = .systemPink
-        view.addSubview(avatarView)
-
-        avatarView.snp.makeConstraints { make in
-            make.width.height.equalTo(50) // 設置為正方形
-            make.leading.equalTo(view.safeAreaLayoutGuide).offset(20) // 靠左邊 16 點
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(16) // 頂部間距 16 點
+        imagesStackView.axis = .horizontal
+        imagesStackView.spacing = 8
+        imagesStackView.alignment = .center
+        imagesStackView.distribution = .fillEqually
+        
+        imagesStackView.snp.makeConstraints { make in
+            make.leading.equalTo(imageButton.snp.trailing).offset(12) // 與 contentTextView 左對齊
+            make.centerY.equalTo(imageButton)
+            make.height.equalTo(60)
+            make.trailing.equalTo(contentTextView)
+        }
+        
+        avatarImageView.image = UIImage(named: "user-placeholder")
+        avatarImageView.contentMode = .scaleAspectFill
+        avatarImageView.layer.cornerRadius = 27
+        avatarImageView.clipsToBounds = true
+        view.addSubview(avatarImageView)
+        
+        avatarImageView.snp.makeConstraints { make in
+            make.width.height.equalTo(54)
+            make.leading.equalTo(view.safeAreaLayoutGuide).offset(20)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
         }
         
         contentTextView.text = ""
         titleTextField.text = ""
         
         contentTextView.backgroundColor = .systemGray5
+        contentTextView.textContainerInset = UIEdgeInsets(top: 10, left: 15, bottom: 10, right: 15)
+        
         titleTextField.backgroundColor = .systemGray5
+        titleTextField.layer.cornerRadius = 15
+        let paddingView = UIView(frame: CGRect(x: 0, y: 0, width: 15, height: titleTextField.frame.height))
+        titleTextField.leftView = paddingView
+        titleTextField.leftViewMode = .always
         dropdownButton.setTitle("choose trip", for: .normal)
-        dropdownButton.backgroundColor = .systemBlue
+        dropdownButton.backgroundColor = .deepBlue
         dropdownButton.setTitleColor(.white, for: .normal)
         dropdownButton.addTarget(self, action: #selector(toggleDropdown), for: .touchUpInside)
+        dropdownButton.layer.cornerRadius = 15
         view.addSubview(dropdownButton)
-
+        
         dropdownButton.snp.makeConstraints { make in
-            make.centerY.equalTo(avatarView) // 設置在 titleTextField 下方
-            make.leading.equalTo(avatarView.snp.trailing).offset(16)
+            make.centerY.equalTo(avatarImageView) // 設置在 titleTextField 下方
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(10)
             make.trailing.equalTo(titleTextField)
             make.height.equalTo(50) // 高度 50 點
         }
@@ -125,26 +205,28 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         contentTextView.snp.makeConstraints { make in
             make.top.equalTo(titleTextField.snp.bottom).offset(12)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(view).multipliedBy(0.5)
+            make.height.equalTo(view).multipliedBy(0.58)
             make.centerX.equalTo(view)
         }
         
+        contentTextView.layer.cornerRadius = 15
+        
         imageButton.setTitle("+ 新增相片", for: .normal)
-        imageButton.setTitleColor(.systemBlue, for: .normal)
+        imageButton.setTitleColor(.deepBlue, for: .normal)
         imageButton.layer.borderWidth = 1
-        imageButton.layer.borderColor = UIColor.systemBlue.cgColor
-        imageButton.layer.cornerRadius = 8
+        imageButton.layer.borderColor = UIColor.deepBlue.cgColor
+        imageButton.layer.cornerRadius = 15
         view.addSubview(imageButton)
-
+        
         imageButton.snp.makeConstraints { make in
             make.top.equalTo(contentTextView.snp.bottom).offset(16) // 設置在 contentTextView 下方
             make.leading.equalTo(contentTextView) // 與 contentTextView 左對齊
-            make.width.equalTo(120) // 寬度 150 點
-            make.height.equalTo(60) // 高度 50 點
+            make.width.equalTo(120)
+            make.height.equalTo(60)
         }
-
+        
         imageButton.addTarget(self, action: #selector(selectImage), for: .touchUpInside)
-
+        
         // 如果選擇了圖片，則顯示圖片
         if let selectedImage = selectedImage {
             let imageView = UIImageView(image: selectedImage)
@@ -167,19 +249,115 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         contentTextView.delegate = self
     }
     
+    func loadAvatarImageForPostView(userId: String) {
+        FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
+            switch result {
+            case .success(let data):
+                if let avatarUrl = data["photo"] as? String {
+                    self?.loadAvatarImage(from: avatarUrl)
+                }
+            case .failure(let error):
+                print("無法加載大頭貼: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // 加載圖片的通用方法
+    func loadAvatarImage(from urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        
+        avatarImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: [
+            .transition(.fade(0.2)),
+            .cacheOriginalImage
+        ], completionHandler: { result in
+            switch result {
+            case .success(let value):
+                print("圖片加載成功: \(value.source.url?.absoluteString ?? "")")
+            case .failure(let error):
+                print("圖片加載失敗: \(error.localizedDescription)")
+            }
+        })
+    }
+    
+    func savePostData(userId: String, title: String, content: String, photoUrls: [String]) {
+        let posts = Firestore.firestore().collection("posts")
+        let document = posts.document()
+        
+        let data = [
+            "id": document.documentID,
+            "userId": userId,
+            "title": title,
+            "content": content,
+            "photoUrls": photoUrls, // 儲存圖片的 URLs 到 Firestore
+            "createdAt": Date(),
+            "bookmarkAccount": [String](),
+            "likesAccount": [String](),
+            "tripId": tripId
+        ] as [String : Any]
+        
+        document.setData(data) { error in
+            if let error = error {
+                print("發文失敗: \(error.localizedDescription)")
+            } else {
+            }
+        }
+    }
+    
+    @objc func backToLastPage() {
+        titleTextField.text = ""
+        contentTextView.text = ""
+        postButtonAction?()
+        navigationController?.popToRootViewController(animated: true)
+        tabBarController?.tabBar.isHidden = false
+    }
+    
+    @objc func toggleDropdown() {
+        isDropdownVisible.toggle() // 切換下拉選單的狀態
+        
+        if isDropdownVisible {
+            dropdownTableView.isHidden = false
+            dropdownHeightConstraint?.update(offset: CGFloat(tripsArray.count * 44))
+        } else {
+            dropdownHeightConstraint?.update(offset: 0)
+        }
+        
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    func loadTripsData(userId: String) {
+        self.tripsArray.removeAll()
+        
+        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
+            guard let self = self else { return }
+            
+            if !tripIds.isEmpty {
+                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
+                    self.tripsArray = filteredTrips
+                    self.dropdownTableView.reloadData()
+                }
+            } else {
+                self.dropdownTableView.reloadData()
+            }
+        }
+    }
+}
+
+extension PostViewController {
+    
     @objc func selectImage() {
         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
         imagePicker.sourceType = .photoLibrary
         present(imagePicker, animated: true, completion: nil)
     }
-
+    
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         
         if let image = info[.originalImage] as? UIImage {
             // 檢查是否已經有 4 張圖片
             if selectedImages.count >= 4 {
-                print("最多只能選擇 4 張圖片")
                 picker.dismiss(animated: true, completion: nil)
                 return
             }
@@ -224,7 +402,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             // 將圖片轉換成 JPEG 格式的 Data
             guard let imageData = image.jpegData(compressionQuality: 0.75) else {
-                print("無法壓縮圖片")
                 picker.dismiss(animated: true, completion: nil)
                 return
             }
@@ -234,16 +411,14 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 if let imageUrl = imageUrl {
                     // 儲存每張圖片的下載 URL 到陣列或處理邏輯中
                     self?.imageUrl = imageUrl
-                    print("圖片上傳成功，下載 URL：\(imageUrl)")
                 } else {
-                    print("圖片上傳失敗")
                 }
             }
         }
         
         picker.dismiss(animated: true, completion: nil)
     }
-
+    
     @objc func removeSelectedImage(_ sender: UIButton) {
         let index = sender.tag
         
@@ -263,7 +438,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     func uploadImage(_ image: UIImage, completion: @escaping (String?) -> Void) {
         guard let imageData = image.jpegData(compressionQuality: 0.75) else {
-            print("圖片壓縮失敗")
             completion(nil)
             return
         }
@@ -273,7 +447,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         imageRef.putData(imageData, metadata: nil) { metadata, error in
             if let error = error {
-                print("上傳圖片失敗: \(error.localizedDescription)")
                 completion(nil)
             } else {
                 imageRef.downloadURL { url, error in
@@ -291,7 +464,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     func uploadImageToFirebase(_ imageData: Data, completion: @escaping (String?) -> Void) {
         // 初始化 storageRef
         let storageRef = Storage.storage().reference()  // 修正：確保每次上傳前正確初始化
-
+        
         // 上傳圖片到指定的路徑
         let imageRef = storageRef.child("postImages/\(UUID().uuidString).jpg")
         imageRef.putData(imageData, metadata: nil) { metadata, error in
@@ -329,7 +502,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 if let imageUrl = imageUrl {
                     uploadedUrls.append(imageUrl)
                 } else {
-                    print("圖片上傳失敗")
                 }
                 group.leave() // 圖片上傳結束
             }
@@ -343,89 +515,17 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     @objc func saveData() {
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
-
+        
         // 從 UserDefaults 中獲取 userId
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            print("未找到 userId，請先登入")
-            return
-        }
-
-        // 上傳所有圖片並獲取 URL
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
         uploadImagesToFirebase { [weak self] urls in
             guard let self = self, let urls = urls else {
-                print("上傳圖片失敗或取消")
                 return
             }
             
             self.photoUrls = urls // 儲存圖片 URLs
             self.savePostData(userId: userId, title: title, content: content, photoUrls: urls)
-        }
-    }
-
-    func savePostData(userId: String, title: String, content: String, photoUrls: [String]) {
-        let posts = Firestore.firestore().collection("posts")
-        let document = posts.document()
-
-        let data = [
-            "id": document.documentID,
-            "userId": userId,
-            "title": title,
-            "content": content,
-            "photoUrls": photoUrls, // 儲存圖片的 URLs 到 Firestore
-            "createdAt": Date(),
-            "bookmarkAccount": [String](),
-            "likesAccount": [String](),
-            "tripId": tripId
-        ] as [String : Any]
-
-        document.setData(data) { error in
-            if let error = error {
-                print("發文失敗: \(error.localizedDescription)")
-            } else {
-                print("發文成功")
-            }
-        }
-    }
-    
-    @objc func backToLastPage() {
-        titleTextField.text = ""
-        contentTextView.text = ""
-        postButtonAction?()
-        navigationController?.popViewController(animated: true)
-    }
-    
-    @objc func toggleDropdown() {
-        isDropdownVisible.toggle() // 切換下拉選單的狀態
-        
-        if isDropdownVisible {
-            dropdownTableView.isHidden = false
-            dropdownHeightConstraint?.update(offset: CGFloat(tripsArray.count * 44))
-        } else {
-            dropdownHeightConstraint?.update(offset: 0)
-        }
-        
-        UIView.animate(withDuration: 0.3) {
-            self.view.layoutIfNeeded()
-        }
-    }
-    
-    func loadTripsData(userId: String) {
-        self.tripsArray.removeAll()
-
-        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
-            guard let self = self else { return }
-            print("Bookmarked Trip IDs: \(tripIds)")
-
-            if !tripIds.isEmpty {
-                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
-                    self.tripsArray = filteredTrips
-                    print("Filtered Trips: \(self.tripsArray)")
-                    self.dropdownTableView.reloadData()
-                }
-            } else {
-                print("No trips found in bookmarks.")
-                self.dropdownTableView.reloadData()
-            }
         }
     }
 }
@@ -438,7 +538,7 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
         dropdownTableView.isHidden = true
         dropdownTableView.register(UITableViewCell.self, forCellReuseIdentifier: "dropdownCell")
         view.addSubview(dropdownTableView)
-
+        
         dropdownTableView.snp.makeConstraints { make in
             make.top.equalTo(dropdownButton.snp.bottom)
             make.leading.trailing.equalTo(dropdownButton)
@@ -485,49 +585,42 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
         
         validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
-
+    
 }
 
 extension PostViewController: UITextFieldDelegate, UITextViewDelegate {
- 
-    // 當 TextField 文字改變時觸發
+    
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        // 獲取更新後的文字
         let updatedText = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) ?? string
         validateInputs(title: updatedText, content: contentTextView.text)
         return true
     }
-
-    // 當 TextView 文字改變時觸發
+    
     func textViewDidChange(_ textView: UITextView) {
         validateInputs(title: titleTextField.text ?? "", content: textView.text)
     }
-
+    
     func validateInputs(title: String, content: String) {
         let isTitleValid = !title.trimmingCharacters(in: .whitespaces).isEmpty
         let isContentValid = !content.trimmingCharacters(in: .whitespaces).isEmpty
         let isTripSelected = !tripId.isEmpty
 
-        // 如果所有條件都滿足，啟用發文按鈕
         navigationItem.rightBarButtonItem?.isEnabled = isTitleValid && isContentValid && isTripSelected
     }
     
     func resetPostForm() {
-        // 清空文本输入
         titleTextField.text = ""
         contentTextView.text = ""
-        // 重置按钮状态
         navigationItem.rightBarButtonItem?.isEnabled = false
-        // 重置选择的图片
         selectedImages.removeAll()
-        // 移除 StackView 中的所有图片视图
         imagesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        // 重置下拉菜单选择
         dropdownButton.setTitle("選擇行程", for: .normal)
-        tripId = ""
-        // 重置下拉菜单的显示状态
+        if tripId.isEmpty {
+                dropdownButton.setTitle("選擇行程", for: .normal)
+            }
         isDropdownVisible = false
         dropdownHeightConstraint?.update(offset: 0)
         dropdownTableView.reloadData()
+        validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
 }

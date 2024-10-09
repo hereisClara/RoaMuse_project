@@ -20,7 +20,9 @@ class UserTableViewCell: UITableViewCell {
     let bookmarkCountLabel = UILabel()
     let contentLabel = UILabel()
     let avatarImageView = UIImageView()
+    let awardLabelView = AwardLabelView(title: "初心者")
     let dateLabel = UILabel()
+    let userNameLabel = UILabel()
     let moreButton = UIButton()
     var photoStackViewHeightConstraint: Constraint?
     let photoStackView = UIStackView() // 新增的 StackView 用於顯示圖片
@@ -32,6 +34,7 @@ class UserTableViewCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupCell()
         addActions()
+        setupRoundedCorners()
     }
     
     required init?(coder: NSCoder) {
@@ -40,37 +43,44 @@ class UserTableViewCell: UITableViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        avatarImageView.layer.cornerRadius = avatarImageView.frame.width * 0.5
+        avatarImageView.layer.cornerRadius = 30
         avatarImageView.layer.masksToBounds = true
+        let inset: CGFloat = 12
+        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset / 2 + 3, left: 0, bottom: inset / 4, right: 0))
     }
     
-    // 設置 cell 內的內容
     func setupCell() {
         
-        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
-        avatarImageView.backgroundColor = .blue
+        userNameLabel.text = "UserName"
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
+        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        avatarImageView.image = UIImage(named: "user-placeholder")
         
-        self.contentView.addSubview(moreButton)
-        self.contentView.addSubview(titleLabel)
-        self.contentView.addSubview(dateLabel)
-        self.contentView.addSubview(contentLabel)
-        self.contentView.addSubview(avatarImageView)
-        self.contentView.addSubview(bookmarkCountLabel)
-        self.contentView.addSubview(likeCountLabel)
-        self.contentView.addSubview(collectButton)
-        self.contentView.addSubview(likeButton) // 加入 likeButton
-        self.contentView.addSubview(commentButton) // 加入 commentButton
-        self.contentView.addSubview(photoStackView)
+        [
+            moreButton, userNameLabel, awardLabelView, titleLabel, avatarImageView, contentLabel, dateLabel,
+             bookmarkCountLabel, likeCountLabel, collectButton,
+            likeButton, commentButton, photoStackView, scrollView
+        ].forEach { contentView.addSubview($0) }
         
-        self.contentView.addSubview(scrollView)
         scrollView.addSubview(photoStackView)
-
+        
         scrollView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.trailing.equalTo(contentLabel)
-            // 不设置高度约束，让内容决定高度
+            make.height.equalTo(0)  // 初始高度為 0
         }
-
+        
+        userNameLabel.snp.makeConstraints { make in
+            make.top.equalTo(avatarImageView).offset(-10)
+            make.leading.equalTo(avatarImageView.snp.trailing).offset(15)
+        }
+        
+        awardLabelView.snp.makeConstraints { make in
+            make.top.equalTo(userNameLabel.snp.bottom).offset(6)
+            make.leading.equalTo(userNameLabel)
+            make.height.equalTo(25)
+        }
+        
         photoStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
             make.height.equalToSuperview()
@@ -84,35 +94,42 @@ class UserTableViewCell: UITableViewCell {
         avatarImageView.snp.makeConstraints { make in
             make.top.equalTo(contentView).offset(30)
             make.leading.equalTo(contentView).offset(15)
-            make.width.height.equalTo(50)
+            make.width.height.equalTo(60)
+        }
+    
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.leading.equalTo(avatarImageView)
+            make.trailing.equalTo(contentView).offset(-16)
+//            make.bottom.equalTo(contentLabel.snp.top).offset(-12)
         }
         
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView)
-            make.leading.equalTo(avatarImageView.snp.trailing).offset(15)
+        contentLabel.numberOfLines = 0
+        contentLabel.text = "????????????????????????????????????????????????????????????????????"
+        contentLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(12)
+            make.leading.equalTo(titleLabel)
+            make.trailing.equalTo(contentView).offset(-16)
+            //make.height.equalTo(30)
+            //make.bottom.equalTo(photoStackView.snp.top).offset(-10)
         }
         
         dateLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.leading.equalTo(titleLabel)
-        }
-        
-        contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
-            make.leading.equalTo(contentView).offset(16)
-            make.trailing.equalTo(contentView).offset(-16)
-            make.height.lessThanOrEqualTo(120) // 例如限制为 100 点高度
+            make.top.equalTo(photoStackView.snp.bottom).offset(12)
+            make.leading.equalTo(contentLabel)
+            make.bottom.equalTo(likeButton.snp.top).offset(-12)
         }
         
         photoStackView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.equalTo(contentLabel)
             make.trailing.equalTo(contentLabel)
-            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
+            make.bottom.equalToSuperview().offset(-16)
+            //            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
         }
         
         likeButton.snp.makeConstraints { make in
-            make.top.equalTo(photoStackView.snp.bottom).offset(16)
+//            make.top.equalTo(dateLabel.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView).offset(10)
             make.width.height.equalTo(20)
             make.bottom.equalTo(contentView).offset(-16)
@@ -141,7 +158,7 @@ class UserTableViewCell: UITableViewCell {
         }
         
         moreButton.snp.makeConstraints { make in
-            make.centerY.equalTo(titleLabel)
+            make.top.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
             make.width.height.equalTo(20)
         }
@@ -149,23 +166,44 @@ class UserTableViewCell: UITableViewCell {
         moreButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
         moreButton.tintColor = .deepBlue
         
-        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
-        likeCountLabel.textColor = .deepBlue
-        
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
+        
+        setupLabel()
+        setupButtonStyle()
+    }
+    
+    func setupLabel() {
+        
+        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
+        likeCountLabel.textColor = .deepBlue
         
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
         contentLabel.textColor = .darkGray
-        contentLabel.font = UIFont.systemFont(ofSize: 18, weight: .light)
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        contentLabel.numberOfLines = 6
+        contentLabel.lineSpacing = 3
+        contentLabel.lineBreakMode = .byTruncatingTail
         
-        titleLabel.font = .boldSystemFont(ofSize: 22)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         titleLabel.textColor = .deepBlue
+        titleLabel.numberOfLines = 1
+        titleLabel.lineBreakMode = .byWordWrapping
         
         dateLabel.textColor = .gray
+        dateLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+    }
+    
+    func setupRoundedCorners() {
+
+        contentView.layer.cornerRadius = 15
+        contentView.layer.masksToBounds = true
+        contentView.backgroundColor = .white
+    }
+    
+    func setupButtonStyle() {
         
-        // 設置按鈕圖片
         likeButton.setImage(UIImage(named: "normal_heart"), for: .normal)
         likeButton.setImage(UIImage(named: "selected_heart"), for: .selected)
         
@@ -173,8 +211,6 @@ class UserTableViewCell: UITableViewCell {
         
         collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
         collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
-        
-        dateLabel.font = UIFont.systemFont(ofSize: 14)
     }
     
     private func addActions() {
@@ -191,38 +227,43 @@ class UserTableViewCell: UITableViewCell {
     
     func configurePhotoStackView(with photoUrls: [String]) {
         photoStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-
+        
         if photoUrls.isEmpty {
             scrollView.isHidden = true
+            scrollView.snp.updateConstraints { make in
+                make.height.equalTo(0)  // 沒有圖片時高度設置為 0
+            }
         } else {
             scrollView.isHidden = false
-
+            
             for urlString in photoUrls {
                 let imageView = UIImageView()
                 imageView.contentMode = .scaleAspectFill
                 imageView.clipsToBounds = true
                 imageView.layer.cornerRadius = 8
-
+                
                 if let url = URL(string: urlString) {
                     imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
                 }
-
+                
                 photoStackView.addArrangedSubview(imageView)
-
+                
                 imageView.snp.makeConstraints { make in
-                    make.width.height.equalTo(150)
+                    make.width.equalTo(150)
                 }
             }
-
+            
             let totalWidth = photoUrls.count * 150 + (photoUrls.count - 1) * Int(photoStackView.spacing)
             scrollView.contentSize = CGSize(width: totalWidth, height: 150)
+            
+            scrollView.snp.updateConstraints { make in
+                make.height.equalTo(150)
+            }
         }
-
-        self.photoStackViewHeightConstraint?.update(offset: 150)
-
+        
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
-            tableView.endUpdates()
+            tableView.endUpdates() 
         }
     }
 }

@@ -98,9 +98,9 @@ class LoginViewController: UIViewController {
     }
     
     @objc func tapTestBtn() {
-//        let testVC = TestVC()
-//        print("Test button tapped, presenting TestVC.")
-//        self.present(testVC, animated: true, completion: nil)
+        //        let testVC = TestVC()
+        //        print("Test button tapped, presenting TestVC.")
+        //        self.present(testVC, animated: true, completion: nil)
     }
     
     @objc func didTapOrangeLoginButton() {
@@ -139,6 +139,7 @@ class LoginViewController: UIViewController {
             "authorizationCode": authorizationCode ?? ""
         ]
         
+        // 僅在首次登入時更新 userName 和 email
         if let fullName = fullName {
             let name = [fullName.givenName, fullName.familyName].compactMap { $0 }.joined(separator: " ")
             userData["userName"] = name
@@ -152,16 +153,24 @@ class LoginViewController: UIViewController {
             print("Email is nil.")
         }
         
-        // 保存到 Firestore
-        usersCollection.document(id).updateData(userData) { error in
-            if let error = error {
-                print("Error saving user data to Firestore: \(error.localizedDescription)")
+        // 先檢查用戶是否存在
+        usersCollection.document(id).getDocument { documentSnapshot, error in
+            if let document = documentSnapshot, document.exists {
+                print("User already exists, not updating userName or email.")
+                // 如果用戶已存在，不覆蓋 userName 和 email
             } else {
-                print("User data saved successfully")
+                // 如果是新用戶，則將其資料寫入 Firebase
+                usersCollection.document(id).setData(userData) { error in
+                    if let error = error {
+                        print("Error saving user data to Firestore: \(error.localizedDescription)")
+                    } else {
+                        print("User data saved successfully")
+                        UserDefaults.standard.set(id, forKey: "userId")
+                    }
+                }
             }
         }
     }
-    
     
     // Example for manual data saving (orange login)
     func saveUserData(userName: String) {

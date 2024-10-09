@@ -1,6 +1,9 @@
 import Foundation
+import FirebaseCore
 
 // 定義簡化的 PlaceIdentifier 結構，保存地點的 id 和完成狀態
+
+let notifyType = ["說你的貼文讚", "已回應貼文", "開始追蹤你"]
 
 struct Style {
     let name: String
@@ -13,20 +16,15 @@ let time = ["不限", "白天", "傍晚", "晚上"]
 
 let styles: [Style] = [
     Style(name: "奇險派", introduction: """
-    以震盪光怪為美，以瘁索枯槁為美，以五彩斑斕為美。表現出重主觀心理、尚奇險怪異的創作傾向。
-    他們的創作，表現的往往是自己心靈的歷程，他們常把現實生活中的感受，與自己虛構的世界融合在一起，
-    其詩想像離奇怪誕，往往使人感到虛實不定，跳躍怪奇，不可確解。
+    以震盪光怪為美，以瘁索枯槁為美，以五彩斑斕為美。把現實生活的感受，與虛構的世界融合，離奇怪誕，虛實不定。
     """),
     
     Style(name: "浪漫派", introduction: """
     以抒發個人情懷為中心，詠唱對自由人生個人價值的渴望與追求。詩詞自由、奔放、順暢、想像豐富、氣勢宏大。
-    語言主張自然，反對雕刻。
     """),
     
     Style(name: "田園派", introduction: """
-    閒適澹泊的思想情緒，色彩雅淡，意境幽深，能概括地描寫雄奇壯闊的景物，
-    又能細緻入微地刻畫自然事物的動態；在自然景物的觀察上別有會心，
-    能夠巧妙地捕捉適於表現其生活情趣的種種形象，構成獨到的意境。
+    閒適澹泊的思想情緒，色彩雅淡，意境幽深，能概括地描寫雄奇壯闊的景物，又能細緻入微地刻畫自然事物的動態。
     """)
 ]
 
@@ -42,19 +40,21 @@ struct Poem: Codable {
     let time: Int?
 }
 
+// TODO: 更新資料結構 還有homeVC跟articleTripVC的keyword傳值
 struct Trip: Codable {
     let poemId: String
     let id: String
-    var placeIds: [String]
+    let placeIds: [String]
+    let keywordPlaceIds: [[String: String]]?
     let tag: Int
-    var poemTitle: String?
-    let season: Int?
-    let weather: Int?
-    let startTime: Int?
+    let season: Int?      // 修改为 Int?
+    let weather: Int?     // 修改为 Int?
+    let startTime: Date?  // 保持为 Date?
 }
 
+
 // 定義 Place 結構，存放地點詳細資料
-struct Place: Codable {
+struct Place: Codable, Hashable {
     var id: String
     let name: String
     let latitude: Double
@@ -109,3 +109,73 @@ struct TaskSet {
     var totalTasks: Int
     var completedTasks: Int
 }
+
+struct PlacePoemPair {
+    let placeId: String
+    let poemLine: String
+}
+
+struct Chat {
+    let userName: String
+    let lastMessage: String
+    let profileImage: String 
+}
+
+
+// 聊天訊息模型
+struct ChatMessage {
+    let text: String
+    let isFromCurrentUser: Bool
+    let timestamp: Date
+}
+
+struct Notification: Codable {
+    var to: String
+    var from: String
+    var postId: String? // postId 是可選的
+    var type: Int
+    var subType: String? // 類型的細分 (可選)
+    var title: String? // 通知的標題
+    var message: String? // 通知的具體內容
+    var actionUrl: String? // 點擊後跳轉的URL
+    var createdAt: Date
+    var isRead: Int = 0 // 默認為未讀
+    var status: String = "pending" // 默認狀態為 pending
+    var priority: Int = 0 // 默認優先級為普通
+    var id: String? // Firestore 自動生成的 ID
+}
+
+extension Notification {
+    func asDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "to": to,
+            "from": from,
+            "type": type,
+            "createdAt": Timestamp(date: createdAt), // 将 Date 转换为 Timestamp
+            "isRead": isRead,
+            "status": status,
+            "priority": priority
+        ]
+        
+        if let postId = postId {
+            dict["postId"] = postId
+        }
+        if let subType = subType {
+            dict["subType"] = subType
+        }
+        if let title = title {
+            dict["title"] = title
+        }
+        if let message = message {
+            dict["message"] = message
+        }
+        if let actionUrl = actionUrl {
+            dict["actionUrl"] = actionUrl
+        }
+        if let id = id {
+            dict["id"] = id
+        }
+        return dict
+    }
+}
+

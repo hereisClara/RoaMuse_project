@@ -30,7 +30,7 @@ class PopUpView {
     
     let versesStackView = UIStackView()
     let placesStackView = UIStackView()
-    let collectButton = UIButton()
+    
     let startButton = UIButton()
     let cityLabel = UILabel()   // 用来显示城市
     let districtsStackView = UIStackView()
@@ -49,14 +49,13 @@ class PopUpView {
         }
         
         if let matchingScore = matchingScore {
-            matchingScoreLabel.text = "匹配分數：\(matchingScore)%"
+            matchingScoreLabel.text = "\(matchingScore)% 匹配"
             matchingScoreLabel.isHidden = false
         } else {
             matchingScoreLabel.isHidden = true
         }
         
         self.tripId = trip.id
-        checkIfTripBookmarked()
         fromEstablishToTripDetail = trip
         
         versesStackView.removeAllArrangedSubviews()
@@ -64,22 +63,22 @@ class PopUpView {
         districtsStackView.removeAllArrangedSubviews()
         
         backgroundView.frame = window.bounds
-        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        window.addSubview(backgroundView)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
-        backgroundView.addGestureRecognizer(tapGesture)
-        
-        popupView.backgroundColor = .deepBlue
-        popupView.layer.cornerRadius = 10
-        popupView.clipsToBounds = true
-        window.addSubview(popupView)
-        
-        popupView.snp.makeConstraints { make in
-            make.center.equalTo(view)
-            make.width.equalTo(view).multipliedBy(0.85)
-            make.height.equalTo(600)
-        }
+            backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+            window.addSubview(backgroundView)
+
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
+            backgroundView.addGestureRecognizer(tapGesture)
+
+            popupView.backgroundColor = .deepBlue
+            popupView.layer.cornerRadius = 10
+            popupView.clipsToBounds = true
+            backgroundView.addSubview(popupView)
+
+            popupView.snp.makeConstraints { make in
+                make.center.equalTo(backgroundView)
+                make.width.equalTo(backgroundView).multipliedBy(0.88)
+                make.height.equalTo(600)
+            }
         
         setupConstraints()
         
@@ -95,7 +94,8 @@ class PopUpView {
                 for verse in poem.content {
                     let verseLabel = UILabel()
                     verseLabel.text = verse
-                    verseLabel.textColor = .white
+                    verseLabel.textColor = .accent
+                    verseLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
                     self.versesStackView.addArrangedSubview(verseLabel)
                 }
             }
@@ -110,17 +110,22 @@ class PopUpView {
                 for place in places {
                     let placeLabel = UILabel()
                     placeLabel.text = place.name
-                    placeLabel.textColor = .white
+                    placeLabel.textColor = .backgroundGray
+                    placeLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
                     self.placesStackView.addArrangedSubview(placeLabel)
 
                     // 進行反向編碼
                     let location = CLLocation(latitude: place.latitude, longitude: place.longitude)
                     self.reverseGeocodeLocation(location) { city, district in
                         if let city = city, let district = district {
-                            self.cityLabel.text = "城市: \(city)"
+                            self.cityLabel.text = "\(city)"
+                            self.cityLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+                            self.cityLabel.textColor = .backgroundGray
                             let districtLabel = UILabel()
                             districtLabel.text = "#\(district)"
-                            districtLabel.textColor = .white
+                            districtLabel.textColor = .backgroundGray
+                            districtLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+
                             self.districtsStackView.addArrangedSubview(districtLabel)
                         }
                     }
@@ -143,123 +148,95 @@ class PopUpView {
         popupView.addSubview(tripStyleLabel)
         popupView.addSubview(versesStackView)
         popupView.addSubview(placesStackView)
-        popupView.addSubview(collectButton)
+        
         popupView.addSubview(startButton)
         popupView.addSubview(cityLabel)   // 添加城市标签
         popupView.addSubview(districtsStackView)
         popupView.addSubview(matchingScoreLabel)
         
-        
         matchingScoreLabel.snp.makeConstraints { make in
-            make.centerX.equalTo(popupView)
-            make.bottom.equalTo(startButton.snp.top).offset(-40)
+            make.trailing.equalTo(popupView).offset(-20)
+            make.bottom.equalTo(popupView).offset(-60)
+            make.width.equalTo(160)  // 設置寬度
+            make.height.equalTo(60)  // 設置高度
         }
+        
+        matchingScoreLabel.textColor = .accent
+        matchingScoreLabel.textAlignment = .center
+        matchingScoreLabel.layer.masksToBounds = true
         
         cityLabel.snp.makeConstraints { make in
             make.top.equalTo(placesStackView.snp.bottom).offset(30)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         districtsStackView.snp.makeConstraints { make in
             make.top.equalTo(cityLabel.snp.bottom).offset(10)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
-        districtsStackView.spacing = 10
+        districtsStackView.spacing = 8
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(40)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(popupView).offset(20)
         }
         
         poetryLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(10)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         tripStyleLabel.snp.makeConstraints { make in
-            make.top.equalTo(poetryLabel.snp.bottom).offset(10)
-            make.centerX.equalTo(popupView)
+            make.bottom.equalTo(poetryLabel.snp.bottom)
+            make.leading.equalTo(poetryLabel.snp.trailing).offset(12)
         }
         
         versesStackView.snp.makeConstraints { make in
             make.top.equalTo(tripStyleLabel.snp.bottom).offset(30)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         versesStackView.axis = .vertical
         versesStackView.spacing = 10
-        versesStackView.alignment = .center
+        versesStackView.alignment = .leading
         
         placesStackView.snp.makeConstraints { make in
             make.top.equalTo(versesStackView.snp.bottom).offset(30)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(titleLabel)
         }
         
         placesStackView.axis = .vertical
         placesStackView.spacing = 10
-        placesStackView.alignment = .center
-        
-        collectButton.snp.makeConstraints { make in
-            make.bottom.equalTo(popupView).offset(-50)
-            make.centerX.equalTo(popupView).offset(40)
-            make.width.height.equalTo(30)
-        }
+        placesStackView.alignment = .leading
         
         startButton.snp.makeConstraints { make in
-            make.bottom.equalTo(popupView).offset(-50)
-            make.centerX.equalTo(popupView).offset(-40)
-            make.width.height.equalTo(30)
+            make.bottom.equalTo(popupView).offset(-20)
+            make.trailing.equalTo(popupView).offset(-20)
+            make.width.height.equalTo(45)
         }
         
-        titleLabel.textColor = .white
-        poetryLabel.textColor = .white
-        tripStyleLabel.textColor = .white
+        titleLabel.textColor = .accent
+        poetryLabel.textColor = .backgroundGray
+        tripStyleLabel.textColor = .backgroundGray
+        cityLabel.textColor = .backgroundGray
         
-        // 設置按鈕圖標和顏色
-        collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        collectButton.tintColor = .white
-        collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
-        
-        collectButton.isEnabled = true
-        collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
-        
-        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
+//        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
         startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
-        startButton.tintColor = .white
-        startButton.isEnabled = false
+        startButton.tintColor = .accent
+        startButton.isEnabled = true
         startButton.addTarget(self, action: #selector(didTapStartButton), for: .touchUpInside)
         
-        matchingScoreLabel.backgroundColor = .accent
-        matchingScoreLabel.textColor = .white
-        
+        setupLabel()
     }
     
-    func checkIfTripBookmarked() {
-            guard let userId = UserDefaults.standard.string(forKey: "userId"),
-                  let tripId = tripId else {
-                print("無法獲取 userId 或 tripId")
-                return
-            }
-
-            let userRef = Firestore.firestore().collection("users").document(userId)
-            
-            userRef.getDocument { [weak self] (document, error) in
-                guard let self = self else { return }
-                if let document = document, document.exists {
-                    DispatchQueue.main.async {
-                        if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
-                            self.collectButton.isSelected = bookmarkTrips.contains(tripId)
-                            // 更新按鈕顏色
-                            self.collectButton.tintColor = self.collectButton.isSelected ? .accent : .white
-                            self.startButton.isEnabled = self.collectButton.isSelected
-                        }
-                    }
-                } else {
-                    print("無法獲取用戶資料")
-                }
-            }
-        }
+    func setupLabel() {
+        
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 40)
+        poetryLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
+        tripStyleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        matchingScoreLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
+    }
 
     @objc func dismissPopup() {
         UIView.animate(withDuration: 0.3, animations: {
@@ -273,54 +250,36 @@ class PopUpView {
     }
     
     @objc func didTapStartButton() {
-        
-        popupView.removeFromSuperview()
-        self.backgroundView.removeFromSuperview()
-        
-        if let fromEstablishToTripDetail = fromEstablishToTripDetail {
-            onTripSelected?(fromEstablishToTripDetail)
-        }
-        
-        delegate?.navigateToTripDetailPage()
-    }
-    
-    @objc func didTapCollectButton() {
-        guard let userId = UserDefaults.standard.string(forKey: "userId"),
-              let tripId = tripId else {
-            print("無法獲取 userId 或 tripId")
-            return
-        }
-        
-        let userRef = Firestore.firestore().collection("users").document(userId)
-        
-        if collectButton.isSelected {
-            // 從 bookmarkTrip 中移除
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayRemove([tripId])
-            ]) { error in
-                if let error = error {
-                    print("從 bookmarkTrip 中移除 tripId 時出錯: \(error.localizedDescription)")
-                } else {
-                    print("成功將 tripId 從 bookmarkTrip 中移除")
+            // 移除popup视图
+            popupView.removeFromSuperview()
+            backgroundView.removeFromSuperview()
+            
+            if let tripId = tripId {
+                guard let userId = UserDefaults.standard.string(forKey: "userId") else {
+                    print("無法獲取 userId 或 tripId")
+                    return
+                }
+                
+                let userRef = Firestore.firestore().collection("users").document(userId)
+                
+                userRef.updateData([
+                    "bookmarkTrip": FieldValue.arrayUnion([tripId])
+                ]) { error in
+                    if let error = error {
+                        print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
+                    } else {
+                        print("成功將 tripId 添加到 bookmarkTrip 中")
+                    }
                 }
             }
-        } else {
-            // 添加到 bookmarkTrip
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayUnion([tripId])
-            ]) { error in
-                if let error = error {
-                    print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
-                } else {
-                    print("成功將 tripId 添加到 bookmarkTrip 中")
-                }
+            
+            // 執行原有的功能
+            if let fromEstablishToTripDetail = fromEstablishToTripDetail {
+                onTripSelected?(fromEstablishToTripDetail)
             }
+            
+            delegate?.navigateToTripDetailPage()
         }
-        
-        collectButton.isSelected.toggle()
-        collectButton.tintColor = collectButton.isSelected ? .accent : .white
-        startButton.isEnabled = collectButton.isSelected
-    }
     
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
