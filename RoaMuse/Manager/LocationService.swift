@@ -207,7 +207,7 @@ class LocationService {
                 }
             } else {
                 // 如果没有找到符合条件的地点，搜索并保存
-                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
                     print("从 Google API 找到的地点: \(foundPlaces)")
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in

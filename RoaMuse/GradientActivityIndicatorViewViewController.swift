@@ -53,7 +53,7 @@ class GradientActivityIndicatorView: UIView {
         // 設定背景與模糊 view 的約束
         backgroundView.snp.makeConstraints { make in
             make.center.equalToSuperview()
-            make.width.height.equalTo(150) // 背景大小
+            make.width.height.equalTo(120) // 背景大小
         }
         
         blurBackgroundView.snp.makeConstraints { make in

@@ -100,7 +100,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 }
             }
         }
-        return nil  // 如果找不到则返回 nil
+        return nil
     }
     
     func saveSelectedIndexesToFirebase(section: Int, row: Int, item: Int) {
@@ -112,7 +112,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         let indexArray = [section, row, item]
         
-        // 儲存資料到 Firebase
         userRef.setData(["selectedTitleIndex": indexArray], merge: true) { error in
             if let error = error {
                 print("保存到 Firebase 時出錯: \(error.localizedDescription)")
@@ -125,14 +124,10 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     func updateTitleContainerStyle(forProgressAt section: Int, row: Int, item: Int) {
-        // 根據 section, row 或 item 來決定進度點
-        // 假設 item 0 表示進度點1, item 1 表示進度點2, item 2 表示進度點3
         switch item {
         case 0:
             // 進度點 1
-            titleContainerView.backgroundColor = UIColor.brown // 深棕色
-            titleContainerView.layer.borderColor = UIColor.lightGray.cgColor // 編框淺灰色
-            titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
+            titleContainerView.backgroundColor = UIColor.forBronze
             titleLabel.textColor = .white
             titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .white

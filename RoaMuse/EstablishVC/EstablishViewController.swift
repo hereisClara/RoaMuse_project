@@ -16,7 +16,6 @@ import MapKit
 class EstablishViewController: UIViewController {
     
     var poemIdsInCollectionTripsHandler: (([String]) -> Void)?
-    
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
     var poemIdsInCollectionTrips = [String]()
@@ -26,16 +25,17 @@ class EstablishViewController: UIViewController {
     var keywordToLineMap = [String: String]()
     var matchingPlaces = [(keyword: String, place: Place)]()
     var placePoemPairs = [PlacePoemPair]()
-    
     private let recommendRandomTripView = UIView()
     private let styleTableView = UITableView()
     private let styleLabel = UILabel()
+    var radiusLabel = UILabel()
+    var radiusSlider = UISlider()
     private var selectionTitle = String()
     private var styleTag = Int()
     private let popupView = PopUpView()
     let locationManager = LocationManager()
-    let activityIndicator = UIActivityIndicatorView(style: .large)
-    let searchRadius: CLLocationDistance = 15000
+    let activityIndicator = GradientActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+    var searchRadius: CLLocationDistance = 15000
     var postsArray = [[String: Any]]()
     
     override func viewDidLoad() {
@@ -80,22 +80,35 @@ class EstablishViewController: UIViewController {
         tabBarController?.tabBar.isHidden = false
     }
     
-    
     func setupUI() {
         view.addSubview(recommendRandomTripView)
         recommendRandomTripView.addSubview(styleLabel)
+        
+        let circleView = UIView()
+        circleView.backgroundColor = .backgroundGray
+        circleView.layer.cornerRadius = 20 // 圆形
+        circleView.layer.masksToBounds = true
+        recommendRandomTripView.addSubview(circleView)
+        
+        // 创建并设置右侧的按钮
+        let sliderButton = UIButton(type: .system)
+        sliderButton.setImage(UIImage(systemName: "slider.horizontal.3"), for: .normal)
+        sliderButton.tintColor = .deepBlue
+        circleView.addSubview(sliderButton)
         
         recommendRandomTripView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide)
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(150)
+            make.height.equalTo(120)
         }
         
         recommendRandomTripView.layer.cornerRadius = 20
-        
+
+        // 风格标签布局
         styleLabel.snp.makeConstraints { make in
-            make.top.leading.equalTo(recommendRandomTripView).offset(30)
+            make.leading.equalTo(recommendRandomTripView).offset(16)
+            make.top.equalTo(recommendRandomTripView).offset(12)
         }
         styleLabel.lineSpacing = 8
         styleLabel.numberOfLines = 0
@@ -104,8 +117,106 @@ class EstablishViewController: UIViewController {
         styleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 28)
         
         recommendRandomTripView.backgroundColor = .deepBlue
+
+        sliderButton.snp.makeConstraints { make in
+            make.center.equalTo(circleView)
+            make.width.height.equalTo(30)
+        }
+
+        circleView.snp.makeConstraints { make in
+            make.trailing.equalTo(recommendRandomTripView).offset(-16)
+            make.top.equalTo(recommendRandomTripView).offset(16)
+            make.width.height.equalTo(40)
+        }
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
+        
+        sliderButton.addTarget(self, action: #selector(showSliderPopup), for: .touchUpInside)
+    }
+    
+    @objc func showSliderPopup() {
+        
+        guard let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else {
+                return
+            }
+        
+        var radiusLabel = UILabel()
+        var radiusSlider = UISlider()
+        // 创建一个全屏半透明背景视图
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        keyWindow.addSubview(backgroundView)
+        backgroundView.snp.makeConstraints { make in
+            make.edges.equalTo(keyWindow) // 全屏覆盖
+        }
+        
+        // 创建一个弹窗视图
+        let popupView = UIView()
+        popupView.backgroundColor = .backgroundGray.withAlphaComponent(0.9)
+        popupView.layer.cornerRadius = 15
+        backgroundView.addSubview(popupView)
+        
+        popupView.snp.makeConstraints { make in
+            make.center.equalTo(backgroundView)
+            make.width.equalTo(view).multipliedBy(0.8)
+            make.height.equalTo(200)
+        }
+        
+        radiusLabel.text = "範圍半徑：\(searchRadius) 公尺"
+        radiusLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        radiusLabel.textAlignment = .center
+        popupView.addSubview(radiusLabel)
+        
+        radiusLabel.snp.makeConstraints { make in
+            make.top.equalTo(popupView).offset(20)
+            make.centerX.equalTo(popupView)
+        }
+        
+        radiusSlider.minimumValue = 1000
+        radiusSlider.maximumValue = 15000
+        radiusSlider.value = Float(searchRadius)  // 初始值为 1000
+        popupView.addSubview(radiusSlider)
+        
+        radiusSlider.snp.makeConstraints { make in
+            make.top.equalTo(radiusLabel.snp.bottom).offset(20)
+            make.leading.equalTo(popupView).offset(20)
+            make.trailing.equalTo(popupView).offset(-20)
+        }
+        
+        // 添加Slider变化监听器
+        radiusSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+        
+        // 添加关闭按钮
+        let closeButton = UIButton(type: .system)
+        closeButton.setTitle("關閉", for: .normal)
+        closeButton.tintColor = .systemBlue
+        popupView.addSubview(closeButton)
+        
+        closeButton.snp.makeConstraints { make in
+            make.top.equalTo(radiusSlider.snp.bottom).offset(20)
+            make.centerX.equalTo(popupView)
+        }
+        
+        closeButton.addTarget(self, action: #selector(dismissPopup), for: .touchUpInside)
+        
+        // 保存 UILabel 和 UISlider 作为属性
+        self.radiusLabel = radiusLabel
+        self.radiusSlider = radiusSlider
+    }
+
+    @objc func sliderValueChanged(_ sender: UISlider) {
+        
+        let roundedValue = round(sender.value / 1000) * 1000
+        sender.value = roundedValue
+        
+        radiusLabel.text = "範圍半徑：\(Int(roundedValue)) 公尺"
+    }
+    
+    @objc func dismissPopup(_ sender: UIButton) {
+        searchRadius = CLLocationDistance(radiusSlider.value)
+        
+        sender.superview?.superview?.removeFromSuperview() // 移除弹窗
     }
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
@@ -127,6 +238,10 @@ class EstablishViewController: UIViewController {
         }
     }
 //    MARK: work
+}
+
+extension EstablishViewController {
+    
     @objc func randomTripEntryButtonDidTapped() {
         recommendRandomTripView.isUserInteractionEnabled = false
         
@@ -199,9 +314,7 @@ class EstablishViewController: UIViewController {
         DispatchQueue.global(qos: .userInitiated).async {
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             
-            guard let model = try? poemLocationNLP3(configuration: .init()) else {
-                return
-            }
+            guard let model = try? poemLocationNLP3(configuration: .init()) else { return }
             
             var allResults = [String]()
             var keywordToLineMap = [String: String]()
@@ -287,12 +400,17 @@ class EstablishViewController: UIViewController {
                     
                 }
             } else {
-                // 如果没有找到符合条件的地点，搜索并保存
-                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation, radius: self.searchRadius) { foundPlaces, hasFoundPlace  in
+                    
+                    if hasFoundPlace == false{
+                        DispatchQueue.main.async {
+                            self.showNoPlacesFoundAlert()
+                        }
+                    }
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
-                                // 确保不重复添加地点
                                 if !self.matchingPlaces.contains(where: { $0.place.id == savedPlace.id }) {
                                     self.matchingPlaces.append((keyword: keyword, place: savedPlace))
                                 }
@@ -305,9 +423,14 @@ class EstablishViewController: UIViewController {
                         completion(false)
                     }
                 }
-                
             }
         }
+    }
+    
+    func showNoPlacesFoundAlert() {
+        let alert = UIAlertController(title: "提示", message: "未找到符合條件的地點", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "確定", style: .default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
     }
     
     func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
@@ -447,6 +570,7 @@ class EstablishViewController: UIViewController {
         
         return nestedRouteInstructions
     }
+    
 }
 
 extension EstablishViewController {
@@ -560,7 +684,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         
         view.addSubview(styleTableView)
         styleTableView.snp.makeConstraints { make in
-            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(20)
+            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(12)
             make.width.equalTo(recommendRandomTripView)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
             make.centerX.equalTo(view)

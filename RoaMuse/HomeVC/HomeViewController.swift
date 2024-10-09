@@ -246,7 +246,7 @@ class HomeViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        tabBarController?.tabBar.isHidden = false
+//        tabBarController?.tabBar.isHidden = false
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             self?.postsArray = postsArray
             DispatchQueue.main.async {
@@ -839,7 +839,7 @@ extension HomeViewController {
                         dispatchGroup.leave()
                     }
                 } else {
-                    PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                    PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
                         if let newPlace = foundPlaces.first {
                             PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                                 if let savedPlace = savedPlace {

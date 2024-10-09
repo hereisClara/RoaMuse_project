@@ -29,10 +29,9 @@ class CollectionsTableViewCell: UITableViewCell {
         contentView.addSubview(containerView)
         
         containerView.backgroundColor = .white
-        containerView.layer.cornerRadius = 15 // 圓角半徑
+        containerView.layer.cornerRadius = 25 // 圓角半徑
         containerView.layer.masksToBounds = false
         
-        // 設置 containerView 的約束
         containerView.snp.makeConstraints { make in
             make.top.equalTo(contentView)
             make.bottom.equalTo(contentView).inset(10)
@@ -40,7 +39,9 @@ class CollectionsTableViewCell: UITableViewCell {
             make.center.equalTo(contentView)
         }
         
-        // 添加 titleLabel 到 containerView 中
+        containerView.layer.borderColor = UIColor.deepBlue.withAlphaComponent(0.7).cgColor
+        containerView.layer.borderWidth = 1.5
+        
         containerView.addSubview(titleLabel)
         titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
         titleLabel.textColor = .deepBlue
@@ -50,7 +51,6 @@ class CollectionsTableViewCell: UITableViewCell {
             make.centerY.equalTo(containerView)
         }
         
-        // 添加 collectButton 到 containerView 中
         containerView.addSubview(collectButton)
         
         collectButton.snp.makeConstraints { make in

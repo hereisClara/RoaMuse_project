@@ -49,7 +49,6 @@ class UserTableViewCell: UITableViewCell {
         contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset / 2 + 3, left: 0, bottom: inset / 4, right: 0))
     }
     
-    // 設置 cell 內的內容
     func setupCell() {
         
         userNameLabel.text = "UserName"
@@ -79,7 +78,7 @@ class UserTableViewCell: UITableViewCell {
         awardLabelView.snp.makeConstraints { make in
             make.top.equalTo(userNameLabel.snp.bottom).offset(6)
             make.leading.equalTo(userNameLabel)
-            make.height.equalTo(20)
+            make.height.equalTo(25)
         }
         
         photoStackView.snp.makeConstraints { make in
@@ -102,6 +101,7 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(avatarImageView.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
+//            make.bottom.equalTo(contentLabel.snp.top).offset(-12)
         }
         
         contentLabel.numberOfLines = 0
@@ -117,6 +117,7 @@ class UserTableViewCell: UITableViewCell {
         dateLabel.snp.makeConstraints { make in
             make.top.equalTo(photoStackView.snp.bottom).offset(12)
             make.leading.equalTo(contentLabel)
+            make.bottom.equalTo(likeButton.snp.top).offset(-12)
         }
         
         photoStackView.snp.makeConstraints { make in
@@ -128,7 +129,7 @@ class UserTableViewCell: UITableViewCell {
         }
         
         likeButton.snp.makeConstraints { make in
-            make.top.equalTo(dateLabel.snp.bottom).offset(16)
+//            make.top.equalTo(dateLabel.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView).offset(10)
             make.width.height.equalTo(20)
             make.bottom.equalTo(contentView).offset(-16)

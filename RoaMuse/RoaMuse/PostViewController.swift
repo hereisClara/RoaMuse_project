@@ -57,7 +57,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         if let trip = selectedTrip {
             var title = String()
             self.tripId = trip.id
-            print("////", tripId)
             FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
                 title = poem.title
                 self.dropdownButton.setTitle(title, for: .normal)
@@ -78,7 +77,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        tabBarController?.tabBar.isHidden = false
+//        tabBarController?.tabBar.isHidden = false
     }
     
     @objc func handlePostAction() {
@@ -106,12 +105,10 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             make.width.height.equalTo(60) // 設置固定大小
         }
         
-        // 为每张图片添加点击手势
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
         imageView.isUserInteractionEnabled = true
         imageView.addGestureRecognizer(tapGesture)
         
-        // 創建一個 "叉叉" 按鈕
         let removeButton = UIButton(type: .custom)
         removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
         removeButton.tintColor = .gray
@@ -126,7 +123,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             make.width.height.equalTo(24)
         }
         
-        // 設置按鈕的點擊事件來移除圖片
         removeButton.addTarget(self, action: #selector(removeSelectedImage(_:)), for: .touchUpInside)
         removeButton.tag = selectedImages.count - 1  // 標記此按鈕，對應圖片位置
     }
@@ -225,8 +221,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         imageButton.snp.makeConstraints { make in
             make.top.equalTo(contentTextView.snp.bottom).offset(16) // 設置在 contentTextView 下方
             make.leading.equalTo(contentTextView) // 與 contentTextView 左對齊
-            make.width.equalTo(120) // 寬度 150 點
-            make.height.equalTo(60) // 高度 50 點
+            make.width.equalTo(120)
+            make.height.equalTo(60)
         }
         
         imageButton.addTarget(self, action: #selector(selectImage), for: .touchUpInside)
@@ -311,7 +307,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         titleTextField.text = ""
         contentTextView.text = ""
         postButtonAction?()
-        navigationController?.popViewController(animated: true)
+        navigationController?.popToRootViewController(animated: true)
+        tabBarController?.tabBar.isHidden = false
     }
     
     @objc func toggleDropdown() {

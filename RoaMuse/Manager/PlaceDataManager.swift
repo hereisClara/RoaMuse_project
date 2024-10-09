@@ -19,51 +19,53 @@ class PlaceDataManager {
            let config = NSDictionary(contentsOfFile: path),
            let googlePlacesAPIKey = config["GOOGLE_PLACES_API_KEY"] as? String {
             self.apiKey = googlePlacesAPIKey
-            print("~~~", self.apiKey)
         } else {
             self.apiKey = ""  // 如果金鑰未設置，設置為空字符串（需要處理錯誤情況）
             print("Google Places API Key is missing!")
         }
     }
     
-    func searchPlaces(withKeywords keywords: [String], startingFrom startLocation: CLLocation, completion: @escaping ([Place]) -> Void) {
+    func searchPlaces(withKeywords keywords: [String], startingFrom startLocation: CLLocation, radius: CLLocationDistance = 15000, completion: @escaping ([Place], Bool) -> Void) {
         var foundPlaces = [Place]()
         var currentLocation = startLocation
         let dispatchGroup = DispatchGroup()
-        
+        var hasFoundPlace = false
         // 遞迴搜尋地點
         func searchNextKeyword(index: Int) {
             if index >= keywords.count {
-                completion(foundPlaces)
+                completion(foundPlaces, hasFoundPlace)
                 return
             }
             
             var keyword = keywords[index]
-            let radius = 15000  // 搜索半徑，單位為公尺
+            let radius = radius
             var typeRestrictions = "park|natural_feature"  // 限制搜尋類型為公園或自然景點
             
             if keyword == "山" {
-                keyword = "高山 登山"  // 使用更具體的關鍵字
+                keyword = "高山 峰 嶺 步道"  // 使用更具體的關鍵字
                 typeRestrictions = "hiking_trail|mountain|natural_feature"  // 限制搜尋高山或登山步道類型
             }
             
             dispatchGroup.enter()
-            searchPlaceByKeyword(keyword, location: currentLocation, radius: radius, typeRestrictions: typeRestrictions) { [weak self] place in
+            searchPlaceByKeyword(keyword, location: currentLocation, radius: Int(radius), typeRestrictions: typeRestrictions) { [weak self] place in
                 guard let self = self else {
                     dispatchGroup.leave()
                     return
                 }
                 
                 if let place = place {
-                    // 檢查 placeId 是否已經存在，避免重複
-                    if !foundPlaces.contains(where: { $0.id == place.id }) {
-                        foundPlaces.append(place)
-                        currentLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                    hasFoundPlace = true
+                    if place.name.contains("協會") {
+                        print("Skipping place with name containing 協會: \(place.name)")
                     } else {
-                        print("Place with ID \(place.id) already exists, skipping.")
+                        if !foundPlaces.contains(where: { $0.id == place.id }) {
+                            foundPlaces.append(place)
+                            currentLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                        } else {
+                            print("Place with ID \(place.id) already exists, skipping.")
+                        }
                     }
                 }
-                
                 dispatchGroup.leave()
                 searchNextKeyword(index: index + 1)
             }

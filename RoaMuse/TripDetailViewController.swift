@@ -95,8 +95,6 @@ class TripDetailViewController: UIViewController {
                     print(self.placePoemPairs)
                 }
             }
-        } else {
-            
         }
         setupTableView()
         loadPlacesDataFromFirebase()
@@ -157,7 +155,7 @@ class TripDetailViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.tabBarController?.tabBar.isHidden = false
+//        self.tabBarController?.tabBar.isHidden = false
     }
     
     func getPoemPlacePair() {
@@ -192,6 +190,7 @@ class TripDetailViewController: UIViewController {
         
         let shareAction = UIAlertAction(title: "分享小卡", style: .default) { [weak self] _ in
             let photoVC = PhotoUploadViewController()
+            photoVC.selectedTrip = self?.trip
             self?.navigationController?.pushViewController(photoVC, animated: true)
         }
         

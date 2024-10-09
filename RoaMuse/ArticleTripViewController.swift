@@ -27,7 +27,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
 //    var locationManager = LocationManager()
     var locationManager = LocationManager()
     var userLocation: CLLocationCoordinate2D?
-    let activityIndicator = UIActivityIndicatorView(style: .large)
+    let activityIndicator = GradientActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
 
     var containerView = UIView()
     let generateView = UIView()
@@ -71,14 +71,12 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                     self.generateView.isUserInteractionEnabled = true  // 允许用户交互
                 }
             } catch {
-                print("NLP 模型加载失败：\(error)")
                 DispatchQueue.main.async {
                     // 可以提示用户，或者处理加载失败的情况
                     self.generateView.isUserInteractionEnabled = true  // 即使加载失败，也需要避免界面卡死
                 }
             }
         }
-
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -129,7 +127,6 @@ print("no process")
     }
     
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
-        print("start2")
         FirebaseManager.shared.loadPoemById(self.poemId) { poem in
             if poem.content.isEmpty {
                 DispatchQueue.main.async {
@@ -139,10 +136,8 @@ print("no process")
             }
 
             self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
-                print("start3")
                 self.keywordToLineMap = keywordToLineMap
                 self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
-                    print("start4")
                     if let trip = trip {
                         let places = self.matchingPlaces.map { $0.place }
                         self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
@@ -245,7 +240,7 @@ print("no process")
                 }
             } else {
                 // 调用 PlaceDataManager 搜索
-                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces in
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
@@ -369,7 +364,11 @@ print("no process")
         var totalTime: TimeInterval = 0
         let dispatchGroup = DispatchGroup()
         var placeOrder = [String]()  // 存放地點的顺序
-        
+        print("inin")
+        print("调用 calculateTotalRouteTimeAndDetails 方法")
+        print("places: \(places)")
+        print("currentLocation: \(currentLocation)")
+
         // Step 1: 当当前位置到第一个地点
         if let firstPlace = places.first {
             let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
@@ -379,6 +378,7 @@ print("no process")
                     totalTime += route.expectedTravelTime
                     self.mapView.addOverlay(route.polyline)  // 绘制路径
                     placeOrder.append(firstPlace.name)
+                    print("!!! ", placeOrder)
                 }
                 dispatchGroup.leave()
             }
@@ -405,6 +405,7 @@ print("no process")
                             self.mapView.addOverlay(route.polyline)
                         }
                         placeOrder.append(endPlace.name)
+                        print("??? ", placeOrder)
                     }
                     dispatchGroup.leave()
                 }
@@ -436,13 +437,8 @@ extension ArticleTripViewController {
     }
     
     func setupLocationManager() {
-//        locationManager.onLocationUpdate = { [weak self] location in
-//            guard let self = self else { return }
-//            self.userLocation = location.coordinate  // 獲取當前使用者位置
-//            print("User location updated: \(location.coordinate)")
-//        }
-//        locationManager.startUpdatingLocation()
-
+//            locationManager.requestWhenInUseAuthorization()  // 请求位置使用权限
+//            locationManager.startUpdatingLocation()
     }
     
     // 繪製路線的覆蓋層
@@ -598,7 +594,6 @@ extension ArticleTripViewController {
             make.leading.equalTo(generateView).offset(15)
         }
         
-        // 設置圖示
         generateView.addSubview(generateIcon)
         generateIcon.image = UIImage(systemName: "chevron.right.circle.fill")
         generateIcon.tintColor = .white
@@ -661,6 +656,7 @@ extension ArticleTripViewController {
         tripRef.getDocument { (document, error) in
             if let document = document, document.exists {
                 if let placeIds = document.data()?["placeIds"] as? [String] {
+                    print("Place IDs: \(placeIds)")
                     let dispatchGroup = DispatchGroup()
                     
                     for placeId in placeIds {
@@ -672,14 +668,17 @@ extension ArticleTripViewController {
                     
                     dispatchGroup.notify(queue: .main) {
                         self.mapView.showAnnotations(self.annotations, animated: true)
-                        
+                        print("=====", self.userLocation)
                         if let userLocation = self.userLocation {
+                            print("正在调用 calculateTotalRouteTimeAndDetails")
                             self.calculateTotalRouteTimeAndDetails(from: userLocation, places: self.places) { totalTime, placeOrder in
+                                print("in")
                                 if let totalTime = totalTime {
                                     self.updateTransportTimeLabel(totalTime: totalTime)
                                 }
                                 if let placeOrder = placeOrder {
                                     self.placeNames = placeOrder  // 更新 placeNames
+                                    print("====", self.placeNames)
                                     self.displayPlacesInLabel()  // 显示地点
                                 }
                             }
