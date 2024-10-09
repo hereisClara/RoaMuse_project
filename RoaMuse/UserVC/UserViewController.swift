@@ -16,6 +16,7 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    var postsCount = Int()
     let postsNumberLabel = UILabel()
     let postsTextLabel = UILabel()
     let awardsButton = UIButton()
@@ -570,7 +571,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
 
     // 新增 setupPostsStackView 方法
     func setupPostsStackView() {
-        postsNumberLabel.text = String(posts.count)
+        postsNumberLabel.text = String(postsCount)
         postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
         
         postsTextLabel.text = "Posts"
@@ -850,6 +851,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 // 重新加载表格视图
                 DispatchQueue.main.async {
+                    self.postsCount = self.posts.count
+                    self.postsNumberLabel.text = String(self.postsCount)
                     self.tableView.reloadData()
                 }
             }

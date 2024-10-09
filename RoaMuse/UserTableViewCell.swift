@@ -56,7 +56,6 @@ class UserTableViewCell: UITableViewCell {
         userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         avatarImageView.image = UIImage(named: "user-placeholder")
-//        awardLabelView.updateTitle("Award Title")
         
         [
             moreButton, userNameLabel, awardLabelView, titleLabel, avatarImageView, contentLabel, dateLabel,
@@ -80,7 +79,7 @@ class UserTableViewCell: UITableViewCell {
         awardLabelView.snp.makeConstraints { make in
             make.top.equalTo(userNameLabel.snp.bottom).offset(6)
             make.leading.equalTo(userNameLabel)
-            make.height.equalTo(20) // 設置適當的高度
+            make.height.equalTo(20)
         }
         
         photoStackView.snp.makeConstraints { make in
@@ -100,7 +99,7 @@ class UserTableViewCell: UITableViewCell {
         }
     
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(12)
+            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
         }
@@ -108,7 +107,7 @@ class UserTableViewCell: UITableViewCell {
         contentLabel.numberOfLines = 0
         contentLabel.text = "????????????????????????????????????????????????????????????????????"
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.top.equalTo(titleLabel.snp.bottom).offset(12)
             make.leading.equalTo(titleLabel)
             make.trailing.equalTo(contentView).offset(-16)
             //make.height.equalTo(30)

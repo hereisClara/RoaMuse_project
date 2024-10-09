@@ -36,13 +36,13 @@ class OpenAIManager {
                 "messages": [
                     ["role": "system", "content": "你是一位創造詩句意境提示的助手"],
                     ["role": "user", "content": """
-                    根據以下詩詞和地點名稱，根據地點的線上資訊，生成一段最多 50 字的提示語，讓遊覽者感受到詩詞中的意境，並確保句子結尾處理完畢，要有句點：
+                    根據以下詩詞和地點名稱，根據地點的線上資訊，生成一段50到60字 字的情境提示語，讓遊覽者感受到詩詞中的意境，並確保句子結尾處理完畢，以句點結束：
                     
                     詩詞內容：『\(poemLine)』
                     地點名稱：\(placeName)
                     """]
                 ],
-                "max_tokens": 45
+                "max_tokens": 100
             ]
         
         AF.request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default, headers: headers)

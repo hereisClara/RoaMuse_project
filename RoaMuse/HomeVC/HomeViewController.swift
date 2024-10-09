@@ -20,7 +20,7 @@ class HomeViewController: UIViewController {
     private let homeTableView = UITableView()
     private let popupView = PopUpView()
     let poemMatchingService = PoemMatchingService()
-    let activityIndicator = UIActivityIndicatorView(style: .large)
+    let activityIndicator = GradientActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
     
     var likeCount = String()
     var bookmarkCount = String()
@@ -278,7 +278,6 @@ class HomeViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
         
-        // 在 recommendRandomTripView 裡面添加 UILabel
         let titleLabel = UILabel()
         titleLabel.text = "# 時令推薦"
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)

@@ -556,6 +556,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
 }
 
 extension NewsFeedViewController {
+    
     func getNewData() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return

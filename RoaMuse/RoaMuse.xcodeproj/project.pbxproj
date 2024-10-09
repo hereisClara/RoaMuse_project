@@ -50,6 +50,7 @@
 		AC75D0FC2CB3C3D8005258EA /* NotificationTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */; };
 		AC75D0FE2CB41C85005258EA /* OpenAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */; };
 		AC75D1002CB50060005258EA /* RegionLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FF2CB50060005258EA /* RegionLabelView.swift */; };
+		AC75D1022CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
@@ -153,6 +154,7 @@
 		AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationTableViewCell.swift; sourceTree = "<group>"; };
 		AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIManager.swift; sourceTree = "<group>"; };
 		AC75D0FF2CB50060005258EA /* RegionLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionLabelView.swift; sourceTree = "<group>"; };
+		AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientActivityIndicatorViewViewController.swift; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
@@ -287,6 +289,7 @@
 			isa = PBXGroup;
 			children = (
 				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
+				AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */,
 				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC18F83A2CABDA28004E8868 /* LocationService.swift */,
@@ -322,6 +325,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
 				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
 				AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */,
 				AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */,
@@ -358,7 +362,6 @@
 				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
 				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
 				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
-				AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */,
 				AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */,
 				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
 				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
@@ -629,6 +632,7 @@
 				AC7A2A592C97AF17003FA811 /* Extension+String.swift in Sources */,
 				AC75D0F42CB28382005258EA /* RegionSelectionViewController.swift in Sources */,
 				AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */,
+				AC75D1022CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift in Sources */,
 				AC18F8452CAE93B8004E8868 /* BottomSheetManager.swift in Sources */,
 				AC18F8532CB01F69004E8868 /* PhotoCollectionTableViewCell.swift in Sources */,
 				AC75D0F62CB285FC005258EA /* SettingDetailCell.swift in Sources */,

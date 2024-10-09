@@ -14,6 +14,7 @@ import FirebaseFirestore
 
 class TripDetailViewController: UIViewController {
     
+    var savedSuggestions: [String: String] = [:]
     var buttonContainer: UIStackView = UIStackView()
     var transportButtons: [UIButton] = []
     var selectedTransportButton: UIButton?
@@ -606,7 +607,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 150
+        return 180
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -655,7 +656,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         placeLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
-            make.centerY.equalToSuperview().offset(-20)
+            make.centerY.equalToSuperview().offset(-40)
         }
         
         let completeButton = UIButton(type: .system)
@@ -673,7 +674,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let descriptionLabel = UILabel()
         descriptionLabel.tag = 100 + section
-        descriptionLabel.numberOfLines = 2
+        descriptionLabel.numberOfLines = 3
         descriptionLabel.lineSpacing = 3
         footerView.addSubview(descriptionLabel)
         descriptionLabel.snp.makeConstraints { make in
@@ -868,11 +869,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func closeMapAndCollapseCell(at sectionIndex: Int) {
-//        if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: sectionIndex)) {
-//                cell.contentView.alpha = 0
-//                cell.isHidden = true
-//            }
-//            isMapVisible = false
             mapVisibilityState[sectionIndex] = false
             self.tableView.beginUpdates()
             self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
@@ -886,8 +882,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     func expandNextCell(at sectionIndex: Int) {
         guard sectionIndex < places.count else { return }
         currentTargetIndex = sectionIndex
-//        isMapVisible = true
-        
         if self.locationButton.isSelected {
             mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
         }
@@ -915,18 +909,23 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                     placeLabel.text = poemPair.poemLine
                     placeLabel.textColor = .white
                     if let descriptionLabel = footerView.viewWithTag(100 + sectionIndex) as? UILabel {
-                        descriptionLabel.text = "生成中..."
-                        descriptionLabel.textColor = .backgroundGray
-                        OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
-                            switch result {
-                            case .success(let suggestion):
-                                DispatchQueue.main.async {
-                                    descriptionLabel.text = suggestion
-                                }
-                            case .failure(let error):
-                                DispatchQueue.main.async {
-                                    descriptionLabel.text = "無法生成描述"
-                                    print("Error fetching suggestion: \(error.localizedDescription)")
+                        if let savedSuggestion = savedSuggestions[place.id] {
+                            descriptionLabel.text = savedSuggestion
+                        } else {
+                            descriptionLabel.text = "生成中..."
+                            descriptionLabel.textColor = .backgroundGray
+                            OpenAIManager.shared.fetchSuggestion(poemLine: poemPair.poemLine, placeName: place.name) { result in
+                                switch result {
+                                case .success(let suggestion):
+                                    DispatchQueue.main.async {
+                                        self.savedSuggestions[place.id] = suggestion
+                                        descriptionLabel.text = suggestion
+                                    }
+                                case .failure(let error):
+                                    DispatchQueue.main.async {
+                                        descriptionLabel.text = "無法生成描述"
+                                        print("Error fetching suggestion: \(error.localizedDescription)")
+                                    }
                                 }
                             }
                         }
@@ -986,7 +985,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         placePoemPairs.append(placePoemPair)
                     }
                 }
-                
                 completion(placePoemPairs)
             } else {
                 completion(nil)

@@ -77,8 +77,9 @@ class CollectionsViewController: UIViewController {
     func setupUI() {
         view.addSubview(segmentedControl)
         
-        segmentedControl.layer.cornerRadius = 20
+        segmentedControl.layer.cornerRadius = 25
         segmentedControl.clipsToBounds = true
+        segmentedControl.layer.masksToBounds = true
         
         segmentedControl.snp.makeConstraints { make in
             make.centerX.equalTo(view)
@@ -252,7 +253,6 @@ class CollectionsViewController: UIViewController {
             parentDispatchGroup.notify(queue: .main) {
                 self.collectionsTableView.reloadData()
                 self.collectionsTableView.mj_header?.endRefreshing()
-                
             }
         }
     }
@@ -565,6 +565,10 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         
         if segmentIndex == 0 {
             if indexPath.section == 0 {
+                guard indexPath.row < incompleteTripsArray.count,
+                                  indexPath.row < incompletesPoemTitleArray.count else {
+                                return UITableViewCell() // 如果數據尚未加載，返回一個空的 UITableViewCell
+                            }
                 let trip = incompleteTripsArray[indexPath.row]
                 let poemTitle = incompletesPoemTitleArray[indexPath.row]
                 cell?.titleLabel.text = poemTitle.isEmpty ? "加载中..." : poemTitle
@@ -574,6 +578,10 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                     }
                 }
             } else {
+                guard indexPath.row < completeTripsArray.count,
+                                  indexPath.row < completesPoemTitleArray.count else {
+                                return UITableViewCell() // 如果數據尚未加載，返回一個空的 UITableViewCell
+                            }
                 let trip = completeTripsArray[indexPath.row]
                 let poemTitle = completesPoemTitleArray[indexPath.row]
                 cell?.titleLabel.text = poemTitle.isEmpty ? "加载中..." : poemTitle
