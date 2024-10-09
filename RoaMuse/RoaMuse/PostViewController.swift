@@ -308,7 +308,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         contentTextView.text = ""
         postButtonAction?()
         navigationController?.popToRootViewController(animated: true)
-        tabBarController?.tabBar.isHidden = false
+//        tabBarController?.tabBar.isHidden = false
     }
     
     @objc func toggleDropdown() {

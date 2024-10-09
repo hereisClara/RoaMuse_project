@@ -5,6 +5,13 @@
 //  Created by 小妍寶 on 2024/10/4.
 //
 
+//
+//  UserListViewController.swift
+//  RoaMuse
+//
+//  Created by 小妍寶 on 2024/10/4.
+//
+
 import Foundation
 import UIKit
 import FirebaseFirestore
@@ -21,10 +28,21 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        
+        self.navigationItem.largeTitleDisplayMode = .never
+
         setupSegmentedControl()
         setupTableView()
         loadUserList()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     // 设置 UISegmentedControl
@@ -129,7 +147,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // 点击某个粉丝或关注用户时跳转到其个人页面
         let selectedUserId = users[indexPath.row]
         
         let userProfileVC = UserProfileViewController()
