@@ -1,6 +1,7 @@
 import UIKit
 import SnapKit
 import Photos
+import CoreImage
 
 class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -18,10 +19,16 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     var transparentArea: CGRect!
     let sliderButton = UIButton(type: .system) // 新增的按钮
     let sliderBackgroundView = UIView()
-    
+    var slider = UISlider()
+    var sliderLabel = UILabel()
     var imageViewConstraints: [Constraint] = [] // 保存 ImageView 的約束
     let minWidthScale: CGFloat = UIScreen.main.bounds.width
     let minHeightScale: CGFloat = UIScreen.main.bounds.height
+    var backgroundView = UIView()
+    var popupView = UIView()
+    var context = CIContext()
+    var currentCIImage: CIImage?
+    var currentFilter: CIFilter?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -87,11 +94,204 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.center.equalTo(sliderBackgroundView)
             make.width.height.equalTo(30)
         }
+        
+        sliderButton.addTarget(self, action: #selector(sliderButtonTapped), for: .touchUpInside)
+    }
+    
+    func createSlider(label: String, min: Float, max: Float, action: Selector) -> UIStackView {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 10
+        
+        let titleLabel = UILabel()
+        titleLabel.text = label
+        titleLabel.textAlignment = .center
+        stackView.addArrangedSubview(titleLabel)
+        
+        let slider = UISlider()
+        slider.minimumValue = min
+        slider.maximumValue = max
+        slider.addTarget(self, action: action, for: .valueChanged)
+        stackView.addArrangedSubview(slider)
+        
+        return stackView
     }
     
     @objc func sliderButtonTapped() {
-        print("Slider button tapped!")
-        // 这里可以添加弹出控制滑块的逻辑
+        // 获取 window 的引用
+        guard let window = UIApplication.shared.keyWindow else { return }
+        
+        var slider = UISlider()
+        var sliderLabel = UILabel()
+        
+        // 创建一个半透明的黑色背景视图
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        backgroundView.frame = window.bounds
+        window.addSubview(backgroundView)  // 添加到 window 上，覆盖所有内容
+        
+        // 创建弹窗视图
+        let popupView = UIView()
+        popupView.backgroundColor = .white
+        popupView.layer.cornerRadius = 15
+        popupView.layer.masksToBounds = true
+        backgroundView.addSubview(popupView)
+        
+        // 设置弹窗视图的布局
+        popupView.snp.makeConstraints { make in
+            make.center.equalTo(backgroundView)
+            make.width.equalTo(window).multipliedBy(0.9)
+            make.height.equalTo(400)
+        }
+        
+        slider.minimumValue = 0.0
+        slider.maximumValue = 1.0
+        popupView.addSubview(slider)
+        
+        // 添加滑块：遮罩透明度
+        let maskOpacitySlider = createSlider(label: "遮罩透明度", min: 0.0, max: 1.0, action: #selector(adjustMaskOpacity(_:)))
+        popupView.addSubview(maskOpacitySlider)
+        maskOpacitySlider.snp.makeConstraints { make in
+            make.top.equalTo(popupView).offset(20)
+            make.centerX.equalTo(popupView)
+            make.width.equalTo(popupView).multipliedBy(0.8)
+        }
+        
+        // 添加滑块：亮度
+        let brightnessSlider = createSlider(label: "亮度", min: -0.3, max: 0.3, action: #selector(adjustBrightness(_:)))
+        popupView.addSubview(brightnessSlider)
+        brightnessSlider.snp.makeConstraints { make in
+            make.top.equalTo(maskOpacitySlider.snp.bottom).offset(20)
+            make.centerX.equalTo(popupView)
+            make.width.equalTo(popupView).multipliedBy(0.8)
+        }
+        
+        // 添加滑块：饱和度
+        let saturationSlider = createSlider(label: "飽和度", min: 0.5, max: 1.5, action: #selector(adjustSaturation(_:)))
+        popupView.addSubview(saturationSlider)
+        saturationSlider.snp.makeConstraints { make in
+            make.top.equalTo(brightnessSlider.snp.bottom).offset(20)
+            make.centerX.equalTo(popupView)
+            make.width.equalTo(popupView).multipliedBy(0.8)
+        }
+        
+        // 添加滑块：模糊程度
+        let blurSlider = createSlider(label: "模糊", min: 0.0, max: 5.0, action: #selector(adjustBlur(_:)))
+        popupView.addSubview(blurSlider)
+        blurSlider.snp.makeConstraints { make in
+            make.top.equalTo(saturationSlider.snp.bottom).offset(20)
+            make.centerX.equalTo(popupView)
+            make.width.equalTo(popupView).multipliedBy(0.8)
+        }
+        // 添加一个标签显示当前滑块的
+        sliderLabel.text = "透明度: \(Int(slider.value * 100))%"
+        sliderLabel.textAlignment = .center
+        popupView.addSubview(sliderLabel)
+        
+        sliderLabel.snp.makeConstraints { make in
+            make.centerX.equalTo(popupView)
+            make.top.equalTo(slider.snp.bottom).offset(10)
+        }
+        
+        // 添加滑块值变化的监听器
+        slider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+        
+        // 添加关闭按钮
+        let closeButton = UIButton(type: .system)
+        closeButton.setTitle("关闭", for: .normal)
+        closeButton.tintColor = .systemBlue
+        closeButton.addTarget(self, action: #selector(dismissPopup), for: .touchUpInside)
+        popupView.addSubview(closeButton)
+        
+        closeButton.snp.makeConstraints { make in
+            make.bottom.equalTo(popupView.snp.bottom).offset(-20)
+            make.centerX.equalTo(popupView)
+        }
+        
+        // 保存引用用于关闭弹窗时使用
+        self.backgroundView = backgroundView
+        self.popupView = popupView
+        self.sliderLabel = sliderLabel
+        self.slider = slider
+    }
+    
+    // 调整遮罩透明度
+    @objc func adjustMaskOpacity(_ sender: UISlider) {
+        let alpha = CGFloat(sender.value)
+        templateImageView.alpha = alpha
+    }
+    
+    // 调整亮度
+    @objc func adjustBrightness(_ sender: UISlider) {
+        // 限制为 2% 的步进
+        let step: Float = 0.04
+        let roundedValue = round(sender.value / step) * step
+        sender.value = roundedValue
+        applyFilter(name: "CIColorControls", parameters: [kCIInputBrightnessKey: roundedValue])
+    }
+
+    @objc func adjustSaturation(_ sender: UISlider) {
+        // 限制为 2% 的步进
+        let step: Float = 0.04
+        let roundedValue = round(sender.value / step) * step
+        sender.value = roundedValue
+        applyFilter(name: "CIColorControls", parameters: [kCIInputSaturationKey: roundedValue])
+    }
+
+    @objc func adjustBlur(_ sender: UISlider) {
+        // 限制为 2% 的步进
+        let step: Float = 0.04
+        let roundedValue = round(sender.value / step) * step
+        sender.value = roundedValue
+        applyFilter(name: "CIGaussianBlur", parameters: [kCIInputRadiusKey: roundedValue])
+    }
+
+    @objc func sliderValueChanged(_ sender: UISlider) {
+        // 限制为 2% 的步进
+        let step: Float = 0.04
+        let roundedValue = round(sender.value / step) * step
+        sender.value = roundedValue
+        adjustMaskOpacity(sender)
+    }
+
+    func applyFilter(name: String, parameters: [String: Any]) {
+        guard let ciImage = currentCIImage else {
+            print("無法獲取 CIImage")
+            return
+        }
+
+        // 如果過去的濾鏡是同一種濾鏡，直接重用
+        if currentFilter?.name != name {
+            currentFilter = CIFilter(name: name)
+            currentFilter?.setDefaults()
+        }
+
+        guard let filter = currentFilter else {
+            print("無法創建 CIFilter")
+            return
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            filter.setValue(ciImage, forKey: kCIInputImageKey)
+            
+            parameters.forEach { key, value in
+                filter.setValue(value, forKey: key)
+            }
+            
+            if let outputImage = filter.outputImage,
+               let cgImage = self.context.createCGImage(outputImage, from: outputImage.extent) {
+                
+                DispatchQueue.main.async {
+                    self.imageView.image = UIImage(cgImage: cgImage)
+                }
+            } else {
+                print("濾鏡應用失敗")
+            }
+        }
+    }
+    
+    @objc func dismissPopup() {
+        backgroundView.removeFromSuperview()
     }
     
     func setupButtons() {
@@ -213,7 +413,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     // 分享到外部的方法
     func shareToExternal() {
         // 分享操作，使用 captureScreenshotExcludingViews 捕捉當前畫面
-        if let image = captureScreenshotExcludingViews([buttonStackView, stackViewBackgroundView]) {
+        if let image = captureScreenshotExcludingViews([buttonStackView, stackViewBackgroundView, sliderBackgroundView]) {
             let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
             self.present(activityVC, animated: true, completion: nil)
         }
@@ -221,7 +421,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     
     // 分享到日記的方法
     func shareToDiary() {
-        guard let combinedImage = captureScreenshotExcludingViews([buttonStackView, stackViewBackgroundView]) else {
+        guard let combinedImage = captureScreenshotExcludingViews([buttonStackView, stackViewBackgroundView, sliderBackgroundView]) else {
             print("无法捕捉合成后的图片")
             return
         }
@@ -233,27 +433,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
     
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let selectedImage = info[.originalImage] as? UIImage {
-            dismiss(animated: true, completion: {
-                self.imageView.image = selectedImage
-                self.resetImageViewPositionAndSize()
-            })
-        }
-    }
-    
-    func resetImageViewPositionAndSize() {
-        guard let image = imageView.image else { return }
-        
-        let screenHeight = UIScreen.main.bounds.height
-        let imageAspectRatio = image.size.width / image.size.height
-        
-        // 設定 imageView 的高度等於螢幕高度
-        let newHeight = screenHeight
-        let newWidth = newHeight * imageAspectRatio
-        
-        updateImageViewConstraints(width: newWidth, height: newHeight)
-    }
+
     
     func setupImageViewConstraints() {
         imageViewConstraints = []
@@ -273,6 +453,31 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
         view.layoutIfNeeded()
     }
+}
+
+extension PhotoUploadViewController {
+    
+    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+
+        // 確定比例，取最小值
+        let ratio = min(widthRatio, heightRatio)
+
+        // 計算新尺寸
+        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+
+        // 重繪圖片
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage ?? image // 確保即使失敗也返回原圖
+    }
+
     
     @objc func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
         guard let view = gesture.view else { return }
@@ -318,21 +523,18 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
     }
     
-    // 确保 imageView 不超出 transparentArea 的范围
     func ensureImageViewWithinBounds() {
         let imageFrame = imageView.frame
         let superviewBounds = view.bounds
         
         var newCenter = imageView.center
         
-        // 確保圖片不超出左右邊界
         if imageFrame.minX > 0 {
             newCenter.x = imageView.frame.width / 2
         } else if imageFrame.maxX < superviewBounds.width {
             newCenter.x = superviewBounds.width - imageView.frame.width / 2
         }
         
-        // 確保圖片不超出上下邊界
         if imageFrame.minY > 0 {
             newCenter.y = imageView.frame.height / 2
         } else if imageFrame.maxY < superviewBounds.height {
@@ -357,7 +559,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
     
     @objc func saveToPhotoAlbum() {
-        if let screenshot = captureScreenshotExcludingViews([uploadButton, saveButton,cameraButton, shareButton, stackViewBackgroundView]) {
+        if let screenshot = captureScreenshotExcludingViews([uploadButton, saveButton,cameraButton, shareButton, stackViewBackgroundView, sliderBackgroundView]) {
             UIImageWriteToSavedPhotosAlbum(screenshot, self, #selector(imageSaved(_:didFinishSavingWithError:contextInfo:)), nil)
         }
     }
@@ -368,5 +570,29 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         } else {
             print("保存成功")
         }
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        if let selectedImage = info[.originalImage] as? UIImage {
+            dismiss(animated: true, completion: {
+                let resizedImage = self.resizeImage(image: selectedImage, targetSize: CGSize(width: 1000, height: 1000))
+                self.imageView.image = resizedImage
+                self.currentCIImage = CIImage(image: resizedImage)
+                self.resetImageViewPositionAndSize()
+            })
+        }
+    }
+    
+    func resetImageViewPositionAndSize() {
+        guard let image = imageView.image else { return }
+        
+        let screenHeight = UIScreen.main.bounds.height
+        let imageAspectRatio = image.size.width / image.size.height
+        
+        // 設定 imageView 的高度等於螢幕高度
+        let newHeight = screenHeight
+        let newWidth = newHeight * imageAspectRatio
+        
+        updateImageViewConstraints(width: newWidth, height: newHeight)
     }
 }
