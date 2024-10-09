@@ -383,6 +383,13 @@ class HomeViewController: UIViewController {
                                         self.activityIndicator.stopAnimating()
                                         self.activityIndicator.isHidden = true
                                     }
+                                    FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: matchedPoem.id, city: self.city) { error in
+                                        if let error = error {
+                                                print("Error saving data: \(error.localizedDescription)")
+                                            } else {
+                                                print("Data saved successfully")
+                                            }
+                                    }
                                 }
                                 
                                 self.saveTripToFirebase(poem: matchedPoem) { savedTrip in
@@ -729,9 +736,7 @@ extension HomeViewController: UITableViewDataSource, UITableViewDelegate {
             let postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
             
-            guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-                return
-            }
+            guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
             
             var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
             
@@ -869,7 +874,6 @@ extension HomeViewController {
     func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
         
         let keywordPlaceIds = self.matchingPlaces.map { ["keyword": $0.keyword, "placeId": $0.place.id] }
-        
         let tripData: [String: Any] = [
             "poemId": poem.id,
             "placeIds": self.matchingPlaces.map { $0.place.id },
@@ -900,7 +904,6 @@ extension HomeViewController {
                     }
                     completion(existingTrip)
                 }
-                
             } else {
                 let db = Firestore.firestore()
                 var documentRef: DocumentReference? = nil
