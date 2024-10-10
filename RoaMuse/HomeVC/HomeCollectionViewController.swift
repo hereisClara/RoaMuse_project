@@ -116,6 +116,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         collectionView.alwaysBounceVertical = true // 總是允許垂直滾動
         collectionView.showsVerticalScrollIndicator = false // 隱藏垂直滾動條
         collectionView.showsHorizontalScrollIndicator = false // 隱藏水平滾動條
+        collectionView.allowsSelection = false
         
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in

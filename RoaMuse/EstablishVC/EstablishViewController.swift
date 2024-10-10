@@ -280,7 +280,7 @@ extension EstablishViewController {
         }
         
         // 在主線程中安排超時計時器
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutWorkItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20, execute: timeoutWorkItem)
         
         PoemCollectionManager.shared.loadPoemIdsFromFirebase(forUserId: userId) {
             DispatchQueue.global(qos: .userInitiated).async {
