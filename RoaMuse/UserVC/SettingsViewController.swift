@@ -1,4 +1,5 @@
 import Foundation
+import SafariServices
 import UIKit
 import FirebaseCore
 import FirebaseStorage
@@ -16,8 +17,8 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     var region = String()
     var userGender: String?
     
-    let settingsOptions = ["個人名稱", "性別", "個人簡介", "地區", "封鎖名單", "刪除帳號", "登出"]
-    
+    let settingsOptions = ["個人名稱", "性別", "個人簡介", "地區", "封鎖名單", "隱私政策", "刪除帳號", "登出"]
+
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
@@ -141,6 +142,8 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             cell.configureCell(title: "地區", detail: region)
         case "封鎖名單":
             cell.configureCell(title: "封鎖名單", detail: "")
+        case "隱私政策":
+            cell.configureCell(title: "隱私政策", detail: "")
         case "刪除帳號":
             cell.configureCell(title: "刪除帳號", detail: "")
         case "登出":
@@ -180,8 +183,18 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         } else if selectedOption == "封鎖名單" {
             let blockVC = BlockedListViewController()
             navigationController?.pushViewController(blockVC, animated: true)
+        } else if selectedOption == "隱私政策" {  // 新增隱私政策選項處理
+            showPrivacyPolicy()
         }
     }
+    
+    func showPrivacyPolicy() {
+        if let url = URL(string: "https://www.privacypolicies.com/live/c984b18c-d28e-4bd2-945e-3ee2b23c5375") { // 替換為你的隱私政策URL
+            let safariVC = SFSafariViewController(url: url)
+            present(safariVC, animated: true, completion: nil)
+        }
+    }
+
     
     // 處理登出邏輯
     func handleLogout() {
@@ -218,7 +231,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                 return
             }
             
-            // 將用戶的狀態設為 0（軟刪除）
             self.softDeleteUser(userId: userId)
         }))
         
