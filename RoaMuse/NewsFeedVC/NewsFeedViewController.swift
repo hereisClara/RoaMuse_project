@@ -424,6 +424,27 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         postsTableView.backgroundColor = .clear
     }
     
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let scrollHeight = scrollView.frame.size.height
+        
+        // 如果內容不足以充滿屏幕，則不用修正
+        guard contentHeight > scrollHeight else { return }
+        
+        // 假設我們定義一個最大允許偏移量範圍，防止滾動超出內容範圍
+        let maxOffsetY = contentHeight - scrollHeight
+        let minOffsetY: CGFloat = 0
+        
+        // 修正滾動條跳動：限制滾動範圍在 minOffsetY 和 maxOffsetY 之間
+        if offsetY < minOffsetY {
+            scrollView.contentOffset.y = minOffsetY // 防止滾動超出頂部
+        } else if offsetY > maxOffsetY {
+            scrollView.contentOffset.y = maxOffsetY // 防止滾動超出底部
+        }
+    }
+
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         postsArray.count
     }
@@ -435,9 +456,14 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         
         guard let cell = cell else { return UITableViewCell() }
         
+        cell.avatarImageView.image = nil
+        cell.userNameLabel.text = nil
+        cell.awardLabelView.updateTitle("初心者")
+        cell.awardLabelView.backgroundColor = .systemGray
+        
         // 獲取貼文發佈者的 userId
         guard let postOwnerId = postData["userId"] as? String else { return UITableViewCell() }
-        
+        cell.tag = indexPath.row
         cell.selectionStyle = .none
         cell.titleLabel.text = postData["title"] as? String
         cell.contentLabel.text = postData["content"] as? String
@@ -470,29 +496,29 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
                     // 使用 Kingfisher 加載圖片到 avatarImageView
                     DispatchQueue.main.async {
-                        cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                        cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "user-placeholder"))
                     }
                 }
                 
                 cell.userNameLabel.text = data["userName"] as? String
                 
-                FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { (result: Result<(String, Int), Error>) in
-                    switch result {
-                    case .success(let (awardTitle, item)):
-                        let title = awardTitle
-                        cell.awardLabelView.updateTitle(awardTitle)
-                        DispatchQueue.main.async {
-                            AwardStyleManager.updateTitleContainerStyle(
-                                forTitle: awardTitle,
-                                item: item,
-                                titleContainerView: cell.awardLabelView,
-                                titleLabel: cell.awardLabelView.titleLabel,
-                                dropdownButton: nil
-                            )
+                FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { result in
+                    DispatchQueue.main.async {
+                        if cell.tag == indexPath.row {  // 確保這個結果與當前的單元格一致
+                            switch result {
+                            case .success(let (awardTitle, item)):
+                                cell.awardLabelView.updateTitle(awardTitle)
+                                AwardStyleManager.updateTitleContainerStyle(
+                                    forTitle: awardTitle,
+                                    item: item,
+                                    titleContainerView: cell.awardLabelView,
+                                    titleLabel: cell.awardLabelView.titleLabel,
+                                    dropdownButton: nil
+                                )
+                            case .failure(let error):
+                                print("獲取稱號失敗: \(error.localizedDescription)")
+                            }
                         }
-                        
-                    case .failure(let error):
-                        print("獲取稱號失敗: \(error.localizedDescription)")
                     }
                 }
             case .failure(let error):
@@ -521,7 +547,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         cell.collectButton.addTarget(self, action: #selector(self.didTapCollectButton(_:)), for: .touchUpInside)
-        
+//        cell.layoutIfNeeded()
         return cell
     }
     

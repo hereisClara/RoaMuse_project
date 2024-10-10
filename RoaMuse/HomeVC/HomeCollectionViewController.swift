@@ -7,6 +7,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     var poems = [Poem]()
     var collectionView: UICollectionView!
     var autoScrollTimer: Timer?
+    var numberOfItems = 30
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -15,7 +16,6 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         
-        // 設置大標題的樣式
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
                 .foregroundColor: UIColor.white,  // 修改大標題顏色
@@ -155,7 +155,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     // MARK: - UICollectionView DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return poems.isEmpty ? 0 : 240 // 返回較大的數字模擬無限滾動
+        return poems.isEmpty ? 0 : numberOfItems // 返回較大的數字模擬無限滾動
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -168,6 +168,20 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         
         return cell
     }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        if indexPath.item == numberOfItems - 5 && poems.count > 0 {
+                // 更新數據源，動態增加 15 個項目
+                let newItems = numberOfItems + 15
+                let indexPaths = (numberOfItems..<newItems).map { IndexPath(item: $0, section: 0) }
+                numberOfItems = newItems
+                
+                // 使用 performBatchUpdates 插入新項目，避免畫面閃動
+                collectionView.performBatchUpdates({
+                    collectionView.insertItems(at: indexPaths)
+                }, completion: nil)
+            }
+        }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // 防止 poems 数组为空导致崩溃
