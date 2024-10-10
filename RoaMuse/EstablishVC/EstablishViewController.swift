@@ -15,6 +15,10 @@ import MapKit
 
 class EstablishViewController: UIViewController {
     
+    var isStyleButtonSelected = true
+
+    var styleCircleView = UIView()
+    var recommendCircleView = UIView()
     var poemIdsInCollectionTripsHandler: (([String]) -> Void)?
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
@@ -64,8 +68,40 @@ class EstablishViewController: UIViewController {
         
         poemIdsInCollectionTripsHandler?(poemIdsInCollectionTrips)
         print(poemIdsInCollectionTrips)
+        
+        if let styleCircleButton = styleCircleView.subviews.first as? UIButton {
+            setButtonSelected(styleCircleButton)
+        } else {
+            setCellsSelectable(isSelectable: false)  // 預設為不可選擇
+        }
     }
     
+    func setButtonSelected(_ sender: UIButton) {
+        guard let circleView = sender.superview else { return }
+        
+        UIView.animate(withDuration: 0.3) {
+            circleView.backgroundColor = sender.tintColor
+            sender.tintColor = .white  // 或者任何未選中的狀態顏色
+        }
+    }
+    
+    func setButtonDeselected(_ sender: UIButton) {
+        guard let circleView = sender.superview else { return }
+        
+        UIView.animate(withDuration: 0.3) {
+            circleView.backgroundColor = .systemGray4
+            sender.tintColor = .deepBlue  // 恢復未選中顏色
+        }
+    }
+    
+    func setCellsSelectable(isSelectable: Bool) {
+        for cell in styleTableView.visibleCells {
+            cell.isUserInteractionEnabled = isSelectable
+        }
+
+        styleTableView.reloadData()  // 確保狀態即時更新
+    }
+
     func setupActivityIndicator() {
         
         activityIndicator.snp.makeConstraints { make in
@@ -83,29 +119,32 @@ class EstablishViewController: UIViewController {
     func setupUI() {
         view.addSubview(recommendRandomTripView)
         recommendRandomTripView.addSubview(styleLabel)
-        
+
         let circleView = UIView()
         circleView.backgroundColor = .backgroundGray
-        circleView.layer.cornerRadius = 20 // 圆形
+        circleView.layer.cornerRadius = 20
         circleView.layer.masksToBounds = true
         recommendRandomTripView.addSubview(circleView)
-        
-        // 创建并设置右侧的按钮
+
         let sliderButton = UIButton(type: .system)
         sliderButton.setImage(UIImage(systemName: "slider.horizontal.3"), for: .normal)
         sliderButton.tintColor = .deepBlue
         circleView.addSubview(sliderButton)
+
+        styleCircleView = createCircleButton(imageName: "shining", tintColor: .deepBlue)
+        recommendCircleView = createCircleButton(imageName: "cloud.sun.fill", tintColor: .deepBlue, isSystemImage: true)
+        view.addSubview(styleCircleView)
+        view.addSubview(recommendCircleView)
         
         recommendRandomTripView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide)
-            make.centerX.equalTo(view)
-            make.width.equalTo(view).multipliedBy(0.9)
+            make.leading.equalTo(styleCircleView.snp.trailing).offset(12)
+            make.trailing.equalTo(view).offset(-16)
             make.height.equalTo(120)
         }
-        
+
         recommendRandomTripView.layer.cornerRadius = 20
 
-        // 风格标签布局
         styleLabel.snp.makeConstraints { make in
             make.leading.equalTo(recommendRandomTripView).offset(16)
             make.top.equalTo(recommendRandomTripView).offset(12)
@@ -115,7 +154,7 @@ class EstablishViewController: UIViewController {
         styleLabel.text = "今天我想來點⋯⋯"
         styleLabel.textColor = .forBronze
         styleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 28)
-        
+
         recommendRandomTripView.backgroundColor = .deepBlue
 
         sliderButton.snp.makeConstraints { make in
@@ -129,10 +168,66 @@ class EstablishViewController: UIViewController {
             make.width.height.equalTo(40)
         }
 
+        // 按鈕佈局
+        styleCircleView.snp.makeConstraints { make in
+            make.leading.equalTo(view).offset(16)
+            make.top.equalTo(recommendRandomTripView).offset(16)
+            make.width.height.equalTo(40)
+        }
+
+        recommendCircleView.snp.makeConstraints { make in
+            make.leading.equalTo(view).offset(16)
+            make.top.equalTo(styleCircleView.snp.bottom).offset(16)
+            make.width.height.equalTo(40)
+        }
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
-        
+
         sliderButton.addTarget(self, action: #selector(showSliderPopup), for: .touchUpInside)
+    }
+
+    func createCircleButton(imageName: String, tintColor: UIColor, isSystemImage: Bool = false) -> UIView {
+        let circleView = UIView()
+        circleView.backgroundColor = .white
+        circleView.layer.cornerRadius = 20
+        circleView.layer.masksToBounds = true
+        circleView.layer.borderColor = UIColor.deepBlue.cgColor
+        circleView.layer.borderWidth = 1.5
+
+        let button = UIButton(type: .system)
+        if isSystemImage {
+            button.setImage(UIImage(systemName: imageName), for: .normal)
+        } else {
+            button.setImage(UIImage(named: imageName), for: .normal)
+        }
+        button.tintColor = tintColor
+        button.addTarget(self, action: #selector(circleButtonTapped(_:)), for: .touchUpInside)
+        
+        circleView.addSubview(button)
+        button.snp.makeConstraints { make in
+            make.center.equalTo(circleView)
+            make.width.height.equalTo(25)
+        }
+
+        return circleView
+    }
+
+    @objc func circleButtonTapped(_ sender: UIButton) {
+        guard let circleView = sender.superview else { return }
+
+        let originalTintColor = sender.tintColor
+        let originalBackgroundColor = circleView.backgroundColor
+
+        UIView.animate(withDuration: 0.3) {
+            // 交換背景色和tintColor
+            circleView.backgroundColor = originalTintColor
+            sender.tintColor = originalBackgroundColor
+        }
+        
+        isStyleButtonSelected.toggle()
+
+        setCellsSelectable(isSelectable: isStyleButtonSelected)
     }
     
     @objc func showSliderPopup() {
@@ -696,10 +791,10 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         
         view.addSubview(styleTableView)
         styleTableView.snp.makeConstraints { make in
-            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(12)
-            make.width.equalTo(recommendRandomTripView)
+            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(8)
+            make.leading.equalTo(view).offset(16)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-            make.centerX.equalTo(view)
+            make.trailing.equalTo(view).offset(-16)
         }
         
         styleTableView.rowHeight = UITableView.automaticDimension
@@ -713,7 +808,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = styleTableView.dequeueReusableCell(withIdentifier: "styleCell", for: indexPath) as? StyleTableViewCell
-        
+        cell?.containerView.backgroundColor = isStyleButtonSelected ? .white : .systemGray4
         cell?.titleLabel.text = styles[indexPath.row].name
         cell?.descriptionLabel.text = styles[indexPath.row].introduction
         cell?.selectionStyle = .none
