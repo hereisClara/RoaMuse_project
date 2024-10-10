@@ -39,7 +39,8 @@ class TabBarController: UITabBarController {
         tabBar.unselectedItemTintColor = UIColor.lightGray
 //        tabBar.isTranslucent = false // 禁用透明效果
         
-        let homeVC = HomeViewController()
+//        MARK: HomeVC change
+        let homeVC = HomeCollectionViewController()
         let homeNavController = UINavigationController(rootViewController: homeVC)
         homeVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "house"), tag: 0)
         

@@ -64,7 +64,7 @@ class CircularProgressBar: UIView {
         avatarImageView.layer.borderWidth = 1.0
         avatarImageView.layer.borderColor = UIColor.white.cgColor // 邊框顏色可調整
         
-        avatarImageView.image = UIImage(named: "default_avatar") // 替換為默認圖片
+        avatarImageView.image = UIImage(named: "user-placeholder") // 替換為默認圖片
         
         addSubview(avatarImageView)
     }

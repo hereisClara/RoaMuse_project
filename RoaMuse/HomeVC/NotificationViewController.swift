@@ -55,11 +55,9 @@ class NotificationViewController: UIViewController {
             return
         }
         
-        // 調用 FirebaseManager 的 fetchNotifications 方法，過濾出 to 是當前用戶的通知
         FirebaseManager.shared.fetchNotifications(forUserId: userId) { [weak self] notifications in
-            // 在這裡對 notifications 進行排序
+            
             self?.notifications = notifications.sorted { $0.createdAt > $1.createdAt }
-            print("-----", self?.notifications)
             DispatchQueue.main.async {
                 self?.tableView.reloadData()
             }

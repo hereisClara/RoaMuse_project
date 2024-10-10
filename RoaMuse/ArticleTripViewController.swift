@@ -95,12 +95,8 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     
     @objc func didTapGenerateView() {
         
-        guard let _ = self.nlpModel else {
-                print("NLP 模型尚未加载完成")
-                return
-            }
+        guard let _ = self.nlpModel else { return }
         
-        print("start")
         generateView.isUserInteractionEnabled = false
         
         activityIndicator.startAnimating()
@@ -110,10 +106,9 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             guard let self = self else { return }
             self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
-print("process")
             self.processWithCurrentLocation(currentLocation)
         }
-print("no process")
+
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             locationManager.requestLocation()
@@ -147,6 +142,13 @@ print("no process")
                                 self.generateView.isUserInteractionEnabled = true
                                 self.activityIndicator.stopAnimating()
                                 self.activityIndicator.isHidden = true
+                            }
+                            FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: poem.id, city: self.city) { error in
+                                if let error = error {
+                                        print("Error saving data: \(error.localizedDescription)")
+                                    } else {
+                                        print("Data saved successfully")
+                                    }
                             }
                         }
                     } else {
@@ -183,7 +185,6 @@ print("no process")
                             foundValidPlace = true
                         }
                     } else {
-                        print("Error processing keyword")
                     }
                     dispatchGroup.leave()
                 }
@@ -198,14 +199,12 @@ print("no process")
                     }
                 }
             } else {
-                print("No valid places found or an error occurred.")
                 DispatchQueue.main.async { completion(nil) }
             }
         }
     }
 
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, syncQueue: DispatchQueue, completion: @escaping (Bool) -> Void) {
-        print("Start processing keyword: \(keyword)")
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
             let nearbyPlaces = places.filter { place in
                 let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
@@ -264,9 +263,13 @@ print("no process")
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
             if let placemark = placemarks?.first {
-                let city = placemark.locality
+                let city = placemark.administrativeArea
+                let cityName = cityCodeMapping[city ?? ""]
                 let district = placemark.subLocality
-                completion(city, district)
+                
+                if let cityName = cityName {
+                    completion(cityName, district)
+                }
             } else {
                 completion(nil, nil)
             }
@@ -281,7 +284,6 @@ print("no process")
                 .prefix(maxSegments)
             
             guard let model = try? poemLocationNLP3(configuration: .init()) else {
-                print("NLP 模型加载失败")
                 DispatchQueue.main.async {
                     completion([], [:])  // 返回空结果，避免异步链条断裂
                 }
@@ -320,7 +322,6 @@ print("no process")
                 "bookmarkTrip": FieldValue.arrayRemove([tripId])
             ]) { error in
                 if let error = error {
-                    print("從 bookmarkTrip 中移除 tripId 時出錯: \(error.localizedDescription)")
                 } else {
 
                 }
@@ -331,7 +332,6 @@ print("no process")
                 "bookmarkTrip": FieldValue.arrayUnion([tripId])
             ]) { error in
                 if let error = error {
-                    print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
                 } else {
                     
                 }

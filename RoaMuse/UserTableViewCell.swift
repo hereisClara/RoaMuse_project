@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import SnapKit
 import Kingfisher
+import FirebaseCore
 
 class UserTableViewCell: UITableViewCell {
     
@@ -105,7 +106,7 @@ class UserTableViewCell: UITableViewCell {
         }
         
         contentLabel.numberOfLines = 0
-        contentLabel.text = "????????????????????????????????????????????????????????????????????"
+//        contentLabel.text = "????????????????????????????????????????????????????????????????????"
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(12)
             make.leading.equalTo(titleLabel)
@@ -264,6 +265,65 @@ class UserTableViewCell: UITableViewCell {
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
             tableView.endUpdates() 
+        }
+    }
+    
+    func configure(with post: [String: Any]) {
+        
+        let userName = String()
+        
+        FirebaseManager.shared.fetchUserData(userId: post["userId"] as? String ?? "") { result in
+            switch result {
+            case .success(let data):
+                if let userName = data["userName"] as? String {
+                    self.userNameLabel.text = userName
+                } else {
+                    
+                }
+            case .failure(let error):
+                
+                print("Error: \(error.localizedDescription)")
+                
+            }
+        }
+        
+        
+        if let title = post["title"] as? String {
+            titleLabel.text = title
+        }
+        
+        // 設置內容
+        if let content = post["content"] as? String {
+            contentLabel.text = content
+        }
+        
+        // 設置用戶名
+        //            if let userName = post["userName"] as? String {
+        //                userNameLabel.text = userName
+        //            }
+        
+        // 設置頭像
+        if let avatarUrlString = post["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
+            avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "user-placeholder"))
+        }
+        
+        // 設置圖片
+        if let photoUrls = post["photoUrls"] as? [String] {
+            configurePhotoStackView(with: photoUrls)
+        }
+        
+        if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+            dateLabel.text = createdAtString
+        }
+        
+        // 設置其他數據如 likeCount, bookmarkCount 等
+        if let likeCount = post["likeCount"] as? Int {
+            likeCountLabel.text = "\(likeCount)"
+        }
+        
+        if let bookmarkCount = post["bookmarkCount"] as? Int {
+            bookmarkCountLabel.text = "\(bookmarkCount)"
         }
     }
 }

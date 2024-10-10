@@ -9,6 +9,7 @@ import MJRefresh
 
 class UserProfileViewController: UIViewController {
     
+    var isShowingFollowers: Bool = true
     var userId: String?
     var bottomSheetManager: BottomSheetManager?
     var userBottomSheetManager: BottomSheetManager?

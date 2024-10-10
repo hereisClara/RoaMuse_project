@@ -16,6 +16,7 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    var isShowingFollowers: Bool = true
     var postsCount = Int()
     let postsNumberLabel = UILabel()
     let postsTextLabel = UILabel()
@@ -130,7 +131,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        tabBarController?.tabBar.isHidden = false
+//        tabBarController?.tabBar.isHidden = false
         guard let userId = userId else {
             return
         }
