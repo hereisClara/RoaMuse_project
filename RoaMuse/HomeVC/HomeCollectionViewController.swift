@@ -13,16 +13,16 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         view.backgroundColor = .backgroundGray
         self.title = "首頁"
         navigationController?.navigationBar.prefersLargeTitles = true
-            navigationItem.largeTitleDisplayMode = .always
-            
-            // 設置大標題的樣式
-            if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-                navigationController?.navigationBar.largeTitleTextAttributes = [
-                    .foregroundColor: UIColor.white,  // 修改大標題顏色
-                    .font: customFont  // 自定義字體
-                ]
-            }
-            
+        navigationItem.largeTitleDisplayMode = .always
+        
+        // 設置大標題的樣式
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.white,  // 修改大標題顏色
+                .font: customFont  // 自定義字體
+            ]
+        }
+        
         startAutoScrolling()
         setupCollectionView()
         getPoems()
@@ -30,15 +30,27 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        self.navigationController?.setNavigationBarHidden(true, animated: animated)
         // 設置 Navigation Bar 透明
-        makeNavigationBarTransparent()
+        //        makeNavigationBarTransparent()
         addGradientBlurEffectToView()
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        restoreNavigationBarStyle()
+        //        restoreNavigationBarStyle()
+    }
+    
+    func setupUI() {
+        
+        let iconImageView = UIImageView(image: UIImage(named: "homeVC title2"))
+        view.addSubview(iconImageView)
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.snp.makeConstraints { make in
+            make.top.equalTo(view).offset(20)
+            make.width.equalTo(160)
+            make.height.equalTo(400)
+        }
     }
     
     func addGradientBlurEffectToView() {
@@ -47,7 +59,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         let blurEffectView = UIVisualEffectView(effect: blurEffect)
         
         view.addSubview(blurEffectView)
-        
+        setupUI()
         blurEffectView.snp.makeConstraints { make in
             make.top.equalTo(view)
             make.leading.trailing.equalTo(view)
@@ -68,7 +80,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         blurEffectView.layoutIfNeeded()
         gradientLayer.frame = blurEffectView.bounds
     }
-
+    
     func makeNavigationBarTransparent() {
         guard let navigationBar = navigationController?.navigationBar else { return }
         
@@ -77,7 +89,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         navigationBar.backgroundColor = .clear
         navigationBar.isTranslucent = true
     }
-
+    
     func restoreNavigationBarStyle() {
         guard let navigationBar = navigationController?.navigationBar else { return }
         
@@ -109,7 +121,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         collectionView.snp.makeConstraints { make in
             make.leading.trailing.equalToSuperview().inset(12)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
-            make.top.equalTo(view)
+            make.top.equalTo(view).offset(-30)
         }
     }
     
@@ -143,7 +155,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     // MARK: - UICollectionView DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return poems.isEmpty ? 0 : 200 // 返回較大的數字模擬無限滾動
+        return poems.isEmpty ? 0 : 240 // 返回較大的數字模擬無限滾動
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -158,12 +170,22 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let selectedIndex = (Int(indexPath.row) % 15) - 1
+        // 防止 poems 数组为空导致崩溃
+        guard !poems.isEmpty else {
+            return
+        }
+        
+        var selectedIndex = indexPath.row % poems.count
+        
+        if selectedIndex == 0 && indexPath.row != 0 {
+            selectedIndex = poems.count - 1
+        }
+        
         let selectedPoem = poems[selectedIndex]
         let poemPostVC = PoemPostViewController()
         
         poemPostVC.selectedPoem = selectedPoem
-//        print(selectedPoem.title)
+        print("Selected poem title: \(selectedPoem.title)")
         navigationController?.pushViewController(poemPostVC, animated: true)
     }
     
@@ -202,7 +224,7 @@ class PoemCell: UICollectionViewCell {
         titleLabel.numberOfLines = 0 // 允許多行顯示
         titleLabel.textAlignment = .center
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
-        titleLabel.textColor = .backgroundGray // 白色文字
+        titleLabel.textColor = .forBronze // 白色文字
         titleLabel.lineBreakMode = .byCharWrapping // 按字符換行，模仿中文直式排列
         
         contentView.addSubview(titleLabel)
