@@ -20,10 +20,10 @@ class UserProfileViewController: UIViewController {
     let followingNumberLabel = UILabel()
     let introductionLabel = UILabel()
     let newView = UIView()
-    let regionLabel = UILabel()
+    
     let fansTextLabel = UILabel()
     let followingTextLabel = UILabel()
-    
+    let regionLabelView = RegionLabelView(region: nil)
     var posts: [[String: Any]] = []
     var followButton = UIButton()
     
@@ -48,7 +48,7 @@ class UserProfileViewController: UIViewController {
         guard let userId = userId else { return }
         
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 300)
-        bottomSheetManager?.addActionButton(title: "隱藏貼文") { }
+//        bottomSheetManager?.addActionButton(title: "隱藏貼文") { }
         bottomSheetManager?.addActionButton(title: "檢舉貼文", textColor: .red) {
             self.presentImpeachAlert()
         }
@@ -89,8 +89,7 @@ class UserProfileViewController: UIViewController {
                 }
                 
                 if let region = data["region"] as? String {
-                    self?.regionLabel.text = region
-                    print("====", region)
+                    self?.regionLabelView.updateRegion(region)
                 }
                 
                 if let introduction = data["introduction"] as? String {
@@ -157,8 +156,7 @@ class UserProfileViewController: UIViewController {
                 }
                 
                 if let region = data["region"] as? String {
-                    self?.regionLabel.text = region
-                    print("====", region)
+                    self?.regionLabelView.updateRegion(region)
                 }
                 
                 if let introduction = data["introduction"] as? String {
@@ -266,10 +264,10 @@ class UserProfileViewController: UIViewController {
             make.height.equalTo(24)
             make.top.equalTo(awardLabelView.snp.bottom).offset(4)
         }
-        newView.addSubview(regionLabel)
+        newView.addSubview(regionLabelView)
         newView.backgroundColor = .gray
         newView.layer.cornerRadius = 6
-        regionLabel.snp.makeConstraints { make in
+        regionLabelView.snp.makeConstraints { make in
             make.leading.equalTo(newView).offset(8)
             make.trailing.equalTo(newView).offset(-8)
             make.centerY.equalTo(newView)
@@ -316,8 +314,8 @@ class UserProfileViewController: UIViewController {
         introductionLabel.lineSpacing = 6
         introductionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         introductionLabel.textColor = .darkGray
-        regionLabel.textColor = .white
-        regionLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
+        regionLabelView.regionLabel.textColor = .white
+        regionLabelView.regionLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
     }
     
     @objc func didTapFans() {

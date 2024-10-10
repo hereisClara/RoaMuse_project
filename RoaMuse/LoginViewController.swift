@@ -16,6 +16,13 @@ class LoginViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
+        let backgroundImage = UIImage(named: "backgroundImage") // 使用你圖片的名字
+        let backgroundImageView = UIImageView(frame: UIScreen.main.bounds) // 設置為全螢幕大小
+        backgroundImageView.image = backgroundImage
+        backgroundImageView.contentMode = .scaleAspectFill // 設置內容模式（讓圖片適應螢幕大小）
+        
+        view.insertSubview(backgroundImageView, at: 0)
+        checkEULAAgreement()
         setupUI()
         configureAppleSignInButton()
     }
@@ -48,59 +55,48 @@ class LoginViewController: UIViewController {
         }
     }
     
+    func checkEULAAgreement() {
+        // 檢查是否已同意 EULA
+        let isEULAAccepted = UserDefaults.standard.bool(forKey: "EULAAccepted")
+        if !isEULAAccepted {
+            // 如果尚未同意，顯示對話框
+            showEULAAlert()
+        }
+    }
+
+    func showEULAAlert() {
+        let alertController = UIAlertController(title: "End User License Agreement (EULA)",
+                                                message: "By using this app, you agree to our terms and conditions. We have a zero-tolerance policy for objectionable content or abusive behavior.",
+                                                preferredStyle: .alert)
+
+        let acceptAction = UIAlertAction(title: "Accept", style: .default) { _ in
+            // 保存同意狀態
+            UserDefaults.standard.set(true, forKey: "EULAAccepted")
+            print("User has accepted the EULA.")
+        }
+        
+        let declineAction = UIAlertAction(title: "Decline", style: .destructive) { _ in
+            // 若用戶拒絕條款，關閉應用
+            print("User declined the EULA, closing app.")
+            exit(0)
+        }
+        
+        alertController.addAction(acceptAction)
+        alertController.addAction(declineAction)
+
+        self.present(alertController, animated: true, completion: nil)
+    }
+
+    
     func setupUI() {
-        view.addSubview(orangeLoginButton)
-        view.addSubview(blueLoginButton)
-        view.addSubview(testButton)
         view.addSubview(appleSignInButton)
         
         appleSignInButton.snp.makeConstraints { make in
             make.centerX.equalTo(view)
-            make.top.equalTo(blueLoginButton.snp.bottom).offset(50)
+            make.bottom.equalTo(view).offset(-80)
             make.width.equalTo(250)
             make.height.equalTo(50)
         }
-        
-        orangeLoginButton.snp.makeConstraints { make in
-            make.centerX.equalTo(view)
-            make.centerY.equalTo(view).offset(-50)
-            make.width.height.equalTo(80)
-        }
-        
-        orangeLoginButton.backgroundColor = .orange
-        orangeLoginButton.layer.cornerRadius = 40
-        orangeLoginButton.setTitle("登入", for: .normal)
-        orangeLoginButton.setTitleColor(.white, for: .normal)
-        orangeLoginButton.addTarget(self, action: #selector(didTapOrangeLoginButton), for: .touchUpInside)
-        
-        blueLoginButton.snp.makeConstraints { make in
-            make.centerX.equalTo(view)
-            make.centerY.equalTo(view).offset(50)
-            make.width.height.equalTo(80)
-        }
-        
-        testButton.snp.makeConstraints { make in
-            make.bottom.equalTo(view).offset(-100)
-            make.width.height.equalTo(60)
-            make.centerX.equalTo(view)
-        }
-        
-        testButton.setTitle("test", for: .normal)
-        testButton.backgroundColor = .red
-        testButton.layer.cornerRadius = 20
-        
-        blueLoginButton.backgroundColor = .blue
-        blueLoginButton.layer.cornerRadius = 40
-        blueLoginButton.setTitle("登入", for: .normal)
-        blueLoginButton.setTitleColor(.white, for: .normal)
-        blueLoginButton.addTarget(self, action: #selector(didTapBlueLoginButton), for: .touchUpInside)
-        testButton.addTarget(self, action: #selector(tapTestBtn), for: .touchUpInside)
-    }
-    
-    @objc func tapTestBtn() {
-        //        let testVC = TestVC()
-        //        print("Test button tapped, presenting TestVC.")
-        //        self.present(testVC, animated: true, completion: nil)
     }
     
     @objc func didTapOrangeLoginButton() {

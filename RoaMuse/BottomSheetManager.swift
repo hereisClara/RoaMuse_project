@@ -25,12 +25,14 @@ class BottomSheetManager {
         self.backgroundView = UIView()
     }
     
+    // 添加按鈕方法
     func addActionButton(title: String, textColor: UIColor = .black, action: @escaping () -> Void) {
-            let button = createButton(title: title, textColor: textColor)
-            button.addAction(UIAction { _ in action() }, for: .touchUpInside)
-            actionButtons.append(button)
-        }
+        let button = createButton(title: title, textColor: textColor)
+        button.addAction(UIAction { _ in action() }, for: .touchUpInside)
+        actionButtons.append(button)  // 將按鈕添加到陣列
+    }
     
+    // 設置 bottom sheet
     func setupBottomSheet() {
         guard let parentView = parentViewController?.view else { return }
 
@@ -53,11 +55,7 @@ class BottomSheetManager {
             window.addSubview(bottomSheetView)
         }
         
-        let saveButton = createButton(title: "隱藏貼文")
-        let impeachButton = createButton(title: "檢舉貼文")
-        let blockButton = createButton(title: "封鎖用戶")
-        let cancelButton = createButton(title: "取消", textColor: .red)
-        
+        // 使用已添加的 actionButtons 來設置 stackView
         let stackView = UIStackView(arrangedSubviews: actionButtons)
         stackView.axis = .vertical
         stackView.spacing = 20
@@ -70,10 +68,9 @@ class BottomSheetManager {
             make.leading.equalTo(bottomSheetView.snp.leading).offset(20)
             make.trailing.equalTo(bottomSheetView.snp.trailing).offset(-20)
         }
-        
-        impeachButton.addTarget(self, action: #selector(didTapImpeachButton), for: .touchUpInside)
     }
     
+    // 創建按鈕方法
     private func createButton(title: String, textColor: UIColor = .black) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
@@ -83,6 +80,7 @@ class BottomSheetManager {
         return button
     }
     
+    // 顯示 bottom sheet
     func showBottomSheet() {
         guard let parentView = parentViewController?.view else { return }
         UIView.animate(withDuration: 0.3) {
@@ -91,6 +89,7 @@ class BottomSheetManager {
         }
     }
     
+    // 隱藏 bottom sheet
     @objc func dismissBottomSheet() {
         guard let parentView = parentViewController?.view else { return }
         UIView.animate(withDuration: 0.3) {
@@ -99,6 +98,7 @@ class BottomSheetManager {
         }
     }
     
+    // 檢舉按鈕操作
     @objc func didTapImpeachButton() {
         guard let parentVC = parentViewController else { return }
         

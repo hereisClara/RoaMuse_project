@@ -12,6 +12,7 @@ import FirebaseFirestore
 
 class PoemPostViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
+    var bottomSheetManager: BottomSheetManager?
     var allTripIds = [String]()
     var selectedPoem: Poem?
     var filteredPosts = [[String: Any]]()
@@ -27,6 +28,17 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         setupTableView()
         
         getCityToTrip()
+        
+        bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 200)
+        
+        
+        bottomSheetManager?.addActionButton(title: "檢舉貼文", textColor: .black) {
+            self.presentImpeachAlert()
+        }
+        bottomSheetManager?.addActionButton(title: "取消", textColor: .red) {
+            self.bottomSheetManager?.dismissBottomSheet()
+        }
+        bottomSheetManager?.setupBottomSheet()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -102,6 +114,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         }
         cell.backgroundColor = .backgroundGray
         cell.selectionStyle = .none
+        
         if filteredPosts.isEmpty {
             print("filteredPosts is empty")
         } else {
@@ -109,6 +122,11 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             print("------ ", post)
             cell.configure(with: post)
         }
+        
+        cell.configureMoreButton {
+            self.bottomSheetManager?.showBottomSheet()
+        }
+        
         return cell
     }
     
@@ -216,6 +234,20 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             }
         }
     }
+    
+    func presentImpeachAlert() {
+            let alertController = UIAlertController(title: "檢舉貼文", message: "你確定要檢舉這篇貼文嗎？", preferredStyle: .alert)
+            
+            let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+            alertController.addAction(cancelAction)
+            
+            let confirmAction = UIAlertAction(title: "確定", style: .destructive) { _ in
+                self.bottomSheetManager?.dismissBottomSheet()
+            }
+            alertController.addAction(confirmAction)
+            
+            present(alertController, animated: true, completion: nil)
+        }
     
     func getCityToTrip() {
         if let selectedPoem = selectedPoem {

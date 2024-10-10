@@ -181,12 +181,12 @@ class NewsFeedViewController: UIViewController {
         }
         
         // 在選單視圖內部添加按鈕
-        let saveButton = createButton(title: "隱藏貼文")
+//        let saveButton = createButton(title: "隱藏貼文")
         let impeachButton = createButton(title: "檢舉貼文")
         let blockButton = createButton(title: "封鎖用戶")
         let cancelButton = createButton(title: "取消", textColor: .red)
         
-        let stackView = UIStackView(arrangedSubviews: [saveButton, impeachButton, blockButton, cancelButton])
+        let stackView = UIStackView(arrangedSubviews: [impeachButton, blockButton, cancelButton])
         stackView.axis = .vertical
         stackView.spacing = 20
         stackView.alignment = .fill
