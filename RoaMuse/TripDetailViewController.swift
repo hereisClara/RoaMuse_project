@@ -155,7 +155,7 @@ class TripDetailViewController: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-//        self.tabBarController?.tabBar.isHidden = false
+        self.tabBarController?.tabBar.isHidden = false
     }
     
     func getPoemPlacePair() {

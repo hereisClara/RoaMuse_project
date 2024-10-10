@@ -14,6 +14,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     var avatarImageUrl = String()
     var selectedTitle = String()
     var titleLabel = UILabel()
+    let circularProgressBar = CircularProgressBar(frame: CGRect(x: 0, y: 0, width: 160, height: 160))
     var userId: String? {
         return UserDefaults.standard.string(forKey: "userId")
     }
@@ -182,10 +183,9 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         headerView.layer.masksToBounds = true
 
         // 設置圓形進度條
-        let circularProgressBar = CircularProgressBar(frame: CGRect(x: 0, y: 0, width: 160, height: 160))
-        if let url = URL(string: avatarImageUrl) {
-            circularProgressBar.setAvatarImage(from: url)
-        }
+//        if let url = URL(string: avatarImageUrl) {
+//            circularProgressBar.setAvatarImage(from: url)
+//        }
         let completedTasks = currentTitles.count
         let totalTasks = 15
         circularProgressBar.progress = Float(completedTasks) / Float(totalTasks) // 設置進度
@@ -257,7 +257,8 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     }
 
     @objc func showDropdownMenu() {
-        if dropdownMenu.superview == nil {  // 如果還未顯示
+        self.view.layoutIfNeeded()
+        if dropdownMenu.superview == nil {
             dropdownMenu.show(in: self.view, anchorView: titleContainerView)
         } else {
             dropdownMenu.hide()
@@ -284,7 +285,14 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             }
             
             self.userName = data["userName"] as? String ?? "使用者"
-            self.avatarImageUrl = data["photo"] as? String ?? ""
+            let avatarImageUrl = data["photo"] as? String ?? ""
+            
+            if avatarImageUrl != self.avatarImageUrl {
+                        self.avatarImageUrl = avatarImageUrl
+                        if let url = URL(string: avatarImageUrl) {
+                            self.circularProgressBar.setAvatarImage(from: url)
+                        }
+                    }
             
             // 加載用戶的當前選擇的 title
             FirebaseManager.shared.loadAwardTitle(forUserId: userId) { result in
@@ -294,7 +302,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                         self.selectedTitle = awardTitle.0
                         self.titleLabel.text = self.selectedTitle
                         self.titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
-                        // 查找選擇的 title 對應的索引，並更新樣式
+                        
                         if let (section, row, item) = self.findIndexesForTitle(awardTitle.0) {
                             self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
                         }

@@ -11,7 +11,6 @@
 		AC18F8392CABA42D004E8868 /* AwardLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8382CABA42D004E8868 /* AwardLabelView.swift */; };
 		AC18F83B2CABDA28004E8868 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F83A2CABDA28004E8868 /* LocationService.swift */; };
 		AC18F83D2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */; };
-		AC18F83F2CAC5920004E8868 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */; };
 		AC18F8412CAD1200004E8868 /* ArticleTripViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */; };
 		AC18F8432CAD6C61004E8868 /* MapTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */; };
 		AC18F8452CAE93B8004E8868 /* BottomSheetManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */; };
@@ -51,6 +50,7 @@
 		AC75D0FE2CB41C85005258EA /* OpenAIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */; };
 		AC75D1002CB50060005258EA /* RegionLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0FF2CB50060005258EA /* RegionLabelView.swift */; };
 		AC75D1022CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */; };
+		AC75D1062CB6656B005258EA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC75D1052CB6656B005258EA /* GoogleService-Info.plist */; };
 		AC7A2A432C93EA0A003FA811 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A422C93EA0A003FA811 /* LocationManager.swift */; };
 		AC7A2A472C943808003FA811 /* data.json in Resources */ = {isa = PBXBuildFile; fileRef = AC7A2A462C943808003FA811 /* data.json */; };
 		AC7A2A492C94384D003FA811 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A482C94384D003FA811 /* DataModel.swift */; };
@@ -86,6 +86,10 @@
 		AC9775792CA987F900EF828A /* AwardsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775782CA987F900EF828A /* AwardsViewController.swift */; };
 		AC97757B2CA9899200EF828A /* AwardTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */; };
 		AC97757D2CA98F5F00EF828A /* MilestoneProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */; };
+		AC984BFB2CB68A5C007F47BB /* HomeCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984BFA2CB68A5C007F47BB /* HomeCollectionViewController.swift */; };
+		AC984BFE2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout in Frameworks */ = {isa = PBXBuildFile; productRef = AC984BFD2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout */; };
+		AC984C002CB6A4EC007F47BB /* GradientBlurView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */; };
+		AC984C022CB6A689007F47BB /* PoemPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C012CB6A689007F47BB /* PoemPostViewController.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -120,7 +124,6 @@
 		AC18F8382CABA42D004E8868 /* AwardLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardLabelView.swift; sourceTree = "<group>"; };
 		AC18F83A2CABDA28004E8868 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "NotoSerifHK-VariableFont_wght.ttf"; sourceTree = "<group>"; };
-		AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleTripViewController.swift; sourceTree = "<group>"; };
 		AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTableViewCell.swift; sourceTree = "<group>"; };
 		AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomSheetManager.swift; sourceTree = "<group>"; };
@@ -155,6 +158,7 @@
 		AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIManager.swift; sourceTree = "<group>"; };
 		AC75D0FF2CB50060005258EA /* RegionLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionLabelView.swift; sourceTree = "<group>"; };
 		AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientActivityIndicatorViewViewController.swift; sourceTree = "<group>"; };
+		AC75D1052CB6656B005258EA /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC7A2A422C93EA0A003FA811 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		AC7A2A462C943808003FA811 /* data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = data.json; sourceTree = "<group>"; };
 		AC7A2A482C94384D003FA811 /* DataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
@@ -189,6 +193,9 @@
 		AC9775782CA987F900EF828A /* AwardsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardsViewController.swift; sourceTree = "<group>"; };
 		AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AwardTableViewCell.swift; sourceTree = "<group>"; };
 		AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneProgressView.swift; sourceTree = "<group>"; };
+		AC984BFA2CB68A5C007F47BB /* HomeCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCollectionViewController.swift; sourceTree = "<group>"; };
+		AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientBlurView.swift; sourceTree = "<group>"; };
+		AC984C012CB6A689007F47BB /* PoemPostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoemPostViewController.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -215,6 +222,7 @@
 				AC7A2A742C99DEED003FA811 /* MJRefresh in Frameworks */,
 				AC27ACB72C91E26900B73485 /* FirebaseFirestore in Frameworks */,
 				AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */,
+				AC984BFE2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout in Frameworks */,
 				AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */,
 				AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */,
 				AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */,
@@ -242,6 +250,7 @@
 			isa = PBXGroup;
 			children = (
 				ACFCA3542C916C8F00643A2E /* HomeViewController.swift */,
+				AC984BFA2CB68A5C007F47BB /* HomeCollectionViewController.swift */,
 				AC75D0F92CB3C316005258EA /* NotificationViewController.swift */,
 				AC75D0FB2CB3C3D8005258EA /* NotificationTableViewCell.swift */,
 			);
@@ -325,6 +334,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC984C012CB6A689007F47BB /* PoemPostViewController.swift */,
+				AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */,
 				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
 				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
 				AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */,
@@ -393,10 +404,10 @@
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
 				AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */,
 				AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */,
+				AC75D1052CB6656B005258EA /* GoogleService-Info.plist */,
 				ACFCA3562C916C8F00643A2E /* Main.storyboard */,
 				ACFCA35E2C916C9000643A2E /* LaunchScreen.storyboard */,
 				ACFCA3612C916C9000643A2E /* Info.plist */,
-				AC18F83E2CAC5920004E8868 /* GoogleService-Info.plist */,
 				ACFCA3592C916C8F00643A2E /* RoaMuse.xcdatamodeld */,
 			);
 			path = RoaMuse;
@@ -445,6 +456,7 @@
 				AC7A2A732C99DEED003FA811 /* MJRefresh */,
 				AC7A2A7E2C9A9ECF003FA811 /* IQKeyboardManagerSwift */,
 				AC7A2A8D2C9F23B1003FA811 /* Kingfisher */,
+				AC984BFD2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout */,
 			);
 			productName = RoaMuse;
 			productReference = ACFCA34D2C916C8F00643A2E /* RoaMuse.app */;
@@ -525,6 +537,7 @@
 				AC7A2A722C99DEED003FA811 /* XCRemoteSwiftPackageReference "MJRefresh" */,
 				AC7A2A7D2C9A9ECF003FA811 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
 				AC7A2A8C2C9F23B1003FA811 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				AC984BFC2CB692B5007F47BB /* XCRemoteSwiftPackageReference "CHTCollectionViewWaterfallLayout" */,
 			);
 			productRefGroup = ACFCA34E2C916C8F00643A2E /* Products */;
 			projectDirPath = "";
@@ -543,7 +556,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACFCA35D2C916C9000643A2E /* Assets.xcassets in Resources */,
-				AC18F83F2CAC5920004E8868 /* GoogleService-Info.plist in Resources */,
+				AC75D1062CB6656B005258EA /* GoogleService-Info.plist in Resources */,
 				ACFCA3602C916C9000643A2E /* Base in Resources */,
 				AC7A2A472C943808003FA811 /* data.json in Resources */,
 				ACFCA3582C916C8F00643A2E /* Base in Resources */,
@@ -620,6 +633,7 @@
 				AC7A2A512C957F87003FA811 /* Extension+UIStackView.swift in Sources */,
 				AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */,
 				AC75D0F82CB2C977005258EA /* Extension+UILabel.swift in Sources */,
+				AC984BFB2CB68A5C007F47BB /* HomeCollectionViewController.swift in Sources */,
 				AC75D0F22CB27E75005258EA /* IntroductionViewController.swift in Sources */,
 				AC7A2A5C2C97C59A003FA811 /* PostViewController.swift in Sources */,
 				AC18F8652CB25E2E004E8868 /* ImageViewController.swift in Sources */,
@@ -658,6 +672,8 @@
 				AC7A2A892C9D1C92003FA811 /* DateManager.swift in Sources */,
 				AC75D0FA2CB3C316005258EA /* NotificationViewController.swift in Sources */,
 				ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */,
+				AC984C022CB6A689007F47BB /* PoemPostViewController.swift in Sources */,
+				AC984C002CB6A4EC007F47BB /* GradientBlurView.swift in Sources */,
 				AC7A2A832C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift in Sources */,
 				AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */,
 				AC18F84F2CAFD871004E8868 /* BlockedListViewController.swift in Sources */,
@@ -1088,6 +1104,14 @@
 				minimumVersion = 8.0.3;
 			};
 		};
+		AC984BFC2CB692B5007F47BB /* XCRemoteSwiftPackageReference "CHTCollectionViewWaterfallLayout" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/chiahsien/CHTCollectionViewWaterfallLayout.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.10;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1130,6 +1154,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC7A2A8C2C9F23B1003FA811 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		AC984BFD2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC984BFC2CB692B5007F47BB /* XCRemoteSwiftPackageReference "CHTCollectionViewWaterfallLayout" */;
+			productName = CHTCollectionViewWaterfallLayout;
 		};
 /* End XCSwiftPackageProductDependency section */
 

@@ -77,7 +77,7 @@ class EstablishViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        tabBarController?.tabBar.isHidden = false
+//        tabBarController?.tabBar.isHidden = false
     }
     
     func setupUI() {
@@ -287,6 +287,13 @@ extension EstablishViewController {
                                             self.recommendRandomTripView.isUserInteractionEnabled = true
                                             self.activityIndicator.stopAnimating()
                                             self.activityIndicator.isHidden = true
+                                        }
+                                        FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: randomPoem.id, city: self.city) { error in
+                                            if let error = error {
+                                                    print("Error saving data: \(error.localizedDescription)")
+                                                } else {
+                                                    print("Data saved successfully")
+                                                }
                                         }
                                     }
                                 } else {
@@ -535,10 +542,15 @@ extension EstablishViewController {
             if let error = error {
                 completion(nil, nil)
             } else if let placemark = placemarks?.first {
-                // 使用 administrativeArea 來獲取縣市，locality 或 subLocality 來獲取區域
-                let city = placemark.administrativeArea ?? "未知縣市"  // 縣市
-                let district = placemark.locality ?? placemark.subLocality ?? "未知區"  // 行政區
-                completion(city, district)
+                
+                let city = placemark.administrativeArea
+                let cityName = cityCodeMapping[city ?? ""]
+                let district = placemark.subLocality
+                
+                if let cityName = cityName {
+                    completion(cityName, district)
+                    print("cityName: \(cityName)")
+                }
             } else {
                 completion(nil, nil)
             }

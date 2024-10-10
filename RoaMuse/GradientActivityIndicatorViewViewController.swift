@@ -13,7 +13,7 @@ class GradientActivityIndicatorView: UIView {
     private let shapeLayer = CAShapeLayer()
     private let gradientLayer = CAGradientLayer()
     private let animationKey = "rotationAnimation"
-    private let blurBackgroundView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+    private let blurBackgroundView = UIVisualEffectView(effect: UIBlurEffect(style: .extraLight))
     private let backgroundView = UIView()
     
     override init(frame: CGRect) {
@@ -27,22 +27,19 @@ class GradientActivityIndicatorView: UIView {
     }
     
     private func setupView() {
-        // 設定背景 view
+        
         setupBackgroundView()
         
-        // 設定圓圈 Layer
         setupCircleLayer()
         
-        // 設定漸層 Layer
         setupGradientLayer()
         
-        // 將 shapeLayer 作為 mask，讓漸層只顯示在圓圈上
         gradientLayer.mask = shapeLayer
     }
     
     private func setupBackgroundView() {
         // 半透明模糊背景
-        backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.6)
+        backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.3)
         backgroundView.layer.cornerRadius = 20
         backgroundView.clipsToBounds = true
         addSubview(backgroundView)

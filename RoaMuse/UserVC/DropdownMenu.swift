@@ -66,8 +66,8 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
     func show(in parentView: UIView, anchorView: UIView) {
         parentView.addSubview(self)
         self.snp.makeConstraints { make in
-            make.top.equalTo(anchorView.snp.bottom).offset(8)
-            make.trailing.equalTo(anchorView)
+            make.top.equalTo(anchorView.snp.bottom).offset(6)
+            make.leading.equalTo(anchorView)
             make.width.equalTo(174)
             make.height.equalTo(200)
         }
