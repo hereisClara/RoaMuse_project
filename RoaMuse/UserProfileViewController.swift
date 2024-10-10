@@ -320,14 +320,14 @@ class UserProfileViewController: UIViewController {
     
     @objc func didTapFans() {
         let userListVC = UserListViewController()
-        userListVC.isShowingFollowers = true // 表示要显示粉丝列表
+        userListVC.isShowingFollowers = true
         userListVC.userId = self.userId
         navigationController?.pushViewController(userListVC, animated: true)
     }
     
     @objc func didTapFollowing() {
         let userListVC = UserListViewController()
-        userListVC.isShowingFollowers = false // 表示要显示关注列表
+        userListVC.isShowingFollowers = false
         userListVC.userId = self.userId
         navigationController?.pushViewController(userListVC, animated: true)
     }
