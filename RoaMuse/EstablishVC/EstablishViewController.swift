@@ -16,9 +16,9 @@ import MapKit
 class EstablishViewController: UIViewController {
     
     var isStyleButtonSelected = true
-
+    var isTimingButtonSelected = false
     var styleCircleView = UIView()
-    var recommendCircleView = UIView()
+    var timingRecommendCircleView = UIView()
     var poemIdsInCollectionTripsHandler: (([String]) -> Void)?
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
@@ -132,9 +132,9 @@ class EstablishViewController: UIViewController {
         circleView.addSubview(sliderButton)
 
         styleCircleView = createCircleButton(imageName: "shining", tintColor: .deepBlue)
-        recommendCircleView = createCircleButton(imageName: "cloud.sun.fill", tintColor: .deepBlue, isSystemImage: true)
+        timingRecommendCircleView = createCircleButton(imageName: "cloud.sun.fill", tintColor: .deepBlue, isSystemImage: true)
         view.addSubview(styleCircleView)
-        view.addSubview(recommendCircleView)
+        view.addSubview(timingRecommendCircleView)
         
         recommendRandomTripView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide)
@@ -175,7 +175,7 @@ class EstablishViewController: UIViewController {
             make.width.height.equalTo(40)
         }
 
-        recommendCircleView.snp.makeConstraints { make in
+        timingRecommendCircleView.snp.makeConstraints { make in
             make.leading.equalTo(view).offset(16)
             make.top.equalTo(styleCircleView.snp.bottom).offset(16)
             make.width.height.equalTo(40)
@@ -225,9 +225,23 @@ class EstablishViewController: UIViewController {
             sender.tintColor = originalBackgroundColor
         }
         
-        isStyleButtonSelected.toggle()
+        if circleView == styleCircleView {
+                isStyleButtonSelected.toggle()
+                setCellsSelectable(isSelectable: isStyleButtonSelected)
+            }
+        
+        if circleView == timingRecommendCircleView {
+                
+                isTimingButtonSelected.toggle()
 
-        setCellsSelectable(isSelectable: isStyleButtonSelected)
+                if isTimingButtonSelected {
+                    // 添加＃時令推薦到風格標籤
+                    updateStyleLabel(with: "＃時令推薦")
+                } else {
+                    styleLabel.text = "今天我想來點⋯⋯"
+                    styleLabel.textColor = .forBronze
+                }
+            }
     }
     
     @objc func showSliderPopup() {
@@ -900,7 +914,7 @@ extension EstablishViewController {
         attributedString.addAttribute(.foregroundColor, value: UIColor.accent, range: selectionRange)
         
         // 設定第三行 "的風格" 的字體和顏色
-        let thirdLineRange = (fullText as NSString).range(of: " 的風格")
+        let thirdLineRange = (fullText as NSString).range(of: " 的旅程")
         attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 28)!, range: thirdLineRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor.backgroundGray, range: thirdLineRange)
         
