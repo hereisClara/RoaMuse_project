@@ -87,7 +87,7 @@ class PopUpView {
             DispatchQueue.main.async {
                 self.titleLabel.text = poem.title
                 self.poetryLabel.text = "\(poem.poetry)"
-                self.tripStyleLabel.text = "\(styles[poem.tag].name)"
+                self.tripStyleLabel.text = "\(styles[poem.tag + 1].name)"
                 
                 self.versesStackView.removeAllArrangedSubviews()
                 for verse in poem.content {
@@ -179,6 +179,7 @@ class PopUpView {
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(40)
             make.leading.equalTo(popupView).offset(20)
+            make.trailing.equalTo(popupView).offset(-20)
         }
         
         poetryLabel.snp.makeConstraints { make in
@@ -215,6 +216,7 @@ class PopUpView {
             make.width.height.equalTo(45)
         }
         
+        titleLabel.numberOfLines = 2
         titleLabel.textColor = .accent
         poetryLabel.textColor = .backgroundGray
         tripStyleLabel.textColor = .backgroundGray
@@ -231,7 +233,7 @@ class PopUpView {
     
     func setupLabel() {
         
-        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 40)
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 36)
         poetryLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 22)
         tripStyleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         matchingScoreLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
