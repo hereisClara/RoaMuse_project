@@ -871,6 +871,7 @@
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "行萬卷書";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "我們需要您的位置信息來提供天氣服務";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "我們需要您的位置信息來提供天氣服務";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "我們需要權限來存取相簿中的照片。";
@@ -909,6 +910,7 @@
 				DEVELOPMENT_TEAM = 893UA9XLV2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoaMuse/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "行萬卷書";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "我們需要您的位置信息來提供天氣服務";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "我們需要您的位置信息來提供天氣服務";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "我們需要權限來存取相簿中的照片。";

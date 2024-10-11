@@ -353,7 +353,7 @@ extension EstablishViewController {
     }
     
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
-        
+            
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return
         }
@@ -362,10 +362,27 @@ extension EstablishViewController {
             self.activityIndicator.startAnimating()
             self.activityIndicator.isHidden = false
         }
+
+        // 設置一個超時計時器，15秒後顯示警告彈窗
+        let timeoutWorkItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.showNoPlacesFoundAlert() // 顯示警告彈窗
+                self.recommendRandomTripView.isUserInteractionEnabled = true
+                self.activityIndicator.stopAnimating()
+                self.activityIndicator.isHidden = true
+            }
+        }
+        
+        // 在主線程中安排超時計時器
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutWorkItem)
         
         PoemCollectionManager.shared.loadPoemIdsFromFirebase(forUserId: userId) {
             DispatchQueue.global(qos: .userInitiated).async {
                 FirebaseManager.shared.loadAllPoems { poems in
+                    // 如果請求成功，取消超時計時器
+                    timeoutWorkItem.cancel()
+                    
                     let filteredPoems = poems.filter { poem in
                         return poem.tag == self.styleTag && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
                     }
@@ -385,10 +402,10 @@ extension EstablishViewController {
                                         }
                                         FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: randomPoem.id, city: self.city) { error in
                                             if let error = error {
-                                                    print("Error saving data: \(error.localizedDescription)")
-                                                } else {
-                                                    print("Data saved successfully")
-                                                }
+                                                print("Error saving data: \(error.localizedDescription)")
+                                            } else {
+                                                print("Data saved successfully")
+                                            }
                                         }
                                     }
                                 } else {
