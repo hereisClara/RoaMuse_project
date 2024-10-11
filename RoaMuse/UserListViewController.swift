@@ -12,6 +12,8 @@ import SnapKit
 
 class UserListViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate {
     
+    var followersData: [[String: Any]] = []
+    var followingData: [[String: Any]] = []
     var followers: [String] = []
     var following: [String] = []
     var userId: String?
@@ -26,23 +28,33 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        
+        self.navigationItem.largeTitleDisplayMode = .never
         setupButtons()
         setupUnderlineView()
         setupScrollView()
         setupTableViews()
         
         if isShowingFollowers {
-            // 如果顯示粉絲，將 ScrollView 設置到最左邊
+            
             scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
             updateUnderlinePosition(button: followersButton)
         } else {
-            // 如果顯示關注，將 ScrollView 設置到最右邊
+            
             scrollView.setContentOffset(CGPoint(x: view.frame.width, y: 0), animated: false)
             updateUnderlinePosition(button: followingButton)
         }
         
         loadUserList()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     // 設置自定義按鈕
@@ -70,15 +82,13 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    // 設置底部黑色線條
     func setupUnderlineView() {
         underlineView.backgroundColor = .black
         view.addSubview(underlineView)
         
-        // 初始時黑色線條位於粉絲按鈕下方
         underlineView.snp.makeConstraints { make in
             make.top.equalTo(followersButton.snp.bottom)
-            make.leading.equalTo(followersButton) // 確保初始leading綁定到followersButton
+            make.leading.equalTo(followersButton)
             make.width.equalTo(followersButton)
             make.height.equalTo(3)
         }
@@ -103,7 +113,7 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     func setupTableViews() {
         followersTableView.delegate = self
         followersTableView.dataSource = self
-        followersTableView.register(UITableViewCell.self, forCellReuseIdentifier: "followerCell")
+        followersTableView.register(FollowerFollowingTableViewCell.self, forCellReuseIdentifier: "followerCell")
         scrollView.addSubview(followersTableView)
         
         followersTableView.snp.makeConstraints { make in
@@ -115,7 +125,7 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         
         followingTableView.delegate = self
         followingTableView.dataSource = self
-        followingTableView.register(UITableViewCell.self, forCellReuseIdentifier: "followingCell")
+        followingTableView.register(FollowerFollowingTableViewCell.self, forCellReuseIdentifier: "followingCell")
         scrollView.addSubview(followingTableView)
         
         followingTableView.snp.makeConstraints { make in
@@ -199,39 +209,77 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         let isShowingFollowers = scrollView.contentOffset.x == 0
         
         if isShowingFollowers {
-            userRef.getDocument { [weak self] snapshot, error in
-                if let error = error {
-                    print("Error fetching followers: \(error)")
-                    return
+                userRef.getDocument { [weak self] snapshot, error in
+                    if let error = error {
+                        print("Error fetching followers: \(error)")
+                        return
+                    }
+                    if let data = snapshot?.data(), let followers = data["followers"] as? [String] {
+                        self?.followers = followers
+                        
+                        var followersData: [[String: Any]] = []
+                        
+                        for followerId in followers {
+                            FirebaseManager.shared.fetchUserData(userId: followerId) { result in
+                                switch result {
+                                case .success(let userData):
+                                    
+                                    followersData.append(userData)
+                                    
+                                    if followersData.count == followers.count {
+                                        self?.followersData = followersData
+                                        print("=======")
+                                        print(followers)
+                                        print(followersData)
+                                        self?.followersTableView.reloadData()
+                                    }
+                                    
+                                case .failure(let error):
+                                    print("Error fetching user data: \(error)")
+                                }
+                            }
+                        }
+                    }
                 }
-                if let data = snapshot?.data(), let followers = data["followers"] as? [String] {
-                    self?.followers = followers
-                    
-//                    for followerId in followers {
-//                        FirebaseManager.shared.fetchUserData(userId: followerId) { result in
-//                            switch result {
-//
-//                            }
-//                        }
-//                    }
-                    
-                    self?.followersTableView.reloadData()
+            } else {
+                print("follow")
+                userRef.getDocument { [weak self] snapshot, error in
+                    if let error = error {
+                        print("Error fetching following: \(error)")
+                        return
+                    }
+                    if let data = snapshot?.data(), let following = data["following"] as? [String] {
+                        self?.following = following
+                        print("=====", following)
+                        
+                        var followingData: [[String: Any]] = []
+                        
+                        for followingId in following {
+                            FirebaseManager.shared.fetchUserData(userId: followingId) { result in
+                                switch result {
+                                case .success(let userData):
+                                    // 收集每个用户的数据
+                                    followingData.append(userData)
+                                    
+                                    // 当所有用户数据都加载完成时，刷新表格
+                                    if followingData.count == following.count {
+                                        self?.followingData = followingData
+                                        self?.followingTableView.reloadData()
+                                        print("-------a ", followingData)
+                                    }
+                                    
+                                case .failure(let error):
+                                    print("Error fetching user data: \(error)")
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        } else {
-            print("follow")
-            userRef.getDocument { [weak self] snapshot, error in
-                if let error = error {
-                    print("Error fetching following: \(error)")
-                    return
-                }
-                if let data = snapshot?.data(), let following = data["following"] as? [String] {
-                    self?.following = following
-                    print("=====",following)
-                    self?.followingTableView.reloadData()
-                }
-            }
-        }
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        70
     }
     
     // MARK: - UITableViewDataSource 和 UITableViewDelegate
@@ -244,15 +292,34 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if tableView == followersTableView {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "followerCell", for: indexPath)
-            cell.textLabel?.text = followers[indexPath.row]
-            return cell
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "followingCell", for: indexPath)
-            cell.textLabel?.text = following[indexPath.row]
-            return cell
+        
+        let reuseIdentifier = tableView == followersTableView ? "followerCell" : "followingCell"
+        
+        // 使用對應的 reuseIdentifier 來 dequeue cell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as? FollowerFollowingTableViewCell else {
+            return UITableViewCell()
         }
+
+        let userData: [String: Any]
+        if tableView == followersTableView {
+            userData = followersData[indexPath.row]
+        } else {
+            userData = followingData[indexPath.row]
+        }
+        
+        cell.userNameLabel.text = ""
+        cell.avatarImageView.image = UIImage(named: "user-placeholder")
+
+        // 配置 cell 的顯示內容
+        cell.userNameLabel.text = userData["userName"] as? String
+        if let photoUrlString = userData["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+            cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "user-placeholder"))
+        }
+        
+        cell.ellipsisButton.addTarget(self, action: #selector(didTapEllipsisButton(_:)), for: .touchUpInside)
+        cell.ellipsisButton.tag = indexPath.row
+        
+        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -260,5 +327,42 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         let userProfileVC = UserProfileViewController()
         userProfileVC.userId = selectedUserId
         navigationController?.pushViewController(userProfileVC, animated: true)
+    }
+    
+    @objc func didTapEllipsisButton(_ sender: UIButton) {
+        let row = sender.tag
+        let userData = scrollView.contentOffset.x == 0 ? followersData[row] : followingData[row]
+        
+        // 初始化 BottomSheetManager
+        let bottomSheetManager = BottomSheetManager(parentViewController: self)
+        
+        bottomSheetManager.addActionButton(title: "檢舉用戶", textColor: .red) {
+            // 檢舉用戶邏輯
+            self.presentReportUserAlert(for: userData)
+        }
+        
+        bottomSheetManager.addActionButton(title: "取消", textColor: .gray) {
+            bottomSheetManager.dismissBottomSheet()
+        }
+        
+        bottomSheetManager.setupBottomSheet()
+        bottomSheetManager.showBottomSheet()
+    }
+
+    // 示例：显示檢舉用戶的 alert
+    func presentReportUserAlert(for userData: [String: Any]) {
+        let userName = userData["userName"] as? String ?? "該用戶"
+        let alertController = UIAlertController(title: "檢舉用戶", message: "你確定要檢舉 \(userName) 嗎？", preferredStyle: .alert)
+        
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        let confirmAction = UIAlertAction(title: "檢舉", style: .destructive) { _ in
+            // 檢舉的邏輯
+            print("檢舉 \(userName)")
+        }
+        alertController.addAction(confirmAction)
+        
+        present(alertController, animated: true, completion: nil)
     }
 }

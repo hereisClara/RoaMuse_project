@@ -90,6 +90,7 @@
 		AC984BFE2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout in Frameworks */ = {isa = PBXBuildFile; productRef = AC984BFD2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout */; };
 		AC984C002CB6A4EC007F47BB /* GradientBlurView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */; };
 		AC984C022CB6A689007F47BB /* PoemPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C012CB6A689007F47BB /* PoemPostViewController.swift */; };
+		AC984C042CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -196,6 +197,7 @@
 		AC984BFA2CB68A5C007F47BB /* HomeCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCollectionViewController.swift; sourceTree = "<group>"; };
 		AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientBlurView.swift; sourceTree = "<group>"; };
 		AC984C012CB6A689007F47BB /* PoemPostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoemPostViewController.swift; sourceTree = "<group>"; };
+		AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowerFollowingTableViewCell.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -334,6 +336,7 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */,
 				AC984C012CB6A689007F47BB /* PoemPostViewController.swift */,
 				AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */,
 				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
@@ -658,6 +661,7 @@
 				AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */,
 				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
 				AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */,
+				AC984C042CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift in Sources */,
 				AC7A2A4F2C949386003FA811 /* PopUpView.swift in Sources */,
 				AC7A2A812C9AB40C003FA811 /* StyleTableViewCell.swift in Sources */,
 				AC7A2A572C97A606003FA811 /* FirstViewController.swift in Sources */,
