@@ -19,8 +19,8 @@ class NewsFeedViewController: UIViewController {
     var likeButtonIsSelected = Bool()
     
     let bottomSheetView = UIView()
-    let backgroundView = UIView() // 半透明背景
-    let sheetHeight: CGFloat = 250 // 選單高度
+    let backgroundView = UIView()
+    let sheetHeight: CGFloat = 250
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,7 +65,7 @@ class NewsFeedViewController: UIViewController {
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             self?.postsArray = postsArray
             DispatchQueue.main.async {
-                self?.postsTableView.reloadData() // 確保 UI 更新
+                self?.postsTableView.reloadData()
             }
         }
     }
@@ -90,7 +90,6 @@ class NewsFeedViewController: UIViewController {
         }
     }
     
-    // 加載圖片的通用方法
     func loadAvatarImage(from urlString: String) {
         guard let url = URL(string: urlString) else { return }
         avatarImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"), options: [
@@ -106,14 +105,11 @@ class NewsFeedViewController: UIViewController {
         })
     }
     
-    
     func setupPostView() {
-        // 建立一個容器 View 來取代原先的 postButton
         
         postView.backgroundColor = .clear
         view.addSubview(postView)
         
-        // 設置點擊手勢
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapPostView))
         postView.addGestureRecognizer(tapGesture)
         postView.layer.cornerRadius = 30
@@ -125,13 +121,13 @@ class NewsFeedViewController: UIViewController {
             make.top.equalTo(view.safeAreaLayoutGuide)
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(60) // 設置高度
+            make.height.equalTo(60)
         }
         
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         avatarImageView.layer.cornerRadius = 25
-        avatarImageView.image = UIImage(named: "user-placeholder") // 可以替換成實際的 avatar 圖片
+        avatarImageView.image = UIImage(named: "user-placeholder")
         postView.addSubview(avatarImageView)
         
         avatarImageView.snp.makeConstraints { make in
@@ -429,14 +425,11 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         let contentHeight = scrollView.contentSize.height
         let scrollHeight = scrollView.frame.size.height
         
-        // 如果內容不足以充滿屏幕，則不用修正
         guard contentHeight > scrollHeight else { return }
         
-        // 假設我們定義一個最大允許偏移量範圍，防止滾動超出內容範圍
         let maxOffsetY = contentHeight - scrollHeight
         let minOffsetY: CGFloat = 0
         
-        // 修正滾動條跳動：限制滾動範圍在 minOffsetY 和 maxOffsetY 之間
         if offsetY < minOffsetY {
             scrollView.contentOffset.y = minOffsetY // 防止滾動超出頂部
         } else if offsetY > maxOffsetY {
@@ -461,7 +454,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         cell.awardLabelView.updateTitle("初心者")
         cell.awardLabelView.backgroundColor = .systemGray
         
-        // 獲取貼文發佈者的 userId
         guard let postOwnerId = postData["userId"] as? String else { return UITableViewCell() }
         cell.tag = indexPath.row
         cell.selectionStyle = .none
@@ -472,7 +464,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         cell.likeCountLabel.text = self.likeCount
         cell.configurePhotoStackView(with: postData["photoUrls"] as? [String] ?? [])
         cell.configureMoreButton {
-            self.showBottomSheet()  // 顯示彈窗
+            self.showBottomSheet()
         }
         
         if let createdAtTimestamp = postData["createdAt"] as? Timestamp {
@@ -480,7 +472,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             cell.dateLabel.text = createdAtString
         }
         
-        // 檢查該貼文是否已被當前用戶收藏
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return cell }
         
         FirebaseManager.shared.isContentBookmarked(forUserId: currentUserId, id: postData["id"] as? String ?? "") { isBookmarked in

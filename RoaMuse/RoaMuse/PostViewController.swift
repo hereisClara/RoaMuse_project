@@ -14,7 +14,6 @@ import Kingfisher
 class PostViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     let db = Firestore.firestore()
-    
     let titleTextField = UITextField()
     let contentTextView = UITextView()
     let postButton = UIButton(type: .system)
@@ -27,12 +26,12 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     var tripsArray = [Trip]()
     var tripId = String()
     var postButtonAction: (() -> Void)?
-    let imageButton = UIButton(type: .system) // 用來選擇圖片的按鈕
-    var selectedImage: UIImage? // 儲存選擇的圖片
-    var imageUrl: String? // 儲存圖片上傳後的下載 URL
+    let imageButton = UIButton(type: .system)
+    var selectedImage: UIImage?
+    var imageUrl: String?
     let avatarImageView = UIImageView()
-    var selectedImages = [UIImage]() // 用來存儲選擇的圖片
-    let imagesStackView = UIStackView() // StackView 用來顯示縮圖
+    var selectedImages = [UIImage]()
+    let imagesStackView = UIStackView()
     var photoUrls = [String]()
     
     override func viewDidLoad() {
@@ -40,6 +39,16 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.backgroundColor = .backgroundGray
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
         navigationItem.backButtonTitle = ""
+        
+        if let navigationBar = self.navigationController?.navigationBar {
+                let navBarAppearance = UINavigationBarAppearance()
+                navBarAppearance.configureWithOpaqueBackground() // 設置為不透明
+                navBarAppearance.backgroundColor = .backgroundGray // 設置背景色為您想要的顏色
+                navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue] // 可選，設定標題文字顏色
+
+                navigationBar.standardAppearance = navBarAppearance
+                navigationBar.scrollEdgeAppearance = navBarAppearance
+            }
         
         setupUI()
         setupDropdownTableView()
@@ -68,9 +77,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = true
-//        resetPostForm()
         if let sharedImage = sharedImage {
-            addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
+            addImageToStackView(sharedImage)
         }
         validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }

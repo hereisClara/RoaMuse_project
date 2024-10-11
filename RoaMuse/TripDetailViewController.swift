@@ -63,6 +63,7 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
         navigationController?.navigationBar.barTintColor = UIColor.backgroundGray
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        
         navigationItem.backButtonTitle = ""
         self.buttonState = []
         getPoemPlacePair()

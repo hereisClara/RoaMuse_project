@@ -11,7 +11,7 @@ import UIKit
 import SnapKit
 
 class UserListViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate {
-
+    
     var followers: [String] = []
     var following: [String] = []
     var userId: String?
@@ -178,30 +178,27 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-            if scrollView.contentOffset.x == 0 {
-                // 展示 Followers
-                followersButton.isSelected = true
-                followingButton.isSelected = false
-                loadUserList() // 加载粉丝数据
-            } else {
-                // 展示 Following
-                followersButton.isSelected = false
-                followingButton.isSelected = true
-                loadUserList() // 加载关注数据
-            }
+        if scrollView.contentOffset.x == 0 {
+            // 展示 Followers
+            followersButton.isSelected = true
+            followingButton.isSelected = false
+            loadUserList() // 加载粉丝数据
+        } else {
+            // 展示 Following
+            followersButton.isSelected = false
+            followingButton.isSelected = true
+            loadUserList() // 加载关注数据
         }
-
+    }
+    
     func loadUserList() {
         guard let userId = userId else { return }
         print("start")
-
         let userRef = Firestore.firestore().collection("users").document(userId)
-
-        // 根據 UIScrollView 的當前偏移量來判斷是否在查看 followers 還是 following
+        
         let isShowingFollowers = scrollView.contentOffset.x == 0
-
+        
         if isShowingFollowers {
-print("follower")
             userRef.getDocument { [weak self] snapshot, error in
                 if let error = error {
                     print("Error fetching followers: \(error)")
@@ -209,6 +206,15 @@ print("follower")
                 }
                 if let data = snapshot?.data(), let followers = data["followers"] as? [String] {
                     self?.followers = followers
+                    
+//                    for followerId in followers {
+//                        FirebaseManager.shared.fetchUserData(userId: followerId) { result in
+//                            switch result {
+//
+//                            }
+//                        }
+//                    }
+                    
                     self?.followersTableView.reloadData()
                 }
             }
@@ -227,7 +233,7 @@ print("follower")
             }
         }
     }
-
+    
     // MARK: - UITableViewDataSource 和 UITableViewDelegate
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if tableView == followersTableView {

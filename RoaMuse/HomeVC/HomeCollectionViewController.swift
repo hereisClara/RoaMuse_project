@@ -63,7 +63,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         blurEffectView.snp.makeConstraints { make in
             make.top.equalTo(view)
             make.leading.trailing.equalTo(view)
-            make.height.equalTo(view).multipliedBy(0.2)
+            make.height.equalTo(view).multipliedBy(0.15)
         }
         
         // 4. 創建一個漸變遮罩來控制模糊效果的範圍
@@ -71,7 +71,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.6).cgColor] // 從透明到模糊漸變
         gradientLayer.locations = [0.0, 1.0] // 從透明到白色的漸變位置
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 1.0) // 從頂部開始漸變
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.0) // 到底部結束漸變
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.05) // 到底部結束漸變
         
         // 5. 將 gradientLayer 添加到 blurEffectView 並設置遮罩
         blurEffectView.layer.mask = gradientLayer

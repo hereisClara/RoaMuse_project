@@ -303,9 +303,9 @@ class UserTableViewCell: UITableViewCell {
         //            }
         
         // 設置頭像
-        if let avatarUrlString = post["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
-            avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "user-placeholder"))
-        }
+//        if let avatarUrlString = post["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
+//            avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "user-placeholder"))
+//        }
         
         // 設置圖片
         if let photoUrls = post["photoUrls"] as? [String] {

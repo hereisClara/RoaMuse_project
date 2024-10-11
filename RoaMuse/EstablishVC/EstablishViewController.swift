@@ -864,13 +864,13 @@ extension EstablishViewController: PopupViewDelegate {
         tripDetailVC.matchingPlaces = self.matchingPlaces
         tripDetailVC.keywordToLineMap = self.keywordToLineMap
         if let currentLocation = locationManager.currentLocation?.coordinate {
-            let places = matchingPlaces.map { $0.place } // 提取 Place 数组
+            let places = matchingPlaces.map { $0.place }
             calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { [weak self] totalTravelTime, nestedInstructions in
                 guard let self = self else { return }
                 
                 if let totalTravelTime = totalTravelTime, let nestedInstructions = nestedInstructions {
-                    tripDetailVC.totalTravelTime = totalTravelTime // 传递总交通时间
-                    tripDetailVC.nestedInstructions = nestedInstructions // 传递嵌套的导航指令数组
+                    tripDetailVC.totalTravelTime = totalTravelTime
+                    tripDetailVC.nestedInstructions = nestedInstructions 
                 }
                 
                 DispatchQueue.main.async {
@@ -907,7 +907,10 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = styleTableView.dequeueReusableCell(withIdentifier: "styleCell", for: indexPath) as? StyleTableViewCell
-        cell?.containerView.backgroundColor = isStyleButtonSelected ? .white : .systemGray4
+        cell?.containerView.backgroundColor = isStyleButtonSelected ? .white : .systemGray5
+        cell?.titleLabel.textColor = isStyleButtonSelected ? .deepBlue : .systemGray
+        cell?.descriptionLabel.textColor = isStyleButtonSelected ? .systemGray : .systemGray3
+        cell?.containerView.layer.borderColor = isStyleButtonSelected ? UIColor.deepBlue.withAlphaComponent(0.6).cgColor : UIColor.systemGray3.cgColor
         cell?.titleLabel.text = styles[indexPath.row].name
         cell?.descriptionLabel.text = styles[indexPath.row].introduction
         cell?.selectionStyle = .none
@@ -917,8 +920,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let cell = tableView.cellForRow(at: indexPath) as? StyleTableViewCell {
-            // 在這裡執行你要對 cell 的操作
-            selectionTitle = cell.titleLabel.text ?? "" // 改變 cell 的背景顏色
+            selectionTitle = cell.titleLabel.text ?? ""
             styleTag = Int(indexPath.row) - 1
             print("Selected Style Title: \(selectionTitle)")
             updateStyleLabel(with: "＃\(selectionTitle)")

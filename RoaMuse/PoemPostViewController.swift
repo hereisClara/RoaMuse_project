@@ -26,7 +26,8 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         self.navigationItem.largeTitleDisplayMode = .never
         setupEmptyStateLabel()
         setupTableView()
-        
+        self.navigationItem.title = ""
+        self.navigationController?.navigationBar.tintColor = UIColor.deepBlue
         getCityToTrip()
         
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 200)
@@ -108,6 +109,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "UserTableViewCell", for: indexPath) as? UserTableViewCell else {
             return UITableViewCell()
         }
@@ -118,8 +120,46 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             print("filteredPosts is empty")
         } else {
             let post = filteredPosts[indexPath.row]
-            print("------ ", post)
+//            print("------ ", post)
             cell.configure(with: post)
+            
+            guard let postOwnerId = post["userId"] as? String else { return UITableViewCell() }
+            
+            FirebaseManager.shared.fetchUserData(userId: postOwnerId) { result in
+                switch result {
+                case .success(let data):
+                    if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
+                        
+                        DispatchQueue.main.async {
+                            cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
+                        }
+                    }
+                    
+                    cell.userNameLabel.text = data["userName"] as? String
+                    
+                    FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { (result: Result<(String, Int), Error>) in
+                        switch result {
+                        case .success(let (awardTitle, item)):
+                            let title = awardTitle
+                            cell.awardLabelView.updateTitle(awardTitle)
+                            DispatchQueue.main.async {
+                                AwardStyleManager.updateTitleContainerStyle(
+                                    forTitle: awardTitle,
+                                    item: item,
+                                    titleContainerView: cell.awardLabelView,
+                                    titleLabel: cell.awardLabelView.titleLabel,
+                                    dropdownButton: nil
+                                )
+                            }
+                            
+                        case .failure(let error):
+                            print("獲取稱號失敗: \(error.localizedDescription)")
+                        }
+                    }
+                case .failure(let error):
+                    print("加載用戶大頭貼失敗: \(error.localizedDescription)")
+                }
+            }
         }
         
         cell.configureMoreButton {
@@ -159,8 +199,31 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     
     // MARK: - UITableViewDelegate
     
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return Array(cityGroupedPoems.keys)[section] // 返回每個 section 的城市名稱作為標題
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        // 创建一个 UIView 作为 section 的 header
+        let headerView = UIView()
+        headerView.backgroundColor = .backgroundGray // 设置背景色
+        
+        // 创建 UILabel 来显示标题
+        let titleLabel = UILabel()
+        titleLabel.text = Array(cityGroupedPoems.keys)[section] // 设置文本为城市名
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+        titleLabel.textColor = .deepBlue // 自定义文字颜色
+        
+        headerView.addSubview(titleLabel)
+        
+        // 使用 Auto Layout 进行布局
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16), // 左边有间距
+            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor) // 垂直居中
+        ])
+        
+        return headerView
+    }
+
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 60 // 自定义的 header 高度
     }
     
     // MARK: - 加載數據
