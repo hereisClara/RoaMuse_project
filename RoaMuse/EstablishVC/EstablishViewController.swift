@@ -117,7 +117,7 @@ class EstablishViewController: UIViewController {
 
         let circleView = UIView()
         circleView.backgroundColor = .backgroundGray
-        circleView.layer.cornerRadius = 20
+        circleView.layer.cornerRadius = 18
         circleView.layer.masksToBounds = true
         recommendRandomTripView.addSubview(circleView)
 
@@ -161,7 +161,7 @@ class EstablishViewController: UIViewController {
         circleView.snp.makeConstraints { make in
             make.trailing.equalTo(recommendRandomTripView).offset(-16)
             make.top.equalTo(recommendRandomTripView).offset(16)
-            make.width.height.equalTo(40)
+            make.width.height.equalTo(36)
         }
 
         // 按鈕佈局

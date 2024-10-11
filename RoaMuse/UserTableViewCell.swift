@@ -232,7 +232,7 @@ class UserTableViewCell: UITableViewCell {
         if photoUrls.isEmpty {
             scrollView.isHidden = true
             scrollView.snp.updateConstraints { make in
-                make.height.equalTo(0)  // 沒有圖片時高度設置為 0
+                make.height.equalTo(0)
             }
         } else {
             scrollView.isHidden = false
@@ -244,7 +244,7 @@ class UserTableViewCell: UITableViewCell {
                 imageView.layer.cornerRadius = 8
                 
                 if let url = URL(string: urlString) {
-                    imageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
+                    imageView.kf.setImage(with: url, placeholder: UIImage(named: "user-placeholder"))
                 }
                 
                 photoStackView.addArrangedSubview(imageView)

@@ -16,7 +16,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     var allTripIds = [String]()
     var selectedPoem: Poem?
     var filteredPosts = [[String: Any]]()
-    var cityGroupedPoems = [String: [[String: Any]]]() // 用來存儲分組後的貼文數據
+    var cityGroupedPoems = [String: [[String: Any]]]()
     var tableView: UITableView!
     var emptyStateLabel: UILabel!
     
@@ -30,7 +30,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         getCityToTrip()
         
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 200)
-        
         
         bottomSheetManager?.addActionButton(title: "檢舉貼文", textColor: .black) {
             self.presentImpeachAlert()
@@ -53,11 +52,11 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         emptyStateLabel.textColor = .lightGray
         emptyStateLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         emptyStateLabel.textAlignment = .center
-        emptyStateLabel.isHidden = true // 預設為隱藏
+        emptyStateLabel.isHidden = true 
         view.addSubview(emptyStateLabel)
         
         emptyStateLabel.snp.makeConstraints { make in
-            make.center.equalTo(view) // 在螢幕正中間顯示
+            make.center.equalTo(view)
         }
     }
     
@@ -65,12 +64,12 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         print("Filtered Posts Count: \(filteredPosts.count)")
         if filteredPosts.isEmpty {
             print("empty")
-            emptyStateLabel.isHidden = false // 顯示提示
-            tableView.isHidden = true        // 隱藏 tableView
+            emptyStateLabel.isHidden = false
+            tableView.isHidden = true
         } else {
             print("not empty")
-            emptyStateLabel.isHidden = true  // 隱藏提示
-            tableView.isHidden = false       // 顯示 tableView
+            emptyStateLabel.isHidden = true
+            tableView.isHidden = false
         }
     }
     // MARK: - TableView 設置
@@ -283,34 +282,10 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                         self.updateEmptyState()
                         self.tableView.reloadData() // 在获取数据后重新载入表格
                     }
+                } else {
+                    self.updateEmptyState()
                 }
             }
         }
     }
-    
-    
-    //    func groupFilteredPostsByCity(filteredPosts: [[String: Any]]) {
-    //        // 創建一個臨時字典來保存分組貼文
-    //        var groupedPosts = [String: [[String: Any]]]()
-    //
-    //        for post in filteredPosts {
-    //            // 獲取貼文的 tripId
-    //            if let tripId = post["tripId"] as? String {
-    //                // 遍歷 cityGroupedPoems 找到對應的城市
-    //                for (city, poems) in cityGroupedPoems {
-    //                    if poems.contains(where: { $0["tripId"] as? String == tripId }) {
-    //                        if var cityPosts = groupedPosts[city] {
-    //                            cityPosts.append(post)
-    //                            groupedPosts[city] = cityPosts
-    //                        } else {
-    //                            groupedPosts[city] = [post]
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //
-    //        // 更新 cityGroupedPoems 為過濾後的分組貼文
-    //        self.cityGroupedPoems = groupedPosts
-    //    }
 }

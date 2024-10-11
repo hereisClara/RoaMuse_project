@@ -68,7 +68,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         
         // 4. 創建一個漸變遮罩來控制模糊效果的範圍
         let gradientLayer = CAGradientLayer()
-        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.9).cgColor] // 從透明到模糊漸變
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.6).cgColor] // 從透明到模糊漸變
         gradientLayer.locations = [0.0, 1.0] // 從透明到白色的漸變位置
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 1.0) // 從頂部開始漸變
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.0) // 到底部結束漸變
@@ -126,7 +126,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     }
     
     func startAutoScrolling() {
-        autoScrollTimer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(handleAutoScroll), userInfo: nil, repeats: true)
+        autoScrollTimer = Timer.scheduledTimer(timeInterval: 0.025, target: self, selector: #selector(handleAutoScroll), userInfo: nil, repeats: true)
     }
     
     func stopAutoScrolling() {
@@ -136,7 +136,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     @objc func handleAutoScroll() {
         let currentOffset = collectionView.contentOffset.y
-        let newOffset = CGPoint(x: 0, y: currentOffset + 1) // 每次向下滾動 1 點
+        let newOffset = CGPoint(x: 0, y: currentOffset + 0.5) // 每次向下滾動 1 點
         let maxOffset = collectionView.contentSize.height - collectionView.bounds.height
         
         if newOffset.y >= maxOffset {
