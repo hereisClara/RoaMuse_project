@@ -98,7 +98,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         sliderButton.addTarget(self, action: #selector(sliderButtonTapped), for: .touchUpInside)
     }
     
-    func createSlider(label: String, min: Float, max: Float, action: Selector) -> UIStackView {
+    func createSlider(label: String, min: Float, max: Float, defaultValue: Float, action: Selector) -> UIStackView {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.spacing = 10
@@ -111,18 +111,19 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let slider = UISlider()
         slider.minimumValue = min
         slider.maximumValue = max
+        slider.value = defaultValue  // 設置預設值
         slider.addTarget(self, action: action, for: .valueChanged)
         stackView.addArrangedSubview(slider)
         
         return stackView
     }
-    
+
     @objc func sliderButtonTapped() {
         // 获取 window 的引用
         guard let window = UIApplication.shared.keyWindow else { return }
         
-        var slider = UISlider()
-        var sliderLabel = UILabel()
+//        var slider = UISlider()
+//        var sliderLabel = UILabel()
         
         // 创建一个半透明的黑色背景视图
         let backgroundView = UIView()
@@ -144,12 +145,12 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.height.equalTo(400)
         }
         
-        slider.minimumValue = 0.0
-        slider.maximumValue = 1.0
-        popupView.addSubview(slider)
+//        slider.minimumValue = 0.0
+//        slider.maximumValue = 1.0
+//        popupView.addSubview(slider)
         
-        // 添加滑块：遮罩透明度
-        let maskOpacitySlider = createSlider(label: "遮罩透明度", min: 0.0, max: 1.0, action: #selector(adjustMaskOpacity(_:)))
+         
+        let maskOpacitySlider = createSlider(label: "遮罩透明度", min: 0.0, max: 1.0, defaultValue: 1.0, action: #selector(adjustMaskOpacity(_:)))
         popupView.addSubview(maskOpacitySlider)
         maskOpacitySlider.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(20)
@@ -157,8 +158,11 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.width.equalTo(popupView).multipliedBy(0.8)
         }
         
+        let brightnessSlider = createSlider(label: "亮度", min: -0.3, max: 0.3, defaultValue: 0.0, action: #selector(adjustBrightness(_:)))
+        let saturationSlider = createSlider(label: "飽和度", min: 0.5, max: 1.5, defaultValue: 1.0, action: #selector(adjustSaturation(_:)))
+        let blurSlider = createSlider(label: "模糊", min: 0.0, max: 5.0, defaultValue: 1.0, action: #selector(adjustBlur(_:)))
+
         // 添加滑块：亮度
-        let brightnessSlider = createSlider(label: "亮度", min: -0.3, max: 0.3, action: #selector(adjustBrightness(_:)))
         popupView.addSubview(brightnessSlider)
         brightnessSlider.snp.makeConstraints { make in
             make.top.equalTo(maskOpacitySlider.snp.bottom).offset(20)
@@ -167,7 +171,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
         
         // 添加滑块：饱和度
-        let saturationSlider = createSlider(label: "飽和度", min: 0.5, max: 1.5, action: #selector(adjustSaturation(_:)))
         popupView.addSubview(saturationSlider)
         saturationSlider.snp.makeConstraints { make in
             make.top.equalTo(brightnessSlider.snp.bottom).offset(20)
@@ -176,7 +179,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
         
         // 添加滑块：模糊程度
-        let blurSlider = createSlider(label: "模糊", min: 0.0, max: 5.0, action: #selector(adjustBlur(_:)))
         popupView.addSubview(blurSlider)
         blurSlider.snp.makeConstraints { make in
             make.top.equalTo(saturationSlider.snp.bottom).offset(20)
@@ -184,17 +186,17 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.width.equalTo(popupView).multipliedBy(0.8)
         }
         // 添加一个标签显示当前滑块的
-        sliderLabel.text = "透明度: \(Int(slider.value * 100))%"
-        sliderLabel.textAlignment = .center
-        popupView.addSubview(sliderLabel)
-        
-        sliderLabel.snp.makeConstraints { make in
-            make.centerX.equalTo(popupView)
-            make.top.equalTo(slider.snp.bottom).offset(10)
-        }
+//        sliderLabel.text = "透明度: \(Int(slider.value * 100))%"
+//        sliderLabel.textAlignment = .center
+//        popupView.addSubview(sliderLabel)
+//        
+//        sliderLabel.snp.makeConstraints { make in
+//            make.centerX.equalTo(popupView)
+//            make.top.equalTo(slider.snp.bottom).offset(10)
+//        }
         
         // 添加滑块值变化的监听器
-        slider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
+//        slider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
         
         // 添加关闭按钮
         let closeButton = UIButton(type: .system)
@@ -211,8 +213,8 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         // 保存引用用于关闭弹窗时使用
         self.backgroundView = backgroundView
         self.popupView = popupView
-        self.sliderLabel = sliderLabel
-        self.slider = slider
+//        self.sliderLabel = sliderLabel
+//        self.slider = slider
     }
     
     // 调整遮罩透明度

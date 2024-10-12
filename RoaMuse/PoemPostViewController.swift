@@ -52,44 +52,37 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-//        print("ScrollView frame: \(scrollView.frame)")
-//        print("ScrollView contentSize: \(scrollView.contentSize)")
-//        for subview in scrollView.subviews {
-//                if let button = subview as? UIButton {
-//                    print("Button Frame: \(button.frame), Title: \(button.titleLabel?.text ?? "")")
-//                }
-//            }
     }
     
     func setupScrollView() {
-            scrollView = UIScrollView()
-            scrollView.showsHorizontalScrollIndicator = false
-            view.addSubview(scrollView)
-            
-            scrollView.snp.makeConstraints { make in
-                make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
-                make.leading.trailing.equalTo(view)
-                make.height.equalTo(50)
-            }
-            
-            updateScrollViewButtons() // 動態生成按鈕
+        scrollView = UIScrollView()
+        scrollView.showsHorizontalScrollIndicator = false
+        view.addSubview(scrollView)
+        
+        scrollView.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
+            make.leading.trailing.equalTo(view)
+            make.height.equalTo(50)
         }
+        
+        updateScrollViewButtons() // 動態生成按鈕
+    }
     
     func updateScrollViewButtons() {
         var buttonX: CGFloat = 10
         let buttonPadding: CGFloat = 10
         let buttonHeight: CGFloat = 40
-
+        
         // 打印 scrollView 的 frame
         print("------ScrollView frame before adding buttons: \(scrollView.frame)")
-
+        
         // 创建按钮并添加到 scrollView
         for (index, city) in cityGroupedPoems.keys.enumerated() {
             print("/////", cityGroupedPoems.keys)
             let button = UIButton(type: .system)
             button.setTitle(city, for: .normal)
             button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 20)
-//            button.titleLabel?.textColor = .deepBlue
+            //            button.titleLabel?.textColor = .deepBlue
             button.layer.borderColor = UIColor.deepBlue.cgColor
             button.layer.borderWidth = 1
             button.backgroundColor = .white
@@ -97,22 +90,22 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             button.layer.cornerRadius = 20
             button.tag = index
             button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
-
+            
             // 设置按钮的宽度
             let buttonWidth = max(80, city.size(withAttributes: [.font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 17)]).width + 20)
             button.frame = CGRect(x: buttonX, y: 5, width: buttonWidth, height: buttonHeight)
             buttonX += buttonWidth + buttonPadding
-
+            
             print("Adding button with title: \(city), Frame: \(button.frame)")
-
+            
             scrollView.addSubview(button)
         }
-
+        
         // 更新 scrollView 的 contentSize
         scrollView.contentSize = CGSize(width: buttonX, height: buttonHeight)
         print("ScrollView contentSize: \(scrollView.contentSize)")
     }
-
+    
     @objc func filterButtonTapped(_ sender: UIButton) {
         if selectedButton == sender {
             // 如果再次點擊同一個按鈕，顏色重設為 .deepBlue 並返回頂部
@@ -138,14 +131,14 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             }
         }
     }
-
+    
     func setupEmptyStateLabel() {
         emptyStateLabel = UILabel()
         emptyStateLabel.text = "現在還沒有這首詩的日記"
         emptyStateLabel.textColor = .lightGray
         emptyStateLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         emptyStateLabel.textAlignment = .center
-        emptyStateLabel.isHidden = true 
+        emptyStateLabel.isHidden = true
         view.addSubview(emptyStateLabel)
         
         emptyStateLabel.snp.makeConstraints { make in
@@ -158,7 +151,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         emptyStateLabel.isHidden = hasData
         tableView.isHidden = !hasData
     }
-
+    
     // MARK: - TableView 設置
     
     func setupTableView() {
@@ -174,10 +167,10 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
         view.addSubview(tableView)
         tableView.snp.makeConstraints { make in
-                    make.top.equalTo(scrollView.snp.bottom).offset(10)
-                    make.leading.trailing.equalTo(view).inset(16)
-                    make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
-                }
+            make.top.equalTo(scrollView.snp.bottom).offset(10)
+            make.leading.trailing.equalTo(view).inset(16)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
+        }
     }
     
     // MARK: - UITableViewDataSource
@@ -190,7 +183,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         let city = Array(cityGroupedPoems.keys)[section]
         return cityGroupedPoems[city]?.count ?? 0
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "UserTableViewCell", for: indexPath) as? UserTableViewCell else {
             return UITableViewCell()
@@ -201,7 +194,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         let city = Array(cityGroupedPoems.keys)[indexPath.section]
         if let post = cityGroupedPoems[city]?[indexPath.row] {
             cell.configure(with: post)
-
+            
             if let postOwnerId = post["userId"] as? String {
                 FirebaseManager.shared.fetchUserData(userId: postOwnerId) { result in
                     switch result {
@@ -212,16 +205,36 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                             }
                         }
                         cell.userNameLabel.text = data["userName"] as? String
+                        
+                        FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { (result: Result<(String, Int), Error>) in
+                            switch result {
+                            case .success(let (awardTitle, item)):
+                                let title = awardTitle
+                                cell.awardLabelView.updateTitle(awardTitle)
+                                DispatchQueue.main.async {
+                                    AwardStyleManager.updateTitleContainerStyle(
+                                        forTitle: awardTitle,
+                                        item: item,
+                                        titleContainerView: cell.awardLabelView,
+                                        titleLabel: cell.awardLabelView.titleLabel,
+                                        dropdownButton: nil
+                                    )
+                                }
+                                
+                            case .failure(let error):
+                                print("獲取稱號失敗: \(error.localizedDescription)")
+                            }
+                        }
                     case .failure(let error):
                         print("Error loading user data: \(error.localizedDescription)")
                     }
                 }
             }
         }
-
+        
         return cell
     }
-
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let city = Array(cityGroupedPoems.keys)[indexPath.section] // 根據 section 取得城市名稱
         guard let post = cityGroupedPoems[city]?[indexPath.row] else { return } // 從對應城市中取得文章
@@ -255,7 +268,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             }
         }
     }
-
+    
     // MARK: - UITableViewDelegate
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -280,7 +293,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
         return headerView
     }
-
+    
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 40 // 自定义的 header 高度
     }
@@ -289,38 +302,38 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     func loadFilteredPosts(cityToTrips: [String: [String]], completion: @escaping ([String: [[String: Any]]]) -> Void) {
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             guard let self = self else { return }
-
+            
             var cityGroupedPosts: [String: [[String: Any]]] = [:]
-
+            
             for (city, tripIds) in cityToTrips {
                 let cityPosts = postsArray.filter { postData in
                     guard let tripId = postData["tripId"] as? String else { return false }
                     return tripIds.contains(tripId)
                 }
-
+                
                 if !cityPosts.isEmpty {
                     cityGroupedPosts[city] = cityPosts
                 }
             }
-
+            
             print("City Grouped Posts: \(cityGroupedPosts)")
             completion(cityGroupedPosts)
         }
     }
-
+    
     func presentImpeachAlert() {
-            let alertController = UIAlertController(title: "檢舉貼文", message: "你確定要檢舉這篇貼文嗎？", preferredStyle: .alert)
-            
-            let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
-            alertController.addAction(cancelAction)
-            
-            let confirmAction = UIAlertAction(title: "確定", style: .destructive) { _ in
-                self.bottomSheetManager?.dismissBottomSheet()
-            }
-            alertController.addAction(confirmAction)
-            
-            present(alertController, animated: true, completion: nil)
+        let alertController = UIAlertController(title: "檢舉貼文", message: "你確定要檢舉這篇貼文嗎？", preferredStyle: .alert)
+        
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        alertController.addAction(cancelAction)
+        
+        let confirmAction = UIAlertAction(title: "確定", style: .destructive) { _ in
+            self.bottomSheetManager?.dismissBottomSheet()
         }
+        alertController.addAction(confirmAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
     
     func getCityToTrip() {
         if let selectedPoem = selectedPoem {
@@ -330,9 +343,9 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     return
                 } else if let poemsArray = poemsArray {
                     print("++++++    ", poemsArray)
-
+                    
                     var cityToTrips: [String: [String]] = [:]
-
+                    
                     for poem in poemsArray {
                         if let city = poem["city"] as? String,
                            let tripId = poem["tripId"] as? String {
@@ -345,9 +358,9 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                             }
                         }
                     }
-
+                    
                     print("City to Trips Mapping: \(cityToTrips)")
-
+                    
                     self.loadFilteredPosts(cityToTrips: cityToTrips) { cityGroupedPosts in
                         self.cityGroupedPoems = cityGroupedPosts
                         self.updateEmptyState()
