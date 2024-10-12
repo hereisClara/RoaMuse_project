@@ -12,6 +12,7 @@ import FirebaseFirestore
 
 class PoemPostViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
+    var selectedButton: UIButton?
     var bottomSheetManager: BottomSheetManager?
     var allTripIds = [String]()
     var selectedPoem: Poem?
@@ -113,16 +114,28 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     }
 
     @objc func filterButtonTapped(_ sender: UIButton) {
-        let section = sender.tag
-        let headerRect = tableView.rectForHeader(inSection: section)
-        
-        // 确保滚动到指定 section 的 header 悬停在 safeArea 的顶部
-        let safeAreaTopInset = tableView.safeAreaInsets.top
-        let offsetY = max(headerRect.origin.y - safeAreaTopInset, 0)
-        
-        // 使用 DispatchQueue 确保在布局完成后滚动
-        DispatchQueue.main.async {
-            self.tableView.setContentOffset(CGPoint(x: 0, y: offsetY), animated: true)
+        if selectedButton == sender {
+            // 如果再次點擊同一個按鈕，顏色重設為 .deepBlue 並返回頂部
+            sender.setTitleColor(.deepBlue, for: .normal)
+            selectedButton = nil
+            tableView.setContentOffset(.zero, animated: true)
+        } else {
+            // 將之前的按鈕顏色還原為 .deepBlue
+            selectedButton?.setTitleColor(.deepBlue, for: .normal)
+            
+            // 將新選中的按鈕設為 .accent 顏色
+            sender.setTitleColor(.accent, for: .normal)
+            selectedButton = sender
+            
+            // 滾動到對應的 section
+            let section = sender.tag
+            let headerRect = tableView.rectForHeader(inSection: section)
+            let safeAreaTopInset = tableView.safeAreaInsets.top
+            let offsetY = max(headerRect.origin.y - safeAreaTopInset, 0)
+            
+            DispatchQueue.main.async {
+                self.tableView.setContentOffset(CGPoint(x: 0, y: offsetY), animated: true)
+            }
         }
     }
 
@@ -141,17 +154,11 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func updateEmptyState() {
-        print("Filtered Posts Count: \(filteredPosts.count)")
-        if filteredPosts.isEmpty {
-            print("empty")
-            emptyStateLabel.isHidden = false
-            tableView.isHidden = true
-        } else {
-            print("not empty")
-            emptyStateLabel.isHidden = true
-            tableView.isHidden = false
-        }
+        let hasData = !cityGroupedPoems.isEmpty
+        emptyStateLabel.isHidden = hasData
+        tableView.isHidden = !hasData
     }
+
     // MARK: - TableView 設置
     
     func setupTableView() {
@@ -180,85 +187,56 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredPosts.count // 返回 filteredPosts 的数量
-        //        let city = Array(cityGroupedPoems.keys)[section] // 取得對應的城市
-        //                return cityGroupedPoems[city]?.count ?? 0
+        let city = Array(cityGroupedPoems.keys)[section]
+        return cityGroupedPoems[city]?.count ?? 0
     }
-    
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "UserTableViewCell", for: indexPath) as? UserTableViewCell else {
             return UITableViewCell()
         }
-        cell.backgroundColor = .backgroundGray
+        cell.backgroundColor = .clear
+        cell.contentView.backgroundColor = .white
         cell.selectionStyle = .none
-        
-        if filteredPosts.isEmpty {
-            print("filteredPosts is empty")
-        } else {
-            let post = filteredPosts[indexPath.row]
-//            print("------ ", post)
+        let city = Array(cityGroupedPoems.keys)[indexPath.section]
+        if let post = cityGroupedPoems[city]?[indexPath.row] {
             cell.configure(with: post)
-            
-            guard let postOwnerId = post["userId"] as? String else { return UITableViewCell() }
-            
-            FirebaseManager.shared.fetchUserData(userId: postOwnerId) { result in
-                switch result {
-                case .success(let data):
-                    if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                        
-                        DispatchQueue.main.async {
-                            cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
-                        }
-                    }
-                    
-                    cell.userNameLabel.text = data["userName"] as? String
-                    
-                    FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { (result: Result<(String, Int), Error>) in
-                        switch result {
-                        case .success(let (awardTitle, item)):
-                            let title = awardTitle
-                            cell.awardLabelView.updateTitle(awardTitle)
+
+            if let postOwnerId = post["userId"] as? String {
+                FirebaseManager.shared.fetchUserData(userId: postOwnerId) { result in
+                    switch result {
+                    case .success(let data):
+                        if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
                             DispatchQueue.main.async {
-                                AwardStyleManager.updateTitleContainerStyle(
-                                    forTitle: awardTitle,
-                                    item: item,
-                                    titleContainerView: cell.awardLabelView,
-                                    titleLabel: cell.awardLabelView.titleLabel,
-                                    dropdownButton: nil
-                                )
+                                cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                             }
-                            
-                        case .failure(let error):
-                            print("獲取稱號失敗: \(error.localizedDescription)")
                         }
+                        cell.userNameLabel.text = data["userName"] as? String
+                    case .failure(let error):
+                        print("Error loading user data: \(error.localizedDescription)")
                     }
-                case .failure(let error):
-                    print("加載用戶大頭貼失敗: \(error.localizedDescription)")
                 }
             }
         }
-        
-        cell.configureMoreButton {
-            self.bottomSheetManager?.showBottomSheet()
-        }
-        
+
         return cell
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let post = filteredPosts[indexPath.row]
+        let city = Array(cityGroupedPoems.keys)[indexPath.section] // 根據 section 取得城市名稱
+        guard let post = cityGroupedPoems[city]?[indexPath.row] else { return } // 從對應城市中取得文章
         
         let articleVC = ArticleViewController()
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
             if let userName = userName {
+                // 配置文章詳情
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
                 articleVC.tripId = post["tripId"] as? String ?? ""
                 articleVC.photoUrls = post["photoUrls"] as? [String] ?? []
+                
                 if let createdAtTimestamp = post["createdAt"] as? Timestamp {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                     articleVC.articleDate = createdAtString
@@ -268,13 +246,16 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                 articleVC.postId = post["id"] as? String ?? ""
                 articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
                 
-                self.navigationController?.pushViewController(articleVC, animated: true)
+                // 將 ArticleViewController 推入導航堆疊
+                DispatchQueue.main.async {
+                    self.navigationController?.pushViewController(articleVC, animated: true)
+                }
             } else {
                 print("未找到對應的 userName")
             }
         }
     }
-    
+
     // MARK: - UITableViewDelegate
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -284,7 +265,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
         // 创建 UILabel 来显示标题
         let titleLabel = UILabel()
-        titleLabel.text = Array(cityGroupedPoems.keys)[section] // 设置文本为城市名
+        titleLabel.text = Array(cityGroupedPoems.keys)[section]
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         titleLabel.textColor = .deepBlue // 自定义文字颜色
         
@@ -301,32 +282,32 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 60 // 自定义的 header 高度
+        return 40 // 自定义的 header 高度
     }
     
     // MARK: - 加載數據
-    
-    func loadFilteredPosts(allTripIds: [String], completion: @escaping ([[String: Any]]) -> Void) {
-        // 检查是否有 TripId
-        guard !allTripIds.isEmpty else {
-            completion([])
-            return
-        }
-        
+    func loadFilteredPosts(cityToTrips: [String: [String]], completion: @escaping ([String: [[String: Any]]]) -> Void) {
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             guard let self = self else { return }
-            
-            // 过滤出与给定 tripId 匹配的帖子
-            let filteredPosts = postsArray.filter { postData in
-                guard let tripId = postData["tripId"] as? String else { return false }
-                return allTripIds.contains(tripId)
+
+            var cityGroupedPosts: [String: [[String: Any]]] = [:]
+
+            for (city, tripIds) in cityToTrips {
+                let cityPosts = postsArray.filter { postData in
+                    guard let tripId = postData["tripId"] as? String else { return false }
+                    return tripIds.contains(tripId)
+                }
+
+                if !cityPosts.isEmpty {
+                    cityGroupedPosts[city] = cityPosts
+                }
             }
-            
-            // 将过滤后的帖子返回
-            completion(filteredPosts)
+
+            print("City Grouped Posts: \(cityGroupedPosts)")
+            completion(cityGroupedPosts)
         }
     }
-    
+
     func presentImpeachAlert() {
             let alertController = UIAlertController(title: "檢舉貼文", message: "你確定要檢舉這篇貼文嗎？", preferredStyle: .alert)
             
@@ -349,33 +330,29 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     return
                 } else if let poemsArray = poemsArray {
                     print("++++++    ", poemsArray)
+
+                    var cityToTrips: [String: [String]] = [:]
+
                     for poem in poemsArray {
-                        if let city = poem["city"] as? String {
-                            print("city isn't empty")
-                            if var existingPoems = self.cityGroupedPoems[city] {
-                                existingPoems.append(poem)
-                                self.cityGroupedPoems[city] = existingPoems
+                        if let city = poem["city"] as? String,
+                           let tripId = poem["tripId"] as? String {
+                            
+                            if var existingTrips = cityToTrips[city] {
+                                existingTrips.append(tripId)
+                                cityToTrips[city] = existingTrips
                             } else {
-                                self.cityGroupedPoems[city] = [poem]
+                                cityToTrips[city] = [tripId]
                             }
                         }
-                        
-                        if let tripId = poem["tripId"] as? String {
-                            print("tripId: \(tripId)")
-                            self.allTripIds.append(tripId)
-                        }
                     }
-                    print("All Trip Ids: \(self.allTripIds)")
-                    
-                    // Load filtered posts and update table view
-                    self.loadFilteredPosts(allTripIds: self.allTripIds) { filteredPosts in
-                        self.filteredPosts = filteredPosts
-                        
-                        print("Filtered Posts: \(self.filteredPosts)")
+
+                    print("City to Trips Mapping: \(cityToTrips)")
+
+                    self.loadFilteredPosts(cityToTrips: cityToTrips) { cityGroupedPosts in
+                        self.cityGroupedPoems = cityGroupedPosts
                         self.updateEmptyState()
-//                        self.setupScrollView()
                         self.updateScrollViewButtons()
-                        self.tableView.reloadData() 
+                        self.tableView.reloadData()
                     }
                 } else {
                     self.updateEmptyState()

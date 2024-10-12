@@ -126,7 +126,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     }
     
     func startAutoScrolling() {
-        autoScrollTimer = Timer.scheduledTimer(timeInterval: 0.025, target: self, selector: #selector(handleAutoScroll), userInfo: nil, repeats: true)
+        autoScrollTimer = Timer.scheduledTimer(timeInterval: 0.03, target: self, selector: #selector(handleAutoScroll), userInfo: nil, repeats: true)
     }
     
     func stopAutoScrolling() {
@@ -136,7 +136,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     @objc func handleAutoScroll() {
         let currentOffset = collectionView.contentOffset.y
-        let newOffset = CGPoint(x: 0, y: currentOffset + 0.5) // 每次向下滾動 1 點
+        let newOffset = CGPoint(x: 0, y: currentOffset + 0.5) 
         let maxOffset = collectionView.contentSize.height - collectionView.bounds.height
         
         if newOffset.y >= maxOffset {
