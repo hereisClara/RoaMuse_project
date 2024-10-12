@@ -5,6 +5,10 @@ import CoreImage
 
 class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    var maskOpacityValue: Float = 1.0
+    var brightnessValue: Float = 0.0
+    var saturationValue: Float = 1.0
+    var blurValue: Float = 1.0
     let stackViewBackgroundView = UIView()
     let imageView = UIImageView()
     let templateImageView = UIImageView()
@@ -144,13 +148,8 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.width.equalTo(window).multipliedBy(0.9)
             make.height.equalTo(400)
         }
-        
-//        slider.minimumValue = 0.0
-//        slider.maximumValue = 1.0
-//        popupView.addSubview(slider)
-        
          
-        let maskOpacitySlider = createSlider(label: "遮罩透明度", min: 0.0, max: 1.0, defaultValue: 1.0, action: #selector(adjustMaskOpacity(_:)))
+        let maskOpacitySlider = createSlider(label: "遮罩透明度", min: 0.0, max: 1.0, defaultValue: maskOpacityValue, action: #selector(adjustMaskOpacity(_:)))
         popupView.addSubview(maskOpacitySlider)
         maskOpacitySlider.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(20)
@@ -158,11 +157,10 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.width.equalTo(popupView).multipliedBy(0.8)
         }
         
-        let brightnessSlider = createSlider(label: "亮度", min: -0.3, max: 0.3, defaultValue: 0.0, action: #selector(adjustBrightness(_:)))
-        let saturationSlider = createSlider(label: "飽和度", min: 0.5, max: 1.5, defaultValue: 1.0, action: #selector(adjustSaturation(_:)))
-        let blurSlider = createSlider(label: "模糊", min: 0.0, max: 5.0, defaultValue: 1.0, action: #selector(adjustBlur(_:)))
+        let brightnessSlider = createSlider(label: "亮度", min: -0.3, max: 0.3, defaultValue: brightnessValue, action: #selector(adjustBrightness(_:)))
+        let saturationSlider = createSlider(label: "飽和度", min: 0.5, max: 1.5, defaultValue: saturationValue, action: #selector(adjustSaturation(_:)))
+        let blurSlider = createSlider(label: "模糊", min: 0.0, max: 5.0, defaultValue: blurValue, action: #selector(adjustBlur(_:)))
 
-        // 添加滑块：亮度
         popupView.addSubview(brightnessSlider)
         brightnessSlider.snp.makeConstraints { make in
             make.top.equalTo(maskOpacitySlider.snp.bottom).offset(20)
@@ -220,6 +218,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     // 调整遮罩透明度
     @objc func adjustMaskOpacity(_ sender: UISlider) {
         let alpha = CGFloat(sender.value)
+        maskOpacityValue = sender.value
         templateImageView.alpha = alpha
     }
     
@@ -229,6 +228,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
+        brightnessValue = roundedValue
         applyFilter(name: "CIColorControls", parameters: [kCIInputBrightnessKey: roundedValue])
     }
 
@@ -237,6 +237,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
+        saturationValue = roundedValue
         applyFilter(name: "CIColorControls", parameters: [kCIInputSaturationKey: roundedValue])
     }
 
@@ -245,6 +246,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
+        blurValue = roundedValue
         applyFilter(name: "CIGaussianBlur", parameters: [kCIInputRadiusKey: roundedValue])
     }
 
