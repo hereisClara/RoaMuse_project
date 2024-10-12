@@ -19,12 +19,14 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     var cityGroupedPoems = [String: [[String: Any]]]()
     var tableView: UITableView!
     var emptyStateLabel: UILabel!
+    var scrollView: UIScrollView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
         self.navigationItem.largeTitleDisplayMode = .never
         setupEmptyStateLabel()
+        setupScrollView()
         setupTableView()
         self.navigationItem.title = ""
         self.navigationController?.navigationBar.tintColor = UIColor.deepBlue
@@ -47,6 +49,83 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+//        print("ScrollView frame: \(scrollView.frame)")
+//        print("ScrollView contentSize: \(scrollView.contentSize)")
+//        for subview in scrollView.subviews {
+//                if let button = subview as? UIButton {
+//                    print("Button Frame: \(button.frame), Title: \(button.titleLabel?.text ?? "")")
+//                }
+//            }
+    }
+    
+    func setupScrollView() {
+            scrollView = UIScrollView()
+            scrollView.showsHorizontalScrollIndicator = false
+            view.addSubview(scrollView)
+            
+            scrollView.snp.makeConstraints { make in
+                make.top.equalTo(view.safeAreaLayoutGuide).offset(10)
+                make.leading.trailing.equalTo(view)
+                make.height.equalTo(50)
+            }
+            
+            updateScrollViewButtons() // 動態生成按鈕
+        }
+    
+    func updateScrollViewButtons() {
+        var buttonX: CGFloat = 10
+        let buttonPadding: CGFloat = 10
+        let buttonHeight: CGFloat = 40
+
+        // 打印 scrollView 的 frame
+        print("------ScrollView frame before adding buttons: \(scrollView.frame)")
+
+        // 创建按钮并添加到 scrollView
+        for (index, city) in cityGroupedPoems.keys.enumerated() {
+            print("/////", cityGroupedPoems.keys)
+            let button = UIButton(type: .system)
+            button.setTitle(city, for: .normal)
+            button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+//            button.titleLabel?.textColor = .deepBlue
+            button.layer.borderColor = UIColor.deepBlue.cgColor
+            button.layer.borderWidth = 1
+            button.backgroundColor = .white
+            button.setTitleColor(.deepBlue, for: .normal)
+            button.layer.cornerRadius = 20
+            button.tag = index
+            button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
+
+            // 设置按钮的宽度
+            let buttonWidth = max(80, city.size(withAttributes: [.font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 17)]).width + 20)
+            button.frame = CGRect(x: buttonX, y: 5, width: buttonWidth, height: buttonHeight)
+            buttonX += buttonWidth + buttonPadding
+
+            print("Adding button with title: \(city), Frame: \(button.frame)")
+
+            scrollView.addSubview(button)
+        }
+
+        // 更新 scrollView 的 contentSize
+        scrollView.contentSize = CGSize(width: buttonX, height: buttonHeight)
+        print("ScrollView contentSize: \(scrollView.contentSize)")
+    }
+
+    @objc func filterButtonTapped(_ sender: UIButton) {
+        let section = sender.tag
+        let headerRect = tableView.rectForHeader(inSection: section)
+        
+        // 确保滚动到指定 section 的 header 悬停在 safeArea 的顶部
+        let safeAreaTopInset = tableView.safeAreaInsets.top
+        let offsetY = max(headerRect.origin.y - safeAreaTopInset, 0)
+        
+        // 使用 DispatchQueue 确保在布局完成后滚动
+        DispatchQueue.main.async {
+            self.tableView.setContentOffset(CGPoint(x: 0, y: offsetY), animated: true)
+        }
+    }
+
     func setupEmptyStateLabel() {
         emptyStateLabel = UILabel()
         emptyStateLabel.text = "現在還沒有這首詩的日記"
@@ -88,11 +167,10 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
         view.addSubview(tableView)
         tableView.snp.makeConstraints { make in
-            make.width.equalTo(view).multipliedBy(0.9)
-            make.top.equalTo(view.safeAreaLayoutGuide)
-            make.centerX.equalTo(view)
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
-        }
+                    make.top.equalTo(scrollView.snp.bottom).offset(10)
+                    make.leading.trailing.equalTo(view).inset(16)
+                    make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
+                }
     }
     
     // MARK: - UITableViewDataSource
@@ -229,71 +307,23 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     // MARK: - 加載數據
     
     func loadFilteredPosts(allTripIds: [String], completion: @escaping ([[String: Any]]) -> Void) {
-        
+        // 检查是否有 TripId
         guard !allTripIds.isEmpty else {
             completion([])
             return
         }
         
-        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else {
-            print("无法获取当前用户 ID")
-            completion([])
-            return
-        }
-        
-        let currentUserRef = Firestore.firestore().collection("users").document(currentUserId)
-        currentUserRef.getDocument { snapshot, error in
-            if let error = error {
-                print("无法加载封锁状态: \(error.localizedDescription)")
-                completion([])
-                return
+        FirebaseManager.shared.loadPosts { [weak self] postsArray in
+            guard let self = self else { return }
+            
+            // 过滤出与给定 tripId 匹配的帖子
+            let filteredPosts = postsArray.filter { postData in
+                guard let tripId = postData["tripId"] as? String else { return false }
+                return allTripIds.contains(tripId)
             }
             
-            let blockedUsers = snapshot?.data()?["blockedUsers"] as? [String] ?? []
-            
-            let dispatchGroup = DispatchGroup()
-            var allFilteredPosts = [[String: Any]]()
-            
-            for tripId in allTripIds {
-                print("Querying posts for tripId: \(tripId)") // 印出正在查询的 tripId
-                dispatchGroup.enter()
-                Firestore.firestore().collection("posts")
-                    .whereField("tripId", isEqualTo: tripId)
-                    .getDocuments { snapshot, error in
-                        if let error = error {
-                            print("Error loading posts for tripId \(tripId): \(error.localizedDescription)")
-                            dispatchGroup.leave()
-                            return
-                        }
-                        
-                        guard let documents = snapshot?.documents else {
-                            print("No posts found for tripId \(tripId)")
-                            dispatchGroup.leave()
-                            return
-                        }
-                        
-                        let filteredPosts = documents.compactMap { document -> [String: Any]? in
-                            let postData = document.data()
-                            let postUserId = postData["userId"] as? String ?? ""
-                            
-                            if blockedUsers.contains(postUserId) {
-                                print("Post from blocked user \(postUserId) ignored")
-                                return nil
-                            }
-                            print("Post found: \(postData)") // 印出找到的资料
-                            return postData
-                        }
-                        
-                        allFilteredPosts.append(contentsOf: filteredPosts)
-                        dispatchGroup.leave()
-                    }
-            }
-            
-            // 当所有异步查询完成后，通知回调并返回所有的 post
-            dispatchGroup.notify(queue: .main) {
-                print("All filtered posts fetched: \(allFilteredPosts)") // 打印所有返回的 filtered posts
-                completion(allFilteredPosts) // 返回所有过滤后的帖子
-            }
+            // 将过滤后的帖子返回
+            completion(filteredPosts)
         }
     }
     
@@ -318,7 +348,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     print("Error retrieving data: \(error.localizedDescription)")
                     return
                 } else if let poemsArray = poemsArray {
-                    print("in else if")
+                    print("++++++    ", poemsArray)
                     for poem in poemsArray {
                         if let city = poem["city"] as? String {
                             print("city isn't empty")
@@ -343,7 +373,9 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                         
                         print("Filtered Posts: \(self.filteredPosts)")
                         self.updateEmptyState()
-                        self.tableView.reloadData() // 在获取数据后重新载入表格
+//                        self.setupScrollView()
+                        self.updateScrollViewButtons()
+                        self.tableView.reloadData() 
                     }
                 } else {
                     self.updateEmptyState()

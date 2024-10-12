@@ -25,7 +25,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tabBarController?.tabBar.isHidden = true
+//        tabBarController?.tabBar.isHidden = true
         navigationItem.backButtonTitle = ""
         mapView = MKMapView(frame: view.bounds)
         mapView.delegate = self
@@ -37,6 +37,16 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         loadCompletedPlacesAndAddAnnotations()
         setupSlidingView()
         setupFullScreenImageView()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     func setupSlidingView() {
