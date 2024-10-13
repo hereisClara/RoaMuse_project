@@ -16,12 +16,14 @@ class LoginViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
+        let waveView = CustomMaskWaveView(frame: view.bounds)
+        view.addSubview(waveView)
         let backgroundImage = UIImage(named: "backgroundImage") // 使用你圖片的名字
         let backgroundImageView = UIImageView(frame: UIScreen.main.bounds) // 設置為全螢幕大小
         backgroundImageView.image = backgroundImage
         backgroundImageView.contentMode = .scaleAspectFill // 設置內容模式（讓圖片適應螢幕大小）
         checkAppleSignInStatus()
-        view.insertSubview(backgroundImageView, at: 0)
+//        view.insertSubview(backgroundImageView, at: 0)
         checkEULAAgreement()
         setupUI()
         configureAppleSignInButton()
