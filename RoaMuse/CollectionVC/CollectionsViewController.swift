@@ -193,12 +193,9 @@ class CollectionsViewController: UIViewController {
             
             let bookmarkTripIds = data["bookmarkTrip"] as? [String] ?? []
             let completedTripIds = data["completedTrip"] as? [String] ?? []
-            print(bookmarkTripIds)
-            print(completedTripIds)
             
             let incompleteTripIds = bookmarkTripIds.filter { !completedTripIds.contains($0) }
             let completeTripIds = bookmarkTripIds.filter { completedTripIds.contains($0) }
-            print(incompleteTripIds)
             
             let parentDispatchGroup = DispatchGroup()
             

@@ -343,6 +343,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             if !tripIds.isEmpty {
                 FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
                     self.tripsArray = filteredTrips
+                    print("----=---= uuuuu     ", self.tripsArray)
                     self.dropdownTableView.reloadData()
                 }
             } else {
