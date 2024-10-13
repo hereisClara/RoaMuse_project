@@ -7,6 +7,7 @@ import Kingfisher
 
 class NewsFeedViewController: UIViewController {
     
+    var notificationButton = UIButton()
     let postViewController = PostViewController()
     let db = Firestore.firestore()
     var postsArray = [[String: Any]]()
@@ -17,7 +18,8 @@ class NewsFeedViewController: UIViewController {
     var likeCount = String()
     var bookmarkCount = String()
     var likeButtonIsSelected = Bool()
-    
+    var emptyStateLabel = UILabel()
+
     let bottomSheetView = UIView()
     let backgroundView = UIView()
     let sheetHeight: CGFloat = 250
@@ -30,10 +32,11 @@ class NewsFeedViewController: UIViewController {
         self.title = "動態"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, // 修改顏色
-                .font: customFont // 設置字體
+                .foregroundColor: UIColor.deepBlue, 
+                .font: customFont
             ]
         }
+        setupEmptyStateLabel()
         loadAvatarImageForPostView()
         postsTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         postsTableView.delegate = self
@@ -42,12 +45,9 @@ class NewsFeedViewController: UIViewController {
         setupPostView()
         setupPostsTableView()
         setupRefreshControl()
+        setupUserProfileImage()
         setupBottomSheet()
-        FirebaseManager.shared.loadPosts { postsArray in
-            self.postsArray = postsArray
-            self.postsTableView.reloadData()
-        }
-        
+        loadPostsForCurrentUserAndFollowing()
         postViewController.postButtonAction = { [weak self] in
             
             guard let self = self else { return }
@@ -61,18 +61,63 @@ class NewsFeedViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        FirebaseManager.shared.loadPosts { [weak self] postsArray in
-            self?.postsArray = postsArray
-            DispatchQueue.main.async {
-                self?.postsTableView.reloadData()
-            }
-        }
+        loadPostsForCurrentUserAndFollowing()
+        setupNavigationBarStyle()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        notificationButton.isHidden = true
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         postsTableView.layoutIfNeeded()
+    }
+    
+    func setupNavigationBarStyle() {
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue,  // 修改顏色
+                .font: customFont  // 設置字體
+            ]
+        }
+        navigationItem.largeTitleDisplayMode = .always
+    }
+    
+    func setupUserProfileImage() {
+        
+        guard let navigationBar = self.navigationController?.navigationBar else { return }
+        
+        notificationButton.layer.masksToBounds = true
+        notificationButton.contentMode = .scaleAspectFill
+        notificationButton.clipsToBounds = true
+        
+        navigationBar.addSubview(notificationButton)
+        
+        notificationButton.snp.makeConstraints { make in
+            make.width.height.equalTo(25)
+            make.trailing.equalTo(navigationBar.snp.trailing).offset(-16)
+            make.bottom.equalTo(navigationBar.snp.bottom).offset(-15)
+        }
+        
+        notificationButton.setImage(UIImage(named: "normal_heart"), for: .normal)
+        notificationButton.addTarget(self, action: #selector(didTapNotificationButton), for: .touchUpInside)
+        
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
+        
+        let userRef = FirebaseManager.shared.db.collection("users").document(currentUserId)
+        
+        userRef.addSnapshotListener { documentSnapshot, error in
+            if let error = error { return }
+            
+            guard let document = documentSnapshot, document.exists, let data = document.data() else { return }
+        }
+    }
+    
+    @objc func didTapNotificationButton() {
+        let notificationVC = NotificationViewController()
+        navigationController?.pushViewController(notificationVC, animated: true)
     }
     
     func loadAvatarImageForPostView() {
@@ -574,29 +619,74 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
 
 extension NewsFeedViewController {
     
+    private func loadPostsForCurrentUserAndFollowing() {
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
+
+        // 從 Firestore 讀取當前用戶的資料，取得追蹤清單和封鎖清單
+        let userRef = Firestore.firestore().collection("users").document(currentUserId)
+        userRef.getDocument { [weak self] snapshot, error in
+            guard let self = self, let data = snapshot?.data() else {
+                print("無法獲取追蹤或封鎖清單")
+                return
+            }
+
+            // 取得追蹤和封鎖清單
+            let followingUsers = data["following"] as? [String] ?? []
+            let blockedUsers = data["blockedUsers"] as? [String] ?? []
+
+            var validUserIds = followingUsers
+            validUserIds.append(currentUserId) // 包括當前用戶自己
+
+            // 使用 FirebaseManager 加載所有貼文
+            FirebaseManager.shared.loadPosts { postsArray in
+                // 過濾：來自追蹤對象或自己的貼文，且不在封鎖用戶清單中
+                let filteredPosts = postsArray.filter { post in
+                    if let userId = post["userId"] as? String {
+                        return validUserIds.contains(userId) && !blockedUsers.contains(userId)
+                    }
+                    return false
+                }
+
+                self.postsArray = filteredPosts
+                DispatchQueue.main.async {
+                    self.updateEmptyState()
+                    self.postsTableView.reloadData()
+                }
+            }
+        }
+    }
+    
     func getNewData() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return
         }
-        
-        // 首先，取得使用者的 following 名單
+
+        // 取得當前用戶的資料，包含 following 和 blockedUsers
         db.collection("users").document(userId).addSnapshotListener { [weak self] documentSnapshot, error in
             guard let self = self else { return }
             guard let document = documentSnapshot, let data = document.data() else {
                 print("Error fetching user data: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
-            
-            // 從用戶資料中提取 following 名單
-            if let followingArray = data["following"] as? [String] {
-                var postsArray = [Dictionary<String, Any>]()
-                let dispatchGroup = DispatchGroup()  // 使用 DispatchGroup 來同步多個資料庫請求
 
-                for followingUserId in followingArray {
-                    dispatchGroup.enter()  // 進入一個異步請求
-                    
-                    // 為每個 following 的使用者加上貼文監聽
-                    db.collection("posts").whereField("userId", isEqualTo: followingUserId).addSnapshotListener { querySnapshot, error in
+            let followingArray = data["following"] as? [String] ?? []
+            let blockedUsers = data["blockedUsers"] as? [String] ?? []
+
+            var postsArray = [Dictionary<String, Any>]()
+            let dispatchGroup = DispatchGroup()
+
+            // 包含當前用戶的貼文
+            let allUsersToFetch = followingArray + [userId]
+
+            for userIdToFetch in allUsersToFetch {
+                // 跳過封鎖的用戶
+                if blockedUsers.contains(userIdToFetch) {
+                    continue
+                }
+
+                dispatchGroup.enter()
+                db.collection("posts").whereField("userId", isEqualTo: userIdToFetch)
+                    .addSnapshotListener { querySnapshot, error in
                         if let error = error {
                             print("Error fetching posts: \(error.localizedDescription)")
                         } else {
@@ -604,29 +694,28 @@ extension NewsFeedViewController {
                                 postsArray.append(document.data())
                             }
                         }
-                        dispatchGroup.leave()  // 當前請求完成
+                        dispatchGroup.leave()
                     }
-                }
-                
-                // 當所有請求完成後，進行排序並更新 TableView
-                dispatchGroup.notify(queue: .main) {
-                    // 依照貼文創建時間進行排序
-                    self.postsArray = postsArray.sorted(by: { (post1, post2) -> Bool in
-                        if let createdAt1 = post1["createdAt"] as? Timestamp, let createdAt2 = post2["createdAt"] as? Timestamp {
-                            return createdAt1.dateValue() > createdAt2.dateValue()
-                        }
-                        return false
-                    })
-                    
-                    // 更新 UI
-                    self.postsTableView.reloadData()
-                    self.postsTableView.mj_header?.endRefreshing()
-                }
+            }
+
+            // 當所有資料都取得後，進行排序並更新 TableView
+            dispatchGroup.notify(queue: .main) {
+                self.postsArray = postsArray.sorted(by: { (post1, post2) -> Bool in
+                    if let createdAt1 = post1["createdAt"] as? Timestamp,
+                       let createdAt2 = post2["createdAt"] as? Timestamp {
+                        return createdAt1.dateValue() > createdAt2.dateValue()
+                    }
+                    return false
+                })
+
+                // 更新 UI 並停止刷新動畫
+                self.postsTableView.reloadData()
+                self.updateEmptyState()
+                self.postsTableView.mj_header?.endRefreshing()
             }
         }
     }
 
-    
     func setupRefreshControl() {
         // 使用 MJRefreshNormalHeader，當下拉時觸發的刷新動作
         postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
@@ -634,4 +723,24 @@ extension NewsFeedViewController {
             self.getNewData() // 在刷新時重新加載數據
         })
     }
+    
+    func setupEmptyStateLabel() {
+        emptyStateLabel.text = "現在還沒有日記"
+        emptyStateLabel.textColor = .lightGray
+        emptyStateLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+        emptyStateLabel.textAlignment = .center
+        emptyStateLabel.isHidden = true  // 預設隱藏
+        view.addSubview(emptyStateLabel)
+        
+        emptyStateLabel.snp.makeConstraints { make in
+            make.center.equalTo(view)
+        }
+    }
+    
+    func updateEmptyState() {
+        let hasData = !postsArray.isEmpty
+        emptyStateLabel.isHidden = hasData
+        postsTableView.isHidden = !hasData
+    }
+
 }

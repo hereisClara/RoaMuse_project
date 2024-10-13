@@ -44,7 +44,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 let navBarAppearance = UINavigationBarAppearance()
                 navBarAppearance.configureWithOpaqueBackground() // 設置為不透明
                 navBarAppearance.backgroundColor = .backgroundGray // 設置背景色為您想要的顏色
-                navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue] // 可選，設定標題文字顏色
+                navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue] 
 
                 navigationBar.standardAppearance = navBarAppearance
                 navigationBar.scrollEdgeAppearance = navBarAppearance

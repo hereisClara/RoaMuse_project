@@ -16,6 +16,7 @@ import MJRefresh
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    let emptyStateLabel = UILabel()
     var isShowingFollowers: Bool = true
     var postsCount = Int()
     let postsNumberLabel = UILabel()
@@ -60,12 +61,13 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 .font: customFont // 設置字體
             ]
         }
-        
-        let navigateBtn = UIBarButtonItem(image: UIImage(systemName: "slider.horizontal.3"), style: .plain, target: self, action: #selector(navigateToSettings))
+        navigationController?.navigationBar.tintColor = .deepBlue
+        let navigateBtn = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(navigateToSettings))
         navigationItem.rightBarButtonItems = [navigateBtn]
         
         imagePicker.delegate = self
         setupTableView()
+        setupEmptyStateLabel()
         setupRefreshControl()
         setupBottomSheet()
         guard let userId = userId else {
@@ -268,28 +270,36 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         guard let postId = post["id"] as? String else {
             return
         }
-        
+
         let alert = UIAlertController(title: "確認刪除", message: "你確定要刪除這篇貼文嗎？", preferredStyle: .alert)
-        
+
         alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
-        
         alert.addAction(UIAlertAction(title: "刪除", style: .destructive, handler: { [weak self] _ in
-            
-            Firestore.firestore().collection("posts").document(postId).delete { error in
-                if let error = error {
-                    
-                } else {
-                    self?.posts.remove(at: sender.tag)
-                    self?.tableView.performBatchUpdates({
-                        self?.tableView.deleteRows(at: [IndexPath(row: sender.tag, section: 0)], with: .fade)
-                    }, completion: { _ in
-                        self?.dismissBottomSheet()
-                    })
+            Firestore.firestore().collection("posts").document(postId).delete { [weak self] error in
+                if error != nil {
+                    print("刪除貼文失敗: \(error!.localizedDescription)")
+                    return
                 }
+                self?.handlePostDeletion(senderTag: sender.tag)
             }
         }))
-        
+
         present(alert, animated: true, completion: nil)
+    }
+    
+    func handlePostDeletion(senderTag: Int) {
+        guard senderTag < posts.count else {
+            print("Index out of range: \(senderTag)")
+            return
+        }
+        
+        posts.remove(at: senderTag)
+        
+        tableView.performBatchUpdates({
+            tableView.deleteRows(at: [IndexPath(row: senderTag, section: 0)], with: .fade)
+        }, completion: { _ in
+            self.dismissBottomSheet()
+        })
     }
     
     func createButton(title: String, textColor: UIColor = .black) -> UIButton {
@@ -305,13 +315,11 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     func showBottomSheet(at indexPath: IndexPath) {
         let post = posts[indexPath.row]
         
-        // 顯示彈窗
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
             self.backgroundView.alpha = 1
         }
         
-        // 傳遞 IndexPath 到刪除按鈕
         let deleteButton = bottomSheetView.viewWithTag(1001) as? UIButton
         deleteButton?.addTarget(self, action: #selector(deletePost(_:)), for: .touchUpInside)
         deleteButton?.tag = indexPath.row  // 使用 `tag` 傳遞行號
@@ -336,7 +344,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             return
         }
         
-        // 重新加載用戶資料
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
             case .success(let data):
@@ -376,7 +383,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         loadUserPosts()
         
-        // 結束刷新
         DispatchQueue.main.async {
             self.tableView.mj_header?.endRefreshing()
         }
@@ -398,7 +404,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             self.userName = savedUserName
             self.userNameLabel.text = savedUserName
-            
         } else {
         }
     }
@@ -570,7 +575,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.tableHeaderView = headerView
     }
 
-    // 新增 setupPostsStackView 方法
     func setupPostsStackView() {
         postsNumberLabel.text = String(postsCount)
         postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
@@ -594,10 +598,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         introductionLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 6 // 設置行間距
-        
-        // 計算實際的行高
         let lineHeight = actualLineHeight()
-        
         let attributes: [NSAttributedString.Key: Any] = [
             .font: introductionLabel.font!,
             .paragraphStyle: paragraphStyle
@@ -605,7 +606,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         let attributedText = NSAttributedString(string: introductionLabel.text ?? "", attributes: attributes)
         introductionLabel.attributedText = attributedText
-        
     }
     
     func updateTableHeaderViewHeight() {
@@ -834,14 +834,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                     return
                 }
                 
-                // 使用從快照中獲取的數據來更新 posts
                 self.posts = documents.map { document in
                     var postData = document.data()
                     postData["id"] = document.documentID // 将文档 ID 保存到 postData
                     return postData
                 }
                 
-                // 按時間排序貼文
                 self.posts.sort(by: { (post1, post2) -> Bool in
                     if let createdAt1 = post1["createdAt"] as? Timestamp,
                        let createdAt2 = post2["createdAt"] as? Timestamp {
@@ -855,6 +853,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                     self.postsCount = self.posts.count
                     self.postsNumberLabel.text = String(self.postsCount)
                     self.tableView.reloadData()
+                    self.updateEmptyState()
                 }
             }
     }
@@ -975,5 +974,26 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let size = attributedText.boundingRect(with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
                                                options: .usesLineFragmentOrigin, context: nil).size
         return ceil(size.height)
+    }
+    
+    func setupEmptyStateLabel() {
+        emptyStateLabel.text = "現在還沒有日記"
+        emptyStateLabel.textColor = .lightGray
+        emptyStateLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+        emptyStateLabel.textAlignment = .center
+        emptyStateLabel.isHidden = true  // 預設隱藏
+        
+        // 將 label 添加到 view 中
+        view.insertSubview(emptyStateLabel, belowSubview: tableView)
+        
+        emptyStateLabel.snp.makeConstraints { make in
+            make.centerX.equalTo(tableView)  // 在 tableView 中居中
+            make.bottom.equalTo(view).offset(-100)  // 左右留白
+        }
+    }
+    
+    func updateEmptyState() {
+        let hasPosts = !posts.isEmpty
+        emptyStateLabel.isHidden = hasPosts  // 有貼文就隱藏，沒有就顯示
     }
 }
