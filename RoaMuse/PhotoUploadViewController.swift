@@ -123,26 +123,20 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
 
     @objc func sliderButtonTapped() {
-        // 获取 window 的引用
+        
         guard let window = UIApplication.shared.keyWindow else { return }
         
-//        var slider = UISlider()
-//        var sliderLabel = UILabel()
-        
-        // 创建一个半透明的黑色背景视图
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         backgroundView.frame = window.bounds
-        window.addSubview(backgroundView)  // 添加到 window 上，覆盖所有内容
+        window.addSubview(backgroundView)
         
-        // 创建弹窗视图
         let popupView = UIView()
         popupView.backgroundColor = .white
         popupView.layer.cornerRadius = 15
         popupView.layer.masksToBounds = true
         backgroundView.addSubview(popupView)
         
-        // 设置弹窗视图的布局
         popupView.snp.makeConstraints { make in
             make.center.equalTo(backgroundView)
             make.width.equalTo(window).multipliedBy(0.9)

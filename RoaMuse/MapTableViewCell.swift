@@ -39,83 +39,34 @@ class MapTableViewCell: UITableViewCell {
         mapView.userTrackingMode = .none // 改为 .none
     }
     
-    func showMap(from startCoordinate: CLLocationCoordinate2D, to destinationCoordinate: CLLocationCoordinate2D) {
-        
-        print("showMap called")
-        
-        if isUserInteracting {
-                return
-            }
-            
-            let coordinateThreshold: CLLocationDistance = 10.0
-        if let lastStart = lastStartCoordinate, let lastDestination = lastDestinationCoordinate {
-            let startLocation = CLLocation(latitude: startCoordinate.latitude, longitude: startCoordinate.longitude)
-            let lastStartLocation = CLLocation(latitude: lastStart.latitude, longitude: lastStart.longitude)
-            let startDistance = startLocation.distance(from: lastStartLocation)
-            
-            let destinationLocation = CLLocation(latitude: destinationCoordinate.latitude, longitude: destinationCoordinate.longitude)
-            let lastDestinationLocation = CLLocation(latitude: lastDestination.latitude, longitude: lastDestination.longitude)
-            let destDistance = destinationLocation.distance(from: lastDestinationLocation)
-            
-            if startDistance < coordinateThreshold && destDistance < coordinateThreshold {
-                
-                return
-            }
-        }
-
-            
-            // 更新上次坐标
-            lastStartCoordinate = startCoordinate
-            lastDestinationCoordinate = destinationCoordinate
-        
+    func showMap(from startCoordinate: CLLocationCoordinate2D, to destinationCoordinate: CLLocationCoordinate2D, with route: MKRoute) {
         mapView.isHidden = false
-        
-        // 计算距离
-        let userLocation = startCoordinate
-        let destinationLocation = destinationCoordinate
-        
-        let distance = MKMapPoint(userLocation).distance(to: MKMapPoint(destinationLocation))
-        
-        let now = Date()
-        if let lastUpdatedTime = lastUpdatedTime, now.timeIntervalSince(lastUpdatedTime) < 180 {
-            return
-        }
-        
-        let currentRegion = mapView.region
-        let newRegion = MKCoordinateRegion(center: startCoordinate, latitudinalMeters: distance * 1.5, longitudinalMeters: distance * 1.5)
-        
-        let regionHasChanged = abs(currentRegion.center.latitude - newRegion.center.latitude) > 0.001 ||
-            abs(currentRegion.center.longitude - newRegion.center.longitude) > 0.001
-        
-        if regionHasChanged {
-            self.lastUpdatedTime = now
-            let region = MKCoordinateRegion(center: startCoordinate, latitudinalMeters: distance * 1.5, longitudinalMeters: distance * 1.5)
-            mapView.setRegion(region, animated: false)
-        }
+
+        // 清除舊的標註和路徑
         mapView.removeAnnotations(mapView.annotations)
         mapView.removeOverlays(mapView.overlays)
-        
+
+        // 添加起點標註
+        let sourceAnnotation = MKPointAnnotation()
+        sourceAnnotation.coordinate = startCoordinate
+//        mapView.addAnnotation(sourceAnnotation)
+
+        // 添加終點標註
         let destinationAnnotation = MKPointAnnotation()
         destinationAnnotation.coordinate = destinationCoordinate
-        destinationAnnotation.title = "Destination"
         mapView.addAnnotation(destinationAnnotation)
-        
-        // 计算路线
-        let request = MKDirections.Request()
-        let sourcePlacemark = MKPlacemark(coordinate: startCoordinate)
-        let destinationPlacemark = MKPlacemark(coordinate: destinationCoordinate)
-        
-        request.source = MKMapItem(placemark: sourcePlacemark)
-        request.destination = MKMapItem(placemark: destinationPlacemark)
-        request.transportType = .automobile
-        
-        let directions = MKDirections(request: request)
-        directions.calculate { [weak self] response, error in
-            guard let self = self, let route = response?.routes.first else { return }
-            self.mapView.addOverlay(route.polyline) // 在地图上添加路线
-        }
+
+        // 添加路線覆蓋層
+        mapView.addOverlay(route.polyline)
+
+        // 調整地圖區域以適應路線
+        mapView.setVisibleMapRect(
+            route.polyline.boundingMapRect,
+            edgePadding: UIEdgeInsets(top: 40, left: 40, bottom: 40, right: 40),
+            animated: true
+        )
     }
-    
+
     func hideMap() {
         mapView.isHidden = true
     }
