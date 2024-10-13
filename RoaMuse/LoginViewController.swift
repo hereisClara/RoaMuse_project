@@ -20,12 +20,61 @@ class LoginViewController: UIViewController {
         let backgroundImageView = UIImageView(frame: UIScreen.main.bounds) // 設置為全螢幕大小
         backgroundImageView.image = backgroundImage
         backgroundImageView.contentMode = .scaleAspectFill // 設置內容模式（讓圖片適應螢幕大小）
-        
+        checkAppleSignInStatus()
         view.insertSubview(backgroundImageView, at: 0)
         checkEULAAgreement()
         setupUI()
         configureAppleSignInButton()
     }
+    
+    func checkAppleSignInStatus() {
+        if let appleUserIdentifier = UserDefaults.standard.string(forKey: "userId") {
+            // 已登入過，驗證登入狀態
+            verifyAppleSignIn(appleUserIdentifier: appleUserIdentifier)
+        } else {
+            // 未登入，顯示登入按鈕
+            print("No previous Apple sign-in found.")
+        }
+    }
+
+    func verifyAppleSignIn(appleUserIdentifier: String) {
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        appleIDProvider.getCredentialState(forUserID: appleUserIdentifier) { (credentialState, error) in
+            switch credentialState {
+            case .authorized:
+                print("User is still signed in with Apple ID.")
+                DispatchQueue.main.async {
+                    // 跳轉到主頁面
+                    self.navigateToHome()
+                }
+            case .revoked:
+                print("Apple ID credentials revoked.")
+                self.showLoginUI()  // 顯示登入 UI 以重新登入
+            case .notFound:
+                print("Apple ID credentials not found.")
+                self.showLoginUI()
+            default:
+                break
+            }
+        }
+    }
+
+    func navigateToHome() {
+        let tabBarController = TabBarController()
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController = tabBarController
+            window.makeKeyAndVisible()
+        }
+    }
+
+    func showLoginUI() {
+        DispatchQueue.main.async {
+            print("Showing login UI.")
+            self.appleSignInButton.isHidden = false // 顯示登入按鈕
+        }
+    }
+
     
     func configureAppleSignInButton() {
         if #available(iOS 13.0, *) {
@@ -251,7 +300,6 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
         case let appleIDCredential as ASAuthorizationAppleIDCredential:
             print("AppleID Credential received.")
             
-            // 不需要使用 guard let，直接使用 appleIDCredential.user
             let userIdentifier = appleIDCredential.user
             print("User Identifier: \(userIdentifier)")
             
@@ -260,7 +308,6 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
             let fullName = appleIDCredential.fullName
             let email = appleIDCredential.email
             
-            // 驗證資料是否齊全
             guard let authorizationCode = appleIDCredential.authorizationCode,
                   let identityToken = appleIDCredential.identityToken else {
                 print("Missing authorizationCode or identityToken.")
