@@ -24,7 +24,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     var mapView = MKMapView()
     let db = Firestore.firestore()
     var annotations = [MKPointAnnotation]()
-//    var locationManager = LocationManager()
+    var placePoemPairs = [PlacePoemPair]()
     var locationManager = LocationManager()
     var userLocation: CLLocationCoordinate2D?
     let activityIndicator = GradientActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
@@ -52,7 +52,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         guard !tripId.isEmpty else { return }
         generateView.isUserInteractionEnabled = false
         popUpView.delegate = self
-//        locationManager.delegate = self
         setupContainerView()
         setupGenerateView()
         setupLocationManager()
@@ -66,13 +65,11 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 self.nlpModel = try poemLocationNLP3(configuration: .init())
-                print("NLP 模型加载成功")
                 DispatchQueue.main.async {
                     self.generateView.isUserInteractionEnabled = true  // 允许用户交互
                 }
             } catch {
                 DispatchQueue.main.async {
-                    // 可以提示用户，或者处理加载失败的情况
                     self.generateView.isUserInteractionEnabled = true  // 即使加载失败，也需要避免界面卡死
                 }
             }
@@ -184,7 +181,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                         syncQueue.async {
                             foundValidPlace = true
                         }
-                    } else {
                     }
                     dispatchGroup.leave()
                 }
@@ -194,8 +190,22 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
             if foundValidPlace, self.matchingPlaces.count >= 1 {
                 FirebaseManager.shared.saveTripToFirebase(poem: poem, matchingPlaces: self.matchingPlaces) { trip in
-                    DispatchQueue.main.async {
-                        completion(trip)
+                    guard let trip = trip else {
+                        DispatchQueue.main.async { completion(nil) }
+                        return
+                    }
+
+                    self.getPoemPlacePair()
+
+                    self.saveSimplePlacePoemPairsToFirebase(tripId: trip.id, simplePairs: self.placePoemPairs) { success in
+                        if success {
+                            print("Successfully saved placePoemPairs to Firebase.")
+                        } else {
+                            print("Failed to save placePoemPairs to Firebase.")
+                        }
+                        DispatchQueue.main.async {
+                            completion(trip)
+                        }
                     }
                 }
             } else {
@@ -323,7 +333,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             ]) { error in
                 if let error = error {
                 } else {
-
                 }
             }
         } else {
@@ -333,7 +342,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             ]) { error in
                 if let error = error {
                 } else {
-                    
                 }
             }
         }
@@ -342,81 +350,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         collectButton.tintColor = collectButton.isSelected ? .systemBlue : .white
     }
     
-    func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (MKRoute?) -> Void) {
-        let request = MKDirections.Request()
-        let sourcePlacemark = MKPlacemark(coordinate: startLocation)
-        let destinationPlacemark = MKPlacemark(coordinate: endLocation)
-        request.source = MKMapItem(placemark: sourcePlacemark)
-        request.destination = MKMapItem(placemark: destinationPlacemark)
-        request.transportType = transportType
-        
-        let directions = MKDirections(request: request)
-        directions.calculate { response, error in
-            if let route = response?.routes.first {
-                completion(route)
-            } else {
-                completion(nil)
-            }
-        }
-    }
-    
-    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [String]?) -> Void) {
-        var totalTime: TimeInterval = 0
-        let dispatchGroup = DispatchGroup()
-        var placeOrder = [String]()  // 存放地點的顺序
-        print("inin")
-        print("调用 calculateTotalRouteTimeAndDetails 方法")
-        print("places: \(places)")
-        print("currentLocation: \(currentLocation)")
-
-        // Step 1: 当当前位置到第一个地点
-        if let firstPlace = places.first {
-            let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
-            dispatchGroup.enter()
-            calculateRoute(from: currentLocation, to: firstPlaceLocation) { route in
-                if let route = route {
-                    totalTime += route.expectedTravelTime
-                    self.mapView.addOverlay(route.polyline)  // 绘制路径
-                    placeOrder.append(firstPlace.name)
-                    print("!!! ", placeOrder)
-                }
-                dispatchGroup.leave()
-            }
-        } else {
-            // 如果没有任何地点，直接返回
-            completion(nil, nil)
-            return
-        }
-        
-        // Step 2: 计算地点之间的路径
-        if places.count >= 2 {
-            for index in 0..<(places.count - 1) {
-                let startPlace = places[index]
-                let endPlace = places[index + 1]
-                
-                let startLocation = CLLocationCoordinate2D(latitude: startPlace.latitude, longitude: startPlace.longitude)
-                let endLocation = CLLocationCoordinate2D(latitude: endPlace.latitude, longitude: endPlace.longitude)
-                
-                dispatchGroup.enter()
-                calculateRoute(from: startLocation, to: endLocation) { route in
-                    if let route = route {
-                        totalTime += route.expectedTravelTime
-                        DispatchQueue.main.async {
-                            self.mapView.addOverlay(route.polyline)
-                        }
-                        placeOrder.append(endPlace.name)
-                        print("??? ", placeOrder)
-                    }
-                    dispatchGroup.leave()
-                }
-            }
-        }
-        
-        // Step 3: 返回结果
-        dispatchGroup.notify(queue: .main) {
-            completion(totalTime, placeOrder)
-        }
-    }
 }
 
 extension ArticleTripViewController {
@@ -511,6 +444,112 @@ extension ArticleTripViewController {
         transportTimeLabel.text = "預計交通時間：\(minutes) 分鐘"
     }
     
+    func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (MKRoute?) -> Void) {
+        let request = MKDirections.Request()
+        let sourcePlacemark = MKPlacemark(coordinate: startLocation)
+        let destinationPlacemark = MKPlacemark(coordinate: endLocation)
+        request.source = MKMapItem(placemark: sourcePlacemark)
+        request.destination = MKMapItem(placemark: destinationPlacemark)
+        request.transportType = transportType
+        
+        let directions = MKDirections(request: request)
+        directions.calculate { response, error in
+            if let route = response?.routes.first {
+                completion(route)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+    
+    func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [String]?) -> Void) {
+        var totalTime: TimeInterval = 0
+        let dispatchGroup = DispatchGroup()
+        var placeOrder = [String]()  // 存放地點的顺序
+        
+        if let firstPlace = places.first {
+            let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
+            dispatchGroup.enter()
+            calculateRoute(from: currentLocation, to: firstPlaceLocation) { route in
+                if let route = route {
+                    totalTime += route.expectedTravelTime
+                    self.mapView.addOverlay(route.polyline)  // 绘制路径
+                    placeOrder.append(firstPlace.name)
+                }
+                dispatchGroup.leave()
+            }
+        } else {
+            // 如果没有任何地点，直接返回
+            completion(nil, nil)
+            return
+        }
+        
+        // Step 2: 计算地点之间的路径
+        if places.count >= 2 {
+            for index in 0..<(places.count - 1) {
+                let startPlace = places[index]
+                let endPlace = places[index + 1]
+                
+                let startLocation = CLLocationCoordinate2D(latitude: startPlace.latitude, longitude: startPlace.longitude)
+                let endLocation = CLLocationCoordinate2D(latitude: endPlace.latitude, longitude: endPlace.longitude)
+                
+                dispatchGroup.enter()
+                calculateRoute(from: startLocation, to: endLocation) { route in
+                    if let route = route {
+                        totalTime += route.expectedTravelTime
+                        DispatchQueue.main.async {
+                            self.mapView.addOverlay(route.polyline)
+                        }
+                        placeOrder.append(endPlace.name)
+                    }
+                    dispatchGroup.leave()
+                }
+            }
+        }
+        
+        // Step 3: 返回结果
+        dispatchGroup.notify(queue: .main) {
+            completion(totalTime, placeOrder)
+        }
+    }
+}
+
+extension ArticleTripViewController {
+    
+    private func getPoemPlacePair() {
+        placePoemPairs.removeAll()
+        for matchingPlace in matchingPlaces {
+            let keyword = matchingPlace.keyword
+            if let poemLine = keywordToLineMap[keyword] {
+                let placePoemPair = PlacePoemPair(placeId: matchingPlace.place.id, poemLine: poemLine)
+                placePoemPairs.append(placePoemPair)
+            }
+        }
+    }
+
+    private func saveSimplePlacePoemPairsToFirebase(tripId: String, simplePairs: [PlacePoemPair], completion: @escaping (Bool) -> Void) {
+        let db = Firestore.firestore()
+        let tripRef = db.collection("trips").document(tripId)
+
+        let placePoemData = simplePairs.map { pair in
+            return [
+                "placeId": pair.placeId,
+                "poemLine": pair.poemLine
+            ] as [String: Any]
+        }
+
+        tripRef.updateData([
+            "placePoemPairs": placePoemData
+        ]) { error in
+            if let error = error {
+                print("Error updating document: \(error)")
+                completion(false)
+            } else {
+                print("Document successfully updated with placePoemPairs")
+                completion(true)
+            }
+        }
+    }
 }
 
 extension ArticleTripViewController {
