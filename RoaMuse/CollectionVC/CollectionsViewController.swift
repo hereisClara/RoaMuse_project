@@ -199,7 +199,6 @@ class CollectionsViewController: UIViewController {
             
             let parentDispatchGroup = DispatchGroup()
             
-            // 处理未完成行程
             parentDispatchGroup.enter()
             FirebaseManager.shared.loadBookmarkedTrips(tripIds: incompleteTripIds) { [weak self] incompleteTrips in
                 guard let self = self else { parentDispatchGroup.leave(); return }
@@ -607,7 +606,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         return cell ?? UITableViewCell()
     }
 
-    //    TODO: 地理反向編碼
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if segmentIndex == 0 {
             let trip: Trip
@@ -618,7 +616,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 trip = completeTripsArray[indexPath.row]
             }
             
-            // 獲取當前位置
             if let currentLocation = locationManager.currentLocation {
                 let dispatchGroup = DispatchGroup()
                 var places: [Place] = []

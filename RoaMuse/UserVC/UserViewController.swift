@@ -243,7 +243,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             window.addSubview(bottomSheetView)
         }
         
-        // 在選單視圖內部添加按鈕（這裡根據需要添加自訂按鈕）
         let deleteButton = createButton(title: "刪除貼文")
         let impeachButton = createButton(title: "檢舉貼文")
         let blockButton = createButton(title: "封鎖用戶")
@@ -266,7 +265,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     }
     
     @objc func deletePost(_ sender: UIButton) {
-        let post = posts[sender.tag]
+        let senderTag = sender.tag
+        let post = posts[senderTag]
         guard let postId = post["id"] as? String else {
             return
         }
@@ -280,7 +280,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     print("刪除貼文失敗: \(error!.localizedDescription)")
                     return
                 }
-                self?.handlePostDeletion(senderTag: sender.tag)
+                self?.handlePostDeletion(senderTag: senderTag)
             }
         }))
 
@@ -465,7 +465,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
          followingNumberLabel, introductionLabel, mapButton, awardsButton].forEach { headerView.addSubview($0) }
 
         setupFollowersAndFollowing()
-        setupPostsStackView()  // 新增这一行来设置帖子数量视图
+        setupPostsStackView() 
         setupLabel()
 
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
@@ -962,14 +962,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func actualLineHeight() -> CGFloat {
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 6 // 您设置的行间距
+        paragraphStyle.lineSpacing = 6
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: introductionLabel.font!,
             .paragraphStyle: paragraphStyle
         ]
 
-        let text = "A" // 任意字符
+        let text = "A"
         let attributedText = NSAttributedString(string: text, attributes: attributes)
         let size = attributedText.boundingRect(with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
                                                options: .usesLineFragmentOrigin, context: nil).size
@@ -983,7 +983,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         emptyStateLabel.textAlignment = .center
         emptyStateLabel.isHidden = true  // 預設隱藏
         
-        // 將 label 添加到 view 中
         view.insertSubview(emptyStateLabel, belowSubview: tableView)
         
         emptyStateLabel.snp.makeConstraints { make in

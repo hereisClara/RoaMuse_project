@@ -19,7 +19,6 @@ class NewsFeedViewController: UIViewController {
     var bookmarkCount = String()
     var likeButtonIsSelected = Bool()
     var emptyStateLabel = UILabel()
-
     let bottomSheetView = UIView()
     let backgroundView = UIView()
     let sheetHeight: CGFloat = 250
@@ -75,14 +74,18 @@ class NewsFeedViewController: UIViewController {
         postsTableView.layoutIfNeeded()
     }
     
-    func setupNavigationBarStyle() {
+    private func setupNavigationBarStyle() {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-            navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue,  // 修改顏色
-                .font: customFont  // 設置字體
+            let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
             ]
+
+            self.navigationItem.standardAppearance = navBarAppearance
+            self.navigationItem.scrollEdgeAppearance = navBarAppearance
         }
-        navigationItem.largeTitleDisplayMode = .always
     }
     
     func setupUserProfileImage() {
@@ -110,7 +113,6 @@ class NewsFeedViewController: UIViewController {
         
         userRef.addSnapshotListener { documentSnapshot, error in
             if let error = error { return }
-            
             guard let document = documentSnapshot, document.exists, let data = document.data() else { return }
         }
     }
@@ -221,8 +223,6 @@ class NewsFeedViewController: UIViewController {
             window.addSubview(bottomSheetView)
         }
         
-        // 在選單視圖內部添加按鈕
-//        let saveButton = createButton(title: "隱藏貼文")
         let impeachButton = createButton(title: "檢舉貼文")
         let blockButton = createButton(title: "封鎖用戶")
         let cancelButton = createButton(title: "取消", textColor: .red)
@@ -328,7 +328,6 @@ class NewsFeedViewController: UIViewController {
         postRef.getDocument { document, error in
             if let document = document, document.exists {
                 guard let postOwnerId = document.data()?["userId"] as? String else {
-                    print("未能找到貼文擁有者")
                     completion(false)
                     return
                 }
@@ -338,7 +337,6 @@ class NewsFeedViewController: UIViewController {
                         "likesAccount": FieldValue.arrayUnion([userId])
                     ]) { error in
                         if let error = error {
-                            print("按讚失敗: \(error.localizedDescription)")
                             completion(false)
                         } else {
                             completion(true)
@@ -657,11 +655,8 @@ extension NewsFeedViewController {
     }
     
     func getNewData() {
-        guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-            return
-        }
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
 
-        // 取得當前用戶的資料，包含 following 和 blockedUsers
         db.collection("users").document(userId).addSnapshotListener { [weak self] documentSnapshot, error in
             guard let self = self else { return }
             guard let document = documentSnapshot, let data = document.data() else {
@@ -742,5 +737,4 @@ extension NewsFeedViewController {
         emptyStateLabel.isHidden = hasData
         postsTableView.isHidden = !hasData
     }
-
 }

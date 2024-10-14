@@ -40,15 +40,13 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
         navigationItem.backButtonTitle = ""
         
-        if let navigationBar = self.navigationController?.navigationBar {
-                let navBarAppearance = UINavigationBarAppearance()
-                navBarAppearance.configureWithOpaqueBackground() // 設置為不透明
-                navBarAppearance.backgroundColor = .backgroundGray // 設置背景色為您想要的顏色
-                navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue] 
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithOpaqueBackground() // 设置为不透明
+        navBarAppearance.backgroundColor = .backgroundGray // 设置背景色
+        navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
 
-                navigationBar.standardAppearance = navBarAppearance
-                navigationBar.scrollEdgeAppearance = navBarAppearance
-            }
+        self.navigationItem.standardAppearance = navBarAppearance
+        self.navigationItem.scrollEdgeAppearance = navBarAppearance
         
         setupUI()
         setupDropdownTableView()
