@@ -454,7 +454,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         postsTableView.rowHeight = UITableView.automaticDimension
-        postsTableView.estimatedRowHeight = 250
+        postsTableView.estimatedRowHeight = 300
         postsTableView.layer.borderColor = UIColor.deepBlue.cgColor
         postsTableView.layer.borderWidth = 2
         postsTableView.layer.cornerRadius = 20
@@ -602,7 +602,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                     let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                     articleVC.articleDate = createdAtString
                 }
-                
+                articleVC.photoUrls = post["photoUrls"] as? [String] ?? []
                 articleVC.authorId = post["userId"] as? String ?? ""
                 articleVC.postId = post["id"] as? String ?? ""
                 articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []

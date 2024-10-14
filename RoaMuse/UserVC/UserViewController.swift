@@ -714,6 +714,11 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             self?.showBottomSheet(at: indexPath)
         }
         
+        if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+            cell.dateLabel.text = createdAtString
+        }
+        
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
                 return post["id"] as? String == postId
@@ -769,7 +774,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
-        // 檢查收藏狀態
         FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: postId) { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
@@ -779,7 +783,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
 
         return cell
     }
-    
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let post = posts[indexPath.row]
@@ -816,7 +819,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func loadUserPosts() {
         guard let userId = userId else { return }
         
-        // 使用 Firestore 的 addSnapshotListener 來監聽帖子資料的變化
         FirebaseManager.shared.db.collection("posts")
             .whereField("userId", isEqualTo: userId)
             .addSnapshotListener { [weak self] snapshot, error in
@@ -846,7 +848,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                     return false
                 })
                 
-                // 重新加载表格视图
                 DispatchQueue.main.async {
                     self.postsCount = self.posts.count
                     self.postsNumberLabel.text = String(self.postsCount)
@@ -856,7 +857,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             }
     }
 
-    
     @objc func didTapLikeButton(_ sender: UIButton) {
         sender.isSelected.toggle()
         

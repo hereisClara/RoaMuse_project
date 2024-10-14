@@ -13,6 +13,7 @@ import FirebaseCore
 
 class UserTableViewCell: UITableViewCell {
     
+    let containerView = UIView()
     let collectButton = UIButton()
     let likeButton = UIButton() // 新增的 likeButton
     let commentButton = UIButton() // 新增的 commentButton
@@ -33,9 +34,12 @@ class UserTableViewCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+//        contentView.layoutMargins = UIEdgeInsets(top: 9, left: 0, bottom: 6, right: 0)
+//        contentView.preservesSuperviewLayoutMargins = false
         setupCell()
         addActions()
         setupRoundedCorners()
+        
     }
     
     required init?(coder: NSCoder) {
@@ -46,22 +50,25 @@ class UserTableViewCell: UITableViewCell {
         super.layoutSubviews()
         avatarImageView.layer.cornerRadius = 30
         avatarImageView.layer.masksToBounds = true
-        let inset: CGFloat = 12
-        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset / 2 + 3, left: 0, bottom: inset / 4, right: 0))
+//        let inset: CGFloat = 12
+//        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset / 2 + 3, left: 0, bottom: inset / 4, right: 0))
+//        contentView.layoutIfNeeded()
     }
     
     func setupCell() {
         
+        setupLabel()
         userNameLabel.text = "UserName"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
-        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         avatarImageView.image = UIImage(named: "user-placeholder")
         
         [
             moreButton, userNameLabel, awardLabelView, titleLabel, avatarImageView, contentLabel, dateLabel,
              bookmarkCountLabel, likeCountLabel, collectButton,
-            likeButton, commentButton, photoStackView, scrollView
+            likeButton, commentButton, /*photoStackView,*/ scrollView
         ].forEach { contentView.addSubview($0) }
+        
+        
         
         scrollView.addSubview(photoStackView)
         
@@ -118,19 +125,19 @@ class UserTableViewCell: UITableViewCell {
         dateLabel.snp.makeConstraints { make in
             make.top.equalTo(photoStackView.snp.bottom).offset(12)
             make.leading.equalTo(contentLabel)
-            make.bottom.equalTo(likeButton.snp.top).offset(-12)
+//            make.bottom.equalTo(likeButton.snp.top).offset(-12)
         }
         
-        photoStackView.snp.makeConstraints { make in
-            make.top.equalTo(contentLabel.snp.bottom).offset(12)
-            make.leading.equalTo(contentLabel)
-            make.trailing.equalTo(contentLabel)
-            make.bottom.equalToSuperview().offset(-16)
-            //            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
-        }
+//        photoStackView.snp.makeConstraints { make in
+//            make.top.equalTo(contentLabel.snp.bottom).offset(12)
+//            make.leading.equalTo(contentLabel)
+//            make.trailing.equalTo(contentLabel)
+//            make.bottom.equalToSuperview().offset(-16)
+//            //            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
+//        }
         
         likeButton.snp.makeConstraints { make in
-//            make.top.equalTo(dateLabel.snp.bottom).offset(16)
+            make.top.equalTo(dateLabel.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView).offset(10)
             make.width.height.equalTo(20)
             make.bottom.equalTo(contentView).offset(-16)
@@ -170,7 +177,6 @@ class UserTableViewCell: UITableViewCell {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         
-        setupLabel()
         setupButtonStyle()
     }
     
@@ -178,22 +184,25 @@ class UserTableViewCell: UITableViewCell {
         
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
         likeCountLabel.textColor = .deepBlue
-        
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        contentLabel.text = "加載中\n加載中"
         contentLabel.numberOfLines = 0
         contentLabel.lineBreakMode = .byWordWrapping
         contentLabel.textColor = .darkGray
-        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        
         contentLabel.numberOfLines = 6
         contentLabel.lineSpacing = 3
         contentLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
+        titleLabel.text = "加載中\n加載中"
         
-        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         titleLabel.textColor = .deepBlue
         titleLabel.numberOfLines = 1
         titleLabel.lineBreakMode = .byWordWrapping
-        
-        dateLabel.textColor = .gray
         dateLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+        dateLabel.text = "加載中\n加載中"
+        dateLabel.textColor = .gray
+        
     }
     
     func setupRoundedCorners() {
@@ -260,6 +269,7 @@ class UserTableViewCell: UITableViewCell {
             scrollView.snp.updateConstraints { make in
                 make.height.equalTo(150)
             }
+            self.layoutIfNeeded()
         }
         
         if let tableView = self.superview as? UITableView {
@@ -297,17 +307,6 @@ class UserTableViewCell: UITableViewCell {
             contentLabel.text = content
         }
         
-        // 設置用戶名
-        //            if let userName = post["userName"] as? String {
-        //                userNameLabel.text = userName
-        //            }
-        
-        // 設置頭像
-//        if let avatarUrlString = post["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
-//            avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "user-placeholder"))
-//        }
-        
-        // 設置圖片
         if let photoUrls = post["photoUrls"] as? [String] {
             configurePhotoStackView(with: photoUrls)
         }
