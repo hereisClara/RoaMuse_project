@@ -77,7 +77,7 @@ class UserTableViewCell: UITableViewCell {
         }
         
         awardLabelView.snp.makeConstraints { make in
-            make.top.equalTo(userNameLabel.snp.bottom).offset(6)
+            make.bottom.equalTo(avatarImageView.snp.bottom)
             make.leading.equalTo(userNameLabel)
             make.height.equalTo(25)
         }
@@ -99,7 +99,7 @@ class UserTableViewCell: UITableViewCell {
         }
     
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(16)
+            make.top.equalTo(awardLabelView.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(contentView).offset(-16)
 //            make.bottom.equalTo(contentLabel.snp.top).offset(-12)

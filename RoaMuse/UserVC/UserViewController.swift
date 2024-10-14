@@ -138,7 +138,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             return
         }
         
-        // 每次頁面將要顯示時都重新加載資料
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
             case .success(let data):
@@ -151,7 +150,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                     self?.fansNumberLabel.text = String(followers.count)
                 }
                 
-                // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
                 }
@@ -520,8 +518,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         awardsButton.layer.cornerRadius = 20
         
         mapButton.snp.makeConstraints { make in
-            make.bottom.equalTo(awardsButton)
-            make.trailing.equalTo(awardsButton.snp.leading).offset(-8)
+            make.bottom.equalTo(awardsButton.snp.top).offset(-12)
+            make.trailing.equalTo(awardsButton)
             make.width.height.equalTo(40)
         }
         mapButton.layer.cornerRadius = 20
