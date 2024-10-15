@@ -1,5 +1,5 @@
 {
-  "originHash" : "70ae78bdff9f28edea7adf747140943da4157a059ad869fed0d42b11423bbd2c",
+  "originHash" : "d4f40390b5abbc02ad9cc6f0c1f601387b6841afa91ef7e658fe8dbb121825dd",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -182,12 +182,39 @@
       }
     },
     {
+      "identity" : "sidemenu",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kukushi/SideMenu.git",
+      "state" : {
+        "revision" : "fc892bfb2cd91881e392a7746d7702b404c45bde",
+        "version" : "2.1.1"
+      }
+    },
+    {
       "identity" : "snapkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SnapKit/SnapKit.git",
       "state" : {
         "revision" : "2842e6e84e82eb9a8dac0100ca90d9444b0307f4",
         "version" : "5.7.1"
+      }
+    },
+    {
+      "identity" : "swift-docc-plugin",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-docc-plugin",
+      "state" : {
+        "revision" : "85e4bb4e1cd62cec64a4b8e769dcefdf0c5b9d64",
+        "version" : "1.4.3"
+      }
+    },
+    {
+      "identity" : "swift-docc-symbolkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-docc-symbolkit",
+      "state" : {
+        "revision" : "b45d1f2ed151d057b54504d653e0da5552844e34",
+        "version" : "1.0.0"
       }
     },
     {

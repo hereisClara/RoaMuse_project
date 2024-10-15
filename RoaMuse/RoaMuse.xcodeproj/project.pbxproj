@@ -92,6 +92,8 @@
 		AC984C022CB6A689007F47BB /* PoemPostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C012CB6A689007F47BB /* PoemPostViewController.swift */; };
 		AC984C042CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */; };
 		AC984C062CBBF232007F47BB /* CustomMaskWaveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C052CBBF232007F47BB /* CustomMaskWaveView.swift */; };
+		AC984C092CBCF741007F47BB /* SideMenu in Frameworks */ = {isa = PBXBuildFile; productRef = AC984C082CBCF741007F47BB /* SideMenu */; };
+		AC984C0B2CBCF7D6007F47BB /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -200,6 +202,7 @@
 		AC984C012CB6A689007F47BB /* PoemPostViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoemPostViewController.swift; sourceTree = "<group>"; };
 		AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowerFollowingTableViewCell.swift; sourceTree = "<group>"; };
 		AC984C052CBBF232007F47BB /* CustomMaskWaveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMaskWaveView.swift; sourceTree = "<group>"; };
+		AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -229,6 +232,7 @@
 				AC984BFE2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout in Frameworks */,
 				AC27ACB52C91E26900B73485 /* FirebaseAuth in Frameworks */,
 				AC27ACB92C91E26900B73485 /* FirebaseStorage in Frameworks */,
+				AC984C092CBCF741007F47BB /* SideMenu in Frameworks */,
 				AC27ACB22C91E17400B73485 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -330,6 +334,7 @@
 				AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */,
 				AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */,
 				AC9775742CA7E22100EF828A /* MapViewController.swift */,
+				AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */,
 				AC18F8502CB00FDC004E8868 /* SlidingView.swift */,
 			);
 			path = UserVC;
@@ -463,6 +468,7 @@
 				AC7A2A7E2C9A9ECF003FA811 /* IQKeyboardManagerSwift */,
 				AC7A2A8D2C9F23B1003FA811 /* Kingfisher */,
 				AC984BFD2CB692B5007F47BB /* CHTCollectionViewWaterfallLayout */,
+				AC984C082CBCF741007F47BB /* SideMenu */,
 			);
 			productName = RoaMuse;
 			productReference = ACFCA34D2C916C8F00643A2E /* RoaMuse.app */;
@@ -544,6 +550,7 @@
 				AC7A2A7D2C9A9ECF003FA811 /* XCRemoteSwiftPackageReference "IQKeyboardManager" */,
 				AC7A2A8C2C9F23B1003FA811 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				AC984BFC2CB692B5007F47BB /* XCRemoteSwiftPackageReference "CHTCollectionViewWaterfallLayout" */,
+				AC984C072CBCF741007F47BB /* XCRemoteSwiftPackageReference "SideMenu" */,
 			);
 			productRefGroup = ACFCA34E2C916C8F00643A2E /* Products */;
 			projectDirPath = "";
@@ -686,6 +693,7 @@
 				AC27ACBB2C92FB2E00B73485 /* TabBarController.swift in Sources */,
 				AC18F84F2CAFD871004E8868 /* BlockedListViewController.swift in Sources */,
 				AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */,
+				AC984C0B2CBCF7D6007F47BB /* MenuViewController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
 				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
 				AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */,
@@ -1122,6 +1130,14 @@
 				minimumVersion = 0.9.10;
 			};
 		};
+		AC984C072CBCF741007F47BB /* XCRemoteSwiftPackageReference "SideMenu" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kukushi/SideMenu.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1169,6 +1185,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = AC984BFC2CB692B5007F47BB /* XCRemoteSwiftPackageReference "CHTCollectionViewWaterfallLayout" */;
 			productName = CHTCollectionViewWaterfallLayout;
+		};
+		AC984C082CBCF741007F47BB /* SideMenu */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AC984C072CBCF741007F47BB /* XCRemoteSwiftPackageReference "SideMenu" */;
+			productName = SideMenu;
 		};
 /* End XCSwiftPackageProductDependency section */
 

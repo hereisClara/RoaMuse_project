@@ -9,9 +9,12 @@ import UIKit
 import MapKit
 import FirebaseFirestore
 import Photos
+import SideMenu
 
 class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
     
+    let filterButton = UIButton(type: .system)
+    var isSlidingViewVisible = false
     var backgroundMaskView: UIView!
     var placeTripDictionary = [String: PlaceTripInfo]()
     var mapView: MKMapView!
@@ -25,8 +28,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        tabBarController?.tabBar.isHidden = true
         navigationItem.backButtonTitle = ""
+        self.navigationController?.isNavigationBarHidden = false
         mapView = MKMapView(frame: view.bounds)
         mapView.delegate = self
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
@@ -35,9 +38,37 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Marker")
         
         loadCompletedPlacesAndAddAnnotations()
-        setupSlidingView()
+        
         setupFullScreenImageView()
+        setupFilterButton()
+        setupSlidingView()
     }
+    
+    func setupFilterButton() {
+            filterButton.setTitle("篩選", for: .normal)
+            filterButton.setTitleColor(.white, for: .normal)
+            filterButton.backgroundColor = .systemBlue
+            filterButton.layer.cornerRadius = 10
+            filterButton.translatesAutoresizingMaskIntoConstraints = false
+            filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
+
+            view.addSubview(filterButton)
+            
+            NSLayoutConstraint.activate([
+                filterButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+                filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+                filterButton.widthAnchor.constraint(equalToConstant: 100),
+                filterButton.heightAnchor.constraint(equalToConstant: 50)
+            ])
+        }
+    
+    @objc func toggleSlidingView() {
+            isSlidingViewVisible.toggle()
+            sideMenuController?.revealMenu()
+            UIView.animate(withDuration: 0.3) {
+                self.slidingView.isHidden = !self.isSlidingViewVisible
+            }
+        }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -81,7 +112,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         if currentImageIndex < images.count - 1 {
             currentImageIndex += 1  // 更新到下一張圖片
             fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
-            print("切換到下一張圖片，當前索引: \(currentImageIndex)")
         } else {
             print("已經是最後一張圖片")
         }
@@ -93,7 +123,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         if currentImageIndex > 0 {
             currentImageIndex -= 1  // 回到上一張圖片
             fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
-            print("切換到上一張圖片，當前索引: \(currentImageIndex)")
         } else {
             print("已經是第一張圖片")
         }
@@ -116,14 +145,10 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func loadCompletedPlacesAndAddAnnotations() {
-        guard let userId = userId else {
-            print("錯誤: 無法從 UserDefaults 獲取 userId，請確認 userId 已正確存入 UserDefaults")
-            return
-        }
+        guard let userId = userId else { return }
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        // 從 Firestore 獲取 user 的 completedPlace
         userRef.getDocument { documentSnapshot, error in
             if let error = error {
                 print("獲取 user completedPlace 失敗: \(error.localizedDescription)")
@@ -152,7 +177,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             self.fetchPlaces(for: uniquePlaceIds)
             
             for (placeId, placeTripInfo) in self.placeTripDictionary {
-                print("============")
                 print("Place ID: \(placeId), Trip IDs: \(placeTripInfo.tripIds)")
             }
         }
@@ -240,7 +264,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         }
     }
     
-    // 設置標註點視圖的 cluster 屬性
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         // 如果是 cluster（聚簇標註點），使用內建的 cluster 視圖
         if let clusterAnnotation = annotation as? MKClusterAnnotation {
@@ -272,7 +295,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         if let annotation = view.annotation {
             if let placeId = annotation.subtitle ?? annotation.title {
-                print("Found placeId: \(placeId)")
                 slidingView.currentPlaceId = placeId
                 if let placeTripInfo = placeTripDictionary[placeId ?? ""] {
                     let tripIds = placeTripInfo.tripIds
@@ -283,17 +305,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     requestPhotoLibraryPermissions { granted in
                         if granted {
                             self.fetchPhotos(for: annotationLocation, radius: 500) { images in
-                                print("Fetched \(images.count) images")
                                 DispatchQueue.main.async {
                                     self.slidingView.images = images
                                     self.slidingView.tableView.reloadData()  // 刷新 tableView
                                     
-                                    print("Images updated in slidingView and tableView reloaded")
-                                    
                                     self.centerMapOnAnnotation(annotation: annotation)
-                                    print("Map centered on annotation")
-                                    
-                                    print("Calling showSlidingView")
                                     self.showSlidingView()
                                 }
                             }
@@ -330,14 +346,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         // 添加背景遮罩视图
         print("showSlidingView called")
         backgroundMaskView = UIView(frame: view.bounds)
-        backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)  // 半透明背景
+        backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         view.insertSubview(backgroundMaskView, belowSubview: slidingView)
         
-        // 添加点击手势识别器，点击遮罩隐藏 slidingView
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideSlidingView))
         backgroundMaskView.addGestureRecognizer(tapGesture)
         
-        // 上滑显示 slidingView
         UIView.animate(withDuration: 0.3) {
             self.slidingView.frame.origin.y = self.view.bounds.height - 600
         }
@@ -367,7 +381,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         // 假設你需要返回第一個 tripId，如果有多個 tripId 可以根據需求進行修改
         return placeTripInfo.tripIds
     }
-    
     
     func showPoemAlert(title: String, author: String) {
         let alertController = UIAlertController(title: "詩", message: "詩名: \(title)\n作者: \(author)", preferredStyle: .alert)

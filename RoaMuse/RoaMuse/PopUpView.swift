@@ -251,7 +251,7 @@ class PopUpView {
     }
     
     @objc func didTapStartButton() {
-            // 移除popup视图
+            
             popupView.removeFromSuperview()
             backgroundView.removeFromSuperview()
             

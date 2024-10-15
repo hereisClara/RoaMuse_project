@@ -305,11 +305,11 @@ class NewsFeedViewController: UIViewController {
                         }
                         if let matchedPost = filteredPosts.first,
                            let likesAccount = matchedPost["likesAccount"] as? [String] {
-                            // 更新 likeCountLabel
+                            
                             self.likeCount = String(likesAccount.count)
                             self.likeButtonIsSelected = likesAccount.contains(userId)
                         } else {
-                            // 如果沒有找到相應的貼文，或者 likesAccount 為空
+                            
                             self.likeCount = "0"
                             self.likeButtonIsSelected = false
                         }
@@ -567,7 +567,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
-                // 更新 likeCountLabel 和按鈕的選中狀態
+                
                 DispatchQueue.main.async {
                     cell.likeCountLabel.text = String(likesAccount.count)
                     cell.likeButton.isSelected = likesAccount.contains(currentUserId) // 依據是否按讚來設置狀態

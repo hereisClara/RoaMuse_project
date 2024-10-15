@@ -12,6 +12,7 @@ import FirebaseFirestore
 
 class PoemPostViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
+    let db = Firestore.firestore()
     var selectedButton: UIButton?
     var bottomSheetManager: BottomSheetManager?
     var allTripIds = [String]()
@@ -21,6 +22,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     var tableView: UITableView!
     var emptyStateLabel: UILabel!
     var scrollView: UIScrollView!
+    let currentUserId = UserDefaults.standard.string(forKey: "userId")
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -167,7 +169,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
         view.addSubview(tableView)
         tableView.snp.makeConstraints { make in
-            make.top.equalTo(scrollView.snp.bottom).offset(10)
+            make.top.equalTo(scrollView.snp.bottom)
             make.leading.trailing.equalTo(view).inset(16)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
@@ -189,7 +191,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             return UITableViewCell()
         }
         cell.backgroundColor = .clear
-        cell.contentView.backgroundColor = .white
         cell.selectionStyle = .none
         let city = Array(cityGroupedPoems.keys)[indexPath.section]
         if let post = cityGroupedPoems[city]?[indexPath.row] {
@@ -230,7 +231,33 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     }
                 }
             }
+            
+            FirebaseManager.shared.loadPosts { posts in
+                let filteredPosts = posts.filter { filteredPost in
+                    return filteredPost["id"] as? String == post["id"] as? String
+                }
+                if let matchedPost = filteredPosts.first,
+                   let likesAccount = matchedPost["likesAccount"] as? [String] {
+                    
+                    DispatchQueue.main.async {
+                        cell.likeCountLabel.text = String(likesAccount.count)
+                        cell.likeButton.isSelected = likesAccount.contains(self.currentUserId ?? "") // 依據是否按讚來設置狀態
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        cell.likeCountLabel.text = "0"
+                        cell.likeButton.isSelected = false // 如果沒有按讚，設置為未選中
+                    }
+                }
+            }
+            
         }
+        cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
+        cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        
+        
+        cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
+        cell.containerView.layer.borderWidth = 2
         
         return cell
     }
@@ -259,7 +286,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                 articleVC.postId = post["id"] as? String ?? ""
                 articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
                 
-                // 將 ArticleViewController 推入導航堆疊
                 DispatchQueue.main.async {
                     self.navigationController?.pushViewController(articleVC, animated: true)
                 }
@@ -372,5 +398,157 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                 }
             }
         }
+    }
+}
+
+extension PoemPostViewController {
+    @objc func didTapLikeButton(_ sender: UIButton) {
+        sender.isSelected.toggle()
+
+        let point = sender.convert(CGPoint.zero, to: tableView)
+        if let indexPath = tableView.indexPathForRow(at: point),
+           let cell = tableView.cellForRow(at: indexPath) as? UserTableViewCell {
+            
+            // 取得貼文資料
+            let postData = cityGroupedPoems[Array(cityGroupedPoems.keys)[indexPath.section]]?[indexPath.row]
+            let postId = postData?["id"] as? String ?? ""
+
+            guard let userId = self.currentUserId else { return }
+
+            // 儲存按讚資料
+            saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
+                if success {
+                    // 重新載入按讚數據
+                    FirebaseManager.shared.loadPosts { posts in
+                        let filteredPosts = posts.filter { post in
+                            return post["id"] as? String == postId
+                        }
+                        if let matchedPost = filteredPosts.first,
+                           let likesAccount = matchedPost["likesAccount"] as? [String] {
+                            
+                            // 在主線程更新 UI
+                            DispatchQueue.main.async {
+                                cell.likeCountLabel.text = String(likesAccount.count)
+                                cell.likeButton.isSelected = likesAccount.contains(userId)
+                            }
+                        } else {
+                            DispatchQueue.main.async {
+                                cell.likeCountLabel.text = "0"
+                                cell.likeButton.isSelected = false
+                            }
+                        }
+                    }
+                } else {
+                    // 如果儲存失敗，還原按鈕狀態
+                    DispatchQueue.main.async {
+                        sender.isSelected.toggle()
+                    }
+                }
+            }
+        }
+    }
+    
+    @objc func didTapCollectButton(_ sender: UIButton) {
+        let point = sender.convert(CGPoint.zero, to: tableView)
+        if let indexPath = tableView.indexPathForRow(at: point) {
+            let postData = cityGroupedPoems[Array(cityGroupedPoems.keys)[indexPath.section]]?[indexPath.row]
+            let postId = postData?["id"] as? String ?? ""
+            guard let userId = self.currentUserId else { return }
+            
+            var bookmarkAccount = postData?["bookmarkAccount"] as? [String] ?? []
+            
+            if sender.isSelected {
+                // 取消收藏
+                bookmarkAccount.removeAll { $0 == userId }
+                FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
+                    if success {
+                        self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                            if let error = error {
+                                print("Failed to update bookmarkAccount: \(error)")
+                            }
+                        }
+                    }
+                }
+            } else {
+                // 新增收藏
+                if !bookmarkAccount.contains(userId) {
+                    bookmarkAccount.append(userId)
+                }
+                FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
+                    if success {
+                        self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                            if let error = error {
+                                print("Failed to update bookmarkAccount: \(error)")
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 切換按鈕狀態
+            sender.isSelected.toggle()
+        }
+    }
+    func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
+        let postRef = Firestore.firestore().collection("posts").document(postId)
+        
+        postRef.getDocument { document, error in
+            if let document = document, document.exists {
+                guard let postOwnerId = document.data()?["userId"] as? String else {
+                    completion(false)
+                    return
+                }
+                
+                if isLiked {
+                    postRef.updateData([
+                        "likesAccount": FieldValue.arrayUnion([userId])
+                    ]) { error in
+                        if let error = error {
+                            completion(false)
+                        } else {
+                            completion(true)
+                            
+                            FirebaseManager.shared.fetchUserData(userId: userId) { result in
+                                switch result {
+                                case .success(let data):
+                                    let userName = data["userName"] as? String ?? ""
+                                    FirebaseManager.shared.saveNotification(
+                                        to: postOwnerId,
+                                        from: userId,
+                                        postId: postId,
+                                        type: 0,
+                                        subType: nil, title: "你的日記被按讚了！",
+                                        message: "\(userName) 按讚了你的日記",
+                                        actionUrl: nil, priority: 0
+                                    ) { result in
+                                        switch result {
+                                        case .success:
+                                            print("通知发送成功")
+                                        case .failure(let error):
+                                            print("通知发送失败: \(error.localizedDescription)")
+                                        }
+                                    }
+                                case .failure(let error):
+                                    print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    postRef.updateData([
+                        "likesAccount": FieldValue.arrayRemove([userId])
+                    ]) { error in
+                        if let error = error {
+                            print("取消按讚失敗: \(error.localizedDescription)")
+                            completion(false)
+                        } else {
+                            //                    print("取消按讚成功，已更新資料")
+                            completion(true)
+                        }
+                    }
+                }
+            }
+        }
+        
     }
 }

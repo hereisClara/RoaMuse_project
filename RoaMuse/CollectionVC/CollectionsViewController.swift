@@ -49,8 +49,6 @@ class CollectionsViewController: UIViewController {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
         self.navigationController?.setNavigationBarHidden(false, animated: false)
-        //        uploadTripsToFirebase()
-        //        uploadPlaces()
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "收藏"
@@ -90,11 +88,9 @@ class CollectionsViewController: UIViewController {
     }
     
     func setupSegmentedControl() {
-        // 設置 segment 的標題
         segmentedControl = UISegmentedControl(items: ["行程", "日記"])
         segmentedControl.selectedSegmentIndex = 0
         
-        // 自定義外觀
         let normalTextAttributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor.deepBlue,
             .font: UIFont(name: "NotoSerifHK-Black", size: 20)
@@ -108,23 +104,18 @@ class CollectionsViewController: UIViewController {
         segmentedControl.setTitleTextAttributes(normalTextAttributes, for: .normal)
         segmentedControl.setTitleTextAttributes(selectedTextAttributes, for: .selected)
         
-        // 設置背景顏色和邊框
         segmentedControl.backgroundColor = UIColor.clear
         segmentedControl.selectedSegmentTintColor = UIColor.deepBlue
         
-        // 自定義邊框
         segmentedControl.layer.cornerRadius = 25
         segmentedControl.layer.borderWidth = 2
         segmentedControl.layer.borderColor = UIColor.deepBlue.cgColor
         segmentedControl.clipsToBounds = true
         
-        // 添加 target 方法
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged(_:)), for: .valueChanged)
         
-        // 添加到視圖
         view.addSubview(segmentedControl)
         
-        // 設置約束
         segmentedControl.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(70)
@@ -729,8 +720,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 if segmentIndex == 0 {
                     FirebaseManager.shared.removeTripBookmark(forUserId: userId, tripId: id) { success in
                         if success {
-                            print("取消行程收藏成功")
-
                             if indexPath.section == 0 {
                                 self.incompleteTripsArray.remove(at: indexPath.row)
                             } else {
@@ -744,7 +733,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 } else {
                     FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: id) { success in
                         if success {
-                            print("取消收藏成功")
                             self.bookmarkPostIdArray.removeAll { $0 == id }
                             self.postsArray.remove(at: indexPath.row)
                             self.collectionsTableView.deleteRows(at: [indexPath], with: .automatic)

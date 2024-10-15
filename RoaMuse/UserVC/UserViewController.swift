@@ -13,6 +13,7 @@ import FirebaseStorage
 import FirebaseFirestore
 import Kingfisher
 import MJRefresh
+import SideMenu
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -275,7 +276,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         alert.addAction(UIAlertAction(title: "刪除", style: .destructive, handler: { [weak self] _ in
             Firestore.firestore().collection("posts").document(postId).delete { [weak self] error in
                 if error != nil {
-                    print("刪除貼文失敗: \(error!.localizedDescription)")
                     return
                 }
                 self?.handlePostDeletion(senderTag: senderTag)
@@ -386,15 +386,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
-    func navigateToLoginScreen() {
-        let loginVC = LoginViewController()
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            window.rootViewController = UINavigationController(rootViewController: loginVC)
-            window.makeKeyAndVisible()
-        }
-    }
-    
     func loadUserDataFromUserDefaults() {
         if let savedUserName = UserDefaults.standard.string(forKey: "userName"),
            let savedUserId = UserDefaults.standard.string(forKey: "userId"),
@@ -436,9 +427,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 240
         tableView.layer.cornerRadius = 20
-//        tableView.layer.borderColor = UIColor.deepBlue.cgColor
-//        tableView.layer.borderWidth = 2
-        
         tableView.snp.makeConstraints { make in
             make.width.equalTo(view).multipliedBy(0.9)
             make.top.equalTo(view.safeAreaLayoutGuide)
@@ -530,7 +518,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         fansStackView.spacing = 0
         headerView.addSubview(fansStackView)
 
-        // 新增帖子数量的 StackView
         let postStackView = UIStackView(arrangedSubviews: [postsNumberLabel, postsTextLabel])
         postStackView.axis = .vertical
         postStackView.alignment = .center
@@ -576,7 +563,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupPostsStackView() {
         postsNumberLabel.text = String(postsCount)
         postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
-        
         postsTextLabel.text = "Posts"
         postsTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         postsTextLabel.textColor = .gray
@@ -616,7 +602,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         var headerFrame = header.frame
         headerFrame.size.height = newSize.height
         header.frame = headerFrame
-        print("HeaderView frame: \(header.frame)")
         tableView.tableHeaderView = header
     }
 
@@ -676,8 +661,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     @objc func handleMapButtonTapped() {
         
-        let mapViewController = MapViewController()
-        self.navigationController?.pushViewController(mapViewController, animated: true)
+        let menuController = MenuViewController()
+        
+        let mapVC = MapViewController()
+        
+        let sideMenuController = SideMenuController(contentViewController: mapVC, menuViewController: menuController)
+        SideMenuController.preferences.basic.direction = .right
+        SideMenuController.preferences.basic.enablePanGesture = true
+        navigationController?.pushViewController(sideMenuController, animated: true)
     }
     
     @objc func handleAwardsButtonTapped() {
@@ -778,8 +769,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             cell.collectButton.isSelected = isBookmarked
         }
         
-        cell.contentView.layer.borderColor = UIColor.deepBlue.cgColor
-        cell.contentView.layer.borderWidth = 2
+        cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
+        cell.containerView.layer.borderWidth = 2
 
         return cell
     }

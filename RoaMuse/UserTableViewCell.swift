@@ -56,19 +56,25 @@ class UserTableViewCell: UITableViewCell {
     }
     
     func setupCell() {
+        contentView.addSubview(containerView)
+
+        containerView.snp.makeConstraints { make in
+            make.edges.equalTo(contentView).inset(UIEdgeInsets(top: 9, left: 0, bottom: 3, right: 0))
+        }
+
+        [
+            moreButton, userNameLabel, awardLabelView, titleLabel, avatarImageView, contentLabel, dateLabel,
+            bookmarkCountLabel, likeCountLabel, collectButton,
+            likeButton, commentButton, scrollView
+        ].forEach { containerView.addSubview($0) }
+
         
         setupLabel()
         userNameLabel.text = "UserName"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
         avatarImageView.image = UIImage(named: "user-placeholder")
-        
-        [
-            moreButton, userNameLabel, awardLabelView, titleLabel, avatarImageView, contentLabel, dateLabel,
-             bookmarkCountLabel, likeCountLabel, collectButton,
-            likeButton, commentButton, /*photoStackView,*/ scrollView
-        ].forEach { contentView.addSubview($0) }
-        
-        
+        contentView.backgroundColor = .clear
+        containerView.backgroundColor = .white
         
         scrollView.addSubview(photoStackView)
         
@@ -100,15 +106,15 @@ class UserTableViewCell: UITableViewCell {
         photoStackView.distribution = .fillEqually
         
         avatarImageView.snp.makeConstraints { make in
-            make.top.equalTo(contentView).offset(30)
-            make.leading.equalTo(contentView).offset(15)
+            make.top.equalTo(containerView).offset(30)
+            make.leading.equalTo(containerView).offset(15)
             make.width.height.equalTo(60)
         }
     
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(awardLabelView.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView)
-            make.trailing.equalTo(contentView).offset(-16)
+            make.trailing.equalTo(containerView).offset(-16)
 //            make.bottom.equalTo(contentLabel.snp.top).offset(-12)
         }
         
@@ -117,7 +123,7 @@ class UserTableViewCell: UITableViewCell {
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(12)
             make.leading.equalTo(titleLabel)
-            make.trailing.equalTo(contentView).offset(-16)
+            make.trailing.equalTo(containerView).offset(-16)
             //make.height.equalTo(30)
             //make.bottom.equalTo(photoStackView.snp.top).offset(-10)
         }
@@ -140,7 +146,7 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(dateLabel.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView).offset(10)
             make.width.height.equalTo(20)
-            make.bottom.equalTo(contentView).offset(-16)
+            make.bottom.equalTo(containerView).offset(-16)
         }
         
         commentButton.snp.makeConstraints { make in
@@ -167,7 +173,7 @@ class UserTableViewCell: UITableViewCell {
         
         moreButton.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView)
-            make.trailing.equalTo(contentView).offset(-16)
+            make.trailing.equalTo(containerView).offset(-16)
             make.width.height.equalTo(20)
         }
         
@@ -207,9 +213,9 @@ class UserTableViewCell: UITableViewCell {
     
     func setupRoundedCorners() {
 
-        contentView.layer.cornerRadius = 15
-        contentView.layer.masksToBounds = true
-        contentView.backgroundColor = .white
+        containerView.layer.cornerRadius = 15
+        containerView.layer.masksToBounds = true
+//        contentView.backgroundColor = .white
     }
     
     func setupButtonStyle() {
