@@ -33,6 +33,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         self.navigationController?.isNavigationBarHidden = false
         mapView = MKMapView(frame: view.bounds)
         mapView.delegate = self
+        mapView.showsUserLocation = true
+        mapView.userTrackingMode = .follow
+        mapView.showsCompass = true
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
         view.addSubview(mapView)
         
@@ -191,7 +194,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             }
         }
 
-        // 所有地點資料下載完成後
         dispatchGroup.notify(queue: .main) {
             print("所有標註點已經添加")
         }
@@ -243,6 +245,10 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         
+        if annotation is MKUserLocation {
+                return nil
+            }
+        
         if let clusterAnnotation = annotation as? MKClusterAnnotation {
             let clusterView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: clusterAnnotation)
             return clusterView
@@ -257,7 +263,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
             
-            annotationView.markerTintColor = .blue // 設定大頭針的顏色
+            annotationView.markerTintColor = .red // 設定大頭針的顏色
             
             return annotationView
         }
@@ -300,21 +306,40 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             print("No annotation selected")
         }
     }
-
-    func centerMapOnAnnotation(annotation: MKAnnotation) {
-        
-        var mapCenter = annotation.coordinate
-        let mapRect = mapView.visibleMapRect
-        let mapHeight = mapRect.size.height
-        let yOffset = mapHeight / 4
-        
-        let currentCenter = mapView.centerCoordinate
-        
-        let adjustedCenter = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: mapCenter.latitude - yOffset / mapHeight, longitude: currentCenter.longitude), span: mapView.region.span)
-        
-        mapView.setRegion(adjustedCenter, animated: true)
+    
+    func centerMapOnUserLocation(userLocation: CLLocation) {
+        let regionRadius: CLLocationDistance = 50000  // 50公里
+        let coordinateRegion = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+        mapView.setRegion(coordinateRegion, animated: true)
     }
     
+    func centerMapOnAnnotation(annotation: MKAnnotation) {
+        let regionRadius: CLLocationDistance = 5000  // 縮放半徑，根據需求調整
+
+        // 1. 取得螢幕尺寸及偏移量
+        let mapViewHeight = mapView.bounds.height
+        let mapViewWidth = mapView.bounds.width
+
+        // 2. 設定地圖中心要移動的高度，讓標註移到螢幕的上 1/3 區域
+        let yOffsetInPoints = mapViewHeight / 4  // 嘗試將其設為 1/4 或其他值
+
+        // 3. 將地理座標轉換為地圖上的螢幕點
+        let annotationPoint = mapView.convert(annotation.coordinate, toPointTo: mapView)
+
+        // 4. 計算新的中心點的螢幕座標，向上移動
+        let newCenterPoint = CGPoint(x: mapViewWidth / 2, y: annotationPoint.y - yOffsetInPoints)
+
+        // 5. 將新的螢幕座標轉換回地理座標，設為地圖的新中心點
+        let newCenterCoordinate = mapView.convert(newCenterPoint, toCoordinateFrom: mapView)
+
+        // 6. 設定地圖的新區域，並放大縮小顯示
+        let region = MKCoordinateRegion(center: newCenterCoordinate,
+                                        latitudinalMeters: regionRadius * 2,
+                                        longitudinalMeters: regionRadius * 2)
+
+        mapView.setRegion(region, animated: true)
+    }
+
     func showSlidingView() {
         // 添加背景遮罩视图
         print("showSlidingView called")

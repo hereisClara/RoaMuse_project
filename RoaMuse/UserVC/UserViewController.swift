@@ -1,10 +1,3 @@
-//
-//  UserViewController.swift
-//  RoaMuse
-//
-//  Created by 小妍寶 on 2024/9/12.
-//
-
 import Foundation
 import UIKit
 import SnapKit
@@ -66,15 +59,12 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         navigationController?.navigationBar.tintColor = .deepBlue
         let navigateBtn = UIBarButtonItem(image: UIImage(systemName: "gearshape.fill"), style: .plain, target: self, action: #selector(navigateToSettings))
         navigationItem.rightBarButtonItems = [navigateBtn]
-        
         imagePicker.delegate = self
         setupTableView()
         setupEmptyStateLabel()
         setupRefreshControl()
         setupBottomSheet()
-        guard let userId = userId else {
-            return
-        }
+        guard let userId = userId else { return }
         
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
@@ -222,32 +212,34 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         backgroundView.alpha = 0
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
         backgroundView.addGestureRecognizer(tapGesture)
-        
+
         bottomSheetView.backgroundColor = .white
         bottomSheetView.layer.cornerRadius = 15
         bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        
+
         bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
-        
+
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             window.addSubview(backgroundView)
             window.addSubview(bottomSheetView)
         }
-        
+
         let deleteButton = createButton(title: "刪除貼文")
+        deleteButton.tag = 1001
+        deleteButton.addTarget(self, action: #selector(deletePost(_:)), for: .touchUpInside)
+
         let impeachButton = createButton(title: "檢舉貼文")
         let blockButton = createButton(title: "封鎖用戶")
         let cancelButton = createButton(title: "取消", textColor: .red)
-        
-        deleteButton.addTarget(self, action: #selector(deletePost), for: .touchUpInside)
-        
+        cancelButton.addTarget(self, action: #selector(dismissBottomSheet), for: .touchUpInside)
+
         let stackView = UIStackView(arrangedSubviews: [deleteButton, impeachButton, blockButton, cancelButton])
         stackView.axis = .vertical
         stackView.spacing = 20
         stackView.alignment = .fill
         stackView.distribution = .fillEqually
-        
+
         bottomSheetView.addSubview(stackView)
         stackView.snp.makeConstraints { make in
             make.top.equalTo(bottomSheetView.snp.top).offset(20)
@@ -272,20 +264,20 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 }
             }
         }))
-
+        
         present(alert, animated: true, completion: nil)
     }
-    
+
     func handlePostDeletion(at indexPath: IndexPath) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+
+//            self.posts.remove(at: indexPath.row)
             
-            self.posts.remove(at: indexPath.row)
-            self.tableView.deleteRows(at: [indexPath], with: .fade)
+//            self.tableView.deleteRows(at: [indexPath], with: .fade)
             
             self.dismissBottomSheet()
             self.updateEmptyState()
-            
         }
     }
     
@@ -299,16 +291,13 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     }
     
     func showBottomSheet(at indexPath: IndexPath) {
-        let post = posts[indexPath.row]
         self.selectedIndexPath = indexPath
+
+        // 只需顯示 BottomSheet，無需重複綁定按鈕事件
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
             self.backgroundView.alpha = 1
         }
-        
-        let deleteButton = bottomSheetView.viewWithTag(1001) as? UIButton
-        deleteButton?.addTarget(self, action: #selector(deletePost(_:)), for: .touchUpInside)
-        deleteButton?.tag = indexPath.row
     }
     
     @objc func dismissBottomSheet() {
@@ -365,7 +354,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-        
         loadUserPosts()
         
         DispatchQueue.main.async {
@@ -556,7 +544,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func setupLabel() {
-        
         userNameLabel.text = "新用戶"
         userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
         userNameLabel.textColor = .deepBlue
@@ -648,12 +635,18 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         let menuController = MenuViewController()
         let mapVC = MapViewController()
-        
         let sideMenuController = SideMenuController(contentViewController: mapVC, menuViewController: menuController)
         
         menuController.onSelectionConfirmed = { [weak self] selectedIndex in
+            guard let self = self else { return }
+
+            // 先隱藏選單，再進行其他操作
+            sideMenuController.hideMenu(animated: true) { _ in
+                // 確保選單隱藏後才進行頁面更新
                 mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: selectedIndex)
             }
+        }
+
         
         SideMenuController.preferences.basic.direction = .right
         SideMenuController.preferences.basic.enablePanGesture = true
@@ -661,7 +654,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func handleAwardsButtonTapped() {
-        
         let awardsViewController = AwardsViewController()
         self.navigationController?.pushViewController(awardsViewController, animated: true)
     }
@@ -751,7 +743,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                                 dropdownButton: nil
                             )
                         }
-                        
                     case .failure(let error):
                         print("獲取稱號失敗: \(error.localizedDescription)")
                     }
@@ -780,7 +771,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let post = posts[indexPath.row]
-        
         let articleVC = ArticleViewController()
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
@@ -981,9 +971,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: url) { data, response, error in
                 defer { dispatchGroup.leave() }
-
                 if let error = error { return }
-
                 if let data = data, let image = UIImage(data: data) {
                     images[index] = image
                 }

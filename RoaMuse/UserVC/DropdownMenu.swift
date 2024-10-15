@@ -13,8 +13,8 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
     var items: [String] = []
     private let tableView = UITableView()
     var onItemSelected: ((String) -> Void)?
+    var titlesWithIndexes: [(title: String, section: Int, row: Int)] = []
     
-    // 初始化
     init(items: [String]) {
         super.init(frame: .zero)
         self.items = items
@@ -34,10 +34,11 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
     }
     
     private func setupTableView() {
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "DropdownCell")
+        tableView.register(DropdownMenuCell.self, forCellReuseIdentifier: "DropdownMenuCell")
         tableView.dataSource = self
         tableView.delegate = self
         tableView.layer.cornerRadius = 12
+        tableView.separatorStyle = .none
         self.addSubview(tableView)
         
         tableView.snp.makeConstraints { make in
@@ -51,20 +52,43 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         return items.count
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        45
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "DropdownCell", for: indexPath)
-        cell.textLabel?.text = items[indexPath.row]
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "DropdownMenuCell", for: indexPath) as? DropdownMenuCell else {
+            return UITableViewCell()
+        }
+        
+        let title = items[indexPath.row]
+        let index = titlesWithIndexes[indexPath.row]
+        
+        cell.selectionStyle = .none
+        cell.awardLabelView.titleLabel.text = index.title
+        
+        AwardStyleManager.updateTitleContainerStyle(
+            forTitle: index.title,
+            item: index.row,
+            titleContainerView: cell.awardLabelView,
+            titleLabel: cell.awardLabelView.titleLabel,
+            dropdownButton: nil
+        )
+        
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedItem = items[indexPath.row]
-        onItemSelected?(selectedItem) // 傳遞選中的項目
-        self.hide() // 選擇後隱藏
+//        onItemSelected?(selectedItem) // 傳遞選中的項目
+        self.hide { [weak self] in
+                self?.onItemSelected?(selectedItem) // 傳遞選中的項目
+            }
     }
     
     func show(in parentView: UIView, anchorView: UIView) {
         parentView.addSubview(self)
+        
         self.snp.makeConstraints { make in
             make.top.equalTo(anchorView.snp.bottom).offset(6)
             make.leading.equalTo(anchorView)
@@ -78,11 +102,12 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         }
     }
     
-    func hide() {
-        UIView.animate(withDuration: 0.3, animations: {
+    func hide(completion: (() -> Void)? = nil) {
+        UIView.animate(withDuration: 0.2, animations: {
             self.alpha = 0
         }) { _ in
             self.removeFromSuperview()
+            completion?()  // 在隱藏動畫完成後執行 completion block
         }
     }
 }

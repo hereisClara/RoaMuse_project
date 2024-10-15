@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import SnapKit
+import SideMenu
 
 class MenuViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
@@ -15,7 +16,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     let styles = ["奇險派", "浪漫派", "田園派"]
     var selectedIndex: IndexPath?
     let confirmButton = UIButton(type: .system)
-    var onSelectionConfirmed: ((Int) -> Void)?
+    var onSelectionConfirmed: ((Int?) -> Void)?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,20 +58,12 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func confirmSelection() {
-        print("確定")
-        guard let index = selectedIndex else {
-            print("尚未選擇風格")
-            return
+        if let index = selectedIndex {
+            self.onSelectionConfirmed?(index.row)
+        } else {
+            self.onSelectionConfirmed?(nil)
         }
         
-//        delegate?.didSelectStyle(index: index.row)
-        
-//        let mapVC = MapViewController()
-//        mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: Int(index.row))
-        
-        self.dismiss(animated: true) {
-                self.onSelectionConfirmed?(index.row)
-            }
     }
     
     // MARK: - UITableViewDataSource
@@ -101,18 +94,26 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // 取消先前選中的項目
-        if let previousIndex = selectedIndex {
-            let previousCell = tableView.cellForRow(at: previousIndex)
-            previousCell?.accessoryType = .none
-            previousCell?.textLabel?.textColor = .darkGray
+        if indexPath == selectedIndex {
+            // 如果再次選擇相同的 row，則取消選取並清空 selectedIndex
+            let selectedCell = tableView.cellForRow(at: indexPath)
+            selectedCell?.accessoryType = .none
+            selectedCell?.textLabel?.textColor = .darkGray
+            selectedIndex = nil
+        } else {
+            // 取消先前選中的項目
+            if let previousIndex = selectedIndex {
+                let previousCell = tableView.cellForRow(at: previousIndex)
+                previousCell?.accessoryType = .none
+                previousCell?.textLabel?.textColor = .darkGray
+            }
+            
+            // 設定新的選中項目
+            selectedIndex = indexPath
+            let selectedCell = tableView.cellForRow(at: indexPath)
+            selectedCell?.accessoryType = .checkmark
+            selectedCell?.textLabel?.textColor = .systemBlue
         }
-        
-        // 設定新的選中項目
-        selectedIndex = indexPath
-        let selectedCell = tableView.cellForRow(at: indexPath)
-        selectedCell?.accessoryType = .checkmark
-        selectedCell?.textLabel?.textColor = .systemBlue
         
         tableView.deselectRow(at: indexPath, animated: true)  // 取消點擊高亮效果
     }
