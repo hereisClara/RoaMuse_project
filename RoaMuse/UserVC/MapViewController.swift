@@ -88,13 +88,10 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         slidingView = SlidingView(frame: CGRect(x: 0, y: view.bounds.height, width: view.bounds.width, height: 600), parentViewController: self)
         view.addSubview(slidingView)
     }
-    
-    
     func loadCompletedPlacesAndAddAnnotations(selectedIndex: Int?) {
         guard let userId = userId else { return }
 
         self.placeTripDictionary = [:]
-        
         let userRef = Firestore.firestore().collection("users").document(userId)
 
         userRef.getDocument { documentSnapshot, error in
@@ -109,94 +106,92 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 return
             }
 
+            let group = DispatchGroup()  // DispatchGroup 用來同步等待所有請求完成
+            var filteredPlaceTripDictionary = [String: PlaceTripInfo]()
+
+            // 遍歷所有的 completedPlace 並發起 trip 資料的請求
             for placeEntry in completedPlace {
                 if let placeIds = placeEntry["placeIds"] as? [String], let tripId = placeEntry["tripId"] as? String {
                     for placeId in placeIds {
-                        if var placeTripInfo = self.placeTripDictionary[placeId] {
-                            placeTripInfo.tripIds.append(tripId)
-                            self.placeTripDictionary[placeId] = placeTripInfo
-                        } else {
-                            self.placeTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: [tripId])
+                        group.enter()
+                        let tripRef = Firestore.firestore().collection("trips").document(tripId)
+
+                        tripRef.getDocument { snapshot, error in
+                            defer { group.leave() }  // 確保每次請求結束都會呼叫 leave()
+
+                            if let error = error {
+                                print("獲取 trip 失敗: \(error.localizedDescription)")
+                                return
+                            }
+
+                            guard let tripData = snapshot?.data() else { return }
+
+                            // 檢查 trip 的 tag 是否符合 selectedIndex
+                            if selectedIndex == nil || tripData["tag"] as? Int == selectedIndex {
+                                if var placeTripInfo = filteredPlaceTripDictionary[placeId] {
+                                    placeTripInfo.tripIds.append(tripId)
+                                    filteredPlaceTripDictionary[placeId] = placeTripInfo
+                                } else {
+                                    filteredPlaceTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: [tripId])
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            let group = DispatchGroup()
-            var filteredPlaceTripDictionary = [String: PlaceTripInfo]()
-
-            for (placeId, placeTripInfo) in self.placeTripDictionary {
-                var validTripIds = [String]()
-
-                for tripId in placeTripInfo.tripIds {
-                    group.enter()
-                    let tripRef = Firestore.firestore().collection("trips").document(tripId)
-
-                    tripRef.getDocument { snapshot, error in
-                        if let error = error {
-                            print("獲取 trip 失敗: \(error.localizedDescription)")
-                        } else if let snapshot = snapshot, let tripData = snapshot.data() {
-                            // 如果 selectedIndex 是 nil，或者 trip 的 tag 等於 selectedIndex，就保留該 tripId
-                            if selectedIndex == nil || tripData["tag"] as? Int == selectedIndex {
-                                validTripIds.append(tripId)
-                            }
-                        }
-                        group.leave()
-                    }
-                }
-
-                group.notify(queue: .main) {
-                    print(">< ", validTripIds)
-                    if !validTripIds.isEmpty {
-                        filteredPlaceTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: validTripIds)
-                        self.placeTripDictionary = filteredPlaceTripDictionary
-                        print("-----------   ", self.placeTripDictionary.keys)
-                        self.fetchPlaces(for: Array(filteredPlaceTripDictionary.keys))
-                    } else {
-                        self.mapView.removeAnnotations(self.mapView.annotations)
-                    }
-                }
+            // 當所有請求完成時執行
+            group.notify(queue: .main) {
+                self.placeTripDictionary = filteredPlaceTripDictionary  // 設定整理後的資料
+                print("完成的地點: ", self.placeTripDictionary.keys)
+                
+                // 呼叫 fetchPlaces 來標註地點
+                self.fetchPlaces(for: Array(filteredPlaceTripDictionary.keys))
             }
         }
     }
 
     func fetchPlaces(for placeIds: [String]) {
         print("fetch")
+
+        // 移除所有現有的標註
         mapView.removeAnnotations(mapView.annotations)
 
         let placesRef = Firestore.firestore().collection("places")
         let dispatchGroup = DispatchGroup()
-        
+
         for placeId in placeIds {
             dispatchGroup.enter()
-            
+
             placesRef.document(placeId).getDocument { documentSnapshot, error in
+                defer { dispatchGroup.leave() }  // 確保每次請求結束都會呼叫 leave()
+
                 if let error = error {
-                    dispatchGroup.leave()
+                    print("獲取地點失敗: \(error.localizedDescription)")
                     return
                 }
-                
+
                 guard let document = documentSnapshot, let data = document.data(),
                       let latitude = data["latitude"] as? Double,
                       let longitude = data["longitude"] as? Double,
                       let placeName = data["name"] as? String else {
-                    dispatchGroup.leave()
+                    print("解析地點資料失敗")
                     return
                 }
-                
+
                 let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                print(location)
-                print(placeId)
+                print("加入地點: \(placeName), ID: \(placeId)")
+
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = location
                 annotation.title = placeName
-                annotation.subtitle = placeId // 確保此處設置 placeId
+                annotation.subtitle = placeId
+
                 self.mapView.addAnnotation(annotation)
-                dispatchGroup.leave()
             }
         }
-        
-        // 確保所有的查詢完成後再進行後續處理
+
+        // 所有地點資料下載完成後
         dispatchGroup.notify(queue: .main) {
             print("所有標註點已經添加")
         }

@@ -250,10 +250,15 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     }
                 }
             }
-            
+            cell.photoTappedHandler = { [weak self] index in
+                        guard let self = self else { return }
+                        let photoUrls = post["photoUrls"] as? [String] ?? []
+                        self.showFullScreenImages(photoUrls: photoUrls, startingIndex: index)
+                    }
         }
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        
         
         
         cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
@@ -550,5 +555,38 @@ extension PoemPostViewController {
             }
         }
         
+    }
+    
+    func showFullScreenImages(photoUrls: [String], startingIndex: Int) {
+        let fullScreenVC = FullScreenImageViewController()
+        let dispatchGroup = DispatchGroup()
+        var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
+
+        // 使用 DispatchGroup 來確保所有圖片都載入完成後再進行顯示
+        for (index, urlString) in photoUrls.enumerated() {
+            guard let url = URL(string: urlString) else { continue }
+
+            dispatchGroup.enter()
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                defer { dispatchGroup.leave() }
+
+                if let error = error {
+                    print("圖片下載失敗: \(error.localizedDescription)")
+                    return
+                }
+
+                if let data = data, let image = UIImage(data: data) {
+                    images[index] = image
+                }
+            }.resume()
+        }
+
+        // 當所有圖片載入完成後，跳轉至全螢幕檢視
+        dispatchGroup.notify(queue: .main) {
+            fullScreenVC.images = images
+            fullScreenVC.startingIndex = startingIndex
+            fullScreenVC.modalPresentationStyle = .fullScreen
+            self.present(fullScreenVC, animated: true, completion: nil)
+        }
     }
 }

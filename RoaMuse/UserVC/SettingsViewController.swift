@@ -320,24 +320,23 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     // 開啟相片庫
     @objc func openPhotoLibrary() {
         imagePicker.sourceType = .photoLibrary
+        imagePicker.allowsEditing = true
         self.present(imagePicker, animated: true, completion: nil)
     }
     
-    // 照片選擇完成
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let image = info[.originalImage] as? UIImage {
-            avatarImageView.image = image
-            uploadImageToFirebaseStorage(image)
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        if let editedImage = info[.editedImage] as? UIImage {
+            avatarImageView.image = editedImage  // 使用編輯後的圖片
+            uploadImageToFirebaseStorage(editedImage)
+        } else if let originalImage = info[.originalImage] as? UIImage {
+            avatarImageView.image = originalImage  // 若無編輯則使用原圖
+            uploadImageToFirebaseStorage(originalImage)
         }
         dismiss(animated: true, completion: nil)
     }
     
-    // 上傳照片到 Firebase Storage
     func uploadImageToFirebaseStorage(_ image: UIImage) {
-        guard let imageData = image.jpegData(compressionQuality: 0.75) else {
-            print("圖片壓縮失敗")
-            return
-        }
+        guard let imageData = image.jpegData(compressionQuality: 0.75) else { return }
         
         let storageRef = Storage.storage().reference().child("avatars/\(UUID().uuidString).jpg")
         storageRef.putData(imageData, metadata: nil) { metadata, error in

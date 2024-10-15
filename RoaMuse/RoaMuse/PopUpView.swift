@@ -62,22 +62,22 @@ class PopUpView {
         districtsStackView.removeAllArrangedSubviews()
         
         backgroundView.frame = window.bounds
-            backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-            window.addSubview(backgroundView)
-
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopupAndNavigateToDetail))
-            backgroundView.addGestureRecognizer(tapGesture)
-
-            popupView.backgroundColor = .deepBlue
-            popupView.layer.cornerRadius = 10
-            popupView.clipsToBounds = true
-            backgroundView.addSubview(popupView)
-
-            popupView.snp.makeConstraints { make in
-                make.center.equalTo(backgroundView)
-                make.width.equalTo(backgroundView).multipliedBy(0.88)
-                make.height.equalTo(600)
-            }
+        backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        window.addSubview(backgroundView)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
+        backgroundView.addGestureRecognizer(tapGesture)
+        
+        popupView.backgroundColor = .deepBlue
+        popupView.layer.cornerRadius = 10
+        popupView.clipsToBounds = true
+        backgroundView.addSubview(popupView)
+        
+        popupView.snp.makeConstraints { make in
+            make.center.equalTo(backgroundView)
+            make.width.equalTo(backgroundView).multipliedBy(0.88)
+            make.height.equalTo(600)
+        }
         
         setupConstraints()
         
@@ -239,16 +239,16 @@ class PopUpView {
         matchingScoreLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
     }
 
-//    @objc func dismissPopup() {
-//        UIView.animate(withDuration: 0.3, animations: {
-//            self.popupView.alpha = 0
-//            self.backgroundView.alpha = 0
-//        }) { _ in
-//            // 完成動畫後移除 popupView 和 backgroundView
-//            self.popupView.removeFromSuperview()
-//            self.backgroundView.removeFromSuperview()
-//        }
-//    }
+    @objc func dismissPopup() {
+        UIView.animate(withDuration: 0.3, animations: {
+            self.popupView.alpha = 0
+            self.backgroundView.alpha = 0
+        }) { _ in
+            // 完成動畫後移除 popupView 和 backgroundView
+            self.popupView.removeFromSuperview()
+            self.backgroundView.removeFromSuperview()
+        }
+    }
     
     @objc func didTapStartButton() {
         guard let tripId = tripId, let userId = UserDefaults.standard.string(forKey: "userId") else {

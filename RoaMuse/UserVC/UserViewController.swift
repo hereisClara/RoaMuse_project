@@ -361,7 +361,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                         dropdownButton: nil
                     )
                 }
-                
             case .failure(let error):
                 print("獲取稱號失敗: \(error.localizedDescription)")
             }
@@ -381,7 +380,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             self.userName = savedUserName
             self.userNameLabel.text = savedUserName
-        } else {
         }
     }
     
@@ -513,10 +511,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         headerView.addSubview(postStackView)
 
         introductionLabel.snp.makeConstraints { make in
-            make.top.equalTo(avatarImageView.snp.bottom).offset(20)
+            make.top.equalTo(avatarImageView.snp.bottom).offset(22)
             make.leading.equalTo(headerView).offset(16)
             make.trailing.equalTo(headerView).offset(-16)
-            make.bottom.equalTo(fansStackView.snp.top).offset(-12)
+            make.bottom.equalTo(fansStackView.snp.top).offset(-16)
         }
         
         fansStackView.snp.makeConstraints { make in
@@ -560,7 +558,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupLabel() {
         
         userNameLabel.text = "新用戶"
-        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
         userNameLabel.textColor = .deepBlue
         introductionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         introductionLabel.numberOfLines = 0
@@ -654,7 +652,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let sideMenuController = SideMenuController(contentViewController: mapVC, menuViewController: menuController)
         
         menuController.onSelectionConfirmed = { [weak self] selectedIndex in
-                // 在这里接收 selectedIndex，并调用更新地图的方法
                 mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: selectedIndex)
             }
         
@@ -803,8 +800,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 articleVC.bookmarkAccounts = post["bookmarkAccount"] as? [String] ?? []
                 
                 self.navigationController?.pushViewController(articleVC, animated: true)
-            } else {
-                print("未找到對應的 userName")
             }
         }
     }
@@ -892,8 +887,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             ]) { error in
                 if let error = error {
                     print("按讚失敗: \(error.localizedDescription)")
-                } else {
-                    
                 }
             }
         } else {
@@ -902,8 +895,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             ]) { error in
                 if let error = error {
                     print("取消按讚失敗: \(error.localizedDescription)")
-                } else {
-                    
                 }
             }
         }
@@ -930,8 +921,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             ]) { error in
                 if let error = error {
                     print("收藏失敗: \(error.localizedDescription)")
-                } else {
-                    
                 }
             }
         } else {
@@ -940,8 +929,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             ]) { error in
                 if let error = error {
                     print("取消收藏失敗: \(error.localizedDescription)")
-                } else {
-                    
                 }
             }
         }
@@ -968,13 +955,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         emptyStateLabel.textColor = .lightGray
         emptyStateLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         emptyStateLabel.textAlignment = .center
-        emptyStateLabel.isHidden = true  // 預設隱藏
+        emptyStateLabel.isHidden = true
         
         view.insertSubview(emptyStateLabel, belowSubview: tableView)
         
         emptyStateLabel.snp.makeConstraints { make in
-            make.centerX.equalTo(tableView)  // 在 tableView 中居中
-            make.bottom.equalTo(view).offset(-100)  // 左右留白
+            make.centerX.equalTo(tableView)
+            make.bottom.equalTo(view).offset(-100)
         }
     }
     
@@ -985,16 +972,29 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func showFullScreenImages(photoUrls: [String], startingIndex: Int) {
         let fullScreenVC = FullScreenImageViewController()
-        
-        fullScreenVC.images = photoUrls.compactMap { urlString in
-            if let url = URL(string: urlString), let data = try? Data(contentsOf: url) {
-                return UIImage(data: data)
-            }
-            return nil
+        let dispatchGroup = DispatchGroup()
+        var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
+
+        for (index, urlString) in photoUrls.enumerated() {
+            guard let url = URL(string: urlString) else { continue }
+
+            dispatchGroup.enter()
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                defer { dispatchGroup.leave() }
+
+                if let error = error { return }
+
+                if let data = data, let image = UIImage(data: data) {
+                    images[index] = image
+                }
+            }.resume()
         }
-        
-        fullScreenVC.startingIndex = startingIndex
-        fullScreenVC.modalPresentationStyle = .fullScreen
-        present(fullScreenVC, animated: true, completion: nil)
+
+        dispatchGroup.notify(queue: .main) {
+            fullScreenVC.images = images
+            fullScreenVC.startingIndex = startingIndex
+            fullScreenVC.modalPresentationStyle = .fullScreen
+            self.present(fullScreenVC, animated: true, completion: nil)
+        }
     }
 }

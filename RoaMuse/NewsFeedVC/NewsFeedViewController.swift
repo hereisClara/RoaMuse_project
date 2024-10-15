@@ -473,9 +473,9 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         let minOffsetY: CGFloat = 0
         
         if offsetY < minOffsetY {
-            scrollView.contentOffset.y = minOffsetY // 防止滾動超出頂部
+            scrollView.contentOffset.y = minOffsetY
         } else if offsetY > maxOffsetY {
-            scrollView.contentOffset.y = maxOffsetY // 防止滾動超出底部
+            scrollView.contentOffset.y = maxOffsetY
         }
     }
 
@@ -522,7 +522,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
-        // 獲取貼文發佈者的資料（頭像）
         FirebaseManager.shared.fetchUserData(userId: postOwnerId) { result in
             switch result {
             case .success(let data):
@@ -537,7 +536,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 FirebaseManager.shared.loadAwardTitle(forUserId: postOwnerId) { result in
                     DispatchQueue.main.async {
-                        if cell.tag == indexPath.row {  // 確保這個結果與當前的單元格一致
+                        if cell.tag == indexPath.row {
                             switch result {
                             case .success(let (awardTitle, item)):
                                 cell.awardLabelView.updateTitle(awardTitle)
@@ -559,7 +558,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
-        // 加載貼文的按讚數據
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
                 return post["id"] as? String == postData["id"] as? String
@@ -579,8 +577,14 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
+        cell.photoTappedHandler = { [weak self] index in
+            guard let self = self else { return }
+            let photoUrls = postData["photoUrls"] as? [String] ?? []
+            self.showFullScreenImages(photoUrls: photoUrls, startingIndex: index)
+        }
+        
         cell.collectButton.addTarget(self, action: #selector(self.didTapCollectButton(_:)), for: .touchUpInside)
-//        cell.layoutIfNeeded()
+
         return cell
     }
     
@@ -711,7 +715,6 @@ extension NewsFeedViewController {
     }
 
     func setupRefreshControl() {
-        // 使用 MJRefreshNormalHeader，當下拉時觸發的刷新動作
         postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
             guard let self = self else { return }
             self.getNewData() // 在刷新時重新加載數據
@@ -735,5 +738,38 @@ extension NewsFeedViewController {
         let hasData = !postsArray.isEmpty
         emptyStateLabel.isHidden = hasData
         postsTableView.isHidden = !hasData
+    }
+    
+    func showFullScreenImages(photoUrls: [String], startingIndex: Int) {
+        let fullScreenVC = FullScreenImageViewController()
+        let dispatchGroup = DispatchGroup()
+        var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
+
+        // 使用 DispatchGroup 來確保所有圖片都載入完成後再進行顯示
+        for (index, urlString) in photoUrls.enumerated() {
+            guard let url = URL(string: urlString) else { continue }
+
+            dispatchGroup.enter()
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                defer { dispatchGroup.leave() }
+
+                if let error = error {
+                    print("圖片下載失敗: \(error.localizedDescription)")
+                    return
+                }
+
+                if let data = data, let image = UIImage(data: data) {
+                    images[index] = image
+                }
+            }.resume()
+        }
+
+        // 當所有圖片載入完成後，跳轉至全螢幕檢視
+        dispatchGroup.notify(queue: .main) {
+            fullScreenVC.images = images
+            fullScreenVC.startingIndex = startingIndex
+            fullScreenVC.modalPresentationStyle = .fullScreen
+            self.present(fullScreenVC, animated: true, completion: nil)
+        }
     }
 }
