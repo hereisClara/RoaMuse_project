@@ -20,6 +20,7 @@ class FullScreenImageViewController: UIViewController, UIPageViewControllerDataS
         view.backgroundColor = .black
         
         setupPageViewController()
+        setupPanGesture()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -70,4 +71,37 @@ class FullScreenImageViewController: UIViewController, UIPageViewControllerDataS
         
         return viewControllerForPage(at: imageVC.index + 1)
     }
+    
+    func setupPanGesture() {
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        view.addGestureRecognizer(panGesture)
+    }
+    
+    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)  // 取得滑動的位移
+
+        switch gesture.state {
+        case .changed:
+            // 根據手指滑動的距離調整 view 的垂直位置
+            if translation.y > 0 {  // 下滑
+                view.transform = CGAffineTransform(translationX: 0, y: translation.y)
+            } else if translation.y < 0 {  // 上滑
+                view.transform = CGAffineTransform(translationX: 0, y: translation.y)
+            }
+            
+        case .ended:
+            // 如果滑動距離超過 150，則關閉控制器，否則回彈
+            if abs(translation.y) > 150 {
+                dismiss(animated: true, completion: nil)
+            } else {
+                UIView.animate(withDuration: 0.3) {
+                    self.view.transform = .identity  // 回彈到原始位置
+                }
+            }
+            
+        default:
+            break
+        }
+    }
+
 }

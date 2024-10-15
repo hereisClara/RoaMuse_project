@@ -29,7 +29,7 @@ class UserTableViewCell: UITableViewCell {
     var photoStackViewHeightConstraint: Constraint?
     let photoStackView = UIStackView() // 新增的 StackView 用於顯示圖片
     let scrollView = UIScrollView()
-    
+    var photoTappedHandler: ((Int) -> Void)?
     var moreButtonAction: (() -> Void)?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -37,9 +37,9 @@ class UserTableViewCell: UITableViewCell {
 //        contentView.layoutMargins = UIEdgeInsets(top: 9, left: 0, bottom: 6, right: 0)
 //        contentView.preservesSuperviewLayoutMargins = false
         setupCell()
-        addActions()
+//        addActions()
         setupRoundedCorners()
-        
+        moreButton.addTarget(self, action: #selector(didTapMoreButton), for: .touchUpInside)
     }
     
     required init?(coder: NSCoder) {
@@ -50,9 +50,6 @@ class UserTableViewCell: UITableViewCell {
         super.layoutSubviews()
         avatarImageView.layer.cornerRadius = 30
         avatarImageView.layer.masksToBounds = true
-//        let inset: CGFloat = 12
-//        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset / 2 + 3, left: 0, bottom: inset / 4, right: 0))
-//        contentView.layoutIfNeeded()
     }
     
     func setupCell() {
@@ -77,6 +74,7 @@ class UserTableViewCell: UITableViewCell {
         containerView.backgroundColor = .white
         
         scrollView.addSubview(photoStackView)
+        scrollView.showsHorizontalScrollIndicator = false
         
         scrollView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
@@ -133,14 +131,6 @@ class UserTableViewCell: UITableViewCell {
             make.leading.equalTo(contentLabel)
 //            make.bottom.equalTo(likeButton.snp.top).offset(-12)
         }
-        
-//        photoStackView.snp.makeConstraints { make in
-//            make.top.equalTo(contentLabel.snp.bottom).offset(12)
-//            make.leading.equalTo(contentLabel)
-//            make.trailing.equalTo(contentLabel)
-//            make.bottom.equalToSuperview().offset(-16)
-//            //            self.photoStackViewHeightConstraint = make.height.equalTo(0).constraint
-//        }
         
         likeButton.snp.makeConstraints { make in
             make.top.equalTo(dateLabel.snp.bottom).offset(16)
@@ -238,6 +228,7 @@ class UserTableViewCell: UITableViewCell {
     }
     
     func configureMoreButton(action: @escaping () -> Void) {
+        moreButtonAction = nil
         moreButtonAction = action
     }
     
@@ -252,15 +243,28 @@ class UserTableViewCell: UITableViewCell {
         } else {
             scrollView.isHidden = false
             
-            for urlString in photoUrls {
+            for (index, urlString) in photoUrls.enumerated() {
                 let imageView = UIImageView()
                 imageView.contentMode = .scaleAspectFill
                 imageView.clipsToBounds = true
                 imageView.layer.cornerRadius = 8
                 
+                let processor = DownsamplingImageProcessor(size: CGSize(width: 150, height: 150))
+                let options: KingfisherOptionsInfo = [.processor(processor), .cacheOriginalImage]
+                
                 if let url = URL(string: urlString) {
-                    imageView.kf.setImage(with: url, placeholder: UIImage(named: "user-placeholder"))
+                    imageView.kf.setImage(
+                        with: url,
+                        placeholder: UIImage(named: "user-placeholder"),
+                        options: options
+                    )
                 }
+                
+                // 添加點擊手勢
+                imageView.isUserInteractionEnabled = true
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(photoTapped(_:)))
+                imageView.addGestureRecognizer(tapGesture)
+                imageView.tag = index  // 將照片索引設置為標籤
                 
                 photoStackView.addArrangedSubview(imageView)
                 
@@ -280,7 +284,14 @@ class UserTableViewCell: UITableViewCell {
         
         if let tableView = self.superview as? UITableView {
             tableView.beginUpdates()
-            tableView.endUpdates() 
+            tableView.endUpdates()
+        }
+    }
+
+    @objc func photoTapped(_ gesture: UITapGestureRecognizer) {
+        if let imageView = gesture.view as? UIImageView {
+            let index = imageView.tag  // 獲取被點擊照片的索引
+            photoTappedHandler?(index)  // 呼叫處理程序並傳遞索引
         }
     }
     
@@ -322,7 +333,6 @@ class UserTableViewCell: UITableViewCell {
             dateLabel.text = createdAtString
         }
         
-        // 設置其他數據如 likeCount, bookmarkCount 等
         if let likeCount = post["likeCount"] as? Int {
             likeCountLabel.text = "\(likeCount)"
         }

@@ -177,20 +177,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.centerX.equalTo(popupView)
             make.width.equalTo(popupView).multipliedBy(0.8)
         }
-        // 添加一个标签显示当前滑块的
-//        sliderLabel.text = "透明度: \(Int(slider.value * 100))%"
-//        sliderLabel.textAlignment = .center
-//        popupView.addSubview(sliderLabel)
-//        
-//        sliderLabel.snp.makeConstraints { make in
-//            make.centerX.equalTo(popupView)
-//            make.top.equalTo(slider.snp.bottom).offset(10)
-//        }
         
-        // 添加滑块值变化的监听器
-//        slider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
-        
-        // 添加关闭按钮
         let closeButton = UIButton(type: .system)
         closeButton.setTitle("关闭", for: .normal)
         closeButton.tintColor = .systemBlue

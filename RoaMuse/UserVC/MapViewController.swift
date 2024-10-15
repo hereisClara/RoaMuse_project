@@ -128,7 +128,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         }
     }
     
-    // Function to display the image in full screen when a thumbnail is tapped
     func displayFullScreenImage(at index: Int) {
         currentImageIndex = index
         fullScreenImageView.image = images[index]
@@ -160,6 +159,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 print("錯誤: 無法解析 completedPlace 資料")
                 return
             }
+            
             for placeEntry in completedPlace {
                 if let placeIds = placeEntry["placeIds"] as? [String], let tripId = placeEntry["tripId"] as? String {
                     for placeId in placeIds {
@@ -245,7 +245,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         completion(images)
     }
     
-    
     func requestPhotoLibraryPermissions(completion: @escaping (Bool) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus()
         switch status {
@@ -265,25 +264,21 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        // 如果是 cluster（聚簇標註點），使用內建的 cluster 視圖
+        
         if let clusterAnnotation = annotation as? MKClusterAnnotation {
             let clusterView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: clusterAnnotation)
             return clusterView
         }
         
-        // 如果是普通的標註點
         if let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Marker", for: annotation) as? MKMarkerAnnotationView {
-            // 設置 clusteringIdentifier 為 "clusterID" 以支持群組
+            
             annotationView.clusteringIdentifier = "clusterID"
             
-            // 啟用懸浮泡泡視窗
             annotationView.canShowCallout = true
             
-            // 添加右側的詳細按鈕 (右側的附屬視圖)
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
             
-            // 可在此處根據 annotation 資訊設置不同的圖片或顯示風格
             annotationView.markerTintColor = .blue // 設定大頭針的顏色
             
             return annotationView
@@ -380,12 +375,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         
         // 假設你需要返回第一個 tripId，如果有多個 tripId 可以根據需求進行修改
         return placeTripInfo.tripIds
-    }
-    
-    func showPoemAlert(title: String, author: String) {
-        let alertController = UIAlertController(title: "詩", message: "詩名: \(title)\n作者: \(author)", preferredStyle: .alert)
-        alertController.addAction(UIAlertAction(title: "確認", style: .default, handler: nil))
-        present(alertController, animated: true, completion: nil)
     }
     
     func fetchTripAndPoemData(for tripId: String, completion: @escaping (String, String) -> Void) {

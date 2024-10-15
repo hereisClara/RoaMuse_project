@@ -17,6 +17,7 @@ import SideMenu
 
 class UserViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    var selectedIndexPath: IndexPath?
     let emptyStateLabel = UILabel()
     var isShowingFollowers: Bool = true
     var postsCount = Int()
@@ -134,10 +135,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        tabBarController?.tabBar.isHidden = false
-        guard let userId = userId else {
-            return
-        }
+        guard let userId = userId else { return }
         
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
             switch result {
@@ -173,7 +171,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             }
         }
         
-        // 重新檢查每個 cell 的收藏狀態並更新
         for (index, post) in posts.enumerated() {
             guard let postId = post["id"] as? String else { continue }
             
@@ -209,7 +206,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         super.viewDidAppear(animated)
     }
 
-    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         updateTableHeaderViewHeight()
@@ -228,12 +224,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
         backgroundView.addGestureRecognizer(tapGesture)
         
-        // 初始化底部選單視圖
         bottomSheetView.backgroundColor = .white
         bottomSheetView.layer.cornerRadius = 15
         bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         
-        // 設置初始位置在螢幕下方
         bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
         
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -264,40 +258,36 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     }
     
     @objc func deletePost(_ sender: UIButton) {
-        let senderTag = sender.tag
-        let post = posts[senderTag]
-        guard let postId = post["id"] as? String else {
-            return
-        }
+        guard let indexPath = self.selectedIndexPath else { return }
+        let post = posts[indexPath.row]
+        guard let postId = post["id"] as? String else { return }
 
         let alert = UIAlertController(title: "確認刪除", message: "你確定要刪除這篇貼文嗎？", preferredStyle: .alert)
-
         alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "刪除", style: .destructive, handler: { [weak self] _ in
             Firestore.firestore().collection("posts").document(postId).delete { [weak self] error in
-                if error != nil {
-                    return
+                if error == nil {
+                    self?.handlePostDeletion(at: indexPath)
+                } else {
+                    print("刪除失敗: \(error?.localizedDescription ?? "未知錯誤")")
                 }
-                self?.handlePostDeletion(senderTag: senderTag)
             }
         }))
 
         present(alert, animated: true, completion: nil)
     }
     
-    func handlePostDeletion(senderTag: Int) {
-        guard senderTag < posts.count else {
-            print("Index out of range: \(senderTag)")
-            return
-        }
-        
-        posts.remove(at: senderTag)
-        
-        tableView.performBatchUpdates({
-            tableView.deleteRows(at: [IndexPath(row: senderTag, section: 0)], with: .fade)
-        }, completion: { _ in
+    func handlePostDeletion(at indexPath: IndexPath) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.posts.remove(at: indexPath.row)
+            self.tableView.deleteRows(at: [indexPath], with: .fade)
+            
             self.dismissBottomSheet()
-        })
+            self.updateEmptyState()
+            
+        }
     }
     
     func createButton(title: String, textColor: UIColor = .black) -> UIButton {
@@ -309,10 +299,9 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         return button
     }
     
-    // 點擊 moreButton 呼叫此方法顯示選單
     func showBottomSheet(at indexPath: IndexPath) {
         let post = posts[indexPath.row]
-        
+        self.selectedIndexPath = indexPath
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
             self.backgroundView.alpha = 1
@@ -320,7 +309,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         let deleteButton = bottomSheetView.viewWithTag(1001) as? UIButton
         deleteButton?.addTarget(self, action: #selector(deletePost(_:)), for: .touchUpInside)
-        deleteButton?.tag = indexPath.row  // 使用 `tag` 傳遞行號
+        deleteButton?.tag = indexPath.row
     }
     
     @objc func dismissBottomSheet() {
@@ -332,7 +321,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     func setupRefreshControl() {
         tableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
-            self?.reloadAllData()  // 在下拉刷新時重新加載所有資料
+            self?.reloadAllData()
         })
     }
     
@@ -606,7 +595,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func calculateIntroductionLabelHeight() -> CGFloat {
-        let maxWidth = tableView.frame.width - 32 // 假設左右間距是 16
+        let maxWidth = tableView.frame.width - 32
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 6
         
@@ -622,7 +611,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             attributes: attributes,
             context: nil
         )
-        
         return ceil(boundingRect.height)
     }
     
@@ -662,7 +650,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     @objc func handleMapButtonTapped() {
         
         let menuController = MenuViewController()
-        
         let mapVC = MapViewController()
         
         let sideMenuController = SideMenuController(contentViewController: mapVC, menuViewController: menuController)
@@ -686,6 +673,9 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         guard let cell = cell else { return UITableViewCell() }
         
+        cell.titleLabel.text = ""
+        cell.contentLabel.text = ""
+        
         let post = posts[indexPath.row]
         let title = post["title"] as? String ?? "無標題"
         let content = post["content"] as? String ?? "no text"
@@ -701,8 +691,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         cell.layoutIfNeeded()
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
+        let currentRow = indexPath.row
+        
         cell.configureMoreButton { [weak self] in
-            self?.showBottomSheet(at: indexPath)
+            guard let self = self else { return }
+            let indexPath = IndexPath(row: currentRow, section: indexPath.section)
+            self.showBottomSheet(at: indexPath)
         }
         
         if let createdAtTimestamp = post["createdAt"] as? Timestamp {
@@ -769,6 +763,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             cell.collectButton.isSelected = isBookmarked
         }
         
+        cell.photoTappedHandler = { [weak self] index in
+            guard let self = self else { return }
+            let post = self.posts[indexPath.row]
+            let photoUrls = post["photoUrls"] as? [String] ?? []
+            self.showFullScreenImages(photoUrls: photoUrls, startingIndex: index)
+        }
+        
         cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
         cell.containerView.layer.borderWidth = 2
 
@@ -814,16 +815,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             .whereField("userId", isEqualTo: userId)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
-                
-                if let error = error {
-                    print("Error listening for post changes: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let documents = snapshot?.documents else {
-                    print("No documents")
-                    return
-                }
+                if let error = error { return }
+                guard let documents = snapshot?.documents else { return }
                 
                 self.posts = documents.map { document in
                     var postData = document.data()
@@ -983,5 +976,20 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func updateEmptyState() {
         let hasPosts = !posts.isEmpty
         emptyStateLabel.isHidden = hasPosts  // 有貼文就隱藏，沒有就顯示
+    }
+    
+    func showFullScreenImages(photoUrls: [String], startingIndex: Int) {
+        let fullScreenVC = FullScreenImageViewController()
+        
+        fullScreenVC.images = photoUrls.compactMap { urlString in
+            if let url = URL(string: urlString), let data = try? Data(contentsOf: url) {
+                return UIImage(data: data)
+            }
+            return nil
+        }
+        
+        fullScreenVC.startingIndex = startingIndex
+        fullScreenVC.modalPresentationStyle = .fullScreen
+        present(fullScreenVC, animated: true, completion: nil)
     }
 }

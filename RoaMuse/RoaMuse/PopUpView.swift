@@ -65,7 +65,7 @@ class PopUpView {
             backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
             window.addSubview(backgroundView)
 
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopup))
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPopupAndNavigateToDetail))
             backgroundView.addGestureRecognizer(tapGesture)
 
             popupView.backgroundColor = .deepBlue
@@ -239,48 +239,141 @@ class PopUpView {
         matchingScoreLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
     }
 
-    @objc func dismissPopup() {
-        UIView.animate(withDuration: 0.3, animations: {
-            self.popupView.alpha = 0
-            self.backgroundView.alpha = 0
-        }) { _ in
-            // 完成動畫後移除 popupView 和 backgroundView
-            self.popupView.removeFromSuperview()
-            self.backgroundView.removeFromSuperview()
-        }
-    }
+//    @objc func dismissPopup() {
+//        UIView.animate(withDuration: 0.3, animations: {
+//            self.popupView.alpha = 0
+//            self.backgroundView.alpha = 0
+//        }) { _ in
+//            // 完成動畫後移除 popupView 和 backgroundView
+//            self.popupView.removeFromSuperview()
+//            self.backgroundView.removeFromSuperview()
+//        }
+//    }
     
     @objc func didTapStartButton() {
-            
-            popupView.removeFromSuperview()
-            backgroundView.removeFromSuperview()
-            
-            if let tripId = tripId {
-                guard let userId = UserDefaults.standard.string(forKey: "userId") else {
-                    print("無法獲取 userId 或 tripId")
-                    return
-                }
-                
-                let userRef = Firestore.firestore().collection("users").document(userId)
-                
-                userRef.updateData([
-                    "bookmarkTrip": FieldValue.arrayUnion([tripId])
-                ]) { error in
-                    if let error = error {
-                        print("將 tripId 添加到 bookmarkTrip 中時出錯: \(error.localizedDescription)")
+        guard let tripId = tripId, let userId = UserDefaults.standard.string(forKey: "userId") else {
+            print("無法獲取 userId 或 tripId")
+            return
+        }
+
+        fetchPoemId(for: tripId) { [weak self] currentPoemId in
+            guard let self = self, let currentPoemId = currentPoemId else { return }
+
+            self.fetchUserBookmarks(userId: userId) { bookmarkedTripIds in
+                self.checkForDuplicatePoemId(bookmarkedTripIds: bookmarkedTripIds, currentPoemId: currentPoemId) { duplicateExists, duplicateTripId in
+                    if duplicateExists, let duplicateTripId = duplicateTripId {
+                        self.showOverrideAlert(for: tripId, userId: userId, duplicateTripId: duplicateTripId)
                     } else {
-                        print("成功將 tripId 添加到 bookmarkTrip 中")
+                        self.addTripToBookmark(tripId: tripId, userId: userId)
                     }
                 }
             }
-            
-            // 執行原有的功能
-            if let fromEstablishToTripDetail = fromEstablishToTripDetail {
-                onTripSelected?(fromEstablishToTripDetail)
-            }
-            
-            delegate?.navigateToTripDetailPage()
         }
+    }
+
+    private func fetchPoemId(for tripId: String, completion: @escaping (String?) -> Void) {
+        let tripRef = Firestore.firestore().collection("trips").document(tripId)
+
+        tripRef.getDocument { document, error in
+            if let error = error {
+                print("獲取 trip 資料失敗: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            let poemId = document?.data()?["poemId"] as? String
+            completion(poemId)
+        }
+    }
+
+    private func fetchUserBookmarks(userId: String, completion: @escaping ([String]) -> Void) {
+        let userRef = Firestore.firestore().collection("users").document(userId)
+
+        userRef.getDocument { document, error in
+            if let error = error {
+                print("獲取 user 資料失敗: \(error.localizedDescription)")
+                completion([])
+                return
+            }
+
+            let bookmarkedTripIds = document?.data()?["bookmarkTrip"] as? [String] ?? []
+            completion(bookmarkedTripIds)
+        }
+    }
+
+    private func checkForDuplicatePoemId(bookmarkedTripIds: [String], currentPoemId: String, completion: @escaping (Bool, String?) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        var duplicateTripId: String?
+        var duplicateExists = false
+
+        for tripId in bookmarkedTripIds {
+            dispatchGroup.enter()
+            
+            fetchPoemId(for: tripId) { poemId in
+                if poemId == currentPoemId {
+                    duplicateExists = true
+                    duplicateTripId = tripId
+                }
+                dispatchGroup.leave()
+            }
+        }
+
+        dispatchGroup.notify(queue: .main) {
+            completion(duplicateExists, duplicateTripId)
+        }
+    }
+
+    private func showOverrideAlert(for tripId: String, userId: String, duplicateTripId: String) {
+        let alert = UIAlertController(title: "覆蓋收藏", message: "此詩已在您的收藏中，是否覆蓋？", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: "覆蓋", style: .destructive) { [weak self] _ in
+            self?.replaceTripInBookmark(newTripId: tripId, oldTripId: duplicateTripId, userId: userId)
+        })
+        UIApplication.shared.windows.first?.rootViewController?.present(alert, animated: true, completion: nil)
+    }
+
+    private func replaceTripInBookmark(newTripId: String, oldTripId: String, userId: String) {
+        let userRef = Firestore.firestore().collection("users").document(userId)
+
+        userRef.updateData([
+            "bookmarkTrip": FieldValue.arrayRemove([oldTripId])
+        ]) { [weak self] error in
+            if let error = error {
+                print("移除舊 tripId 失敗: \(error.localizedDescription)")
+            } else {
+                print("成功移除舊 tripId")
+                self?.addTripToBookmark(tripId: newTripId, userId: userId)
+            }
+        }
+    }
+
+    private func addTripToBookmark(tripId: String, userId: String) {
+        let userRef = Firestore.firestore().collection("users").document(userId)
+
+        userRef.updateData([
+            "bookmarkTrip": FieldValue.arrayUnion([tripId])
+        ]) { [weak self] error in
+            if let error = error {
+                print("添加 trip 到 bookmark 失敗: \(error.localizedDescription)")
+            } else {
+                print("成功添加 trip 到 bookmark")
+                self?.dismissPopupAndNavigateToDetail()
+            }
+        }
+    }
+
+    @objc func dismissPopupAndNavigateToDetail() {
+        UIView.animate(withDuration: 0.3, animations: {
+            self.popupView.alpha = 0
+            self.backgroundView.alpha = 0
+        }) { [weak self] _ in
+            self?.popupView.removeFromSuperview()
+            self?.backgroundView.removeFromSuperview()
+            
+            // 通知委派導向詳細頁面
+            self?.delegate?.navigateToTripDetailPage()
+        }
+    }
     
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
