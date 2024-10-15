@@ -54,19 +54,24 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
                 make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
                 make.height.equalTo(50)
             }
-        }
+    }
     
     @objc func confirmSelection() {
-            guard let index = selectedIndex else {
-                print("尚未選擇風格")
-                return
-            }
-
-            onSelectionConfirmed?(index.row)
-
-            // 返回上一頁
-            self.dismiss(animated: true, completion: nil)
+        print("確定")
+        guard let index = selectedIndex else {
+            print("尚未選擇風格")
+            return
         }
+        
+//        delegate?.didSelectStyle(index: index.row)
+        
+//        let mapVC = MapViewController()
+//        mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: Int(index.row))
+        
+        self.dismiss(animated: true) {
+                self.onSelectionConfirmed?(index.row)
+            }
+    }
     
     // MARK: - UITableViewDataSource
     

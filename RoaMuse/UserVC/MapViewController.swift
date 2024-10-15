@@ -19,6 +19,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     var placeTripDictionary = [String: PlaceTripInfo]()
     var mapView: MKMapView!
     var images: [UIImage] = []  // 定義存放照片的屬性
+//    let menuVC = MenuViewController()
     var slidingView: SlidingView!
     var fullScreenImageView: UIImageView!
     var currentImageIndex: Int = 0
@@ -37,7 +38,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Marker")
         
-        loadCompletedPlacesAndAddAnnotations()
+//        menuVC.delegate = self
+        loadCompletedPlacesAndAddAnnotations(selectedIndex: nil)
         
         setupFullScreenImageView()
         setupFilterButton()
@@ -60,19 +62,21 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 filterButton.widthAnchor.constraint(equalToConstant: 100),
                 filterButton.heightAnchor.constraint(equalToConstant: 50)
             ])
-        }
+    }
     
     @objc func toggleSlidingView() {
-            isSlidingViewVisible.toggle()
-            sideMenuController?.revealMenu()
-            UIView.animate(withDuration: 0.3) {
-                self.slidingView.isHidden = !self.isSlidingViewVisible
-            }
+        
+        isSlidingViewVisible.toggle()
+        sideMenuController?.revealMenu()
+        UIView.animate(withDuration: 0.3) {
+            self.slidingView.isHidden = !self.isSlidingViewVisible
         }
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = true
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -85,81 +89,26 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         view.addSubview(slidingView)
     }
     
-    func setupFullScreenImageView() {
-        fullScreenImageView = UIImageView(frame: view.bounds)
-        fullScreenImageView.contentMode = .scaleAspectFit
-        fullScreenImageView.backgroundColor = .black
-        fullScreenImageView.isUserInteractionEnabled = true
-        fullScreenImageView.alpha = 0 
-        
-        // 添加手勢識別器
-        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeToNextImage))
-        swipeLeft.direction = .left
-        fullScreenImageView.addGestureRecognizer(swipeLeft)
-        
-        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeToPreviousImage))
-        swipeRight.direction = .right
-        fullScreenImageView.addGestureRecognizer(swipeRight)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullScreenImageView))
-        fullScreenImageView.addGestureRecognizer(tapGesture)
-        
-        view.addSubview(fullScreenImageView)
-    }
     
-    @objc func swipeToNextImage() {
-        // 確保我們不會超出圖片陣列的範圍
-        if currentImageIndex < images.count - 1 {
-            currentImageIndex += 1  // 更新到下一張圖片
-            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
-        } else {
-            print("已經是最後一張圖片")
-        }
-    }
-    
-    // 處理切換到上一張圖片的邏輯
-    @objc func swipeToPreviousImage() {
-        // 確保我們不會低於圖片陣列的範圍
-        if currentImageIndex > 0 {
-            currentImageIndex -= 1  // 回到上一張圖片
-            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
-        } else {
-            print("已經是第一張圖片")
-        }
-    }
-    
-    func displayFullScreenImage(at index: Int) {
-        currentImageIndex = index
-        fullScreenImageView.image = images[index]
-        
-        UIView.animate(withDuration: 0.3) {
-            self.fullScreenImageView.alpha = 1
-        }
-    }
-    
-    @objc func dismissFullScreenImageView() {
-        UIView.animate(withDuration: 0.3) {
-            self.fullScreenImageView.alpha = 0  // 隱藏全螢幕視圖
-        }
-    }
-    
-    func loadCompletedPlacesAndAddAnnotations() {
+    func loadCompletedPlacesAndAddAnnotations(selectedIndex: Int?) {
         guard let userId = userId else { return }
+
+        self.placeTripDictionary = [:]
         
         let userRef = Firestore.firestore().collection("users").document(userId)
-        
+
         userRef.getDocument { documentSnapshot, error in
             if let error = error {
                 print("獲取 user completedPlace 失敗: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let document = documentSnapshot, let data = document.data(),
                   let completedPlace = data["completedPlace"] as? [[String: Any]] else {
                 print("錯誤: 無法解析 completedPlace 資料")
                 return
             }
-            
+
             for placeEntry in completedPlace {
                 if let placeIds = placeEntry["placeIds"] as? [String], let tripId = placeEntry["tripId"] as? String {
                     for placeId in placeIds {
@@ -172,17 +121,49 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     }
                 }
             }
-            
-            let uniquePlaceIds = Array(self.placeTripDictionary.keys)
-            self.fetchPlaces(for: uniquePlaceIds)
-            
+
+            let group = DispatchGroup()
+            var filteredPlaceTripDictionary = [String: PlaceTripInfo]()
+
             for (placeId, placeTripInfo) in self.placeTripDictionary {
-                print("Place ID: \(placeId), Trip IDs: \(placeTripInfo.tripIds)")
+                var validTripIds = [String]()
+
+                for tripId in placeTripInfo.tripIds {
+                    group.enter()
+                    let tripRef = Firestore.firestore().collection("trips").document(tripId)
+
+                    tripRef.getDocument { snapshot, error in
+                        if let error = error {
+                            print("獲取 trip 失敗: \(error.localizedDescription)")
+                        } else if let snapshot = snapshot, let tripData = snapshot.data() {
+                            // 如果 selectedIndex 是 nil，或者 trip 的 tag 等於 selectedIndex，就保留該 tripId
+                            if selectedIndex == nil || tripData["tag"] as? Int == selectedIndex {
+                                validTripIds.append(tripId)
+                            }
+                        }
+                        group.leave()
+                    }
+                }
+
+                group.notify(queue: .main) {
+                    print(">< ", validTripIds)
+                    if !validTripIds.isEmpty {
+                        filteredPlaceTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: validTripIds)
+                        self.placeTripDictionary = filteredPlaceTripDictionary
+                        print("-----------   ", self.placeTripDictionary.keys)
+                        self.fetchPlaces(for: Array(filteredPlaceTripDictionary.keys))
+                    } else {
+                        self.mapView.removeAnnotations(self.mapView.annotations)
+                    }
+                }
             }
         }
     }
-    
+
     func fetchPlaces(for placeIds: [String]) {
+        print("fetch")
+        mapView.removeAnnotations(mapView.annotations)
+
         let placesRef = Firestore.firestore().collection("places")
         let dispatchGroup = DispatchGroup()
         
@@ -204,6 +185,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 }
                 
                 let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                print(location)
+                print(placeId)
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = location
                 annotation.title = placeName
@@ -448,5 +431,66 @@ extension MapViewController: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         
         return scrollView.subviews.first as? UIImageView
+    }
+}
+
+extension MapViewController {
+    
+    func setupFullScreenImageView() {
+        fullScreenImageView = UIImageView(frame: view.bounds)
+        fullScreenImageView.contentMode = .scaleAspectFit
+        fullScreenImageView.backgroundColor = .black
+        fullScreenImageView.isUserInteractionEnabled = true
+        fullScreenImageView.alpha = 0
+        
+        // 添加手勢識別器
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeToNextImage))
+        swipeLeft.direction = .left
+        fullScreenImageView.addGestureRecognizer(swipeLeft)
+        
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeToPreviousImage))
+        swipeRight.direction = .right
+        fullScreenImageView.addGestureRecognizer(swipeRight)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullScreenImageView))
+        fullScreenImageView.addGestureRecognizer(tapGesture)
+        
+        view.addSubview(fullScreenImageView)
+    }
+    
+    @objc func swipeToNextImage() {
+        // 確保我們不會超出圖片陣列的範圍
+        if currentImageIndex < images.count - 1 {
+            currentImageIndex += 1  // 更新到下一張圖片
+            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
+        } else {
+            print("已經是最後一張圖片")
+        }
+    }
+    
+    // 處理切換到上一張圖片的邏輯
+    @objc func swipeToPreviousImage() {
+        // 確保我們不會低於圖片陣列的範圍
+        if currentImageIndex > 0 {
+            currentImageIndex -= 1  // 回到上一張圖片
+            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
+        } else {
+            print("已經是第一張圖片")
+        }
+    }
+    
+    func displayFullScreenImage(at index: Int) {
+        currentImageIndex = index
+        fullScreenImageView.image = images[index]
+        
+        UIView.animate(withDuration: 0.3) {
+            self.fullScreenImageView.alpha = 1
+        }
+    }
+    
+    @objc func dismissFullScreenImageView() {
+        UIView.animate(withDuration: 0.3) {
+            self.fullScreenImageView.alpha = 0  // 隱藏全螢幕視圖
+        }
     }
 }

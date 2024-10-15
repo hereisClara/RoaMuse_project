@@ -102,7 +102,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 
                 if let introduction = data["introduction"] as? String {
                     self?.introductionLabel.text = introduction
-//                    self?.updateTableHeaderViewHeight()
                 }
                 
             case .failure(let error):
@@ -653,6 +652,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let mapVC = MapViewController()
         
         let sideMenuController = SideMenuController(contentViewController: mapVC, menuViewController: menuController)
+        
+        menuController.onSelectionConfirmed = { [weak self] selectedIndex in
+                // 在这里接收 selectedIndex，并调用更新地图的方法
+                mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: selectedIndex)
+            }
+        
         SideMenuController.preferences.basic.direction = .right
         SideMenuController.preferences.basic.enablePanGesture = true
         navigationController?.pushViewController(sideMenuController, animated: true)

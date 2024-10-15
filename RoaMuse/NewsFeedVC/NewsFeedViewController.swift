@@ -62,6 +62,7 @@ class NewsFeedViewController: UIViewController {
         super.viewWillAppear(animated)
         loadPostsForCurrentUserAndFollowing()
         setupNavigationBarStyle()
+        notificationButton.isHidden = false
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -372,10 +373,8 @@ class NewsFeedViewController: UIViewController {
                         "likesAccount": FieldValue.arrayRemove([userId])
                     ]) { error in
                         if let error = error {
-                            print("取消按讚失敗: \(error.localizedDescription)")
                             completion(false)
                         } else {
-                            //                    print("取消按讚成功，已更新資料")
                             completion(true)
                         }
                     }
