@@ -20,7 +20,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .deepBlue
         
         setupTableView()
         setupConfirmButton()
@@ -33,29 +33,33 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.dataSource = self
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "styleCell")
         tableView.tableFooterView = UIView()
-        
+        tableView.backgroundColor = .clear
         tableView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+            make.edges.equalToSuperview().inset(8)
         }
     }
     
     func setupConfirmButton() {
-            view.addSubview(confirmButton)
-            
-            confirmButton.setTitle("確定", for: .normal)
-            confirmButton.backgroundColor = .systemBlue
-            confirmButton.setTitleColor(.white, for: .normal)
-            confirmButton.layer.cornerRadius = 10
-            confirmButton.addTarget(self, action: #selector(confirmSelection), for: .touchUpInside)
+        view.addSubview(confirmButton)
 
-            // 使用 SnapKit 設置按鈕的約束
-            confirmButton.snp.makeConstraints { make in
-                make.leading.equalToSuperview().offset(16)
-                make.trailing.equalToSuperview().offset(-16)
-                make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
-                make.height.equalTo(50)
-            }
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小和粗細
+        let iconImage = UIImage(named: "right-arrow")
+
+        confirmButton.setImage(iconImage, for: .normal)  // 將按鈕圖標設置為 arrow.right
+        confirmButton.tintColor = .systemGray6  // 設定圖標顏色
+        confirmButton.backgroundColor = .clear  // 移除按鈕背景色
+        confirmButton.addTarget(self, action: #selector(confirmSelection), for: .touchUpInside)
+
+        // 使用 SnapKit 設置按鈕的約束
+        confirmButton.snp.makeConstraints { make in
+            make.leading.equalToSuperview().offset(180)  // 距離左邊 160 點
+//            make.trailing.equalToSuperview().offset(-16)  // 距離右邊 16 點
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-30)  // 距離底部 20 點
+            make.height.equalTo(20)  // 按鈕高度 50
+            make.width.equalTo(40)
+        }
     }
+
     
     @objc func confirmSelection() {
         if let index = selectedIndex {
@@ -79,15 +83,18 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "styleCell", for: indexPath)
         cell.textLabel?.text = styles[indexPath.row]
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 18)
-        cell.textLabel?.textColor = .darkGray
+        cell.textLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+        cell.textLabel?.textColor = .forBronze
+        
+        cell.backgroundColor = .clear
+        cell.contentView.backgroundColor = .clear
         
         if indexPath == selectedIndex {
             cell.accessoryType = .checkmark
-            cell.textLabel?.textColor = .systemBlue
+            cell.textLabel?.textColor = .accent
         } else {
             cell.accessoryType = .none
-            cell.textLabel?.textColor = .darkGray
+            cell.textLabel?.textColor = .forBronze
         }
         
         return cell
@@ -98,21 +105,21 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
             // 如果再次選擇相同的 row，則取消選取並清空 selectedIndex
             let selectedCell = tableView.cellForRow(at: indexPath)
             selectedCell?.accessoryType = .none
-            selectedCell?.textLabel?.textColor = .darkGray
+            selectedCell?.textLabel?.textColor = .forBronze
             selectedIndex = nil
         } else {
             // 取消先前選中的項目
             if let previousIndex = selectedIndex {
                 let previousCell = tableView.cellForRow(at: previousIndex)
                 previousCell?.accessoryType = .none
-                previousCell?.textLabel?.textColor = .darkGray
+                previousCell?.textLabel?.textColor = .forBronze
             }
             
             // 設定新的選中項目
             selectedIndex = indexPath
             let selectedCell = tableView.cellForRow(at: indexPath)
             selectedCell?.accessoryType = .checkmark
-            selectedCell?.textLabel?.textColor = .systemBlue
+            selectedCell?.textLabel?.textColor = .accent
         }
         
         tableView.deselectRow(at: indexPath, animated: true)  // 取消點擊高亮效果
@@ -122,25 +129,25 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = .lightGray
+        headerView.backgroundColor = .clear
         
         let headerLabel = UILabel()
         headerLabel.text = "風格"
-        headerLabel.font = UIFont.boldSystemFont(ofSize: 20)
-        headerLabel.textColor = .black
+        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
+        headerLabel.textColor = .white
         
         headerView.addSubview(headerLabel)
         
         // 使用 SnapKit 設置 Header Label 的位置
         headerLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
-            make.leading.equalToSuperview().offset(16)
+            make.leading.equalToSuperview().offset(12)
         }
         
         return headerView
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 70  // 設置 Header 高度
+        return 85  // 設置 Header 高度
     }
 }

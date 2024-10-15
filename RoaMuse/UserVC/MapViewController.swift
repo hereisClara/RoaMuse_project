@@ -50,21 +50,32 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func setupFilterButton() {
-            filterButton.setTitle("篩選", for: .normal)
-            filterButton.setTitleColor(.white, for: .normal)
-            filterButton.backgroundColor = .systemBlue
-            filterButton.layer.cornerRadius = 10
-            filterButton.translatesAutoresizingMaskIntoConstraints = false
-            filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
+        
+        let backgroundCircle = UIView()
+        backgroundCircle.backgroundColor = UIColor.white.withAlphaComponent(0.65)  // 半透明白色
+        backgroundCircle.layer.cornerRadius = 35  // 圓形（寬高一樣，半徑為寬/2）
+        view.addSubview(backgroundCircle)
+        
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小及粗細
+        let iconImage = UIImage(systemName: "slider.horizontal.3", withConfiguration: imageConfig)
+        filterButton.setImage(iconImage, for: .normal)
+        filterButton.tintColor = .deepBlue  // 設定圖標顏色
+        filterButton.backgroundColor = .clear  // 清除按鈕背景色
+        filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
+        view.addSubview(filterButton)
 
-            view.addSubview(filterButton)
-            
-            NSLayoutConstraint.activate([
-                filterButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-                filterButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-                filterButton.widthAnchor.constraint(equalToConstant: 100),
-                filterButton.heightAnchor.constraint(equalToConstant: 50)
-            ])
+        // 使用 SnapKit 設定圓形背景的約束
+        backgroundCircle.snp.makeConstraints { make in
+            make.width.height.equalTo(70)  // 圓形，寬高一致
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)  // 距離底部 20
+            make.trailing.equalToSuperview().offset(-20)  // 靠右對齊，距離右邊 20
+        }
+
+        // 使用 SnapKit 設定按鈕的約束
+        filterButton.snp.makeConstraints { make in
+            make.center.equalTo(backgroundCircle)  // 與圓形背景的中心對齊
+            make.width.height.equalTo(40)  // 按鈕寬高為 40
+        }
     }
     
     @objc func toggleSlidingView() {
@@ -91,6 +102,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         slidingView = SlidingView(frame: CGRect(x: 0, y: view.bounds.height, width: view.bounds.width, height: 600), parentViewController: self)
         view.addSubview(slidingView)
     }
+    
     func loadCompletedPlacesAndAddAnnotations(selectedIndex: Int?) {
         guard let userId = userId else { return }
 
@@ -343,10 +355,14 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func showSlidingView() {
         // 添加背景遮罩视图
         print("showSlidingView called")
+        slidingView.isHidden = false
+
         backgroundMaskView = UIView(frame: view.bounds)
         backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         view.insertSubview(backgroundMaskView, belowSubview: slidingView)
-        
+        print("SlidingView frame:", slidingView.frame)
+        print("SlidingView hidden:", slidingView.isHidden)
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideSlidingView))
         backgroundMaskView.addGestureRecognizer(tapGesture)
         

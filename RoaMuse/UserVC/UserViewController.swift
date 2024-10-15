@@ -649,6 +649,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
 
         
         SideMenuController.preferences.basic.direction = .right
+        SideMenuController.preferences.basic.menuWidth = 280
         SideMenuController.preferences.basic.enablePanGesture = true
         navigationController?.pushViewController(sideMenuController, animated: true)
     }
