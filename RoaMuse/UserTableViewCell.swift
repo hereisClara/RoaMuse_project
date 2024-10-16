@@ -256,7 +256,7 @@ class UserTableViewCell: UITableViewCell {
                 if let url = URL(string: urlString) {
                     imageView.kf.setImage(
                         with: url,
-                        placeholder: UIImage(named: "user-placeholder"),
+                        placeholder: UIImage(named: "photo-placeholder"),
                         options: options
                     )
                 }

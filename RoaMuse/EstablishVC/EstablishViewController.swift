@@ -886,6 +886,7 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         styleTableView.dataSource = self
         styleTableView.delegate = self
         styleTableView.separatorStyle = .none
+        styleTableView.isScrollEnabled = false
         
         view.addSubview(styleTableView)
         styleTableView.snp.makeConstraints { make in
@@ -907,9 +908,10 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = styleTableView.dequeueReusableCell(withIdentifier: "styleCell", for: indexPath) as? StyleTableViewCell
         cell?.containerView.backgroundColor = isStyleButtonSelected ? .white : .systemGray5
-        cell?.titleLabel.textColor = isStyleButtonSelected ? .deepBlue : .systemGray
+        cell?.containerView.layer.borderWidth = isStyleButtonSelected ? 2 : 0
+        cell?.titleLabel.textColor = isStyleButtonSelected ? .deepBlue : .systemGray2
         cell?.descriptionLabel.textColor = isStyleButtonSelected ? .systemGray : .systemGray3
-        cell?.containerView.layer.borderColor = isStyleButtonSelected ? UIColor.deepBlue.withAlphaComponent(0.6).cgColor : UIColor.systemGray3.cgColor
+        cell?.containerView.layer.borderColor = isStyleButtonSelected ? UIColor.deepBlue.withAlphaComponent(1).cgColor : UIColor.systemGray3.cgColor
         cell?.titleLabel.text = styles[indexPath.row].name
         cell?.descriptionLabel.text = styles[indexPath.row].introduction
         cell?.selectionStyle = .none

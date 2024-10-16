@@ -690,7 +690,7 @@ extension NewsFeedViewController {
                                 postsArray.append(document.data())
                             }
                         }
-                        dispatchGroup.leave() 
+                        dispatchGroup.leave()
                     }
             }
 

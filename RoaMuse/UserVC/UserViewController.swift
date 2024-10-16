@@ -124,6 +124,18 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        self.title = "個人"
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            navigationController?.navigationBar.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue, // 修改颜色
+                .font: customFont // 设置字体
+            ]
+        }
+        navigationController?.navigationBar.tintColor = .deepBlue
+        
         guard let userId = userId else { return }
         
         FirebaseManager.shared.fetchUserData(userId: userId) { [weak self] result in
@@ -188,7 +200,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-//        loadUserPosts()
+        //        loadUserPosts()
     }
     
     override func viewDidLayoutSubviews() {
@@ -526,9 +538,9 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setupPostsStackView() {
         postsNumberLabel.text = String(postsCount)
-        postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        postsNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         postsTextLabel.text = "Posts"
-        postsTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        postsTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         postsTextLabel.textColor = .gray
         postsTextLabel.textAlignment = .center
     }
@@ -591,18 +603,18 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func setupFollowersAndFollowing() {
         
         fansNumberLabel.text = "0"
-        fansNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        fansNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         
         fansTextLabel.text = "Followers"
-        fansTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        fansTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         fansTextLabel.textColor = .gray
         fansTextLabel.textAlignment = .center
         
         followingNumberLabel.text = "0"
-        followingNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        followingNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         
         followingTextLabel.text = "Following"
-        followingTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        followingTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         followingTextLabel.textColor = .gray
         followingTextLabel.textAlignment = .center
     }
@@ -635,7 +647,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
-        
         SideMenuController.preferences.basic.direction = .right
         SideMenuController.preferences.basic.menuWidth = 280
         SideMenuController.preferences.basic.enablePanGesture = true
@@ -643,7 +654,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func handleLikeButtonTap(at indexPath: IndexPath, isLiked: Bool) {
-        // 更新数据源中的数据
         var post = posts[indexPath.row]
         var likesAccount = post["likesAccount"] as? [String] ?? []
         if isLiked {
@@ -654,7 +664,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         post["likesAccount"] = likesAccount
         posts[indexPath.row] = post
         
-        // 更新特定的单元格
         DispatchQueue.main.async {
             self.tableView.beginUpdates()
             self.tableView.reloadRows(at: [indexPath], with: .none)
@@ -673,7 +682,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell
-        
         guard let cell = cell else { return UITableViewCell() }
         
         cell.titleLabel.text = ""
@@ -730,14 +738,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             switch result {
             case .success(let data):
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                    
                     DispatchQueue.main.async {
                         cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
                 }
                 
                 cell.userNameLabel.text = data["userName"] as? String
-                
                 FirebaseManager.shared.loadAwardTitle(forUserId: self.userId ?? "") { (result: Result<(String, Int), Error>) in
                     switch result {
                     case .success(let (awardTitle, item)):
@@ -814,14 +820,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             .whereField("userId", isEqualTo: userId)
             .getDocuments { [weak self] (snapshot, error) in
                 guard let self = self else { return }
-                if let error = error {
-                    print("Error fetching posts: \(error)")
-                    return
-                }
-                guard let documents = snapshot?.documents else {
-                    print("No posts found")
-                    return
-                }
+                if let error = error { return }
+                guard let documents = snapshot?.documents else { return }
                 
                 self.posts = documents.map { document in
                     var postData = document.data()

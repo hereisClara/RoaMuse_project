@@ -66,15 +66,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         setupTableView()
         self.navigationItem.largeTitleDisplayMode = .never
-//        dropdownMenu.onItemSelected = { [weak self] selectedItem in
-//            guard let self = self else { return }
-//            self.titleLabel.text = selectedItem
-//            if let (section, row, item) = self.findIndexesForTitle(selectedItem) {
-//                self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
-//                self.saveSelectedIndexesToFirebase(section: section, row: row, item: item)
-////                print("已保存的索引: section = \(section), row = \(row), item = \(item)")
-//            }
-//        }
     }
     
     override func viewWillAppear(_ animated: Bool) {

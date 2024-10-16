@@ -46,11 +46,15 @@ class ArticleViewController: UIViewController {
         view.backgroundColor = .white
         navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
-        let navBarAppearance = UINavigationBarAppearance()
-        navBarAppearance.configureWithOpaqueBackground() // 设置为不透明
-        navBarAppearance.backgroundColor = .white // 设置背景色
-        self.navigationItem.standardAppearance = navBarAppearance
-        self.navigationItem.scrollEdgeAppearance = navBarAppearance
+//        let navBarAppearance = UINavigationBarAppearance()
+//            navBarAppearance.configureWithOpaqueBackground() // 确保导航栏不透明
+//            navBarAppearance.backgroundColor = .white // 自定义背景颜色
+//            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
+//
+//            // 只为当前页面的导航项设置外观
+//            self.navigationItem.standardAppearance = navBarAppearance
+//            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        
         tabBarController?.tabBar.isHidden = true
         self.navigationItem.largeTitleDisplayMode = .never
         getTripData()
@@ -64,7 +68,6 @@ class ArticleViewController: UIViewController {
         setupCommentInput()
         updateLikesData()
         setupTripViewAction()
-        
         FirebaseManager.shared.loadAwardTitle(forUserId: authorId) { (result: Result<(String, Int), Error>) in
             switch result {
             case .success(let (awardTitle, item)):
@@ -242,8 +245,6 @@ class ArticleViewController: UIViewController {
     
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
-        
-        
         if isLiked {
             postRef.updateData([
                 "likesAccount": FieldValue.arrayUnion([userId])
@@ -371,34 +372,6 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-    
-    func getTripData() {
-        FirebaseManager.shared.loadAllTrips { trips in
-            let filteredTrips = trips.filter { trip in
-                return trip.id == self.tripId
-            }
-            if let matchedTrip = filteredTrips.first {
-                FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
-                    DispatchQueue.main.async {
-                        self.tripTitleLabel.text = poem.title
-                        self.poemTitle = poem.title
-                        self.poemId = poem.id
-                        
-                        if let headerView = self.tableView.tableHeaderView {
-                            headerView.setNeedsLayout()
-                            headerView.layoutIfNeeded()
-                            let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
-                            var frame = headerView.frame
-                            frame.size.height = headerHeight
-                            headerView.frame = frame
-                            self.tableView.tableHeaderView = headerView
-                        }
-                        self.tableView.reloadData()
-                    }
-                }
-            }
-        }
-    }
 }
 
 extension ArticleViewController {
@@ -486,8 +459,7 @@ extension ArticleViewController {
                         print("加載使用者資料失敗: \(error.localizedDescription)")
                     }
                 }
-            } else {
-            }
+            } else { }
         }
     }
 }
@@ -652,7 +624,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
         
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
         authorLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
-        contentLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
         contentLabel.lineSpacing = 7
         contentLabel.text = articleContent
         contentLabel.numberOfLines = 0
@@ -809,7 +781,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
         
         var uiImages: [UIImage] = []
         let dispatchGroup = DispatchGroup()
-        
         let syncQueue = DispatchQueue(label: "com.example.imageSyncQueue")
         
         for urlString in photoUrls {
@@ -868,7 +839,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
             
             db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
                 if let error = error { return }
-                
                 if let documents = snapshot?.documents, let document = documents.first {
                     
                     let data = document.data()
@@ -961,7 +931,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as? CommentTableViewCell else { return UITableViewCell() }
         
         cell.selectionStyle = .none
-        
         if comments.count > 0 {
             let comment = comments[indexPath.row]
             
@@ -973,14 +942,12 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
                 let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                 cell.createdAtLabel.text = createdAtString
             }
-            
             if let avatarUrlString = comment["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
                 DispatchQueue.main.async {
                     cell.avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"))
                 }
             }
         }
-        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapCommentAvatar(_:)))
         cell.avatarImageView.isUserInteractionEnabled = true
         cell.avatarImageView.addGestureRecognizer(tapGesture)
@@ -996,5 +963,35 @@ extension ArticleViewController: PopupViewDelegate {
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
         navigationController?.pushViewController(tripDetailVC, animated: true)
+    }
+}
+
+extension ArticleViewController {
+    func getTripData() {
+        FirebaseManager.shared.loadAllTrips { trips in
+            let filteredTrips = trips.filter { trip in
+                return trip.id == self.tripId
+            }
+            if let matchedTrip = filteredTrips.first {
+                FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
+                    DispatchQueue.main.async {
+                        self.tripTitleLabel.text = poem.title
+                        self.poemTitle = poem.title
+                        self.poemId = poem.id
+                        
+                        if let headerView = self.tableView.tableHeaderView {
+                            headerView.setNeedsLayout()
+                            headerView.layoutIfNeeded()
+                            let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+                            var frame = headerView.frame
+                            frame.size.height = headerHeight
+                            headerView.frame = frame
+                            self.tableView.tableHeaderView = headerView
+                        }
+                        self.tableView.reloadData()
+                    }
+                }
+            }
+        }
     }
 }

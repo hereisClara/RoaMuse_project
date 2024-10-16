@@ -24,7 +24,7 @@ let styles: [Style] = [
     """),
     
     Style(name: "浪漫派", introduction: """
-    以抒發個人情懷為中心，詠唱對自由人生個人價值的渴望與追求。。
+    以抒發個人情懷為中心，詠唱對自由人生個人價值的渴望與追求。
     """),
     
     Style(name: "田園派", introduction: """

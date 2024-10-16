@@ -46,7 +46,6 @@ class UserProfileViewController: UIViewController {
         checkIfFollowing()
         setupTableView()
         setupHeaderView()
-//        setupChatButton()
         setupRefreshControl()
         guard let userId = userId else { return }
         
@@ -316,15 +315,6 @@ class UserProfileViewController: UIViewController {
             make.centerX.equalTo(fansStackView.snp.trailing).offset(80)  // 间距
         }
         
-//        headerView.addSubview(newView)
-//        newView.snp.makeConstraints { make in
-//            make.leading.equalTo(awardLabelView)
-//            make.height.equalTo(24)
-//            make.top.equalTo(awardLabelView.snp.bottom).offset(4)
-//        }
-//        newView.addSubview(regionLabelView)
-//        newView.backgroundColor = .gray
-//        newView.layer.cornerRadius = 6
         regionLabelView.snp.makeConstraints { make in
             make.leading.equalTo(awardLabelView)
             make.height.equalTo(24)
@@ -351,10 +341,10 @@ class UserProfileViewController: UIViewController {
     
     func setupPostsStackView() {
         postsNumberLabel.text = String(posts.count)
-        postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        postsNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         
         postsTextLabel.text = "Posts"
-        postsTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        postsTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         postsTextLabel.textColor = .gray
         postsTextLabel.textAlignment = .center
     }
@@ -376,16 +366,16 @@ class UserProfileViewController: UIViewController {
     func setupLabel() {
         
         fansNumberLabel.text = "0"
-        fansNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        fansNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         fansTextLabel.text = "Followers"
-        fansTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        fansTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         fansTextLabel.textColor = .gray
         fansTextLabel.textAlignment = .center
         
         followingNumberLabel.text = "0"
-        followingNumberLabel.font = UIFont.systemFont(ofSize: 16)
+        followingNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         followingTextLabel.text = "Following"
-        followingTextLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        followingTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         followingTextLabel.textColor = .gray
         followingTextLabel.textAlignment = .center
         
@@ -431,7 +421,7 @@ extension UserProfileViewController {
         let followedUserRef = Firestore.firestore().collection("users").document(followedUserId)
         
         if followButton.isSelected {
-            // 取消追蹤
+            
             currentUserRef.updateData([
                 "following": FieldValue.arrayRemove([followedUserId])
             ]) { error in
@@ -610,6 +600,8 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
         tableView.delegate = self
         tableView.dataSource = self
         tableView.separatorStyle = .none
+        tableView.estimatedRowHeight = 250
+        tableView.rowHeight = UITableView.automaticDimension
         tableView.snp.makeConstraints { make in
             make.width.equalTo(view).multipliedBy(0.9)
             make.top.equalTo(view.safeAreaLayoutGuide)
@@ -644,6 +636,11 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         cell.configureMoreButton { [weak self] in
             self?.bottomSheetManager?.showBottomSheet()
+        }
+        
+        if let createdAtTimestamp = post["createdAt"] as? Timestamp {
+            let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
+            cell.dateLabel.text = createdAtString
         }
         
         FirebaseManager.shared.loadPosts { posts in
@@ -738,9 +735,9 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
         }
     }
     
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 250
-    }
+//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+//        return 250
+//    }
     
     func loadUserPosts() {
         guard let userId = userId else { return }
