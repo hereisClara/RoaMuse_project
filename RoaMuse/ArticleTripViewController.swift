@@ -398,11 +398,15 @@ extension ArticleTripViewController {
         if annotationView == nil {
             annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: identifier)
             annotationView?.canShowCallout = true
-            annotationView?.pinTintColor = .red  // 自定義標註顏色
+            annotationView?.pinTintColor = .red
         } else {
             annotationView?.annotation = annotation
         }
         return annotationView
+    }
+    
+    func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+        self.userLocation = userLocation.coordinate
     }
     
     func checkIfTripBookmarked() {
@@ -416,7 +420,6 @@ extension ArticleTripViewController {
                 DispatchQueue.main.async {
                     if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
                         self.collectButton.isSelected = bookmarkTrips.contains(self.tripId)
-                        // 更新按鈕顏色
                         self.collectButton.tintColor = self.collectButton.isSelected ? .systemBlue : .white
                     }
                 }
@@ -556,11 +559,11 @@ extension ArticleTripViewController {
     
     func setupContainerView() {
         view.addSubview(containerView)
-        containerView.backgroundColor = .systemGray5
+        containerView.backgroundColor = .forBronze
         containerView.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(view).multipliedBy(0.6)
+            make.height.equalTo(view).multipliedBy(0.7)
             make.top.equalTo(view.safeAreaLayoutGuide)
         }
         containerView.layer.cornerRadius = 15
@@ -575,8 +578,8 @@ extension ArticleTripViewController {
             make.top.equalTo(containerView).offset(12)
             make.leading.equalTo(containerView).offset(15)
         }
-        postUsernameLabel.textColor = .deepBlue
-        postUsernameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 30)
+        postUsernameLabel.textColor = .white
+        postUsernameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
         
         containerView.addSubview(collectButton)
         collectButton.snp.makeConstraints { make in
@@ -590,7 +593,7 @@ extension ArticleTripViewController {
             make.leading.equalTo(postUsernameLabel)
             make.top.equalTo(postUsernameLabel.snp.bottom).offset(8)
         }
-        poemTitleLabel.textColor = .deepBlue
+        poemTitleLabel.textColor = .white
         poemTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         
         containerView.addSubview(placeLabel)
@@ -598,8 +601,8 @@ extension ArticleTripViewController {
             make.top.equalTo(poemTitleLabel.snp.bottom).offset(24)
             make.leading.equalTo(postUsernameLabel)
         }
-        placeLabel.font = UIFont.systemFont(ofSize: 14, weight: .light)
-        
+        placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        placeLabel.textColor = .deepBlue
         displayPlacesInLabel()
         
         containerView.addSubview(transportTimeLabel)
@@ -607,8 +610,8 @@ extension ArticleTripViewController {
             make.leading.equalTo(poemTitleLabel)
             make.top.equalTo(placeLabel.snp.bottom).offset(8)
         }
-        transportTimeLabel.textColor = .gray
-        transportTimeLabel.font = UIFont.systemFont(ofSize: 14)
+        transportTimeLabel.textColor = .deepBlue
+        transportTimeLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
     }
     
     func setupGenerateView() {
