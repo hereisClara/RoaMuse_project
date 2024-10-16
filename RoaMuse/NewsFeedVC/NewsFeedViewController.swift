@@ -685,12 +685,12 @@ extension NewsFeedViewController {
                     .addSnapshotListener { querySnapshot, error in
                         if let error = error {
                             print("Error fetching posts: \(error.localizedDescription)")
-                        } else {
-                            for document in querySnapshot!.documents {
+                        } else if let snapshot = querySnapshot {
+                            for document in snapshot.documents {
                                 postsArray.append(document.data())
                             }
                         }
-                        dispatchGroup.leave()
+                        dispatchGroup.leave() 
                     }
             }
 
