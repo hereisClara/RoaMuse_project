@@ -261,7 +261,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             annotationView.clusteringIdentifier = "clusterID"
             
 //            annotationView.canShowCallout = true
-            
+            annotationView.glyphImage = UIImage(systemName: "flag.circle.fill")
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
             
@@ -332,27 +332,30 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
 //    MARK: map center
     func centerMapOnAnnotation(annotation: MKAnnotation) {
-        let regionRadius: CLLocationDistance = 5000  // 縮放半徑，根據需求調整
+        let regionRadius: CLLocationDistance = 5000 // 5公里的縮放半徑
 
-        let mapViewHeight = mapView.bounds.height
-        let mapViewWidth = mapView.bounds.width
+        // 固定大頭針要顯示在螢幕上的位置 (100, 100)
+        let fixedScreenPoint = CGPoint(x: view.frame.width / 2, y: view.frame.height * 0.2)
 
-        let yOffsetInPoints = mapViewHeight / 4  // 嘗試將其設為 1/4 或其他值
+        // 將固定點轉換為地理座標
+        let fixedCoordinate = mapView.convert(fixedScreenPoint, toCoordinateFrom: mapView)
 
-        // 3. 將地理座標轉換為地圖上的螢幕點
-        let annotationPoint = mapView.convert(annotation.coordinate, toPointTo: mapView)
+        // 計算從大頭針地點到固定點的偏移量（緯度、經度）
+        let latitudeDelta = annotation.coordinate.latitude - fixedCoordinate.latitude
+        let longitudeDelta = annotation.coordinate.longitude - fixedCoordinate.longitude
 
-        // 4. 計算新的中心點的螢幕座標，向上移動
-        let newCenterPoint = CGPoint(x: mapViewWidth / 2, y: annotationPoint.y - yOffsetInPoints)
+        // 計算新的地圖中心座標，將地圖移動，使大頭針顯示在固定點
+        let newCenterCoordinate = CLLocationCoordinate2D(
+            latitude: mapView.centerCoordinate.latitude + latitudeDelta,
+            longitude: mapView.centerCoordinate.longitude + longitudeDelta
+        )
 
-        // 5. 將新的螢幕座標轉換回地理座標，設為地圖的新中心點
-        let newCenterCoordinate = mapView.convert(newCenterPoint, toCoordinateFrom: mapView)
-
-        // 6. 設定地圖的新區域，並放大縮小顯示
+        // 設定地圖的新區域
         let region = MKCoordinateRegion(center: newCenterCoordinate,
                                         latitudinalMeters: regionRadius * 2,
                                         longitudinalMeters: regionRadius * 2)
 
+        // 動畫顯示新的地圖區域
         mapView.setRegion(region, animated: true)
     }
 

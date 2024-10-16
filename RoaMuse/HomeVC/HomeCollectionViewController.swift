@@ -12,6 +12,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
+        navigationItem.backButtonTitle = ""
         self.title = "首頁"
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always

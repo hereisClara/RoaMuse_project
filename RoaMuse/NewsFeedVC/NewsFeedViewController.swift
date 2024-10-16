@@ -28,6 +28,7 @@ class NewsFeedViewController: UIViewController {
         
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
+        navigationItem.backButtonTitle = ""
         self.title = "動態"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
@@ -35,7 +36,9 @@ class NewsFeedViewController: UIViewController {
                 .font: customFont
             ]
         }
+        
         setupEmptyStateLabel()
+        loadPostsForCurrentUserAndFollowing()
         loadAvatarImageForPostView()
         postsTableView.register(UserTableViewCell.self, forCellReuseIdentifier: "userCell")
         postsTableView.delegate = self
@@ -46,7 +49,7 @@ class NewsFeedViewController: UIViewController {
         setupRefreshControl()
         setupUserProfileImage()
         setupBottomSheet()
-        loadPostsForCurrentUserAndFollowing()
+        
         postViewController.postButtonAction = { [weak self] in
             
             guard let self = self else { return }
@@ -60,7 +63,7 @@ class NewsFeedViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadPostsForCurrentUserAndFollowing()
+//        loadPostsForCurrentUserAndFollowing()
         setupNavigationBarStyle()
         notificationButton.isHidden = false
     }
@@ -410,11 +413,9 @@ class NewsFeedViewController: UIViewController {
                                 }
                             }
                         } else {
-                            print("取消收藏失敗")
                         }
                     }
                 } else {
-                    // 如果按鈕未選中，進行收藏並加入 userId
                     if !bookmarkAccount.contains(userId) {
                         bookmarkAccount.append(userId)
                     }
@@ -459,27 +460,26 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         postsTableView.layer.cornerRadius = 20
         postsTableView.layer.masksToBounds = true
         postsTableView.allowsSelection = true
-        postsTableView.backgroundColor = .clear
+        postsTableView.backgroundColor = .white
     }
     
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        let scrollHeight = scrollView.frame.size.height
-        
-        guard contentHeight > scrollHeight else { return }
-        
-        let maxOffsetY = contentHeight - scrollHeight
-        let minOffsetY: CGFloat = 0
-        
-        if offsetY < minOffsetY {
-            scrollView.contentOffset.y = minOffsetY
-        } else if offsetY > maxOffsetY {
-            scrollView.contentOffset.y = maxOffsetY
-        }
-    }
+//    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+//        let offsetY = scrollView.contentOffset.y
+//        let contentHeight = scrollView.contentSize.height
+//        let scrollHeight = scrollView.frame.size.height
+//        
+//        guard contentHeight > scrollHeight else { return }
+//        
+//        let maxOffsetY = contentHeight - scrollHeight
+//        let minOffsetY: CGFloat = 0
+//        
+//        if offsetY < minOffsetY {
+//            scrollView.contentOffset.y = minOffsetY
+//        } else if offsetY > maxOffsetY {
+//            scrollView.contentOffset.y = maxOffsetY
+//        }
+//    }
 
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         postsArray.count
     }
@@ -636,11 +636,9 @@ extension NewsFeedViewController {
             let blockedUsers = data["blockedUsers"] as? [String] ?? []
 
             var validUserIds = followingUsers
-            validUserIds.append(currentUserId) // 包括當前用戶自己
+            validUserIds.append(currentUserId)
 
-            // 使用 FirebaseManager 加載所有貼文
             FirebaseManager.shared.loadPosts { postsArray in
-                // 過濾：來自追蹤對象或自己的貼文，且不在封鎖用戶清單中
                 let filteredPosts = postsArray.filter { post in
                     if let userId = post["userId"] as? String {
                         return validUserIds.contains(userId) && !blockedUsers.contains(userId)
@@ -764,7 +762,6 @@ extension NewsFeedViewController {
             }.resume()
         }
 
-        // 當所有圖片載入完成後，跳轉至全螢幕檢視
         dispatchGroup.notify(queue: .main) {
             fullScreenVC.images = images
             fullScreenVC.startingIndex = startingIndex

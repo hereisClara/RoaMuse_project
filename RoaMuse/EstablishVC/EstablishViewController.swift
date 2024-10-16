@@ -116,14 +116,16 @@ class EstablishViewController: UIViewController {
         recommendRandomTripView.addSubview(styleLabel)
 
         let circleView = UIView()
-        circleView.backgroundColor = .backgroundGray
+        circleView.layer.borderColor = UIColor.backgroundGray.cgColor
+        circleView.layer.borderWidth = 1.5
+        circleView.backgroundColor = .clear
         circleView.layer.cornerRadius = 18
         circleView.layer.masksToBounds = true
         recommendRandomTripView.addSubview(circleView)
 
         let sliderButton = UIButton(type: .system)
         sliderButton.setImage(UIImage(systemName: "slider.horizontal.3"), for: .normal)
-        sliderButton.tintColor = .deepBlue
+        sliderButton.tintColor = .backgroundGray
         circleView.addSubview(sliderButton)
 
         styleCircleView = createCircleButton(imageName: "shining", tintColor: .deepBlue)
@@ -142,7 +144,7 @@ class EstablishViewController: UIViewController {
 
         styleLabel.snp.makeConstraints { make in
             make.leading.equalTo(recommendRandomTripView).offset(16)
-            make.top.equalTo(recommendRandomTripView).offset(12)
+            make.top.equalTo(recommendRandomTripView).offset(14)
         }
         
         styleLabel.lineSpacing = 8
@@ -279,11 +281,8 @@ class EstablishViewController: UIViewController {
     }
 
     @objc func showSliderPopup() {
-        
-        guard let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else {
-                return
-            }
-        
+        guard let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+
         var radiusLabel = UILabel()
         var radiusSlider = UISlider()
         let backgroundView = UIView()
@@ -292,54 +291,54 @@ class EstablishViewController: UIViewController {
         backgroundView.snp.makeConstraints { make in
             make.edges.equalTo(keyWindow) // 全屏覆盖
         }
-        
+
         let popupView = UIView()
         popupView.backgroundColor = .backgroundGray.withAlphaComponent(0.9)
         popupView.layer.cornerRadius = 15
         backgroundView.addSubview(popupView)
-        
+
         popupView.snp.makeConstraints { make in
             make.center.equalTo(backgroundView)
             make.width.equalTo(view).multipliedBy(0.8)
-            make.height.equalTo(150)
+            make.height.equalTo(130)
         }
-        
+
         radiusLabel.text = "範圍半徑：\(searchRadius) 公尺"
-        radiusLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        radiusLabel.textAlignment = .center
+        radiusLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        radiusLabel.textAlignment = .left
         popupView.addSubview(radiusLabel)
-        
+
         radiusLabel.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(20)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(popupView).offset(20)
         }
-        
+
         radiusSlider.minimumValue = 1000
         radiusSlider.maximumValue = 15000
         radiusSlider.value = Float(searchRadius)  // 初始值为 1000
         popupView.addSubview(radiusSlider)
-        
+
         radiusSlider.snp.makeConstraints { make in
-            make.top.equalTo(radiusLabel.snp.bottom).offset(20)
+            make.top.equalTo(radiusLabel.snp.bottom).offset(30)
             make.leading.equalTo(popupView).offset(20)
             make.trailing.equalTo(popupView).offset(-20)
         }
-        
+        radiusSlider.minimumTrackTintColor = .deepBlue
         radiusSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
-        
+
         let closeButton = UIButton(type: .system)
-        closeButton.setTitle("關閉", for: .normal)
-        closeButton.tintColor = .systemBlue
+        let closeImage = UIImage(systemName: "xmark.circle.fill")  // 使用 SF Symbols 的圖示
+        closeButton.setImage(closeImage, for: .normal)
+        closeButton.tintColor = .forBronze
         popupView.addSubview(closeButton)
-        
+
         closeButton.snp.makeConstraints { make in
-            make.top.equalTo(radiusSlider.snp.bottom).offset(20)
-            make.centerX.equalTo(popupView)
+            make.top.equalTo(popupView).offset(20)  // 調整 X 標誌的位置
+            make.trailing.equalTo(popupView).offset(-20)  // 靠右上角顯示
         }
-        
+
         closeButton.addTarget(self, action: #selector(dismissPopup), for: .touchUpInside)
-        
-        // 保存 UILabel 和 UISlider 作为属性
+
         self.radiusLabel = radiusLabel
         self.radiusSlider = radiusSlider
     }

@@ -706,9 +706,8 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             cell.collectButton.isSelected = isBookmarked
         }
         
-        cell.contentView.layer.borderColor = UIColor.deepBlue.cgColor
-        cell.contentView.layer.borderWidth = 2
-
+        cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
+        cell.containerView.layer.borderWidth = 2
         return cell
     }
     

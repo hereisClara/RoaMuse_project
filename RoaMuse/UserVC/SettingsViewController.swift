@@ -34,7 +34,10 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         loadUserData(userId: userId)
         view.backgroundColor = UIColor.systemBackground
         self.navigationItem.largeTitleDisplayMode = .never
-        
+        navigationController?.navigationBar.titleTextAttributes = [
+            NSAttributedString.Key.foregroundColor: UIColor.white,
+            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
+        ]
         self.title = "設定"
         
         imagePicker.delegate = self
@@ -45,10 +48,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        guard let userId = userId else {
-            print("未找到 userId，請先登入")
-            return
-        }
+        guard let userId = userId else { return }
         tabBarController?.tabBar.isHidden = true
         loadUserData(userId: userId)
     }
@@ -95,7 +95,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         cameraIcon.layer.cornerRadius = 12
         headerView.addSubview(cameraIcon)
         
-        // 點擊大頭貼打開相片庫
         let avatarTapGesture = UITapGestureRecognizer(target: self, action: #selector(openPhotoLibrary))
         avatarImageView.addGestureRecognizer(avatarTapGesture)
         

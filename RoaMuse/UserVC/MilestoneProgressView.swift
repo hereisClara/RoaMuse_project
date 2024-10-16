@@ -56,7 +56,7 @@ class MilestoneProgressView: UIView {
         
         var fitProgress = Float()
         if progress != 0 {
-            fitProgress = progress + 0.0125
+            fitProgress = progress + 0.0126
         } else if progress == 1 || progress == 0 {
             fitProgress = progress
         }

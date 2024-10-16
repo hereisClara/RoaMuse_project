@@ -188,13 +188,9 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-        loadUserPosts()
+//        loadUserPosts()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-    }
-
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         updateTableHeaderViewHeight()
@@ -212,34 +208,34 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         backgroundView.alpha = 0
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
         backgroundView.addGestureRecognizer(tapGesture)
-
+        
         bottomSheetView.backgroundColor = .white
         bottomSheetView.layer.cornerRadius = 15
         bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-
+        
         bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
-
+        
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             window.addSubview(backgroundView)
             window.addSubview(bottomSheetView)
         }
-
+        
         let deleteButton = createButton(title: "刪除貼文")
         deleteButton.tag = 1001
         deleteButton.addTarget(self, action: #selector(deletePost(_:)), for: .touchUpInside)
-
+        
         let impeachButton = createButton(title: "檢舉貼文")
         let blockButton = createButton(title: "封鎖用戶")
         let cancelButton = createButton(title: "取消", textColor: .red)
         cancelButton.addTarget(self, action: #selector(dismissBottomSheet), for: .touchUpInside)
-
+        
         let stackView = UIStackView(arrangedSubviews: [deleteButton, impeachButton, blockButton, cancelButton])
         stackView.axis = .vertical
         stackView.spacing = 20
         stackView.alignment = .fill
         stackView.distribution = .fillEqually
-
+        
         bottomSheetView.addSubview(stackView)
         stackView.snp.makeConstraints { make in
             make.top.equalTo(bottomSheetView.snp.top).offset(20)
@@ -252,7 +248,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         guard let indexPath = self.selectedIndexPath else { return }
         let post = posts[indexPath.row]
         guard let postId = post["id"] as? String else { return }
-
+        
         let alert = UIAlertController(title: "確認刪除", message: "你確定要刪除這篇貼文嗎？", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "刪除", style: .destructive, handler: { [weak self] _ in
@@ -267,15 +263,10 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         present(alert, animated: true, completion: nil)
     }
-
+    
     func handlePostDeletion(at indexPath: IndexPath) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-
-//            self.posts.remove(at: indexPath.row)
-            
-//            self.tableView.deleteRows(at: [indexPath], with: .fade)
-            
             self.dismissBottomSheet()
             self.updateEmptyState()
         }
@@ -292,8 +283,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     func showBottomSheet(at indexPath: IndexPath) {
         self.selectedIndexPath = indexPath
-
-        // 只需顯示 BottomSheet，無需重複綁定按鈕事件
+        
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
             self.backgroundView.alpha = 1
@@ -409,7 +399,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         setupHeaderView()
     }
-
+    
     func setupHeaderView() {
         headerView.backgroundColor = .systemGray5
         headerView.layer.cornerRadius = 20
@@ -423,11 +413,11 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         [userNameLabel, awardLabelView, avatarImageView, fansTextLabel, followingTextLabel, fansNumberLabel,
          followingNumberLabel, introductionLabel, mapButton, awardsButton].forEach { headerView.addSubview($0) }
-
+        
         setupFollowersAndFollowing()
-        setupPostsStackView() 
+        setupPostsStackView()
         setupLabel()
-
+        
         let followingStackView = UIStackView(arrangedSubviews: [followingNumberLabel, followingTextLabel])
         followingStackView.axis = .vertical
         followingStackView.alignment = .center
@@ -457,7 +447,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         headerView.addSubview(regionLabelView)
-
+        
         regionLabelView.snp.makeConstraints { make in
             make.leading.equalTo(awardLabelView)
             make.height.equalTo(24)
@@ -491,13 +481,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         fansStackView.alignment = .center
         fansStackView.spacing = 0
         headerView.addSubview(fansStackView)
-
+        
         let postStackView = UIStackView(arrangedSubviews: [postsNumberLabel, postsTextLabel])
         postStackView.axis = .vertical
         postStackView.alignment = .center
         postStackView.spacing = 0
         headerView.addSubview(postStackView)
-
+        
         introductionLabel.snp.makeConstraints { make in
             make.top.equalTo(avatarImageView.snp.bottom).offset(22)
             make.leading.equalTo(headerView).offset(16)
@@ -530,10 +520,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         headerView.setNeedsLayout()
         headerView.layoutIfNeeded()
-
+        
         tableView.tableHeaderView = headerView
     }
-
+    
     func setupPostsStackView() {
         postsNumberLabel.text = String(postsCount)
         postsNumberLabel.font = UIFont.systemFont(ofSize: 16)
@@ -567,17 +557,17 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func updateTableHeaderViewHeight() {
         guard let header = tableView.tableHeaderView else { return }
-
+        
         header.setNeedsLayout()
         header.layoutIfNeeded()
-
+        
         let newSize = header.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
         var headerFrame = header.frame
         headerFrame.size.height = newSize.height
         header.frame = headerFrame
         tableView.tableHeaderView = header
     }
-
+    
     func calculateIntroductionLabelHeight() -> CGFloat {
         let maxWidth = tableView.frame.width - 32
         let paragraphStyle = NSMutableParagraphStyle()
@@ -639,19 +629,37 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         menuController.onSelectionConfirmed = { [weak self] selectedIndex in
             guard let self = self else { return }
-
-            // 先隱藏選單，再進行其他操作
+            
             sideMenuController.hideMenu(animated: true) { _ in
-                // 確保選單隱藏後才進行頁面更新
                 mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: selectedIndex)
             }
         }
-
+        
         
         SideMenuController.preferences.basic.direction = .right
         SideMenuController.preferences.basic.menuWidth = 280
         SideMenuController.preferences.basic.enablePanGesture = true
         navigationController?.pushViewController(sideMenuController, animated: true)
+    }
+    
+    func handleLikeButtonTap(at indexPath: IndexPath, isLiked: Bool) {
+        // 更新数据源中的数据
+        var post = posts[indexPath.row]
+        var likesAccount = post["likesAccount"] as? [String] ?? []
+        if isLiked {
+            likesAccount.append(userId ?? "")
+        } else {
+            likesAccount.removeAll { $0 == userId }
+        }
+        post["likesAccount"] = likesAccount
+        posts[indexPath.row] = post
+        
+        // 更新特定的单元格
+        DispatchQueue.main.async {
+            self.tableView.beginUpdates()
+            self.tableView.reloadRows(at: [indexPath], with: .none)
+            self.tableView.endUpdates()
+        }
     }
     
     @objc func handleAwardsButtonTapped() {
@@ -766,7 +774,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
         cell.containerView.layer.borderWidth = 2
-
+        
         return cell
     }
     
@@ -804,10 +812,16 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         
         FirebaseManager.shared.db.collection("posts")
             .whereField("userId", isEqualTo: userId)
-            .addSnapshotListener { [weak self] snapshot, error in
+            .getDocuments { [weak self] (snapshot, error) in
                 guard let self = self else { return }
-                if let error = error { return }
-                guard let documents = snapshot?.documents else { return }
+                if let error = error {
+                    print("Error fetching posts: \(error)")
+                    return
+                }
+                guard let documents = snapshot?.documents else {
+                    print("No posts found")
+                    return
+                }
                 
                 self.posts = documents.map { document in
                     var postData = document.data()
@@ -831,7 +845,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             }
     }
-
+    
     @objc func didTapLikeButton(_ sender: UIButton) {
         sender.isSelected.toggle()
         
@@ -844,27 +858,28 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             FirebaseManager.shared.fetchUserData(userId: userId ?? "") { result in
                 switch result {
                 case .success(let data):
-                let userName = data["userName"] as? String ?? ""
-                FirebaseManager.shared.saveNotification(
-                    to: postOwnerId,
-                    from: self.userId ?? "",
-                    postId: postId,
-                    type: 0,
-                    subType: nil, title: "你的日記被按讚了！",
-                    message: "\(userName) 按讚了你的日記",
-                    actionUrl: nil, priority: 0
-                ) { result in
-                    switch result {
-                    case .success:
-                        print("通知发送成功")
-                    case .failure(let error):
-                        print("通知发送失败: \(error.localizedDescription)")
+                    let userName = data["userName"] as? String ?? ""
+                    FirebaseManager.shared.saveNotification(
+                        to: postOwnerId,
+                        from: self.userId ?? "",
+                        postId: postId,
+                        type: 0,
+                        subType: nil, title: "你的日記被按讚了！",
+                        message: "\(userName) 按讚了你的日記",
+                        actionUrl: nil, priority: 0
+                    ) { result in
+                        switch result {
+                        case .success:
+                            print("通知发送成功")
+                        case .failure(let error):
+                            print("通知发送失败: \(error.localizedDescription)")
+                        }
                     }
-                }
                 case .failure(let error):
                     print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
                 }
             }
+            handleLikeButtonTap(at: indexPath, isLiked: sender.isSelected)
             updateLikeStatus(postId: postId, isLiked: sender.isSelected)
         }
     }
@@ -876,17 +891,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             postRef.updateData([
                 "likesAccount": FieldValue.arrayUnion([userId])
             ]) { error in
-                if let error = error {
-                    print("按讚失敗: \(error.localizedDescription)")
-                }
+                if let error = error { }
             }
         } else {
             postRef.updateData([
                 "likesAccount": FieldValue.arrayRemove([userId])
             ]) { error in
-                if let error = error {
-                    print("取消按讚失敗: \(error.localizedDescription)")
-                }
+                if let error = error { }
             }
         }
     }
@@ -910,17 +921,13 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             postRef.updateData([
                 "bookmarkAccount": FieldValue.arrayUnion([userId])
             ]) { error in
-                if let error = error {
-                    print("收藏失敗: \(error.localizedDescription)")
-                }
+                if let error = error { }
             }
         } else {
             postRef.updateData([
                 "bookmarkAccount": FieldValue.arrayRemove([userId])
             ]) { error in
-                if let error = error {
-                    print("取消收藏失敗: \(error.localizedDescription)")
-                }
+                if let error = error { }
             }
         }
     }
@@ -928,12 +935,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func actualLineHeight() -> CGFloat {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 6
-
+        
         let attributes: [NSAttributedString.Key: Any] = [
             .font: introductionLabel.font!,
             .paragraphStyle: paragraphStyle
         ]
-
+        
         let text = "A"
         let attributedText = NSAttributedString(string: text, attributes: attributes)
         let size = attributedText.boundingRect(with: CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude),
@@ -965,10 +972,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let fullScreenVC = FullScreenImageViewController()
         let dispatchGroup = DispatchGroup()
         var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
-
+        
         for (index, urlString) in photoUrls.enumerated() {
             guard let url = URL(string: urlString) else { continue }
-
+            
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: url) { data, response, error in
                 defer { dispatchGroup.leave() }
@@ -978,7 +985,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 }
             }.resume()
         }
-
+        
         dispatchGroup.notify(queue: .main) {
             fullScreenVC.images = images
             fullScreenVC.startingIndex = startingIndex

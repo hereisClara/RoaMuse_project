@@ -26,10 +26,8 @@ class CollectionsViewController: UIViewController {
     let popupView = PopUpView()
     var incompleteTripsArray = [Trip]()
     var completeTripsArray = [Trip]()
-    
     var filterButtons: [UIButton] = []
     var selectedFilterIndex: Int?
-    
     let mainContainer = UIView()
     let buttonsBackground = UIView()
     let magnifierBackground = UIView()
@@ -37,10 +35,8 @@ class CollectionsViewController: UIViewController {
     var isExpanded = false
     var mainContainerWidthConstraint: Constraint?
     var poemIdsInCollectionTrip = [String]()
-    
     var incompletesPoemTitleArray: [String] = []
     var completesPoemTitleArray: [String] = []
-    
     var selectedTrip: Trip?
     
     override func viewDidLoad() {
@@ -51,6 +47,7 @@ class CollectionsViewController: UIViewController {
         self.navigationController?.setNavigationBarHidden(false, animated: false)
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
+        navigationItem.backButtonTitle = ""
         self.title = "收藏"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
@@ -78,7 +75,6 @@ class CollectionsViewController: UIViewController {
         segmentedControl.layer.cornerRadius = 25
         segmentedControl.clipsToBounds = true
         segmentedControl.layer.masksToBounds = true
-        
         segmentedControl.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(70)

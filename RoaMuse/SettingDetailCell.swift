@@ -13,17 +13,17 @@ class SettingDetailCell: UITableViewCell {
     
     let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
+        label.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        label.textColor = .deepBlue
         return label
     }()
     
     let detailLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         label.textColor = .gray
         label.numberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
+        label.lineBreakMode = .byTruncatingTail
         return label
     }()
     
@@ -39,6 +39,8 @@ class SettingDetailCell: UITableViewCell {
     func setupViews() {
         contentView.addSubview(titleLabel)
         contentView.addSubview(detailLabel)
+        
+        detailLabel.lineBreakMode = .byWordWrapping
         
         // 使用 SnapKit 進行佈局
         titleLabel.snp.makeConstraints { make in

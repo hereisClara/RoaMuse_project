@@ -24,6 +24,9 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     let scrollView = UIScrollView() // 用來左右滑動
     let followersTableView = UITableView() // 顯示粉絲列表
     let followingTableView = UITableView() // 顯示關注者列表
+    let followersPlaceholderLabel = UILabel()
+    let followingPlaceholderLabel = UILabel()
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,17 +36,15 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         setupUnderlineView()
         setupScrollView()
         setupTableViews()
+        setupPlaceholders()
         
         if isShowingFollowers {
-            
             scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
             updateUnderlinePosition(button: followersButton)
         } else {
-            
             scrollView.setContentOffset(CGPoint(x: view.frame.width, y: 0), animated: false)
             updateUnderlinePosition(button: followingButton)
         }
-        
         loadUserList()
     }
     
@@ -57,7 +58,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         tabBarController?.tabBar.isHidden = false
     }
     
-    // 設置自定義按鈕
     func setupButtons() {
         followersButton.setTitle("Followers", for: .normal)
         followersButton.setTitleColor(.black, for: .selected)
@@ -94,7 +94,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    // 設置 UIScrollView
     func setupScrollView() {
         scrollView.isPagingEnabled = true
         scrollView.delegate = self
@@ -135,7 +134,34 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
             make.height.equalTo(scrollView.snp.height)
         }
     }
-    
+//    MARK: placeholder
+    func setupPlaceholders() {
+        // 粉絲 Placeholder
+        followersPlaceholderLabel.text = "還沒有粉絲"
+        followersPlaceholderLabel.textAlignment = .center
+        followersPlaceholderLabel.textColor = .gray
+        followersPlaceholderLabel.font = UIFont.systemFont(ofSize: 18)
+        followersPlaceholderLabel.isHidden = true
+        followersTableView.superview?.addSubview(followersPlaceholderLabel) // 加到 TableView 的父視圖上
+
+        // 關注者 Placeholder
+        followingPlaceholderLabel.text = "還沒有追蹤者"
+        followingPlaceholderLabel.textAlignment = .center
+        followingPlaceholderLabel.textColor = .gray
+        followingPlaceholderLabel.font = UIFont.systemFont(ofSize: 18)
+        followingPlaceholderLabel.isHidden = true
+        followingTableView.superview?.addSubview(followingPlaceholderLabel) // 加到 TableView 的父視圖上
+
+        // 設定 Placeholder 的約束，使其蓋在 TableView 上
+        followersPlaceholderLabel.snp.makeConstraints { make in
+            make.edges.equalTo(followersTableView) // 完全覆蓋在 TableView 上
+        }
+
+        followingPlaceholderLabel.snp.makeConstraints { make in
+            make.edges.equalTo(followingTableView) // 完全覆蓋在 TableView 上
+        }
+    }
+
     // MARK: - Button actions
     @objc func followersButtonTapped() {
         scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
@@ -205,77 +231,84 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         guard let userId = userId else { return }
         print("start")
         let userRef = Firestore.firestore().collection("users").document(userId)
-        
+
         let isShowingFollowers = scrollView.contentOffset.x == 0
-        
+
         if isShowingFollowers {
-                userRef.getDocument { [weak self] snapshot, error in
-                    if let error = error {
-                        print("Error fetching followers: \(error)")
-                        return
-                    }
-                    if let data = snapshot?.data(), let followers = data["followers"] as? [String] {
-                        self?.followers = followers
-                        
-                        var followersData: [[String: Any]] = []
-                        
-                        for followerId in followers {
-                            FirebaseManager.shared.fetchUserData(userId: followerId) { result in
-                                switch result {
-                                case .success(let userData):
-                                    
-                                    followersData.append(userData)
-                                    
-                                    if followersData.count == followers.count {
-                                        self?.followersData = followersData
-                                        print("=======")
-                                        print(followers)
-                                        print(followersData)
-                                        self?.followersTableView.reloadData()
-                                    }
-                                    
-                                case .failure(let error):
-                                    print("Error fetching user data: \(error)")
-                                }
-                            }
-                        }
-                    }
+            userRef.getDocument { [weak self] snapshot, error in
+                if let error = error {
+                    print("Error fetching followers: \(error)")
+                    return
                 }
-            } else {
-                print("follow")
-                userRef.getDocument { [weak self] snapshot, error in
-                    if let error = error {
-                        print("Error fetching following: \(error)")
-                        return
+                if let data = snapshot?.data(), let followers = data["followers"] as? [String] {
+                    self?.followers = followers
+
+                    if followers.isEmpty {
+//                        self?.followersTableView.isHidden = true
+                        self?.followersPlaceholderLabel.isHidden = false
+                    } else {
+//                        self?.followersTableView.isHidden = false
+                        self?.followersPlaceholderLabel.isHidden = true
                     }
-                    if let data = snapshot?.data(), let following = data["following"] as? [String] {
-                        self?.following = following
-                        print("=====", following)
-                        
-                        var followingData: [[String: Any]] = []
-                        
-                        for followingId in following {
-                            FirebaseManager.shared.fetchUserData(userId: followingId) { result in
-                                switch result {
-                                case .success(let userData):
-                                    // 收集每个用户的数据
-                                    followingData.append(userData)
-                                    
-                                    // 当所有用户数据都加载完成时，刷新表格
-                                    if followingData.count == following.count {
-                                        self?.followingData = followingData
-                                        self?.followingTableView.reloadData()
-                                        print("-------a ", followingData)
-                                    }
-                                    
-                                case .failure(let error):
-                                    print("Error fetching user data: \(error)")
+//                    self?.view.layoutIfNeeded()
+                    var followersData: [[String: Any]] = []
+
+                    for followerId in followers {
+                        FirebaseManager.shared.fetchUserData(userId: followerId) { result in
+                            switch result {
+                            case .success(let userData):
+                                followersData.append(userData)
+
+                                if followersData.count == followers.count {
+                                    self?.followersData = followersData
+                                    self?.followersTableView.reloadData()
                                 }
+
+                            case .failure(let error):
+                                print("Error fetching user data: \(error)")
                             }
                         }
                     }
                 }
             }
+        } else {
+            userRef.getDocument { [weak self] snapshot, error in
+                if let error = error {
+                    print("Error fetching following: \(error)")
+                    return
+                }
+                if let data = snapshot?.data(), let following = data["following"] as? [String] {
+                    self?.following = following
+
+                    if following.isEmpty {
+//                        self?.followingTableView.isHidden = true
+                        self?.followingPlaceholderLabel.isHidden = false
+                    } else {
+//                        self?.followingTableView.isHidden = false
+                        self?.followingPlaceholderLabel.isHidden = true
+                    }
+//                    self?.view.layoutIfNeeded()
+                    var followingData: [[String: Any]] = []
+
+                    for followingId in following {
+                        FirebaseManager.shared.fetchUserData(userId: followingId) { result in
+                            switch result {
+                            case .success(let userData):
+                                followingData.append(userData)
+
+                                if followingData.count == following.count {
+                                    self?.followingData = followingData
+                                    self?.followingTableView.reloadData()
+                                }
+
+                            case .failure(let error):
+                                print("Error fetching user data: \(error)")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -333,7 +366,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         let row = sender.tag
         let userData = scrollView.contentOffset.x == 0 ? followersData[row] : followingData[row]
         
-        // 初始化 BottomSheetManager
         let bottomSheetManager = BottomSheetManager(parentViewController: self)
         
         bottomSheetManager.addActionButton(title: "檢舉用戶", textColor: .red) {
@@ -358,7 +390,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         alertController.addAction(cancelAction)
         
         let confirmAction = UIAlertAction(title: "檢舉", style: .destructive) { _ in
-            // 檢舉的邏輯
             print("檢舉 \(userName)")
         }
         alertController.addAction(confirmAction)
