@@ -36,7 +36,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     var transportType: MKDirectionsTransportType = .automobile
     var placeNames = [String]()
     
-    let collectButton = UIButton(type: .custom)
+    let arrowButton = UIButton(type: .custom)
     var matchingPlaces: [(keyword: String, place: Place)] = []
     var places: [Place] = []
     var keywordToLineMap = [String: String]()
@@ -44,10 +44,11 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     var districts: [String] = []
     var popUpView = PopUpView()
     var trip: Trip?
+    var postTrip: Trip?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .backgroundGray
         
         guard !tripId.isEmpty else { return }
         generateView.isUserInteractionEnabled = false
@@ -324,30 +325,16 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             return
         }
         
-        let userRef = Firestore.firestore().collection("users").document(userId)
-        
-        if collectButton.isSelected {
-            // 從 bookmarkTrip 中移除
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayRemove([tripId])
-            ]) { error in
-                if let error = error {
-                } else {
-                }
+        FirebaseManager.shared.loadTripById(tripId) { trip in
+            
+            self.postTrip = trip
+            guard let postTrip = self.postTrip else {
+                print("trip無值")
+                return
             }
-        } else {
-            // 添加到 bookmarkTrip
-            userRef.updateData([
-                "bookmarkTrip": FieldValue.arrayUnion([tripId])
-            ]) { error in
-                if let error = error {
-                } else {
-                }
-            }
+            
+            self.popUpView.showPopup(on: self.view, with: postTrip, city: nil, districts: nil)
         }
-        
-        collectButton.isSelected.toggle()
-        collectButton.tintColor = collectButton.isSelected ? .systemBlue : .white
     }
     
 }
@@ -419,8 +406,8 @@ extension ArticleTripViewController {
             if let document = document, document.exists {
                 DispatchQueue.main.async {
                     if let bookmarkTrips = document.data()?["bookmarkTrip"] as? [String] {
-                        self.collectButton.isSelected = bookmarkTrips.contains(self.tripId)
-                        self.collectButton.tintColor = self.collectButton.isSelected ? .systemBlue : .white
+                        self.arrowButton.isSelected = bookmarkTrips.contains(self.tripId)
+                        self.arrowButton.tintColor = self.arrowButton.isSelected ? .systemBlue : .white
                     }
                 }
             } else {
@@ -559,33 +546,33 @@ extension ArticleTripViewController {
     
     func setupContainerView() {
         view.addSubview(containerView)
-        containerView.backgroundColor = .forBronze
+        containerView.layer.borderColor = UIColor.deepBlue.cgColor
+        containerView.layer.borderWidth = 2.5
         containerView.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(view).multipliedBy(0.7)
+            make.height.equalTo(view).multipliedBy(0.72)
             make.top.equalTo(view.safeAreaLayoutGuide)
         }
         containerView.layer.cornerRadius = 15
         
-        collectButton.setImage(UIImage(named: "normal_bookmark"), for: .normal)
-        collectButton.setImage(UIImage(named: "selected_bookmark"), for: .selected)
-        collectButton.tintColor = .deepBlue
-        collectButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
+        arrowButton.setImage(UIImage(named: "right-arrow"), for: .normal)
+        arrowButton.tintColor = .deepBlue
+        arrowButton.addTarget(self, action: #selector(didTapCollectButton), for: .touchUpInside)
         
         containerView.addSubview(postUsernameLabel)
         postUsernameLabel.snp.makeConstraints { make in
             make.top.equalTo(containerView).offset(12)
             make.leading.equalTo(containerView).offset(15)
         }
-        postUsernameLabel.textColor = .white
+        postUsernameLabel.textColor = .deepBlue
         postUsernameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
         
-        containerView.addSubview(collectButton)
-        collectButton.snp.makeConstraints { make in
-            make.centerY.equalTo(postUsernameLabel)  // 與 postUsernameLabel 水平對齊
-            make.trailing.equalTo(containerView).offset(-15)  // 放置在右側，距離右邊框 15
-            make.width.height.equalTo(30)  // 設置按鈕大小
+        containerView.addSubview(arrowButton)
+        arrowButton.snp.makeConstraints { make in
+            make.centerY.equalTo(postUsernameLabel)
+            make.trailing.equalTo(containerView).offset(-15)
+            make.width.height.equalTo(30)
         }
         
         containerView.addSubview(poemTitleLabel)
@@ -593,16 +580,16 @@ extension ArticleTripViewController {
             make.leading.equalTo(postUsernameLabel)
             make.top.equalTo(postUsernameLabel.snp.bottom).offset(8)
         }
-        poemTitleLabel.textColor = .white
-        poemTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+        poemTitleLabel.textColor = .deepBlue
+        poemTitleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
         
         containerView.addSubview(placeLabel)
         placeLabel.snp.makeConstraints { make in
             make.top.equalTo(poemTitleLabel.snp.bottom).offset(24)
             make.leading.equalTo(postUsernameLabel)
         }
-        placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
-        placeLabel.textColor = .deepBlue
+        placeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
+        placeLabel.textColor = .forBronze
         displayPlacesInLabel()
         
         containerView.addSubview(transportTimeLabel)
@@ -610,23 +597,22 @@ extension ArticleTripViewController {
             make.leading.equalTo(poemTitleLabel)
             make.top.equalTo(placeLabel.snp.bottom).offset(8)
         }
-        transportTimeLabel.textColor = .deepBlue
+        transportTimeLabel.textColor = .forBronze
         transportTimeLabel.font = UIFont(name: "NotoSerifHK-Black", size: 14)
     }
     
     func setupGenerateView() {
-        // 將 generateView 添加到主視圖中
+        
         view.addSubview(generateView)
         generateView.backgroundColor = .deepBlue
-        generateView.layer.cornerRadius = 15
+        generateView.layer.cornerRadius = 20
         generateView.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.width.equalTo(view).multipliedBy(0.9)
-            make.height.equalTo(80)
+            make.height.equalTo(view).multipliedBy(0.08)
             make.top.equalTo(containerView.snp.bottom).offset(16)
         }
         
-        // 設置標題
         generateView.addSubview(generateTitleLabel)
         generateTitleLabel.text = "生成屬於你的旅程"
         generateTitleLabel.textColor = .white

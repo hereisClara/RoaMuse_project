@@ -42,7 +42,7 @@ class PopUpView {
     
     init() {}
     
-    func showPopup(on view: UIView, with trip: Trip, city: String, districts: [String], matchingScore: Double? = nil) {
+    func showPopup(on view: UIView, with trip: Trip, city: String?, districts: [String]?, matchingScore: Double? = nil) {
         
         guard let window = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
             return
