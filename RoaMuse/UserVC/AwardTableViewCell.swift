@@ -13,8 +13,8 @@ class AwardTableViewCell: UITableViewCell {
     // 定義一個 Label 來顯示 award 名稱
     let awardLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        label.textColor = .black
+        label.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        label.textColor = .deepBlue
         //        label.numberOfLines = 1
         return label
     }()
@@ -28,7 +28,7 @@ class AwardTableViewCell: UITableViewCell {
     
     let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         label.textColor = .lightGray
         label.numberOfLines = 0
         return label
@@ -51,7 +51,7 @@ class AwardTableViewCell: UITableViewCell {
         contentView.addSubview(milestoneProgressView)
         contentView.addSubview(descriptionLabel)
         
-        let padding: CGFloat = 12 // 邊距縮進
+        let padding: CGFloat = 16 // 邊距縮進
         
         // 使用 SnapKit 設置 Auto Layout
         awardLabel.snp.makeConstraints { make in
@@ -62,7 +62,7 @@ class AwardTableViewCell: UITableViewCell {
         }
         
         descriptionLabel.snp.makeConstraints { make in
-            make.top.equalTo(awardLabel.snp.bottom).offset(20)
+            make.top.equalTo(awardLabel.snp.bottom).offset(12)
             make.leading.equalTo(contentView).offset(padding)
             make.trailing.equalTo(contentView).offset(-padding)
         }
@@ -71,7 +71,7 @@ class AwardTableViewCell: UITableViewCell {
             make.width.equalTo(contentView).multipliedBy(0.85)
             make.centerX.equalTo(contentView)
             make.height.equalTo(30)
-            make.bottom.equalTo(contentView).offset(-10)
+            make.bottom.equalTo(contentView).offset(-16)
         }
     }
     

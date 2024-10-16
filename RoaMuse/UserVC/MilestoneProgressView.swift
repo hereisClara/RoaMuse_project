@@ -47,15 +47,22 @@ class MilestoneProgressView: UIView {
         let progressHeight: CGFloat = 10
         let progressY = (rect.height - progressHeight) / 2
         let cornerRadius = progressHeight / 2 // 圓角半徑等於進度條高度的一半
-        let adjustedWidth = rect.width - 16
+        let adjustedWidth = rect.width - 12
         // 繪製圓角背景
         let backgroundPath = UIBezierPath(roundedRect: CGRect(x: 0, y: progressY, width: adjustedWidth , height: progressHeight), cornerRadius: cornerRadius)
         context.setFillColor(UIColor.systemGray5.cgColor)
         context.addPath(backgroundPath.cgPath)
         context.fillPath()
         
+        var fitProgress = Float()
+        if progress != 0 {
+            fitProgress = progress + 0.0126
+        } else if progress == 1 || progress == 0 {
+            fitProgress = progress
+        }
+        
         // 繪製圓角進度條
-        let progressWidth = min(adjustedWidth, adjustedWidth * CGFloat(progress))
+        let progressWidth = min(adjustedWidth, adjustedWidth * CGFloat(fitProgress))
         let progressPath = UIBezierPath(roundedRect: CGRect(x: 0, y: progressY, width: progressWidth, height: progressHeight), cornerRadius: cornerRadius)
         context.setFillColor(UIColor.deepBlue.cgColor) // 根據需要調整進度條的顏色
         context.addPath(progressPath.cgPath)

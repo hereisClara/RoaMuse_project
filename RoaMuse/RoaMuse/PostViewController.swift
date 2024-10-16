@@ -14,7 +14,6 @@ import Kingfisher
 class PostViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     let db = Firestore.firestore()
-    
     let titleTextField = UITextField()
     let contentTextView = UITextView()
     let postButton = UIButton(type: .system)
@@ -27,12 +26,12 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     var tripsArray = [Trip]()
     var tripId = String()
     var postButtonAction: (() -> Void)?
-    let imageButton = UIButton(type: .system) // 用來選擇圖片的按鈕
-    var selectedImage: UIImage? // 儲存選擇的圖片
-    var imageUrl: String? // 儲存圖片上傳後的下載 URL
+    let imageButton = UIButton(type: .system)
+    var selectedImage: UIImage?
+    var imageUrl: String?
     let avatarImageView = UIImageView()
-    var selectedImages = [UIImage]() // 用來存儲選擇的圖片
-    let imagesStackView = UIStackView() // StackView 用來顯示縮圖
+    var selectedImages = [UIImage]()
+    let imagesStackView = UIStackView()
     var photoUrls = [String]()
     
     override func viewDidLoad() {
@@ -41,11 +40,24 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
         navigationItem.backButtonTitle = ""
         
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithOpaqueBackground() // 设置为不透明
+        navBarAppearance.backgroundColor = .backgroundGray // 设置背景色
+        navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
+
+        self.navigationItem.standardAppearance = navBarAppearance
+        self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        
         setupUI()
         setupDropdownTableView()
         
         self.navigationItem.largeTitleDisplayMode = .never
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont(name: "NotoSerifHK-Black", size: 18) ?? UIFont.systemFont(ofSize: 18),
+            .foregroundColor: UIColor.deepBlue // 你可以根據需求調整顏色
+        ]
         let postButtonItem = UIBarButtonItem(title: "發文", style: .done, target: self, action: #selector(handlePostAction))
+        postButtonItem.setTitleTextAttributes(attributes, for: .normal)
         
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return
@@ -68,9 +80,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = true
-//        resetPostForm()
         if let sharedImage = sharedImage {
-            addImageToStackView(sharedImage) // 將分享的圖片添加到 StackView
+            addImageToStackView(sharedImage)
         }
         validateInputs(title: titleTextField.text ?? "", content: contentTextView.text)
     }
@@ -182,6 +193,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         titleTextField.leftView = paddingView
         titleTextField.leftViewMode = .always
         dropdownButton.setTitle("choose trip", for: .normal)
+        dropdownButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         dropdownButton.backgroundColor = .deepBlue
         dropdownButton.setTitleColor(.white, for: .normal)
         dropdownButton.addTarget(self, action: #selector(toggleDropdown), for: .touchUpInside)
@@ -189,19 +201,20 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.addSubview(dropdownButton)
         
         dropdownButton.snp.makeConstraints { make in
-            make.centerY.equalTo(avatarImageView) // 設置在 titleTextField 下方
+            make.centerY.equalTo(avatarImageView)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(10)
             make.trailing.equalTo(titleTextField)
-            make.height.equalTo(50) // 高度 50 點
+            make.height.equalTo(50)
         }
         
+        titleTextField.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         titleTextField.snp.makeConstraints { make in
             make.top.equalTo(dropdownButton.snp.bottom).offset(12)
             make.height.equalTo(50)
             make.width.equalTo(view).multipliedBy(0.9)
             make.centerX.equalTo(view)
         }
-        
+        contentTextView.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         contentTextView.snp.makeConstraints { make in
             make.top.equalTo(titleTextField.snp.bottom).offset(12)
             make.width.equalTo(view).multipliedBy(0.9)
@@ -212,6 +225,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         contentTextView.layer.cornerRadius = 15
         
         imageButton.setTitle("+ 新增相片", for: .normal)
+        imageButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         imageButton.setTitleColor(.deepBlue, for: .normal)
         imageButton.layer.borderWidth = 1
         imageButton.layer.borderColor = UIColor.deepBlue.cgColor
@@ -219,8 +233,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         view.addSubview(imageButton)
         
         imageButton.snp.makeConstraints { make in
-            make.top.equalTo(contentTextView.snp.bottom).offset(16) // 設置在 contentTextView 下方
-            make.leading.equalTo(contentTextView) // 與 contentTextView 左對齊
+            make.top.equalTo(contentTextView.snp.bottom).offset(16)
+            make.leading.equalTo(contentTextView) 
             make.width.equalTo(120)
             make.height.equalTo(60)
         }
@@ -299,6 +313,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             if let error = error {
                 print("發文失敗: \(error.localizedDescription)")
             } else {
+                print("發文成功")
             }
         }
     }
@@ -335,6 +350,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             if !tripIds.isEmpty {
                 FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
                     self.tripsArray = filteredTrips
+                    print("----=---= uuuuu     ", self.tripsArray)
                     self.dropdownTableView.reloadData()
                 }
             } else {
@@ -516,7 +532,6 @@ extension PostViewController {
     @objc func saveData() {
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
         
-        // 從 UserDefaults 中獲取 userId
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         
         uploadImagesToFirebase { [weak self] urls in
@@ -558,6 +573,7 @@ extension PostViewController: UITableViewDataSource, UITableViewDelegate {
         FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
             DispatchQueue.main.async {
                 cell.textLabel?.text = poem.title
+                cell.textLabel?.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
             }
         }
         

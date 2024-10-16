@@ -10,11 +10,15 @@ import SnapKit
 import WeatherKit
 import CoreLocation
 import FirebaseFirestore
-import MJRefresh
 import MapKit
 
 class EstablishViewController: UIViewController {
     
+    let poemMatchingService = PoemMatchingService()
+    var isStyleButtonSelected = true
+    var isTimingButtonSelected = false
+    var styleCircleView = UIView()
+    var timingRecommendCircleView = UIView()
     var poemIdsInCollectionTripsHandler: (([String]) -> Void)?
     var poemsFromFirebase: [[String: Any]] = []
     var fittingPoemArray = [[String: Any]]()
@@ -57,65 +61,98 @@ class EstablishViewController: UIViewController {
         
         setupUI()
         setupTableView()
-        setupPullToRefresh()
-        
         view.addSubview(activityIndicator)
         setupActivityIndicator()
         
         poemIdsInCollectionTripsHandler?(poemIdsInCollectionTrips)
-        print(poemIdsInCollectionTrips)
+        if let styleCircleButton = styleCircleView.subviews.first as? UIButton {
+            setButtonSelected(styleCircleButton)
+        } else {
+            setCellsSelectable(isSelectable: false)  // 預設為不可選擇
+        }
     }
     
+    func setButtonSelected(_ sender: UIButton) {
+        guard let circleView = sender.superview else { return }
+        
+        UIView.animate(withDuration: 0.3) {
+            circleView.backgroundColor = sender.tintColor
+            sender.tintColor = .white  // 或者任何未選中的狀態顏色
+        }
+    }
+    
+    func setButtonDeselected(_ sender: UIButton) {
+        guard let circleView = sender.superview else { return }
+        
+        UIView.animate(withDuration: 0.3) {
+            circleView.backgroundColor = .systemGray4
+            sender.tintColor = .deepBlue  // 恢復未選中顏色
+        }
+    }
+    
+    func setCellsSelectable(isSelectable: Bool) {
+        for cell in styleTableView.visibleCells {
+            cell.isUserInteractionEnabled = isSelectable
+        }
+        styleTableView.reloadData() // 確保狀態及時更新
+    }
+
     func setupActivityIndicator() {
         
         activityIndicator.snp.makeConstraints { make in
             make.center.equalTo(view) // 設置指示器在視圖的中央
         }
-        
         activityIndicator.isHidden = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 //        tabBarController?.tabBar.isHidden = false
+        updateStyleLabel(with: "＃隨機")
     }
     
     func setupUI() {
         view.addSubview(recommendRandomTripView)
         recommendRandomTripView.addSubview(styleLabel)
-        
+
         let circleView = UIView()
-        circleView.backgroundColor = .backgroundGray
-        circleView.layer.cornerRadius = 20 // 圆形
+        circleView.layer.borderColor = UIColor.backgroundGray.cgColor
+        circleView.layer.borderWidth = 1.5
+        circleView.backgroundColor = .clear
+        circleView.layer.cornerRadius = 18
         circleView.layer.masksToBounds = true
         recommendRandomTripView.addSubview(circleView)
-        
-        // 创建并设置右侧的按钮
+
         let sliderButton = UIButton(type: .system)
         sliderButton.setImage(UIImage(systemName: "slider.horizontal.3"), for: .normal)
-        sliderButton.tintColor = .deepBlue
+        sliderButton.tintColor = .backgroundGray
         circleView.addSubview(sliderButton)
+
+        styleCircleView = createCircleButton(imageName: "shining", tintColor: .deepBlue)
+        timingRecommendCircleView = createCircleButton(imageName: "cloud.sun.fill", tintColor: .deepBlue, isSystemImage: true)
+        view.addSubview(styleCircleView)
+        view.addSubview(timingRecommendCircleView)
         
         recommendRandomTripView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide)
-            make.centerX.equalTo(view)
-            make.width.equalTo(view).multipliedBy(0.9)
+            make.leading.equalTo(styleCircleView.snp.trailing).offset(12)
+            make.trailing.equalTo(view).offset(-16)
             make.height.equalTo(120)
         }
-        
+
         recommendRandomTripView.layer.cornerRadius = 20
 
-        // 风格标签布局
         styleLabel.snp.makeConstraints { make in
             make.leading.equalTo(recommendRandomTripView).offset(16)
-            make.top.equalTo(recommendRandomTripView).offset(12)
+            make.top.equalTo(recommendRandomTripView).offset(14)
         }
+        
         styleLabel.lineSpacing = 8
         styleLabel.numberOfLines = 0
         styleLabel.text = "今天我想來點⋯⋯"
         styleLabel.textColor = .forBronze
         styleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 28)
-        
+
         recommendRandomTripView.backgroundColor = .deepBlue
 
         sliderButton.snp.makeConstraints { make in
@@ -126,81 +163,182 @@ class EstablishViewController: UIViewController {
         circleView.snp.makeConstraints { make in
             make.trailing.equalTo(recommendRandomTripView).offset(-16)
             make.top.equalTo(recommendRandomTripView).offset(16)
+            make.width.height.equalTo(36)
+        }
+
+        // 按鈕佈局
+        styleCircleView.snp.makeConstraints { make in
+            make.leading.equalTo(view).offset(16)
+            make.top.equalTo(recommendRandomTripView).offset(16)
+            make.width.height.equalTo(40)
+        }
+
+        timingRecommendCircleView.snp.makeConstraints { make in
+            make.leading.equalTo(view).offset(16)
+            make.top.equalTo(styleCircleView.snp.bottom).offset(16)
             make.width.height.equalTo(40)
         }
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         recommendRandomTripView.addGestureRecognizer(tapGesture)
-        
+
         sliderButton.addTarget(self, action: #selector(showSliderPopup), for: .touchUpInside)
     }
-    
-    @objc func showSliderPopup() {
+
+    func createCircleButton(imageName: String, tintColor: UIColor, isSystemImage: Bool = false) -> UIView {
+        let circleView = UIView()
+        circleView.backgroundColor = .white
+        circleView.layer.cornerRadius = 20
+        circleView.layer.masksToBounds = true
+        circleView.layer.borderColor = UIColor.deepBlue.cgColor
+        circleView.layer.borderWidth = 1.5
+
+        let button = UIButton(type: .system)
+        if isSystemImage {
+            button.setImage(UIImage(systemName: imageName), for: .normal)
+        } else {
+            button.setImage(UIImage(named: imageName), for: .normal)
+        }
+        button.tintColor = tintColor
+        button.addTarget(self, action: #selector(circleButtonTapped(_:)), for: .touchUpInside)
         
-        guard let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else {
-                return
+        circleView.addSubview(button)
+        button.snp.makeConstraints { make in
+            make.center.equalTo(circleView)
+            make.width.height.equalTo(25)
+        }
+
+        return circleView
+    }
+
+    @objc func circleButtonTapped(_ sender: UIButton) {
+        guard let circleView = sender.superview else { return }
+
+        if circleView == styleCircleView {
+            // 点击 styleCircleView 时
+            if !isStyleButtonSelected {
+                isStyleButtonSelected = true
+                isTimingButtonSelected = false
+                updateUIBasedOnSelection()
             }
+        } else if circleView == timingRecommendCircleView {
+            // 点击 timingRecommendCircleView 时
+            if !isTimingButtonSelected {
+                isTimingButtonSelected = true
+                isStyleButtonSelected = false
+                updateUIBasedOnSelection()
+            }
+        }
+        updateButtonColors()
+    }
+
+    func updateUIBasedOnSelection() {
+        if isStyleButtonSelected {
+            updateStyleLabel(with: "＃隨機")
+            setCellsSelectable(isSelectable: true)
+        } else {
+            setCellsSelectable(isSelectable: false)
+        }
         
+        if isTimingButtonSelected {
+            updateStyleLabel(with: "＃時令推薦")
+            setCellsSelectable(isSelectable: false)
+        }
+    }
+    
+    func updateButtonColors() {
+        if isStyleButtonSelected {
+            UIView.animate(withDuration: 0.3) {
+                self.styleCircleView.backgroundColor = .deepBlue
+                if let button = self.styleCircleView.subviews.first as? UIButton {
+                    button.tintColor = .white
+                }
+            }
+        } else {
+            UIView.animate(withDuration: 0.3) {
+                self.styleCircleView.backgroundColor = .white
+                if let button = self.styleCircleView.subviews.first as? UIButton {
+                    button.tintColor = .deepBlue
+                }
+            }
+        }
+        
+        if isTimingButtonSelected {
+            UIView.animate(withDuration: 0.3) {
+                self.timingRecommendCircleView.backgroundColor = .deepBlue
+                if let button = self.timingRecommendCircleView.subviews.first as? UIButton {
+                    button.tintColor = .white
+                }
+            }
+        } else {
+            UIView.animate(withDuration: 0.3) {
+                self.timingRecommendCircleView.backgroundColor = .white
+                if let button = self.timingRecommendCircleView.subviews.first as? UIButton {
+                    button.tintColor = .deepBlue
+                }
+            }
+        }
+    }
+
+    @objc func showSliderPopup() {
+        guard let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) else { return }
+
         var radiusLabel = UILabel()
         var radiusSlider = UISlider()
-        // 创建一个全屏半透明背景视图
         let backgroundView = UIView()
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         keyWindow.addSubview(backgroundView)
         backgroundView.snp.makeConstraints { make in
             make.edges.equalTo(keyWindow) // 全屏覆盖
         }
-        
-        // 创建一个弹窗视图
+
         let popupView = UIView()
         popupView.backgroundColor = .backgroundGray.withAlphaComponent(0.9)
         popupView.layer.cornerRadius = 15
         backgroundView.addSubview(popupView)
-        
+
         popupView.snp.makeConstraints { make in
             make.center.equalTo(backgroundView)
             make.width.equalTo(view).multipliedBy(0.8)
-            make.height.equalTo(200)
+            make.height.equalTo(130)
         }
-        
+
         radiusLabel.text = "範圍半徑：\(searchRadius) 公尺"
-        radiusLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
-        radiusLabel.textAlignment = .center
+        radiusLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        radiusLabel.textAlignment = .left
         popupView.addSubview(radiusLabel)
-        
+
         radiusLabel.snp.makeConstraints { make in
             make.top.equalTo(popupView).offset(20)
-            make.centerX.equalTo(popupView)
+            make.leading.equalTo(popupView).offset(20)
         }
-        
+
         radiusSlider.minimumValue = 1000
         radiusSlider.maximumValue = 15000
         radiusSlider.value = Float(searchRadius)  // 初始值为 1000
         popupView.addSubview(radiusSlider)
-        
+
         radiusSlider.snp.makeConstraints { make in
-            make.top.equalTo(radiusLabel.snp.bottom).offset(20)
+            make.top.equalTo(radiusLabel.snp.bottom).offset(30)
             make.leading.equalTo(popupView).offset(20)
             make.trailing.equalTo(popupView).offset(-20)
         }
-        
-        // 添加Slider变化监听器
+        radiusSlider.minimumTrackTintColor = .deepBlue
         radiusSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
-        
-        // 添加关闭按钮
+
         let closeButton = UIButton(type: .system)
-        closeButton.setTitle("關閉", for: .normal)
-        closeButton.tintColor = .systemBlue
+        let closeImage = UIImage(systemName: "xmark.circle.fill")  // 使用 SF Symbols 的圖示
+        closeButton.setImage(closeImage, for: .normal)
+        closeButton.tintColor = .forBronze
         popupView.addSubview(closeButton)
-        
+
         closeButton.snp.makeConstraints { make in
-            make.top.equalTo(radiusSlider.snp.bottom).offset(20)
-            make.centerX.equalTo(popupView)
+            make.top.equalTo(popupView).offset(20)  // 調整 X 標誌的位置
+            make.trailing.equalTo(popupView).offset(-20)  // 靠右上角顯示
         }
-        
+
         closeButton.addTarget(self, action: #selector(dismissPopup), for: .touchUpInside)
-        
-        // 保存 UILabel 和 UISlider 作为属性
+
         self.radiusLabel = radiusLabel
         self.radiusSlider = radiusSlider
     }
@@ -222,37 +360,24 @@ class EstablishViewController: UIViewController {
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
         randomTripEntryButtonDidTapped()
     }
-    
-    func setupPullToRefresh() {
-        styleTableView.mj_header = MJRefreshNormalHeader(refreshingTarget: self, refreshingAction: #selector(refreshData))
-    }
-    
-    @objc func refreshData() {
-        FirebaseManager.shared.loadNewPosts(existingPosts: self.postsArray) { newPosts in
-            self.postsArray.insert(contentsOf: newPosts, at: 0)
-            self.styleTableView.reloadData()
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.styleTableView.mj_header?.endRefreshing()
-        }
-    }
-//    MARK: work
 }
 
 extension EstablishViewController {
     
     @objc func randomTripEntryButtonDidTapped() {
         recommendRandomTripView.isUserInteractionEnabled = false
-        
         activityIndicator.startAnimating()
         activityIndicator.isHidden = false
-        
+
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
             self.locationManager.onLocationUpdate = nil
             
-            self.processWithCurrentLocation(currentLocation)
+            if self.isTimingButtonSelected {
+                self.processTimingRecommendWithCurrentLocation(currentLocation)
+            } else {
+                self.processWithCurrentLocation(currentLocation)
+            }
         }
         locationManager.requestLocation()
     }
@@ -278,18 +403,24 @@ extension EstablishViewController {
                 self.activityIndicator.isHidden = true
             }
         }
-        
-        // 在主線程中安排超時計時器
-        DispatchQueue.main.asyncAfter(deadline: .now() + 20, execute: timeoutWorkItem)
+ 
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutWorkItem)
+
         
         PoemCollectionManager.shared.loadPoemIdsFromFirebase(forUserId: userId) {
             DispatchQueue.global(qos: .userInitiated).async {
                 FirebaseManager.shared.loadAllPoems { poems in
                     // 如果請求成功，取消超時計時器
                     timeoutWorkItem.cancel()
-                    
-                    let filteredPoems = poems.filter { poem in
-                        return poem.tag == self.styleTag && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
+                    let filteredPoems: [Poem]
+                    if self.styleTag < 0 {
+                        filteredPoems = poems.filter { poem in
+                            return !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
+                        }
+                    } else {
+                        filteredPoems = poems.filter { poem in
+                            return poem.tag == self.styleTag && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
+                        }
                     }
                     if let randomPoem = filteredPoems.randomElement() {
                         self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
@@ -328,6 +459,64 @@ extension EstablishViewController {
                             self.activityIndicator.stopAnimating()
                             self.activityIndicator.isHidden = true
                         }
+                    }
+                }
+            }
+        }
+    }
+    
+    func processTimingRecommendWithCurrentLocation(_ currentLocation: CLLocation) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let currentSeason = self.poemMatchingService.getCurrentSeason()
+            let currentTime = self.poemMatchingService.getCurrentTimeOfDay()
+            self.poemMatchingService.findBestMatchedPoem(currentSeason: currentSeason, currentWeather: 0, currentTime: currentTime) { matchedPoem, matchedScore in
+                if let matchedPoem = matchedPoem {
+                    self.processPoemText(matchedPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                        self.keywordToLineMap = keywordToLineMap
+                        self.generateTripFromKeywords(keywords, poem: matchedPoem, startingFrom: currentLocation) { trip in
+                            if let trip = trip {
+                                print("成功生成 trip：\(trip)")
+                                let places = self.matchingPlaces.map { $0.place }
+                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                    DispatchQueue.main.async {
+                                        self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
+                                        self.trip = trip
+                                        self.recommendRandomTripView.isUserInteractionEnabled = true
+                                        self.activityIndicator.stopAnimating()
+                                        self.activityIndicator.isHidden = true
+                                    }
+                                    FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: matchedPoem.id, city: self.city) { error in
+                                        if let error = error {
+                                                print("Error saving data: \(error.localizedDescription)")
+                                            } else {
+                                                print("Data saved successfully")
+                                            }
+                                    }
+                                }
+                                
+                                self.saveTripToFirebase(poem: matchedPoem) { savedTrip in
+                                    if let savedTrip = savedTrip {
+                                        print("行程已儲存至 Firebase，ID：\(savedTrip.id)")
+                                    } else {
+                                        print("行程儲存失敗")
+                                    }
+                                }
+                            } else {
+                                print("未能生成行程")
+                                DispatchQueue.main.async {
+                                    self.recommendRandomTripView.isUserInteractionEnabled = true
+                                    self.activityIndicator.stopAnimating()
+                                    self.activityIndicator.isHidden = true
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    print("未找到匹配的诗歌")
+                    DispatchQueue.main.async {
+                        self.recommendRandomTripView.isUserInteractionEnabled = true
+                        self.activityIndicator.stopAnimating()
+                        self.activityIndicator.isHidden = true
                     }
                 }
             }
@@ -376,7 +565,6 @@ extension EstablishViewController {
                     dispatchGroup.leave()
                 }
             }
-            
             dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
                 if foundValidPlace, self.matchingPlaces.count > 0 {
                     self.saveTripToFirebase(poem: poem) { trip in
@@ -421,7 +609,6 @@ extension EstablishViewController {
                     completion(true) // 标记为成功找到地点
                 } else {
                     completion(false) // 如果已经存在该地点
-                    
                 }
             } else {
                 
@@ -533,7 +720,6 @@ extension EstablishViewController {
                     if let travelTime = travelTime, let route = route {
                         totalTime += travelTime
                         
-                        // 創建導航指令數列
                         var stepInstructions = [String]()
                         for step in route.steps {
                             let instruction = step.instructions
@@ -546,12 +732,10 @@ extension EstablishViewController {
             }
         }
         
-        // Step 3: 返回總時間和詳細導航指令
         dispatchGroup.notify(queue: .main) {
             completion(totalTime, nestedInstructions)
         }
     }
-    
     
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
@@ -582,24 +766,20 @@ extension EstablishViewController {
             var stepInstructions = [[String: Any]]()  // 用來保存每一段路線的步驟
             
             if let route = routeArray.first {
-                // 遍歷該段路線中的每個步驟
                 for step in route.steps {
                     let stepData: [String: Any] = [
                         "instructions": step.instructions,
                         "distance": step.distance,
-                        "notice": step.notice ?? "無"  // `notice` 可能為 nil，所以提供預設值
+                        "notice": step.notice ?? "無"
                     ]
                     stepInstructions.append(stepData)
                 }
             }
             
-            // 將每段路線的步驟保存到外層數組中
             nestedRouteInstructions.append(stepInstructions)
         }
-        
         return nestedRouteInstructions
     }
-    
 }
 
 extension EstablishViewController {
@@ -681,27 +861,24 @@ extension EstablishViewController: PopupViewDelegate {
     func navigateToTripDetailPage() {
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
-        tripDetailVC.matchingPlaces = self.matchingPlaces // 确保 TripDetailViewController 能处理新的数据结构
-        tripDetailVC.keywordToLineMap = self.keywordToLineMap // 传递 keywordToLineMap
-        
+        tripDetailVC.matchingPlaces = self.matchingPlaces
+        tripDetailVC.keywordToLineMap = self.keywordToLineMap
         if let currentLocation = locationManager.currentLocation?.coordinate {
-            let places = matchingPlaces.map { $0.place } // 提取 Place 数组
+            let places = matchingPlaces.map { $0.place }
             calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { [weak self] totalTravelTime, nestedInstructions in
                 guard let self = self else { return }
                 
                 if let totalTravelTime = totalTravelTime, let nestedInstructions = nestedInstructions {
-                    tripDetailVC.totalTravelTime = totalTravelTime // 传递总交通时间
-                    tripDetailVC.nestedInstructions = nestedInstructions // 传递嵌套的导航指令数组
+                    tripDetailVC.totalTravelTime = totalTravelTime
+                    tripDetailVC.nestedInstructions = nestedInstructions 
                 }
                 
-                // 跳转到 TripDetailViewController
                 DispatchQueue.main.async {
                     self.navigationController?.pushViewController(tripDetailVC, animated: true)
                 }
             }
         }
     }
-    
 }
 
 extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
@@ -710,13 +887,14 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         styleTableView.dataSource = self
         styleTableView.delegate = self
         styleTableView.separatorStyle = .none
+        styleTableView.isScrollEnabled = false
         
         view.addSubview(styleTableView)
         styleTableView.snp.makeConstraints { make in
-            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(12)
-            make.width.equalTo(recommendRandomTripView)
+            make.top.equalTo(recommendRandomTripView.snp.bottom).offset(8)
+            make.leading.equalTo(view).offset(16)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-            make.centerX.equalTo(view)
+            make.trailing.equalTo(view).offset(-16)
         }
         
         styleTableView.rowHeight = UITableView.automaticDimension
@@ -730,7 +908,11 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = styleTableView.dequeueReusableCell(withIdentifier: "styleCell", for: indexPath) as? StyleTableViewCell
-        
+        cell?.containerView.backgroundColor = isStyleButtonSelected ? .white : .systemGray5
+        cell?.containerView.layer.borderWidth = isStyleButtonSelected ? 2 : 0
+        cell?.titleLabel.textColor = isStyleButtonSelected ? .deepBlue : .systemGray2
+        cell?.descriptionLabel.textColor = isStyleButtonSelected ? .systemGray : .systemGray3
+        cell?.containerView.layer.borderColor = isStyleButtonSelected ? UIColor.deepBlue.withAlphaComponent(1).cgColor : UIColor.systemGray3.cgColor
         cell?.titleLabel.text = styles[indexPath.row].name
         cell?.descriptionLabel.text = styles[indexPath.row].introduction
         cell?.selectionStyle = .none
@@ -740,9 +922,9 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let cell = tableView.cellForRow(at: indexPath) as? StyleTableViewCell {
-            // 在這裡執行你要對 cell 的操作
-            selectionTitle = cell.titleLabel.text ?? "" // 改變 cell 的背景顏色
-            styleTag = Int(indexPath.row)
+            selectionTitle = cell.titleLabel.text ?? ""
+            styleTag = Int(indexPath.row) - 1
+            print("Selected Style Title: \(selectionTitle)")
             updateStyleLabel(with: "＃\(selectionTitle)")
         }
     }
@@ -789,28 +971,22 @@ extension EstablishViewController {
     }
     
     func updateStyleLabel(with title: String) {
-        let fullText = "今天我想來點\n\(title) 的風格"
+        let fullText = "今天我想來點\n\(title) 的旅程"
         
-        // 建立 NSMutableAttributedString 來應用樣式
         let attributedString = NSMutableAttributedString(string: fullText)
         
-        // 設定第一行的字體和顏色
         let firstLineRange = (fullText as NSString).range(of: "今天我想來點")
-        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 28)!, range: firstLineRange)
+        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 26)!, range: firstLineRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor.backgroundGray, range: firstLineRange)
         
-        // 設定選擇的風格的字體和顏色
         let selectionRange = (fullText as NSString).range(of: title)
-        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 34)!, range: selectionRange)
+        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 32)!, range: selectionRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor.accent, range: selectionRange)
         
-        // 設定第三行 "的風格" 的字體和顏色
-        let thirdLineRange = (fullText as NSString).range(of: " 的風格")
-        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 28)!, range: thirdLineRange)
+        let thirdLineRange = (fullText as NSString).range(of: " 的旅程")
+        attributedString.addAttribute(.font, value: UIFont(name: "NotoSerifHK-Black", size: 26)!, range: thirdLineRange)
         attributedString.addAttribute(.foregroundColor, value: UIColor.backgroundGray, range: thirdLineRange)
         
-        // 將設定後的 attributed string 設定到 label
         styleLabel.attributedText = attributedString
     }
-
 }

@@ -36,18 +36,18 @@ class NotificationTableViewCell: UITableViewCell {
         contentView.addSubview(avatarImageView)
         
         // 配置標題
-        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
-        titleLabel.textColor = .black
+        titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        titleLabel.textColor = .deepBlue
         contentView.addSubview(titleLabel)
         
         // 配置訊息
-        messageLabel.font = UIFont.systemFont(ofSize: 14)
+        messageLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         messageLabel.textColor = .darkGray
         messageLabel.numberOfLines = 2
         contentView.addSubview(messageLabel)
         
         // 配置時間
-        dateLabel.font = UIFont.systemFont(ofSize: 12)
+        dateLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         dateLabel.textColor = .gray
         contentView.addSubview(dateLabel)
         

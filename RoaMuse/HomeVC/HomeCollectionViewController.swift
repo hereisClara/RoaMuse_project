@@ -7,15 +7,16 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     var poems = [Poem]()
     var collectionView: UICollectionView!
     var autoScrollTimer: Timer?
+    var numberOfItems = 30
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
+        navigationItem.backButtonTitle = ""
         self.title = "首頁"
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         
-        // 設置大標題的樣式
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
                 .foregroundColor: UIColor.white,  // 修改大標題顏色
@@ -63,15 +64,15 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         blurEffectView.snp.makeConstraints { make in
             make.top.equalTo(view)
             make.leading.trailing.equalTo(view)
-            make.height.equalTo(view).multipliedBy(0.2)
+            make.height.equalTo(view).multipliedBy(0.15)
         }
         
         // 4. 創建一個漸變遮罩來控制模糊效果的範圍
         let gradientLayer = CAGradientLayer()
-        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.9).cgColor] // 從透明到模糊漸變
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.6).cgColor] // 從透明到模糊漸變
         gradientLayer.locations = [0.0, 1.0] // 從透明到白色的漸變位置
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 1.0) // 從頂部開始漸變
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.0) // 到底部結束漸變
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.05) // 到底部結束漸變
         
         // 5. 將 gradientLayer 添加到 blurEffectView 並設置遮罩
         blurEffectView.layer.mask = gradientLayer
@@ -116,7 +117,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         collectionView.alwaysBounceVertical = true // 總是允許垂直滾動
         collectionView.showsVerticalScrollIndicator = false // 隱藏垂直滾動條
         collectionView.showsHorizontalScrollIndicator = false // 隱藏水平滾動條
-        collectionView.allowsSelection = false
+        collectionView.allowsSelection = true
         
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
@@ -127,7 +128,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     }
     
     func startAutoScrolling() {
-        autoScrollTimer = Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(handleAutoScroll), userInfo: nil, repeats: true)
+        autoScrollTimer = Timer.scheduledTimer(timeInterval: 0.03, target: self, selector: #selector(handleAutoScroll), userInfo: nil, repeats: true)
     }
     
     func stopAutoScrolling() {
@@ -137,7 +138,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     @objc func handleAutoScroll() {
         let currentOffset = collectionView.contentOffset.y
-        let newOffset = CGPoint(x: 0, y: currentOffset + 1) // 每次向下滾動 1 點
+        let newOffset = CGPoint(x: 0, y: currentOffset + 0.5) 
         let maxOffset = collectionView.contentSize.height - collectionView.bounds.height
         
         if newOffset.y >= maxOffset {
@@ -156,7 +157,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     // MARK: - UICollectionView DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return poems.isEmpty ? 0 : 240 // 返回較大的數字模擬無限滾動
+        return poems.isEmpty ? 0 : numberOfItems // 返回較大的數字模擬無限滾動
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -169,6 +170,20 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         
         return cell
     }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        if indexPath.item == numberOfItems - 5 && poems.count > 0 {
+                // 更新數據源，動態增加 15 個項目
+                let newItems = numberOfItems + 15
+                let indexPaths = (numberOfItems..<newItems).map { IndexPath(item: $0, section: 0) }
+                numberOfItems = newItems
+                
+                // 使用 performBatchUpdates 插入新項目，避免畫面閃動
+                collectionView.performBatchUpdates({
+                    collectionView.insertItems(at: indexPaths)
+                }, completion: nil)
+            }
+        }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // 防止 poems 数组为空导致崩溃

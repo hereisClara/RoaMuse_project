@@ -39,8 +39,8 @@ class RegionLabelView: UIView {
         // 使用 Auto Layout 設置約束
         regionLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            regionLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 6),
-            regionLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -6),
+            regionLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 8),
+            regionLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -8),
             regionLabel.centerYAnchor.constraint(equalTo: self.centerYAnchor)
         ])
         

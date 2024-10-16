@@ -9,13 +9,16 @@ import UIKit
 import MapKit
 import FirebaseFirestore
 import Photos
+import SideMenu
 
 class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate {
     
+    let filterButton = UIButton(type: .system)
+    var isSlidingViewVisible = false
     var backgroundMaskView: UIView!
     var placeTripDictionary = [String: PlaceTripInfo]()
     var mapView: MKMapView!
-    var images: [UIImage] = []  // 定義存放照片的屬性
+    var images: [UIImage] = []
     var slidingView: SlidingView!
     var fullScreenImageView: UIImageView!
     var currentImageIndex: Int = 0
@@ -25,18 +28,70 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tabBarController?.tabBar.isHidden = true
         navigationItem.backButtonTitle = ""
+        self.navigationController?.isNavigationBarHidden = false
         mapView = MKMapView(frame: view.bounds)
         mapView.delegate = self
+        mapView.showsUserLocation = true
+        mapView.userTrackingMode = .follow
+        mapView.showsCompass = true
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier)
         view.addSubview(mapView)
         
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Marker")
         
-        loadCompletedPlacesAndAddAnnotations()
-        setupSlidingView()
+        loadCompletedPlacesAndAddAnnotations(selectedIndex: nil)
+        
         setupFullScreenImageView()
+        setupFilterButton()
+        setupSlidingView()
+    }
+    
+    func setupFilterButton() {
+        
+        let backgroundCircle = UIView()
+        backgroundCircle.backgroundColor = UIColor.white.withAlphaComponent(0.7)  // 半透明白色
+        backgroundCircle.layer.cornerRadius = 35  // 圓形（寬高一樣，半徑為寬/2）
+        view.addSubview(backgroundCircle)
+        
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小及粗細
+        let iconImage = UIImage(systemName: "slider.horizontal.3", withConfiguration: imageConfig)
+        filterButton.setImage(iconImage, for: .normal)
+        filterButton.tintColor = .deepBlue  // 設定圖標顏色
+        filterButton.backgroundColor = .clear  // 清除按鈕背景色
+        filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
+        view.addSubview(filterButton)
+
+        backgroundCircle.snp.makeConstraints { make in
+            make.width.height.equalTo(70)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
+            make.trailing.equalToSuperview().offset(-20)
+        }
+
+        filterButton.snp.makeConstraints { make in
+            make.center.equalTo(backgroundCircle)
+            make.width.height.equalTo(40) 
+        }
+    }
+    
+    @objc func toggleSlidingView() {
+        
+        isSlidingViewVisible.toggle()
+        sideMenuController?.revealMenu()
+        UIView.animate(withDuration: 0.3) {
+            self.slidingView.isHidden = !self.isSlidingViewVisible
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+        
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     func setupSlidingView() {
@@ -44,142 +99,103 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         view.addSubview(slidingView)
     }
     
-    func setupFullScreenImageView() {
-        fullScreenImageView = UIImageView(frame: view.bounds)
-        fullScreenImageView.contentMode = .scaleAspectFit
-        fullScreenImageView.backgroundColor = .black
-        fullScreenImageView.isUserInteractionEnabled = true
-        fullScreenImageView.alpha = 0 
-        
-        // 添加手勢識別器
-        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeToNextImage))
-        swipeLeft.direction = .left
-        fullScreenImageView.addGestureRecognizer(swipeLeft)
-        
-        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeToPreviousImage))
-        swipeRight.direction = .right
-        fullScreenImageView.addGestureRecognizer(swipeRight)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullScreenImageView))
-        fullScreenImageView.addGestureRecognizer(tapGesture)
-        
-        view.addSubview(fullScreenImageView)
-    }
-    
-    @objc func swipeToNextImage() {
-        // 確保我們不會超出圖片陣列的範圍
-        if currentImageIndex < images.count - 1 {
-            currentImageIndex += 1  // 更新到下一張圖片
-            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
-            print("切換到下一張圖片，當前索引: \(currentImageIndex)")
-        } else {
-            print("已經是最後一張圖片")
-        }
-    }
-    
-    // 處理切換到上一張圖片的邏輯
-    @objc func swipeToPreviousImage() {
-        // 確保我們不會低於圖片陣列的範圍
-        if currentImageIndex > 0 {
-            currentImageIndex -= 1  // 回到上一張圖片
-            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
-            print("切換到上一張圖片，當前索引: \(currentImageIndex)")
-        } else {
-            print("已經是第一張圖片")
-        }
-    }
-    
-    // Function to display the image in full screen when a thumbnail is tapped
-    func displayFullScreenImage(at index: Int) {
-        currentImageIndex = index
-        fullScreenImageView.image = images[index]
-        
-        UIView.animate(withDuration: 0.3) {
-            self.fullScreenImageView.alpha = 1
-        }
-    }
-    
-    @objc func dismissFullScreenImageView() {
-        UIView.animate(withDuration: 0.3) {
-            self.fullScreenImageView.alpha = 0  // 隱藏全螢幕視圖
-        }
-    }
-    
-    func loadCompletedPlacesAndAddAnnotations() {
-        guard let userId = userId else {
-            print("錯誤: 無法從 UserDefaults 獲取 userId，請確認 userId 已正確存入 UserDefaults")
-            return
-        }
-        
+    func loadCompletedPlacesAndAddAnnotations(selectedIndex: Int?) {
+        guard let userId = userId else { return }
+
+        self.placeTripDictionary = [:]
         let userRef = Firestore.firestore().collection("users").document(userId)
-        
-        // 從 Firestore 獲取 user 的 completedPlace
+
         userRef.getDocument { documentSnapshot, error in
             if let error = error {
                 print("獲取 user completedPlace 失敗: \(error.localizedDescription)")
                 return
             }
-            
+
             guard let document = documentSnapshot, let data = document.data(),
                   let completedPlace = data["completedPlace"] as? [[String: Any]] else {
                 print("錯誤: 無法解析 completedPlace 資料")
                 return
             }
+
+            let group = DispatchGroup()  // DispatchGroup 用來同步等待所有請求完成
+            var filteredPlaceTripDictionary = [String: PlaceTripInfo]()
+
             for placeEntry in completedPlace {
                 if let placeIds = placeEntry["placeIds"] as? [String], let tripId = placeEntry["tripId"] as? String {
                     for placeId in placeIds {
-                        if var placeTripInfo = self.placeTripDictionary[placeId] {
-                            placeTripInfo.tripIds.append(tripId)
-                            self.placeTripDictionary[placeId] = placeTripInfo
-                        } else {
-                            self.placeTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: [tripId])
+                        group.enter()
+                        let tripRef = Firestore.firestore().collection("trips").document(tripId)
+
+                        tripRef.getDocument { snapshot, error in
+                            defer { group.leave() }
+
+                            if let error = error {
+                                print("獲取 trip 失敗: \(error.localizedDescription)")
+                                return
+                            }
+
+                            guard let tripData = snapshot?.data() else { return }
+
+                            if selectedIndex == nil || tripData["tag"] as? Int == selectedIndex {
+                                if var placeTripInfo = filteredPlaceTripDictionary[placeId] {
+                                    placeTripInfo.tripIds.append(tripId)
+                                    filteredPlaceTripDictionary[placeId] = placeTripInfo
+                                } else {
+                                    filteredPlaceTripDictionary[placeId] = PlaceTripInfo(placeId: placeId, tripIds: [tripId])
+                                }
+                            }
                         }
                     }
                 }
             }
             
-            let uniquePlaceIds = Array(self.placeTripDictionary.keys)
-            self.fetchPlaces(for: uniquePlaceIds)
-            
-            for (placeId, placeTripInfo) in self.placeTripDictionary {
-                print("============")
-                print("Place ID: \(placeId), Trip IDs: \(placeTripInfo.tripIds)")
+            group.notify(queue: .main) {
+                self.placeTripDictionary = filteredPlaceTripDictionary  // 設定整理後的資料
+                print("完成的地點: ", self.placeTripDictionary.keys)
+                
+                // 呼叫 fetchPlaces 來標註地點
+                self.fetchPlaces(for: Array(filteredPlaceTripDictionary.keys))
             }
         }
     }
-    
+
     func fetchPlaces(for placeIds: [String]) {
+        mapView.removeAnnotations(mapView.annotations)
+
         let placesRef = Firestore.firestore().collection("places")
         let dispatchGroup = DispatchGroup()
-        
+
         for placeId in placeIds {
             dispatchGroup.enter()
-            
+
             placesRef.document(placeId).getDocument { documentSnapshot, error in
+                defer { dispatchGroup.leave() }  // 確保每次請求結束都會呼叫 leave()
+
                 if let error = error {
-                    dispatchGroup.leave()
+                    print("獲取地點失敗: \(error.localizedDescription)")
                     return
                 }
-                
+
                 guard let document = documentSnapshot, let data = document.data(),
                       let latitude = data["latitude"] as? Double,
                       let longitude = data["longitude"] as? Double,
                       let placeName = data["name"] as? String else {
-                    dispatchGroup.leave()
+                    print("解析地點資料失敗")
                     return
                 }
-                
+
                 let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                print("加入地點: \(placeName), ID: \(placeId)")
+
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = location
                 annotation.title = placeName
-                annotation.subtitle = placeId // 確保此處設置 placeId
+                annotation.subtitle = placeId
+
                 self.mapView.addAnnotation(annotation)
-                dispatchGroup.leave()
             }
         }
-        
-        // 確保所有的查詢完成後再進行後續處理
+
         dispatchGroup.notify(queue: .main) {
             print("所有標註點已經添加")
         }
@@ -211,7 +227,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         completion(images)
     }
     
-    
     func requestPhotoLibraryPermissions(completion: @escaping (Bool) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus()
         switch status {
@@ -230,28 +245,27 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         }
     }
     
-    // 設置標註點視圖的 cluster 屬性
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        // 如果是 cluster（聚簇標註點），使用內建的 cluster 視圖
+        
+        if annotation is MKUserLocation {
+                return nil
+            }
+        
         if let clusterAnnotation = annotation as? MKClusterAnnotation {
             let clusterView = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: clusterAnnotation)
             return clusterView
         }
         
-        // 如果是普通的標註點
         if let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "Marker", for: annotation) as? MKMarkerAnnotationView {
-            // 設置 clusteringIdentifier 為 "clusterID" 以支持群組
+            
             annotationView.clusteringIdentifier = "clusterID"
             
-            // 啟用懸浮泡泡視窗
-            annotationView.canShowCallout = true
-            
-            // 添加右側的詳細按鈕 (右側的附屬視圖)
+//            annotationView.canShowCallout = true
+            annotationView.glyphImage = UIImage(systemName: "flag.circle.fill")
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
             
-            // 可在此處根據 annotation 資訊設置不同的圖片或顯示風格
-            annotationView.markerTintColor = .blue // 設定大頭針的顏色
+            annotationView.markerTintColor = .red // 設定大頭針的顏色
             
             return annotationView
         }
@@ -260,74 +274,105 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        if let annotation = view.annotation {
-            if let placeId = annotation.subtitle ?? annotation.title {
-                print("Found placeId: \(placeId)")
-                slidingView.currentPlaceId = placeId
-                if let placeTripInfo = placeTripDictionary[placeId ?? ""] {
-                    let tripIds = placeTripInfo.tripIds
-                    
-                    slidingView.tripIds = tripIds
-                    slidingView.tableView.reloadData()
-                    let annotationLocation = CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
-                    requestPhotoLibraryPermissions { granted in
-                        if granted {
-                            self.fetchPhotos(for: annotationLocation, radius: 500) { images in
-                                print("Fetched \(images.count) images")
-                                DispatchQueue.main.async {
-                                    self.slidingView.images = images
-                                    self.slidingView.tableView.reloadData()  // 刷新 tableView
-                                    
-                                    print("Images updated in slidingView and tableView reloaded")
-                                    
-                                    self.centerMapOnAnnotation(annotation: annotation)
-                                    print("Map centered on annotation")
-                                    
-                                    print("Calling showSlidingView")
-                                    self.showSlidingView()
-                                }
-                            }
-                        } else {
-                            print("Photo library permissions denied")
-                        }
-                    }
-                } else {
-                    print("No matching tripIds found for placeId: \(placeId)")
+        guard let annotation = view.annotation,
+              let placeId = annotation.subtitle ?? annotation.title else {
+            print("No valid annotation selected")
+            return
+        }
+
+        slidingView.currentPlaceId = placeId
+
+        guard let placeTripInfo = placeTripDictionary[placeId ?? ""] else {
+            print("No matching tripIds found for placeId: \(placeId)")
+            return
+        }
+
+        slidingView.tripIds = placeTripInfo.tripIds
+        slidingView.tableView.reloadData()
+
+        let dispatchGroup = DispatchGroup()
+
+        dispatchGroup.enter()
+        let annotationLocation = CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
+        requestPhotoLibraryPermissions { granted in
+            if granted {
+                self.fetchPhotos(for: annotationLocation, radius: 500) { images in
+                    self.slidingView.images = images
+                    dispatchGroup.leave()
                 }
             } else {
-                print("No placeId found in annotation title or subtitle")
+                print("Photo library permissions denied")
+                dispatchGroup.leave()
             }
-        } else {
-            print("No annotation selected")
+        }
+
+        // 詩句資料請求
+        dispatchGroup.enter()
+        slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
+            DispatchQueue.main.async {
+                // 你可以在這裡更新相關 UI 或變數
+                print("詩名: \(poemTitle), 詩句: \(poemLine)")
+                dispatchGroup.leave()  // 當詩句資料完成時再呼叫 leave()
+            }
+        }
+
+        // 所有資料獲取完成後顯示 slidingView 並更新 UI
+        dispatchGroup.notify(queue: .main) {
+            self.slidingView.tableView.reloadData()
+            self.centerMapOnAnnotation(annotation: annotation)
+            self.showSlidingView()
         }
     }
-
-    func centerMapOnAnnotation(annotation: MKAnnotation) {
-        
-        var mapCenter = annotation.coordinate
-        let mapRect = mapView.visibleMapRect
-        let mapHeight = mapRect.size.height
-        let yOffset = mapHeight / 4
-        
-        let currentCenter = mapView.centerCoordinate
-        
-        let adjustedCenter = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: mapCenter.latitude - yOffset / mapHeight, longitude: currentCenter.longitude), span: mapView.region.span)
-        
-        mapView.setRegion(adjustedCenter, animated: true)
+    
+    func centerMapOnUserLocation(userLocation: CLLocation) {
+        let regionRadius: CLLocationDistance = 50000  // 50公里
+        let coordinateRegion = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+        mapView.setRegion(coordinateRegion, animated: true)
     }
     
+//    MARK: map center
+    func centerMapOnAnnotation(annotation: MKAnnotation) {
+        let regionRadius: CLLocationDistance = 5000 // 5公里的縮放半徑
+
+        // 固定大頭針要顯示在螢幕上的位置 (100, 100)
+        let fixedScreenPoint = CGPoint(x: view.frame.width / 2, y: view.frame.height * 0.2)
+
+        // 將固定點轉換為地理座標
+        let fixedCoordinate = mapView.convert(fixedScreenPoint, toCoordinateFrom: mapView)
+
+        // 計算從大頭針地點到固定點的偏移量（緯度、經度）
+        let latitudeDelta = annotation.coordinate.latitude - fixedCoordinate.latitude
+        let longitudeDelta = annotation.coordinate.longitude - fixedCoordinate.longitude
+
+        // 計算新的地圖中心座標，將地圖移動，使大頭針顯示在固定點
+        let newCenterCoordinate = CLLocationCoordinate2D(
+            latitude: mapView.centerCoordinate.latitude + latitudeDelta,
+            longitude: mapView.centerCoordinate.longitude + longitudeDelta
+        )
+
+        // 設定地圖的新區域
+        let region = MKCoordinateRegion(center: newCenterCoordinate,
+                                        latitudinalMeters: regionRadius * 2,
+                                        longitudinalMeters: regionRadius * 2)
+
+        // 動畫顯示新的地圖區域
+        mapView.setRegion(region, animated: true)
+    }
+
     func showSlidingView() {
         // 添加背景遮罩视图
         print("showSlidingView called")
+        slidingView.isHidden = false
+
         backgroundMaskView = UIView(frame: view.bounds)
-        backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)  // 半透明背景
+        backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         view.insertSubview(backgroundMaskView, belowSubview: slidingView)
-        
-        // 添加点击手势识别器，点击遮罩隐藏 slidingView
+        print("SlidingView frame:", slidingView.frame)
+        print("SlidingView hidden:", slidingView.isHidden)
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideSlidingView))
         backgroundMaskView.addGestureRecognizer(tapGesture)
         
-        // 上滑显示 slidingView
         UIView.animate(withDuration: 0.3) {
             self.slidingView.frame.origin.y = self.view.bounds.height - 600
         }
@@ -344,25 +389,16 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func getTripId(from annotation: MKAnnotation) -> [String]? {
-        // 解包 annotation.subtitle 並確保其為非 nil 值
+        
         guard let placeId = annotation.subtitle as? String else {
             return []
         }
         
-        // 從 placeTripDictionary 中獲取對應的 tripIds
         guard let placeTripInfo = placeTripDictionary[placeId] else {
             return []
         }
         
-        // 假設你需要返回第一個 tripId，如果有多個 tripId 可以根據需求進行修改
         return placeTripInfo.tripIds
-    }
-    
-    
-    func showPoemAlert(title: String, author: String) {
-        let alertController = UIAlertController(title: "詩", message: "詩名: \(title)\n作者: \(author)", preferredStyle: .alert)
-        alertController.addAction(UIAlertAction(title: "確認", style: .default, handler: nil))
-        present(alertController, animated: true, completion: nil)
     }
     
     func fetchTripAndPoemData(for tripId: String, completion: @escaping (String, String) -> Void) {
@@ -427,7 +463,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // Tap to show full-screen image
+        
         displayFullScreenImage(at: indexPath.row)
     }
 }
@@ -436,5 +472,66 @@ extension MapViewController: UIScrollViewDelegate {
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         
         return scrollView.subviews.first as? UIImageView
+    }
+}
+
+extension MapViewController {
+    
+    func setupFullScreenImageView() {
+        fullScreenImageView = UIImageView(frame: view.bounds)
+        fullScreenImageView.contentMode = .scaleAspectFit
+        fullScreenImageView.backgroundColor = .black
+        fullScreenImageView.isUserInteractionEnabled = true
+        fullScreenImageView.alpha = 0
+        
+        // 添加手勢識別器
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeToNextImage))
+        swipeLeft.direction = .left
+        fullScreenImageView.addGestureRecognizer(swipeLeft)
+        
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeToPreviousImage))
+        swipeRight.direction = .right
+        fullScreenImageView.addGestureRecognizer(swipeRight)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissFullScreenImageView))
+        fullScreenImageView.addGestureRecognizer(tapGesture)
+        
+        view.addSubview(fullScreenImageView)
+    }
+    
+    @objc func swipeToNextImage() {
+        // 確保我們不會超出圖片陣列的範圍
+        if currentImageIndex < images.count - 1 {
+            currentImageIndex += 1  // 更新到下一張圖片
+            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
+        } else {
+            print("已經是最後一張圖片")
+        }
+    }
+    
+    // 處理切換到上一張圖片的邏輯
+    @objc func swipeToPreviousImage() {
+        // 確保我們不會低於圖片陣列的範圍
+        if currentImageIndex > 0 {
+            currentImageIndex -= 1  // 回到上一張圖片
+            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
+        } else {
+            print("已經是第一張圖片")
+        }
+    }
+    
+    func displayFullScreenImage(at index: Int) {
+        currentImageIndex = index
+        fullScreenImageView.image = images[index]
+        
+        UIView.animate(withDuration: 0.3) {
+            self.fullScreenImageView.alpha = 1
+        }
+    }
+    
+    @objc func dismissFullScreenImageView() {
+        UIView.animate(withDuration: 0.3) {
+            self.fullScreenImageView.alpha = 0  // 隱藏全螢幕視圖
+        }
     }
 }

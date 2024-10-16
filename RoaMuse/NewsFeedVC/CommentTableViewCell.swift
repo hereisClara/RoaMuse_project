@@ -32,7 +32,7 @@ class CommentTableViewCell: UITableViewCell {
     
     let createdAtLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         label.textColor = .gray
         label.numberOfLines = 1
         return label
@@ -45,11 +45,9 @@ class CommentTableViewCell: UITableViewCell {
         return imageView
     }()
     
-    // 初始化
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         
-        // 將子視圖添加到 contentView 中
         contentView.addSubview(usernameLabel)
         contentView.addSubview(contentLabel)
         contentView.addSubview(createdAtLabel)
@@ -63,17 +61,16 @@ class CommentTableViewCell: UITableViewCell {
         }
         
         contentLabel.snp.makeConstraints { make in
-            make.top.equalTo(usernameLabel.snp.bottom).offset(4)
+            make.top.equalTo(usernameLabel.snp.bottom).offset(8)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
-            make.bottom.equalTo(createdAtLabel).offset(-16)
         }
         
         createdAtLabel.snp.makeConstraints { make in
-            make.top.equalTo(contentLabel.snp.bottom).offset(4)
+            make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
-            make.bottom.equalTo(contentView).offset(-8) // 確保自適應
+            make.bottom.equalTo(contentView).offset(-12) // 確保自適應
         }
         
         avatarImageView.snp.makeConstraints { make in

@@ -26,10 +26,8 @@ class CollectionsViewController: UIViewController {
     let popupView = PopUpView()
     var incompleteTripsArray = [Trip]()
     var completeTripsArray = [Trip]()
-    
     var filterButtons: [UIButton] = []
     var selectedFilterIndex: Int?
-    
     let mainContainer = UIView()
     let buttonsBackground = UIView()
     let magnifierBackground = UIView()
@@ -37,10 +35,8 @@ class CollectionsViewController: UIViewController {
     var isExpanded = false
     var mainContainerWidthConstraint: Constraint?
     var poemIdsInCollectionTrip = [String]()
-    
     var incompletesPoemTitleArray: [String] = []
     var completesPoemTitleArray: [String] = []
-    
     var selectedTrip: Trip?
     
     override func viewDidLoad() {
@@ -49,10 +45,9 @@ class CollectionsViewController: UIViewController {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
         self.navigationController?.setNavigationBarHidden(false, animated: false)
-        //        uploadTripsToFirebase()
-        //        uploadPlaces()
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
+        navigationItem.backButtonTitle = ""
         self.title = "收藏"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
@@ -80,7 +75,6 @@ class CollectionsViewController: UIViewController {
         segmentedControl.layer.cornerRadius = 25
         segmentedControl.clipsToBounds = true
         segmentedControl.layer.masksToBounds = true
-        
         segmentedControl.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(70)
@@ -90,11 +84,9 @@ class CollectionsViewController: UIViewController {
     }
     
     func setupSegmentedControl() {
-        // 設置 segment 的標題
         segmentedControl = UISegmentedControl(items: ["行程", "日記"])
         segmentedControl.selectedSegmentIndex = 0
         
-        // 自定義外觀
         let normalTextAttributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor.deepBlue,
             .font: UIFont(name: "NotoSerifHK-Black", size: 20)
@@ -108,23 +100,18 @@ class CollectionsViewController: UIViewController {
         segmentedControl.setTitleTextAttributes(normalTextAttributes, for: .normal)
         segmentedControl.setTitleTextAttributes(selectedTextAttributes, for: .selected)
         
-        // 設置背景顏色和邊框
         segmentedControl.backgroundColor = UIColor.clear
         segmentedControl.selectedSegmentTintColor = UIColor.deepBlue
         
-        // 自定義邊框
         segmentedControl.layer.cornerRadius = 25
         segmentedControl.layer.borderWidth = 2
         segmentedControl.layer.borderColor = UIColor.deepBlue.cgColor
         segmentedControl.clipsToBounds = true
         
-        // 添加 target 方法
         segmentedControl.addTarget(self, action: #selector(segmentedControlChanged(_:)), for: .valueChanged)
         
-        // 添加到視圖
         view.addSubview(segmentedControl)
         
-        // 設置約束
         segmentedControl.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(70)
@@ -193,16 +180,12 @@ class CollectionsViewController: UIViewController {
             
             let bookmarkTripIds = data["bookmarkTrip"] as? [String] ?? []
             let completedTripIds = data["completedTrip"] as? [String] ?? []
-            print(bookmarkTripIds)
-            print(completedTripIds)
             
             let incompleteTripIds = bookmarkTripIds.filter { !completedTripIds.contains($0) }
             let completeTripIds = bookmarkTripIds.filter { completedTripIds.contains($0) }
-            print(incompleteTripIds)
             
             let parentDispatchGroup = DispatchGroup()
             
-            // 处理未完成行程
             parentDispatchGroup.enter()
             FirebaseManager.shared.loadBookmarkedTrips(tripIds: incompleteTripIds) { [weak self] incompleteTrips in
                 guard let self = self else { parentDispatchGroup.leave(); return }
@@ -610,7 +593,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
         return cell ?? UITableViewCell()
     }
 
-    //    TODO: 地理反向編碼
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if segmentIndex == 0 {
             let trip: Trip
@@ -621,7 +603,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 trip = completeTripsArray[indexPath.row]
             }
             
-            // 獲取當前位置
             if let currentLocation = locationManager.currentLocation {
                 let dispatchGroup = DispatchGroup()
                 var places: [Place] = []
@@ -735,8 +716,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 if segmentIndex == 0 {
                     FirebaseManager.shared.removeTripBookmark(forUserId: userId, tripId: id) { success in
                         if success {
-                            print("取消行程收藏成功")
-
                             if indexPath.section == 0 {
                                 self.incompleteTripsArray.remove(at: indexPath.row)
                             } else {
@@ -750,7 +729,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 } else {
                     FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: id) { success in
                         if success {
-                            print("取消收藏成功")
                             self.bookmarkPostIdArray.removeAll { $0 == id }
                             self.postsArray.remove(at: indexPath.row)
                             self.collectionsTableView.deleteRows(at: [indexPath], with: .automatic)

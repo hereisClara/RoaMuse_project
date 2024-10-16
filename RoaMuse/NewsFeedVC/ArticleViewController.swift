@@ -13,13 +13,11 @@ class ArticleViewController: UIViewController {
     var bookmarkAccounts = [String]()
     var likeAccounts = [String]()
     let tableView = UITableView()
-    
     var articleTitle = String()
     var articleAuthor = String()
     var articleContent = String()
     var articleDate = String()
     var comments = [[String: Any]]()
-    
     var isBookmarked = false
     let collectButton = UIButton()
     let likeButton = UIButton()
@@ -38,11 +36,9 @@ class ArticleViewController: UIViewController {
     let dateLabel = UILabel()
     var photoUrls = [String]()
     let photoContainerView = UIView()
-    
     var poemTitle = String()
     var trip: Trip?
     var isScrolledToFirstComment = false
-    
     private let popupView = PopUpView()
     
     override func viewDidLoad() {
@@ -50,22 +46,28 @@ class ArticleViewController: UIViewController {
         view.backgroundColor = .white
         navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
+//        let navBarAppearance = UINavigationBarAppearance()
+//            navBarAppearance.configureWithOpaqueBackground() // 确保导航栏不透明
+//            navBarAppearance.backgroundColor = .white // 自定义背景颜色
+//            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
+//
+//            // 只为当前页面的导航项设置外观
+//            self.navigationItem.standardAppearance = navBarAppearance
+//            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        
         tabBarController?.tabBar.isHidden = true
         self.navigationItem.largeTitleDisplayMode = .never
         getTripData()
         observeLikeCountChanges()
-        
         popupView.delegate = self
         setupTableView()
         setupPhotos()
         updateHeaderViewLayout()
         checkBookmarkStatus()
         updateBookmarkData()
-        
         setupCommentInput()
         updateLikesData()
         setupTripViewAction()
-        
         FirebaseManager.shared.loadAwardTitle(forUserId: authorId) { (result: Result<(String, Int), Error>) in
             switch result {
             case .success(let (awardTitle, item)):
@@ -92,8 +94,7 @@ class ArticleViewController: UIViewController {
         
         if let tabBarController = self.tabBarController {
             tabBarController.tabBar.isHidden = true
-        } else {
-        }
+        } else { }
         
         observeLikeCountChanges()
         checkBookmarkStatus()
@@ -117,9 +118,7 @@ class ArticleViewController: UIViewController {
         
         postRef.addSnapshotListener { [weak self] snapshot, error in
             guard let self = self else { return }
-            
             if self.isUpdatingLikeStatus { return }
-            
             if let error = error { return }
             
             guard let data = snapshot?.data(), let likesAccount = data["likesAccount"] as? [String] else { return }
@@ -132,18 +131,31 @@ class ArticleViewController: UIViewController {
     }
     
     func setupCommentInput() {
-        commentTextField.placeholder = "輸入留言..."
+        
+        let placeholderText = "輸入留言..."
+        commentTextField.attributedPlaceholder = NSAttributedString(
+            string: placeholderText,
+            attributes: [
+                .font: UIFont(name: "NotoSerifHK-Black", size: 18) ?? UIFont.systemFont(ofSize: 18),
+                .foregroundColor: UIColor.lightGray // 可選的顏色設定
+            ]
+        )
+        
+        commentTextField.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         commentTextField.borderStyle = .roundedRect
+        commentTextField.layer.cornerRadius = 15
         view.addSubview(commentTextField)
         
         sendButton.setTitle("送出", for: .normal)
+        sendButton.tintColor = .deepBlue
+        sendButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         sendButton.addTarget(self, action: #selector(didTapSendButton), for: .touchUpInside)
         view.addSubview(sendButton)
         
         commentTextField.snp.makeConstraints { make in
             make.leading.equalTo(view).offset(16)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-            make.height.equalTo(40)
+            make.height.equalTo(50)
         }
         
         sendButton.snp.makeConstraints { make in
@@ -151,9 +163,10 @@ class ArticleViewController: UIViewController {
             make.trailing.equalTo(view).offset(-16)
             make.bottom.equalTo(commentTextField)
             make.height.equalTo(commentTextField)
-            make.width.equalTo(80)
+            make.width.equalTo(50)
         }
     }
+
     
     func checkBookmarkStatus() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
@@ -189,9 +202,7 @@ class ArticleViewController: UIViewController {
         Firestore.firestore().collection("posts").document(postId).getDocument { snapshot, error in
             if let error = error { return }
             
-            guard let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] else {
-                return
-            }
+            guard let data = snapshot?.data(), let loadedComments = data["comments"] as? [[String: Any]] else { return }
             
             var decodedComments: [[String: Any]] = []
             let dispatchGroup = DispatchGroup()
@@ -220,7 +231,6 @@ class ArticleViewController: UIViewController {
             }
             
             dispatchGroup.notify(queue: .main) {
-                // 對 comments 根據 createdAt 進行由舊到新的排序
                 self.comments = decodedComments.sorted {
                     let date1 = ($0["createdAt"] as? Timestamp)?.dateValue() ?? Date()
                     let date2 = ($1["createdAt"] as? Timestamp)?.dateValue() ?? Date()
@@ -235,14 +245,11 @@ class ArticleViewController: UIViewController {
     
     func saveLikeData(postId: String, userId: String, isLiked: Bool, completion: @escaping (Bool) -> Void) {
         let postRef = Firestore.firestore().collection("posts").document(postId)
-        
-        
         if isLiked {
             postRef.updateData([
                 "likesAccount": FieldValue.arrayUnion([userId])
             ]) { error in
                 if let error = error {
-                    print("按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
                     self.updateLikesData()
@@ -279,7 +286,6 @@ class ArticleViewController: UIViewController {
                 "likesAccount": FieldValue.arrayRemove([userId])
             ]) { error in
                 if let error = error {
-                    print("取消按讚失敗: \(error.localizedDescription)")
                     completion(false)
                 } else {
                     self.updateLikesData()
@@ -366,41 +372,12 @@ class ArticleViewController: UIViewController {
             }
         }
     }
-    
-    func getTripData() {
-        FirebaseManager.shared.loadAllTrips { trips in
-            let filteredTrips = trips.filter { trip in
-                return trip.id == self.tripId
-            }
-            if let matchedTrip = filteredTrips.first {
-                FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
-                    DispatchQueue.main.async {
-                        self.tripTitleLabel.text = poem.title
-                        self.poemTitle = poem.title
-                        self.poemId = poem.id
-                        
-                        if let headerView = self.tableView.tableHeaderView {
-                            headerView.setNeedsLayout()
-                            headerView.layoutIfNeeded()
-                            let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
-                            var frame = headerView.frame
-                            frame.size.height = headerHeight
-                            headerView.frame = frame
-                            self.tableView.tableHeaderView = headerView
-                        }
-                        self.tableView.reloadData()
-                    }
-                }
-            }
-        }
-    }
 }
 
 extension ArticleViewController {
     
     @objc func didTapLikeButton(_ sender: UIButton) {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        
         isUpdatingLikeStatus = true
         sender.isSelected.toggle()
         saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
@@ -426,7 +403,6 @@ extension ArticleViewController {
         let firstCommentIndexPath = IndexPath(row: 0, section: 0)
         if comments.count > 0 {
             tableView.scrollToRow(at: firstCommentIndexPath, at: .top, animated: true)
-            
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self.isScrolledToFirstComment = false
             }
@@ -449,9 +425,7 @@ extension ArticleViewController {
     
     @objc func didTapSendButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        guard let commentContent = commentTextField.text, !commentContent.isEmpty else {
-            return
-        }
+        guard let commentContent = commentTextField.text, !commentContent.isEmpty else { return }
         saveComment(userId: userId, postId: postId, commentContent: commentContent) { success in
             if success {
                 self.loadComments()
@@ -485,13 +459,12 @@ extension ArticleViewController {
                         print("加載使用者資料失敗: \(error.localizedDescription)")
                     }
                 }
-            } else {
-            }
+            } else { }
         }
     }
 }
 
-extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
+extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setupTableView() {
         
@@ -538,7 +511,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         headerView.addSubview(contentLabel)
         
         dateLabel.text = articleDate
-        dateLabel.font = UIFont.systemFont(ofSize: 12)
+        dateLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         dateLabel.textColor = .gray
         dateLabel.numberOfLines = 0
         headerView.addSubview(dateLabel)
@@ -618,7 +591,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         setupButton()
         
         likeCountLabel.text = "0"
-        likeCountLabel.font = UIFont.systemFont(ofSize: 14)
+        likeCountLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         headerView.addSubview(likeCountLabel)
         
         likeButton.snp.makeConstraints { make in
@@ -651,7 +624,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
         authorLabel.font = UIFont(name: "NotoSerifHK-Black", size: 22)
-        contentLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        contentLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 18)
         contentLabel.lineSpacing = 7
         contentLabel.text = articleContent
         contentLabel.numberOfLines = 0
@@ -687,20 +660,17 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
     
     func setupActionButtons(in headerView: UIView) {
-        
         likeButton.tintColor = UIColor.systemBlue
         likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         likeCountLabel.text = "0"
         likeCountLabel.font = UIFont.systemFont(ofSize: 14)
         commentButton.tintColor = UIColor.systemGreen
         commentButton.addTarget(self, action: #selector(didTapCommentButton(_:)), for: .touchUpInside)
-        
         collectButton.tintColor = UIColor.systemPink
         collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
     }
     
     func setupTripViewAction() {
-        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(openPresent))
         tripView.addGestureRecognizer(tapGesture)
     }
@@ -811,7 +781,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         
         var uiImages: [UIImage] = []
         let dispatchGroup = DispatchGroup()
-        
         let syncQueue = DispatchQueue(label: "com.example.imageSyncQueue")
         
         for urlString in photoUrls {
@@ -835,7 +804,6 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             let fullScreenVC = FullScreenImageViewController()
             fullScreenVC.images = uiImages
             fullScreenVC.startingIndex = index
-            
             self.navigationController?.pushViewController(fullScreenVC, animated: true)
         }
     }
@@ -870,10 +838,7 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             let db = Firestore.firestore()
             
             db.collection("trips").whereField("id", isEqualTo: self.tripId).getDocuments { snapshot, error in
-                if let error = error {
-                    return
-                }
-                
+                if let error = error { return }
                 if let documents = snapshot?.documents, let document = documents.first {
                     
                     let data = document.data()
@@ -915,10 +880,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                             weather: weather,
                             startTime: startTime
                         )
-                    } else {
-                    }
-                } else {
-                }
+                    } else { }
+                } else { }
             }
         }
     }
@@ -930,11 +893,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
             case .success(let data):
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
                     DispatchQueue.main.async {
-                        
                         self.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "placeholder"))
                     }
-                } else {
-                }
+                } else { }
             case .failure(let error):
                 print("加載貼文作者的資料失敗: \(error.localizedDescription)")
             }
@@ -945,10 +906,21 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
         avatarImageView.addGestureRecognizer(tapGesture)
     }
     
-    @objc func didTapAvatar() {
+    func navigateToUserProfile(userId: String) {
         let userProfileVC = UserProfileViewController()
-        userProfileVC.userId = authorId
-        self.navigationController?.pushViewController(userProfileVC, animated: true)
+        userProfileVC.userId = userId
+        navigationController?.pushViewController(userProfileVC, animated: true)
+    }
+
+    @objc func didTapAvatar() {
+        navigateToUserProfile(userId: authorId)
+    }
+    
+    @objc func didTapCommentAvatar(_ sender: UITapGestureRecognizer) {
+        guard let index = sender.view?.tag else { return }
+        let comment = comments[index]
+        let userId = comment["userId"] as? String ?? ""
+        navigateToUserProfile(userId: userId)
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -956,12 +928,9 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as? CommentTableViewCell else {
-            return UITableViewCell()
-        }
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "CommentCell", for: indexPath) as? CommentTableViewCell else { return UITableViewCell() }
         
         cell.selectionStyle = .none
-        
         if comments.count > 0 {
             let comment = comments[indexPath.row]
             
@@ -973,16 +942,16 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
                 let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
                 cell.createdAtLabel.text = createdAtString
             }
-            
             if let avatarUrlString = comment["avatarUrl"] as? String, let avatarUrl = URL(string: avatarUrlString) {
                 DispatchQueue.main.async {
                     cell.avatarImageView.kf.setImage(with: avatarUrl, placeholder: UIImage(named: "placeholder"))
                 }
             }
         }
-        cell.setNeedsLayout()
-        cell.layoutIfNeeded()
-        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapCommentAvatar(_:)))
+        cell.avatarImageView.isUserInteractionEnabled = true
+        cell.avatarImageView.addGestureRecognizer(tapGesture)
+        cell.avatarImageView.tag = indexPath.row
         return cell
     }
 }
@@ -990,11 +959,39 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource  {
 extension ArticleViewController: PopupViewDelegate {
     
     func navigateToTripDetailPage() {
-        guard let trip = self.trip else {
-            return
-        }
+        guard let trip = self.trip else { return }
         let tripDetailVC = TripDetailViewController()
         tripDetailVC.trip = trip
         navigationController?.pushViewController(tripDetailVC, animated: true)
+    }
+}
+
+extension ArticleViewController {
+    func getTripData() {
+        FirebaseManager.shared.loadAllTrips { trips in
+            let filteredTrips = trips.filter { trip in
+                return trip.id == self.tripId
+            }
+            if let matchedTrip = filteredTrips.first {
+                FirebaseManager.shared.loadPoemById(matchedTrip.poemId) { poem in
+                    DispatchQueue.main.async {
+                        self.tripTitleLabel.text = poem.title
+                        self.poemTitle = poem.title
+                        self.poemId = poem.id
+                        
+                        if let headerView = self.tableView.tableHeaderView {
+                            headerView.setNeedsLayout()
+                            headerView.layoutIfNeeded()
+                            let headerHeight = headerView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).height
+                            var frame = headerView.frame
+                            frame.size.height = headerHeight
+                            headerView.frame = frame
+                            self.tableView.tableHeaderView = headerView
+                        }
+                        self.tableView.reloadData()
+                    }
+                }
+            }
+        }
     }
 }

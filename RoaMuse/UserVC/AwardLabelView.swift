@@ -17,7 +17,7 @@ class AwardLabelView: UIView {
     var onTap: (() -> Void)?
     
     // 初始化方法
-    init(title: String, backgroundColor: UIColor = .lightGray) {
+    init(title: String, backgroundColor: UIColor = .systemGray) {
         super.init(frame: .zero)
         
         // 設置背景顏色

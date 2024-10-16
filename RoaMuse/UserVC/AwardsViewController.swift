@@ -5,9 +5,11 @@ import FirebaseFirestore
 class AwardsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
     let dropdownMenu = DropdownMenu(items: ["探索者", "街頭土行孫", "現世行腳仙", "浪漫1", "奇險1", "田園1"])
+    var titlesWithIndexes: [(title: String, section: Int, row: Int)] = []
     let dropdownButton = UIButton(type: .system)
     var dynamicTaskSets: [[TaskSet]] = []
     let tableView = UITableView()
+    let headerLabel = UILabel()
     let titleContainerView = UIView()
     var currentTitles: [String] = []
     var userName = String()
@@ -64,15 +66,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         setupTableView()
         self.navigationItem.largeTitleDisplayMode = .never
-        dropdownMenu.onItemSelected = { [weak self] selectedItem in
-            guard let self = self else { return }
-            self.titleLabel.text = selectedItem
-            if let (section, row, item) = self.findIndexesForTitle(selectedItem) {
-                self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
-                self.saveSelectedIndexesToFirebase(section: section, row: row, item: item)
-                print("已保存的索引: section = \(section), row = \(row), item = \(item)")
-            }
-        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -80,6 +73,16 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         fetchUserData()
         tabBarController?.tabBar.isHidden = true
         navigationController?.navigationBar.isTranslucent = true
+        
+        dropdownMenu.onItemSelected = { [weak self] selectedItem in
+            guard let self = self else { return }
+            self.titleLabel.text = selectedItem
+            if let (section, row, item) = self.findIndexesForTitle(selectedItem) {
+                self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
+                self.saveSelectedIndexesToFirebase(section: section, row: row, item: item)
+//                print("已保存的索引: section = \(section), row = \(row), item = \(item)")
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -173,28 +176,20 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     }
 
     func setupTableViewHeader() {
-        // 創建一個包含進度條的Header View
         let headerView = UIView()
         headerView.backgroundColor = .deepBlue
 
-        // 設置圓角，只對下方兩個角進行圓角處理
         headerView.layer.cornerRadius = 30
         headerView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         headerView.layer.masksToBounds = true
 
-        // 設置圓形進度條
-//        if let url = URL(string: avatarImageUrl) {
-//            circularProgressBar.setAvatarImage(from: url)
-//        }
         let completedTasks = currentTitles.count
         let totalTasks = 15
         circularProgressBar.progress = Float(completedTasks) / Float(totalTasks) // 設置進度
         headerView.addSubview(circularProgressBar)
 
-        // 添加標題
-        let headerLabel = UILabel()
         headerLabel.text = userName
-        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 32)
+        headerLabel.font = UIFont(name: "NotoSerifHK-Black", size: 26)
         headerLabel.textColor = .white
 
         titleLabel.text = selectedTitle
@@ -261,6 +256,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         if dropdownMenu.superview == nil {
             dropdownMenu.show(in: self.view, anchorView: titleContainerView)
         } else {
+            tableView.reloadData()
             dropdownMenu.hide()
         }
     }
@@ -272,7 +268,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        // 使用 addSnapshotListener 監聽數據變化
         userRef.addSnapshotListener { (documentSnapshot, error) in
             if let error = error {
                 print("獲取用戶數據時出錯: \(error.localizedDescription)")
@@ -414,7 +409,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             }
         }
         
-        // 更新下拉選單
         dropdownMenu.items = currentTitles
     }
     
@@ -452,14 +446,15 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
 }
 
 extension AwardsViewController {
-    // 新增方法，根據數據計算稱號並更新 dropDown
+    
     func calculateTitlesAndUpdateDropDown() {
+        titlesWithIndexes.removeAll()  // 清空舊資料，避免重複
+        
         for section in 0..<self.dynamicTaskSets.count {
             for row in 0..<self.dynamicTaskSets[section].count {
                 let taskSet = self.dynamicTaskSets[section][row]
                 let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
                 
-                // 計算稱號
                 let titlesForRow = awardTitles[section][row]
                 var obtainedTitles: [String] = []
                 
@@ -471,15 +466,15 @@ extension AwardsViewController {
                     obtainedTitles = [titlesForRow[0]]
                 }
                 
-                // 將獲得的稱號加入 dropDown
                 for title in obtainedTitles {
                     if !currentTitles.contains(title) {
-                        currentTitles.append(title)
+                        currentTitles.append(title)  // 保留舊的 currentTitles
                     }
+                    titlesWithIndexes.append((title: title, section: section, row: row))
                 }
             }
         }
-        
+        dropdownMenu.titlesWithIndexes = titlesWithIndexes
         dropdownMenu.items = currentTitles
     }
     

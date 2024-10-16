@@ -63,6 +63,7 @@ class TripDetailViewController: UIViewController {
         super.viewDidLoad()
         navigationController?.navigationBar.barTintColor = UIColor.backgroundGray
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
+        
         navigationItem.backButtonTitle = ""
         self.buttonState = []
         getPoemPlacePair()
@@ -88,7 +89,6 @@ class TripDetailViewController: UIViewController {
         }
         
         if let trip = trip {
-            print("成功接收到行程數據: \(trip)")
             fetchPlacePoemPairs(for: trip.id) { pair in
                 if let pair = pair {
                     self.placePoemPairs.append(contentsOf: pair)
@@ -257,7 +257,6 @@ class TripDetailViewController: UIViewController {
                 }
             }
             self.places = self.matchingPlaces.map { $0.place }
-            print("Sorted matchingPlaces: \(self.matchingPlaces)")
             
             if let lastCompletedPlaceId = self.completedPlaceIds.last,
                let lastCompletedIndex = self.places.firstIndex(where: { $0.id == lastCompletedPlaceId }) {
@@ -321,9 +320,7 @@ class TripDetailViewController: UIViewController {
 extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard section == 0 else {
-            return nil
-        }
+        guard section == 0 else { return nil }
         
         guard let poem = loadedPoem else {
             return createLoadingHeaderView()
@@ -393,7 +390,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let contentLabel = createLabel(text: poem.content.joined(separator: "\n"), font: UIFont(name: "NotoSerifHK-Black", size: 20) ?? UIFont.systemFont(ofSize: 20))
         contentLabel.numberOfLines = 0
         headerView.addSubview(contentLabel)
-        
+        contentLabel.textAlignment = .left
         contentLabel.snp.makeConstraints { make in
             make.top.equalTo(poetLabel.snp.bottom).offset(30)
             make.leading.equalToSuperview().offset(12)
@@ -493,7 +490,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         return buttonsView
     }
     
-    
     private func updateTransportButtonsDisplay() {
         if isExpanded {
             for button in transportButtons {
@@ -540,7 +536,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             for button in transportButtons {
                 buttonContainer.addArrangedSubview(button)
             }
-            // 收合按钮
+            
             isExpanded = false
             UIView.animate(withDuration: 0.3) {
                 self.updateTransportButtonsDisplay()
@@ -576,36 +572,35 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     private func updateMapForSelectedTransportType() {
         guard let startCoordinate = locationManager.currentLocation?.coordinate else { return }
-        
+
         let place = places[currentTargetIndex]
         let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+
         let directionRequest = MKDirections.Request()
-        directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate, addressDictionary: nil))
-        directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate, addressDictionary: nil))
+        directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate))
+        directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate))
         directionRequest.transportType = selectedTransportType // 根據選擇的交通方式設置
-        
+
         let directions = MKDirections(request: directionRequest)
         directions.calculate { [weak self] (response, error) in
-            guard let self = self, let response = response, error == nil else {
-                return
-            }
-            
+            guard let self = self, let response = response, error == nil else { return }
+
             let route = response.routes[0]
-            if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: self.currentTargetIndex)) as? MapTableViewCell {
-                cell.showMap(from: startCoordinate, to: destinationCoordinate)
-                UIView.performWithoutAnimation {
-                    self.tableView.reloadRows(at: [IndexPath(row: 0, section: self.currentTargetIndex)], with: .none)
+            DispatchQueue.main.async {
+                if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: self.currentTargetIndex)) as? MapTableViewCell {
+                    // 呼叫 showMap 時傳入起點和終點座標
+                    cell.showMap(from: startCoordinate, to: destinationCoordinate, with: route)
                 }
             }
         }
     }
-    
+
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return section == 0 ? UITableView.automaticDimension : 0
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 180
+        return 200
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -625,9 +620,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        guard section < places.count else {
-            return nil
-        }
+        guard section < places.count else { return nil }
         
         let containerView = UIView()
         containerView.backgroundColor = .clear
@@ -654,7 +647,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         placeLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
-            make.centerY.equalToSuperview().offset(-40)
+            make.centerY.equalToSuperview().offset(-60)
         }
         
         let completeButton = UIButton(type: .system)
@@ -672,7 +665,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let descriptionLabel = UILabel()
         descriptionLabel.tag = 100 + section
-        descriptionLabel.numberOfLines = 3
+        descriptionLabel.numberOfLines = 5
         descriptionLabel.lineSpacing = 3
         footerView.addSubview(descriptionLabel)
         descriptionLabel.snp.makeConstraints { make in
@@ -701,28 +694,41 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             }
             placeLabel.text = place.name
             placeLabel.textColor = .deepBlue
-//            MARK: iiiiiiii
         }
         
         footerViews[section] = footerView
-        print("view for footer: \(footerViews)")
-
         return containerView
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MapCell", for: indexPath) as? MapTableViewCell ?? MapTableViewCell()
         let place = places[indexPath.section]
-        
+
         let isMapVisibleForSection = mapVisibilityState[indexPath.section] ?? false
-            if isMapVisibleForSection {
-                let startCoordinate = locationManager.currentLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
-                let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
-                cell.showMap(from: startCoordinate, to: destinationCoordinate)
-            } else {
-                cell.hideMap()
+        if isMapVisibleForSection {
+            guard let startCoordinate = locationManager.currentLocation?.coordinate else { return cell }
+            let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
+
+            // 建立路徑請求
+            let directionRequest = MKDirections.Request()
+            directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate))
+            directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate))
+            directionRequest.transportType = selectedTransportType
+
+            // 計算路徑
+            let directions = MKDirections(request: directionRequest)
+            directions.calculate { response, error in
+                guard let response = response, error == nil else { return }
+
+                let route = response.routes.first  // 取得第一條路徑
+                DispatchQueue.main.async {
+                    cell.showMap(from: startCoordinate, to: destinationCoordinate, with: route!)
+                }
             }
-        
+        } else {
+            cell.hideMap()
+        }
+
         return cell
     }
     
@@ -812,7 +818,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         }
                         
                         if sectionIndex + 1 < self.places.count {
-                            
                                 self.expandNextCell(at: sectionIndex + 1)
                             
                         } else {
@@ -831,7 +836,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                         self.checkDistanceForCurrentTarget(from: currentLocation)
                     }
                 } else {
-                    print("更新失败")
                 }
             }
         } else {
@@ -904,6 +908,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                 footerView.backgroundColor = .deepBlue
                 if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
+                    print("-----+ ", self.placePoemPairs)
                     placeLabel.text = poemPair.poemLine
                     placeLabel.textColor = .white
                     if let descriptionLabel = footerView.viewWithTag(100 + sectionIndex) as? UILabel {
@@ -922,7 +927,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
                                 case .failure(let error):
                                     DispatchQueue.main.async {
                                         descriptionLabel.text = "無法生成描述"
-                                        print("Error fetching suggestion: \(error.localizedDescription)")
                                     }
                                 }
                             }
