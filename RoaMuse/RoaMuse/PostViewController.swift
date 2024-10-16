@@ -93,7 +93,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     @objc func handlePostAction() {
         saveData()          // 執行保存操作
-        backToLastPage()    // 返回上一頁
     }
     
     func addImageToStackView(_ image: UIImage) {
@@ -254,8 +253,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         contentTextView.font = UIFont.systemFont(ofSize: 20)
         postButton.setTitle("發文", for: .normal)
-        postButton.addTarget(self, action: #selector(saveData), for: .touchUpInside)
-        postButton.addTarget(self, action: #selector(backToLastPage), for: .touchUpInside)
+//        postButton.addTarget(self, action: #selector(saveData), for: .touchUpInside)
+//        postButton.addTarget(self, action: #selector(backToLastPage), for: .touchUpInside)
         
         postButton.isEnabled = false
         
@@ -293,7 +292,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         })
     }
     
-    func savePostData(userId: String, title: String, content: String, photoUrls: [String]) {
+    func savePostData(userId: String, title: String, content: String, photoUrls: [String], completion: @escaping (Bool) -> Void) {
         let posts = Firestore.firestore().collection("posts")
         let document = posts.document()
         
@@ -302,7 +301,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             "userId": userId,
             "title": title,
             "content": content,
-            "photoUrls": photoUrls, // 儲存圖片的 URLs 到 Firestore
+            "photoUrls": photoUrls,
             "createdAt": Date(),
             "bookmarkAccount": [String](),
             "likesAccount": [String](),
@@ -311,9 +310,11 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         document.setData(data) { error in
             if let error = error {
-                print("發文失敗: \(error.localizedDescription)")
+                print("发文失败: \(error.localizedDescription)")
+                completion(false)
             } else {
-                print("發文成功")
+                print("发文成功")
+                completion(true)
             }
         }
     }
@@ -529,18 +530,26 @@ extension PostViewController {
         }
     }
     
-    @objc func saveData() {
+    func saveData() {
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
         
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        
+        print("开始保存数据")
         uploadImagesToFirebase { [weak self] urls in
             guard let self = self, let urls = urls else {
                 return
             }
             
-            self.photoUrls = urls // 儲存圖片 URLs
-            self.savePostData(userId: userId, title: title, content: content, photoUrls: urls)
+            self.photoUrls = urls
+            self.savePostData(userId: userId, title: title, content: content, photoUrls: urls) { success in
+                if success {
+                    DispatchQueue.main.async {
+                        self.backToLastPage()
+                    }
+                } else {
+                    // 处理保存失败的情况，例如提示用户
+                }
+            }
         }
     }
 }
