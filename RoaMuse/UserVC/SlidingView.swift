@@ -123,7 +123,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             if isExpanded || tripIds.count <= 3 {
                 return tripIds.count
             } else {
-                return 3 // 限制最多显示5行
+                return 3
             }
         } else {
             return 1
@@ -208,45 +208,43 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
         tripsRef.getDocument { document, error in
             if let error = error {
                 print("獲取行程資料失敗: \(error.localizedDescription)")
-                completion("無詩名", "無詩句")
+                completion("無詩名", "無詩句") // 確保即使出錯也能完成
                 return
             }
             
             guard let tripData = document?.data(),
                   let poemId = tripData["poemId"] as? String,
                   let placePoemPairs = tripData["placePoemPairs"] as? [[String: Any]] else {
-                completion("無詩名", "無詩句")
+                completion("無詩名", "無詩句") // 確保資料缺失時完成
                 return
             }
-            
-            // 通過 poemId 查找詩名
+
+            // 查找詩名
             let poemsRef = Firestore.firestore().collection("poems").document(poemId)
-            
             poemsRef.getDocument { poemDocument, error in
                 if let error = error {
                     print("獲取詩資料失敗: \(error.localizedDescription)")
-                    completion("無詩名", "無詩句")
+                    completion("無詩名", "無詩句") // 確保出錯時完成
                     return
                 }
                 
                 let poemTitle = poemDocument?.get("title") as? String ?? "無詩名"
-                
-                // 查找 placeId 對應的詩句
                 var matchingPoemLine = "無詩句"
+                
                 for pair in placePoemPairs {
                     if let placeId = pair["placeId"] as? String,
-                       placeId == self.currentPlaceId, // 假設你有一個當前的 placeId
+                       placeId == self.currentPlaceId,
                        let poemLine = pair["poemLine"] as? String {
                         matchingPoemLine = poemLine
                         break
                     }
                 }
                 
-                completion(poemTitle, matchingPoemLine)
+                completion(poemTitle, matchingPoemLine) // 完成後調用 closure
             }
         }
     }
-    
+
     @objc func handleShowMoreTapped() {
         isExpanded = true
         tableView.reloadSections(IndexSet(integer: 0), with: .automatic)

@@ -18,8 +18,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     var backgroundMaskView: UIView!
     var placeTripDictionary = [String: PlaceTripInfo]()
     var mapView: MKMapView!
-    var images: [UIImage] = []  // 定義存放照片的屬性
-//    let menuVC = MenuViewController()
+    var images: [UIImage] = []
     var slidingView: SlidingView!
     var fullScreenImageView: UIImageView!
     var currentImageIndex: Int = 0
@@ -41,7 +40,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "Marker")
         
-//        menuVC.delegate = self
         loadCompletedPlacesAndAddAnnotations(selectedIndex: nil)
         
         setupFullScreenImageView()
@@ -52,7 +50,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func setupFilterButton() {
         
         let backgroundCircle = UIView()
-        backgroundCircle.backgroundColor = UIColor.white.withAlphaComponent(0.65)  // 半透明白色
+        backgroundCircle.backgroundColor = UIColor.white.withAlphaComponent(0.7)  // 半透明白色
         backgroundCircle.layer.cornerRadius = 35  // 圓形（寬高一樣，半徑為寬/2）
         view.addSubview(backgroundCircle)
         
@@ -64,17 +62,15 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
         view.addSubview(filterButton)
 
-        // 使用 SnapKit 設定圓形背景的約束
         backgroundCircle.snp.makeConstraints { make in
-            make.width.height.equalTo(70)  // 圓形，寬高一致
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)  // 距離底部 20
-            make.trailing.equalToSuperview().offset(-20)  // 靠右對齊，距離右邊 20
+            make.width.height.equalTo(70)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
+            make.trailing.equalToSuperview().offset(-20)
         }
 
-        // 使用 SnapKit 設定按鈕的約束
         filterButton.snp.makeConstraints { make in
-            make.center.equalTo(backgroundCircle)  // 與圓形背景的中心對齊
-            make.width.height.equalTo(40)  // 按鈕寬高為 40
+            make.center.equalTo(backgroundCircle)
+            make.width.height.equalTo(40) 
         }
     }
     
@@ -124,7 +120,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             let group = DispatchGroup()  // DispatchGroup 用來同步等待所有請求完成
             var filteredPlaceTripDictionary = [String: PlaceTripInfo]()
 
-            // 遍歷所有的 completedPlace 並發起 trip 資料的請求
             for placeEntry in completedPlace {
                 if let placeIds = placeEntry["placeIds"] as? [String], let tripId = placeEntry["tripId"] as? String {
                     for placeId in placeIds {
@@ -132,7 +127,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                         let tripRef = Firestore.firestore().collection("trips").document(tripId)
 
                         tripRef.getDocument { snapshot, error in
-                            defer { group.leave() }  // 確保每次請求結束都會呼叫 leave()
+                            defer { group.leave() }
 
                             if let error = error {
                                 print("獲取 trip 失敗: \(error.localizedDescription)")
@@ -141,7 +136,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
 
                             guard let tripData = snapshot?.data() else { return }
 
-                            // 檢查 trip 的 tag 是否符合 selectedIndex
                             if selectedIndex == nil || tripData["tag"] as? Int == selectedIndex {
                                 if var placeTripInfo = filteredPlaceTripDictionary[placeId] {
                                     placeTripInfo.tripIds.append(tripId)
@@ -154,8 +148,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     }
                 }
             }
-
-            // 當所有請求完成時執行
+            
             group.notify(queue: .main) {
                 self.placeTripDictionary = filteredPlaceTripDictionary  // 設定整理後的資料
                 print("完成的地點: ", self.placeTripDictionary.keys)
@@ -167,9 +160,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
 
     func fetchPlaces(for placeIds: [String]) {
-        print("fetch")
-
-        // 移除所有現有的標註
         mapView.removeAnnotations(mapView.annotations)
 
         let placesRef = Firestore.firestore().collection("places")
@@ -270,7 +260,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             
             annotationView.clusteringIdentifier = "clusterID"
             
-            annotationView.canShowCallout = true
+//            annotationView.canShowCallout = true
             
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
@@ -284,38 +274,53 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        if let annotation = view.annotation {
-            if let placeId = annotation.subtitle ?? annotation.title {
-                slidingView.currentPlaceId = placeId
-                if let placeTripInfo = placeTripDictionary[placeId ?? ""] {
-                    let tripIds = placeTripInfo.tripIds
-                    
-                    slidingView.tripIds = tripIds
-                    slidingView.tableView.reloadData()
-                    let annotationLocation = CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
-                    requestPhotoLibraryPermissions { granted in
-                        if granted {
-                            self.fetchPhotos(for: annotationLocation, radius: 500) { images in
-                                DispatchQueue.main.async {
-                                    self.slidingView.images = images
-                                    self.slidingView.tableView.reloadData()  // 刷新 tableView
-                                    
-                                    self.centerMapOnAnnotation(annotation: annotation)
-                                    self.showSlidingView()
-                                }
-                            }
-                        } else {
-                            print("Photo library permissions denied")
-                        }
-                    }
-                } else {
-                    print("No matching tripIds found for placeId: \(placeId)")
+        guard let annotation = view.annotation,
+              let placeId = annotation.subtitle ?? annotation.title else {
+            print("No valid annotation selected")
+            return
+        }
+
+        slidingView.currentPlaceId = placeId
+
+        guard let placeTripInfo = placeTripDictionary[placeId ?? ""] else {
+            print("No matching tripIds found for placeId: \(placeId)")
+            return
+        }
+
+        slidingView.tripIds = placeTripInfo.tripIds
+        slidingView.tableView.reloadData()
+
+        let dispatchGroup = DispatchGroup()
+
+        dispatchGroup.enter()
+        let annotationLocation = CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
+        requestPhotoLibraryPermissions { granted in
+            if granted {
+                self.fetchPhotos(for: annotationLocation, radius: 500) { images in
+                    self.slidingView.images = images
+                    dispatchGroup.leave()
                 }
             } else {
-                print("No placeId found in annotation title or subtitle")
+                print("Photo library permissions denied")
+                dispatchGroup.leave()
             }
-        } else {
-            print("No annotation selected")
+        }
+
+        // 詩句資料請求
+        dispatchGroup.enter()
+        slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
+            DispatchQueue.main.async {
+                // 你可以在這裡更新相關 UI 或變數
+                print("詩名: \(poemTitle), 詩句: \(poemLine)")
+                dispatchGroup.leave()  // 當詩句資料完成時再呼叫 leave()
+            }
+        }
+
+        // 所有資料獲取完成後顯示 slidingView 並更新 UI
+        dispatchGroup.notify(queue: .main) {
+            self.slidingView.tableView.reloadData()
+            self.centerMapOnAnnotation(annotation: annotation)
+            self.showSlidingView()
         }
     }
     
@@ -325,14 +330,13 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         mapView.setRegion(coordinateRegion, animated: true)
     }
     
+//    MARK: map center
     func centerMapOnAnnotation(annotation: MKAnnotation) {
         let regionRadius: CLLocationDistance = 5000  // 縮放半徑，根據需求調整
 
-        // 1. 取得螢幕尺寸及偏移量
         let mapViewHeight = mapView.bounds.height
         let mapViewWidth = mapView.bounds.width
 
-        // 2. 設定地圖中心要移動的高度，讓標註移到螢幕的上 1/3 區域
         let yOffsetInPoints = mapViewHeight / 4  // 嘗試將其設為 1/4 或其他值
 
         // 3. 將地理座標轉換為地圖上的螢幕點
@@ -382,17 +386,15 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func getTripId(from annotation: MKAnnotation) -> [String]? {
-        // 解包 annotation.subtitle 並確保其為非 nil 值
+        
         guard let placeId = annotation.subtitle as? String else {
             return []
         }
         
-        // 從 placeTripDictionary 中獲取對應的 tripIds
         guard let placeTripInfo = placeTripDictionary[placeId] else {
             return []
         }
         
-        // 假設你需要返回第一個 tripId，如果有多個 tripId 可以根據需求進行修改
         return placeTripInfo.tripIds
     }
     
@@ -458,7 +460,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // Tap to show full-screen image
+        
         displayFullScreenImage(at: indexPath.row)
     }
 }
