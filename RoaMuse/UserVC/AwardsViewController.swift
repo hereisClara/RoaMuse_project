@@ -446,7 +446,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
 }
 
 extension AwardsViewController {
-    
+//    MARK: containerStyle
     func calculateTitlesAndUpdateDropDown() {
         titlesWithIndexes.removeAll()  // 清空舊資料，避免重複
         
@@ -455,9 +455,11 @@ extension AwardsViewController {
                 let taskSet = self.dynamicTaskSets[section][row]
                 let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
                 
+                // 根據 section 和 row 從 awardTitles 中取得該 row 的 titles
                 let titlesForRow = awardTitles[section][row]
                 var obtainedTitles: [String] = []
                 
+                // 根據進度決定應該取得哪些 titles
                 if isProgressEqualOrGreater(progress, than: 1.0) {
                     obtainedTitles = titlesForRow
                 } else if isProgressEqualOrGreater(progress, than: 0.6) {
@@ -466,14 +468,22 @@ extension AwardsViewController {
                     obtainedTitles = [titlesForRow[0]]
                 }
                 
+                // 檢查 obtainedTitles 並將 title 的索引位置存入 titlesWithIndexes
                 for title in obtainedTitles {
                     if !currentTitles.contains(title) {
                         currentTitles.append(title)  // 保留舊的 currentTitles
                     }
-                    titlesWithIndexes.append((title: title, section: section, row: row))
+
+                    // 找到 title 在 awardTitles 中的 row 索引
+                    if let titleRowIndex = titlesForRow.firstIndex(of: title) {
+                        titlesWithIndexes.append((title: title, section: section, row: titleRowIndex))
+                        print("---", titlesWithIndexes)
+                    }
                 }
             }
         }
+        
+        // 更新 dropdownMenu
         dropdownMenu.titlesWithIndexes = titlesWithIndexes
         dropdownMenu.items = currentTitles
     }

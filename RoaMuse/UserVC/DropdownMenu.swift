@@ -63,12 +63,14 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         
         let title = items[indexPath.row]
         let index = titlesWithIndexes[indexPath.row]
+        print(items)
+        print(titlesWithIndexes)
         
         cell.selectionStyle = .none
         cell.awardLabelView.titleLabel.text = index.title
         
         AwardStyleManager.updateTitleContainerStyle(
-            forTitle: index.title,
+            forTitle: title,
             item: index.row,
             titleContainerView: cell.awardLabelView,
             titleLabel: cell.awardLabelView.titleLabel,

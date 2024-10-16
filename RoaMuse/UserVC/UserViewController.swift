@@ -195,6 +195,9 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                         dropdownButton: nil
                     )
                 }
+                if let visibleIndexPaths = self.tableView.indexPathsForVisibleRows {
+                    self.tableView.reloadData()
+                    }
                 
             case .failure(let error):
                 print("獲取稱號失敗: \(error.localizedDescription)")
@@ -370,7 +373,24 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             
             self.userName = savedUserName
             self.userNameLabel.text = savedUserName
+            
+            FirebaseManager.shared.loadAwardTitle(forUserId: savedUserId) { (result: Result<(String, Int), Error>) in
+                        switch result {
+                        case .success(let (awardTitle, item)):
+                            let title = awardTitle
+                            self.awardLabelView.updateTitle(title)
+                            DispatchQueue.main.async {
+                                AwardStyleManager.updateTitleContainerStyle(
+                                    forTitle: awardTitle,item: item,titleContainerView: self.awardLabelView,
+                                    titleLabel: self.awardLabelView.titleLabel,dropdownButton: nil)
+                            }
+                        case .failure(let error):
+                            print("獲取稱號失敗: \(error.localizedDescription)")
+                        }
+                    }
         }
+        
+        
     }
     
     func loadAvatarImage(from urlString: String) {
@@ -511,7 +531,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerX.equalTo(headerView)
             make.bottom.equalTo(headerView.snp.bottom).offset(-16)
         }
-        
         postStackView.snp.makeConstraints { make in
             make.centerY.equalTo(fansStackView)
             make.centerX.equalTo(fansStackView.snp.leading).offset(-80)  // 间距
@@ -521,18 +540,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             make.centerY.equalTo(fansStackView)
             make.centerX.equalTo(fansStackView.snp.trailing).offset(80)  // 间距
         }
-        
         let fansTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFans))
         fansStackView.addGestureRecognizer(fansTapGesture)
         fansStackView.isUserInteractionEnabled = true
-        
         let followingTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFollowing))
         followingStackView.addGestureRecognizer(followingTapGesture)
         followingStackView.isUserInteractionEnabled = true
-        
         headerView.setNeedsLayout()
         headerView.layoutIfNeeded()
-        
         tableView.tableHeaderView = headerView
     }
     
@@ -562,17 +577,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             .font: introductionLabel.font!,
             .paragraphStyle: paragraphStyle
         ]
-        
         let attributedText = NSAttributedString(string: introductionLabel.text ?? "", attributes: attributes)
         introductionLabel.attributedText = attributedText
     }
     
     func updateTableHeaderViewHeight() {
         guard let header = tableView.tableHeaderView else { return }
-        
         header.setNeedsLayout()
         header.layoutIfNeeded()
-        
         let newSize = header.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
         var headerFrame = header.frame
         headerFrame.size.height = newSize.height
@@ -584,12 +596,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         let maxWidth = tableView.frame.width - 32
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 6
-        
         let attributes: [NSAttributedString.Key: Any] = [
             .font: introductionLabel.font!,
             .paragraphStyle: paragraphStyle
         ]
-        
         let text = introductionLabel.text ?? ""
         let boundingRect = (text as NSString).boundingRect(
             with: CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude),
@@ -601,18 +611,14 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func setupFollowersAndFollowing() {
-        
         fansNumberLabel.text = "0"
         fansNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
-        
         fansTextLabel.text = "Followers"
         fansTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         fansTextLabel.textColor = .gray
         fansTextLabel.textAlignment = .center
-        
         followingNumberLabel.text = "0"
         followingNumberLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
-        
         followingTextLabel.text = "Following"
         followingTextLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         followingTextLabel.textColor = .gray
@@ -634,19 +640,15 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func handleMapButtonTapped() {
-        
         let menuController = MenuViewController()
         let mapVC = MapViewController()
         let sideMenuController = SideMenuController(contentViewController: mapVC, menuViewController: menuController)
-        
         menuController.onSelectionConfirmed = { [weak self] selectedIndex in
             guard let self = self else { return }
-            
             sideMenuController.hideMenu(animated: true) { _ in
                 mapVC.loadCompletedPlacesAndAddAnnotations(selectedIndex: selectedIndex)
             }
         }
-        
         SideMenuController.preferences.basic.direction = .right
         SideMenuController.preferences.basic.menuWidth = 280
         SideMenuController.preferences.basic.enablePanGesture = true
@@ -683,38 +685,30 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath) as? UserTableViewCell
         guard let cell = cell else { return UITableViewCell() }
-        
         cell.titleLabel.text = ""
         cell.contentLabel.text = ""
-        
         let post = posts[indexPath.row]
         let title = post["title"] as? String ?? "無標題"
         let content = post["content"] as? String ?? "no text"
-        
         cell.titleLabel.text = title
         cell.contentLabel.text = content
         cell.selectionStyle = .none
         cell.backgroundColor = .clear
-        
         let postId = post["id"] as? String ?? ""
-        
         cell.configurePhotoStackView(with: post["photoUrls"] as? [String] ?? [])
         cell.layoutIfNeeded()
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         let currentRow = indexPath.row
-        
         cell.configureMoreButton { [weak self] in
             guard let self = self else { return }
             let indexPath = IndexPath(row: currentRow, section: indexPath.section)
             self.showBottomSheet(at: indexPath)
         }
-        
         if let createdAtTimestamp = post["createdAt"] as? Timestamp {
             let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
             cell.dateLabel.text = createdAtString
         }
-        
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
                 return post["id"] as? String == postId
@@ -751,12 +745,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                         cell.awardLabelView.updateTitle(awardTitle)
                         DispatchQueue.main.async {
                             AwardStyleManager.updateTitleContainerStyle(
-                                forTitle: awardTitle,
-                                item: item,
-                                titleContainerView: cell.awardLabelView,
-                                titleLabel: cell.awardLabelView.titleLabel,
-                                dropdownButton: nil
-                            )
+                                forTitle: awardTitle,item: item,titleContainerView: cell.awardLabelView,
+                                titleLabel: cell.awardLabelView.titleLabel,dropdownButton: nil)
                         }
                     case .failure(let error):
                         print("獲取稱號失敗: \(error.localizedDescription)")

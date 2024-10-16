@@ -42,7 +42,7 @@ class UserProfileViewController: UIViewController {
         if let currentUserId = UserDefaults.standard.string(forKey: "userId"), currentUserId == userId {
             followButton.isHidden = true
         }
-        
+        loadUserPosts()
         checkIfFollowing()
         setupTableView()
         setupHeaderView()
@@ -98,8 +98,6 @@ class UserProfileViewController: UIViewController {
                 print("獲取用戶資料失敗: \(error.localizedDescription)")
             }
         }
-        
-        loadUserPosts()
         
         FirebaseManager.shared.loadAwardTitle(forUserId: userId) { (result: Result<(String, Int), Error>) in
             switch result {
@@ -750,7 +748,10 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
                 }
                 return false
             })
-            self.tableView.reloadData()
+            DispatchQueue.main.async {
+                self.postsNumberLabel.text = String(self.posts.count)
+                self.tableView.reloadData()
+            }
         }
     }
     
