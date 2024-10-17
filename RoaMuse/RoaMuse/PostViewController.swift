@@ -206,14 +206,16 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             make.height.equalTo(50)
         }
         
-        titleTextField.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        titleTextField.font = UIFont(name: "NotoSerifHK-Black", size: 20)
+        titleTextField.textColor = .deepBlue
         titleTextField.snp.makeConstraints { make in
             make.top.equalTo(dropdownButton.snp.bottom).offset(12)
             make.height.equalTo(50)
             make.width.equalTo(view).multipliedBy(0.9)
             make.centerX.equalTo(view)
         }
-        contentTextView.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+        contentTextView.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        contentTextView.textColor = .deepBlue
         contentTextView.snp.makeConstraints { make in
             make.top.equalTo(titleTextField.snp.bottom).offset(12)
             make.width.equalTo(view).multipliedBy(0.9)
@@ -251,7 +253,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             }
         }
         
-        contentTextView.font = UIFont.systemFont(ofSize: 20)
         postButton.setTitle("發文", for: .normal)
 //        postButton.addTarget(self, action: #selector(saveData), for: .touchUpInside)
 //        postButton.addTarget(self, action: #selector(backToLastPage), for: .touchUpInside)
@@ -525,7 +526,6 @@ extension PostViewController {
         }
         
         group.notify(queue: .main) {
-            // 當所有圖片上傳完畢後，將 URLs 傳遞出去
             completion(uploadedUrls)
         }
     }

@@ -166,6 +166,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 240
         tableView.layer.cornerRadius = 20
+        tableView.showsVerticalScrollIndicator = false
         
         view.addSubview(tableView)
         tableView.snp.makeConstraints { make in
