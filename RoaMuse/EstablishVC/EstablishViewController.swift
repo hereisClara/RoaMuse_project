@@ -108,7 +108,22 @@ class EstablishViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 //        tabBarController?.tabBar.isHidden = false
+        setupNavigationBarStyle()
         updateStyleLabel(with: "＃隨機")
+    }
+    
+    private func setupNavigationBarStyle() {
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
+            ]
+
+            self.navigationItem.standardAppearance = navBarAppearance
+            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        }
     }
     
     func setupUI() {
@@ -166,7 +181,6 @@ class EstablishViewController: UIViewController {
             make.width.height.equalTo(36)
         }
 
-        // 按鈕佈局
         styleCircleView.snp.makeConstraints { make in
             make.leading.equalTo(view).offset(16)
             make.top.equalTo(recommendRandomTripView).offset(16)
@@ -502,7 +516,7 @@ extension EstablishViewController {
                                     }
                                 }
                             } else {
-                                print("未能生成行程")
+                                
                                 DispatchQueue.main.async {
                                     self.recommendRandomTripView.isUserInteractionEnabled = true
                                     self.activityIndicator.stopAnimating()
@@ -512,7 +526,6 @@ extension EstablishViewController {
                         }
                     }
                 } else {
-                    print("未找到匹配的诗歌")
                     DispatchQueue.main.async {
                         self.recommendRandomTripView.isUserInteractionEnabled = true
                         self.activityIndicator.stopAnimating()
@@ -653,9 +666,7 @@ extension EstablishViewController {
         request.source = MKMapItem(placemark: sourcePlacemark)
         request.destination = MKMapItem(placemark: destinationPlacemark)
         
-        request.transportType = .automobile  // 或者 .walking
-        
-        // 計算路線
+        request.transportType = .automobile
         let directions = MKDirections(request: request)
         directions.calculate { response, error in
             if let error = error {
@@ -924,7 +935,6 @@ extension EstablishViewController: UITableViewDataSource, UITableViewDelegate {
         if let cell = tableView.cellForRow(at: indexPath) as? StyleTableViewCell {
             selectionTitle = cell.titleLabel.text ?? ""
             styleTag = Int(indexPath.row) - 1
-            print("Selected Style Title: \(selectionTitle)")
             updateStyleLabel(with: "＃\(selectionTitle)")
         }
     }
@@ -961,10 +971,8 @@ extension EstablishViewController {
             "placePoemPairs": placePoemData
         ]) { error in
             if let error = error {
-                print("Error updating document: \(error)")
                 completion(false)
             } else {
-                print("Document successfully updated with placePoemPairs")
                 completion(true)
             }
         }

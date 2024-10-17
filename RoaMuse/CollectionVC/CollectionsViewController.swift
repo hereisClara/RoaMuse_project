@@ -67,6 +67,21 @@ class CollectionsViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         loadInitialData()
+        setupNavigationBarStyle()
+    }
+    
+    private func setupNavigationBarStyle() {
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
+            ]
+
+            self.navigationItem.standardAppearance = navBarAppearance
+            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        }
     }
     
     func setupUI() {

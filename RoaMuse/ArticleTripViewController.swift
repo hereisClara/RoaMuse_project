@@ -640,21 +640,25 @@ extension ArticleTripViewController: PopupViewDelegate {
     
     func navigateToTripDetailPage() {
         
-        guard let trip = self.trip else {
+        print("~~~~~", self.postTrip)
+        
+        guard let postTrip = self.postTrip else {
             print("Error: Trip is nil!")
             return
         }
         
         let tripDetailVC = TripDetailViewController()
-        tripDetailVC.trip = trip
+        tripDetailVC.trip = postTrip
         tripDetailVC.keywordToLineMap = self.keywordToLineMap
         
-        FirebaseManager.shared.loadPlacesByIds(placeIds: trip.placeIds) { [weak self] places in
+        FirebaseManager.shared.loadPlacesByIds(placeIds: postTrip.placeIds) { [weak self] places in
             guard let self = self else { return }
-            
-            if let currentLocation = self.locationManager.currentLocation?.coordinate {
+            print("starrrrt")
+            if let currentLocation = self.userLocation {
+                print("location")
                 LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { totalTravelTime, routes in
                     if let totalTravelTime = totalTravelTime, let routes = routes {
+                        print("stsrstsr")
                         tripDetailVC.totalTravelTime = totalTravelTime
                         var nestedInstructions = [[String]]()
                         for route in routes {

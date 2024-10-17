@@ -69,7 +69,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         
         // 4. 創建一個漸變遮罩來控制模糊效果的範圍
         let gradientLayer = CAGradientLayer()
-        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.6).cgColor] // 從透明到模糊漸變
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.7).cgColor] // 從透明到模糊漸變
         gradientLayer.locations = [0.0, 1.0] // 從透明到白色的漸變位置
         gradientLayer.startPoint = CGPoint(x: 0.5, y: 1.0) // 從頂部開始漸變
         gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.05) // 到底部結束漸變
