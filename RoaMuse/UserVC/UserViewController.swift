@@ -421,6 +421,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         tableView.dataSource = self
         tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
+        tableView.showsVerticalScrollIndicator = false
         tableView.estimatedRowHeight = 240
         tableView.layer.cornerRadius = 20
         tableView.snp.makeConstraints { make in

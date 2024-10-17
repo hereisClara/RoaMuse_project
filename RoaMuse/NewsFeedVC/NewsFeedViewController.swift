@@ -456,6 +456,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         postsTableView.rowHeight = UITableView.automaticDimension
         postsTableView.estimatedRowHeight = 300
         postsTableView.layer.borderColor = UIColor.deepBlue.cgColor
+        postsTableView.showsVerticalScrollIndicator = false
         postsTableView.layer.borderWidth = 2
         postsTableView.layer.cornerRadius = 20
         postsTableView.layer.masksToBounds = true

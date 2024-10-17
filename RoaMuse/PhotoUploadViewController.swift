@@ -109,12 +109,14 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         
         let titleLabel = UILabel()
         titleLabel.text = label
+        titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         titleLabel.textAlignment = .center
         stackView.addArrangedSubview(titleLabel)
         
         let slider = UISlider()
         slider.minimumValue = min
         slider.maximumValue = max
+        slider.minimumTrackTintColor = .deepBlue
         slider.value = defaultValue  // 設置預設值
         slider.addTarget(self, action: action, for: .valueChanged)
         stackView.addArrangedSubview(slider)
@@ -132,7 +134,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         window.addSubview(backgroundView)
         
         let popupView = UIView()
-        popupView.backgroundColor = .white
+        popupView.backgroundColor = .white.withAlphaComponent(0.85)
         popupView.layer.cornerRadius = 15
         popupView.layer.masksToBounds = true
         backgroundView.addSubview(popupView)
@@ -140,7 +142,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         popupView.snp.makeConstraints { make in
             make.center.equalTo(backgroundView)
             make.width.equalTo(window).multipliedBy(0.9)
-            make.height.equalTo(400)
+            make.height.equalTo(420)
         }
          
         let maskOpacitySlider = createSlider(label: "遮罩透明度", min: 0.0, max: 1.0, defaultValue: maskOpacityValue, action: #selector(adjustMaskOpacity(_:)))
@@ -162,7 +164,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.width.equalTo(popupView).multipliedBy(0.8)
         }
         
-        // 添加滑块：饱和度
         popupView.addSubview(saturationSlider)
         saturationSlider.snp.makeConstraints { make in
             make.top.equalTo(brightnessSlider.snp.bottom).offset(20)
@@ -170,7 +171,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.width.equalTo(popupView).multipliedBy(0.8)
         }
         
-        // 添加滑块：模糊程度
         popupView.addSubview(blurSlider)
         blurSlider.snp.makeConstraints { make in
             make.top.equalTo(saturationSlider.snp.bottom).offset(20)
@@ -179,8 +179,9 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
         
         let closeButton = UIButton(type: .system)
-        closeButton.setTitle("关闭", for: .normal)
-        closeButton.tintColor = .systemBlue
+        closeButton.setTitle("關閉", for: .normal)
+        closeButton.titleLabel?.textColor = .forBronze
+        closeButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         closeButton.addTarget(self, action: #selector(dismissPopup), for: .touchUpInside)
         popupView.addSubview(closeButton)
         
@@ -189,7 +190,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             make.centerX.equalTo(popupView)
         }
         
-        // 保存引用用于关闭弹窗时使用
         self.backgroundView = backgroundView
         self.popupView = popupView
 //        self.sliderLabel = sliderLabel
