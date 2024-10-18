@@ -332,30 +332,23 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     
 //    MARK: map center
     func centerMapOnAnnotation(annotation: MKAnnotation) {
-        let regionRadius: CLLocationDistance = 5000 // 5公里的縮放半徑
+        let regionRadius: CLLocationDistance = 5000
+        let fixedScreenPoint = CGPoint(x: view.frame.width * 0.5, y: view.frame.height * 0.225)
 
-        // 固定大頭針要顯示在螢幕上的位置 (100, 100)
-        let fixedScreenPoint = CGPoint(x: view.frame.width / 2, y: view.frame.height * 0.2)
-
-        // 將固定點轉換為地理座標
         let fixedCoordinate = mapView.convert(fixedScreenPoint, toCoordinateFrom: mapView)
 
-        // 計算從大頭針地點到固定點的偏移量（緯度、經度）
         let latitudeDelta = annotation.coordinate.latitude - fixedCoordinate.latitude
         let longitudeDelta = annotation.coordinate.longitude - fixedCoordinate.longitude
 
-        // 計算新的地圖中心座標，將地圖移動，使大頭針顯示在固定點
         let newCenterCoordinate = CLLocationCoordinate2D(
             latitude: mapView.centerCoordinate.latitude + latitudeDelta,
             longitude: mapView.centerCoordinate.longitude + longitudeDelta
         )
 
-        // 設定地圖的新區域
         let region = MKCoordinateRegion(center: newCenterCoordinate,
                                         latitudinalMeters: regionRadius * 2,
                                         longitudinalMeters: regionRadius * 2)
 
-        // 動畫顯示新的地圖區域
         mapView.setRegion(region, animated: true)
     }
 
@@ -531,7 +524,7 @@ extension MapViewController {
     
     @objc func dismissFullScreenImageView() {
         UIView.animate(withDuration: 0.3) {
-            self.fullScreenImageView.alpha = 0  // 隱藏全螢幕視圖
+            self.fullScreenImageView.alpha = 0 
         }
     }
 }

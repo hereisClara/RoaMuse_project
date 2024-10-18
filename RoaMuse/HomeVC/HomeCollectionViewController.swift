@@ -27,6 +27,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         startAutoScrolling()
         setupCollectionView()
         getPoems()
+        addGradientBlurEffectToView()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -34,7 +35,6 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         self.navigationController?.setNavigationBarHidden(true, animated: animated)
         // 設置 Navigation Bar 透明
         //        makeNavigationBarTransparent()
-        addGradientBlurEffectToView()
     }
     
     override func viewWillDisappear(_ animated: Bool) {

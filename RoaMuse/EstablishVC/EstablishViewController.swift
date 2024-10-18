@@ -46,6 +46,7 @@ class EstablishViewController: UIViewController {
         super.viewDidLoad()
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
+        navigationItem.backButtonTitle = ""
         self.title = "建立"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
@@ -832,7 +833,6 @@ extension EstablishViewController {
                             return
                         }
                         
-                        // 更新 tripId
                         documentRef?.updateData(["id": documentID]) { error in
                             if let error = error {
                                 

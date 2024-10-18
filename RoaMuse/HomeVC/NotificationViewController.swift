@@ -23,12 +23,10 @@ class NotificationViewController: UIViewController {
         self.navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .backgroundGray
         
-        // 创建自定义的导航栏外观
         let navBarAppearance = UINavigationBarAppearance()
-        navBarAppearance.configureWithOpaqueBackground() // 根据需要设置透明或不透明背景
-        navBarAppearance.backgroundColor = .white  // 设置背景颜色
+        navBarAppearance.configureWithOpaqueBackground()
+        navBarAppearance.backgroundColor = .white
         
-        // 设置导航栏标题的自定义字体和颜色
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 18) {
             navBarAppearance.titleTextAttributes = [
                 .font: customFont,

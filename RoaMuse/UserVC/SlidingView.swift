@@ -71,7 +71,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             showMoreButton.setTitle("查看更多", for: .normal)
             showMoreButton.addTarget(self, action: #selector(handleShowMoreTapped), for: .touchUpInside)
             
-            headerView.addSubview(showMoreButton)
+//            headerView.addSubview(showMoreButton)
             headerView.addSubview(titleLabel)
             
             titleLabel.snp.makeConstraints { make in
@@ -79,16 +79,16 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
                 make.leading.equalTo(headerView).offset(16)
             }
             
-            showMoreButton.snp.makeConstraints { make in
-                make.trailing.equalTo(headerView).offset(-16)
-                make.centerY.equalTo(headerView)
-            }
+//            showMoreButton.snp.makeConstraints { make in
+//                make.trailing.equalTo(headerView).offset(-16)
+//                make.centerY.equalTo(headerView)
+//            }
             
-            if isExpanded == false {
-                showMoreButton.isHidden = false
-            } else {
-                showMoreButton.isHidden = true
-            }
+//            if isExpanded == false {
+//                showMoreButton.isHidden = false
+//            } else {
+//                showMoreButton.isHidden = true
+//            }
             
             return headerView
         } else {
