@@ -202,13 +202,11 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "登出", style: .destructive, handler: { _ in
             do {
-                // 清空 UserDefaults
                 UserDefaults.standard.removeObject(forKey: "userName")
                 UserDefaults.standard.removeObject(forKey: "userId")
                 UserDefaults.standard.removeObject(forKey: "email")
                 
                 print("已清空使用者資訊")
-                // 跳轉到登入畫面
                 self.navigateToLoginScreen()
             } catch let error {
                 print("登出失敗: \(error.localizedDescription)")
@@ -218,7 +216,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         present(alert, animated: true, completion: nil)
     }
     
-    // 處理刪除帳號邏輯
     func handleDeleteAccount() {
         let alert = UIAlertController(title: "刪除帳號", message: "你確定要刪除帳號嗎？此操作無法撤銷。", preferredStyle: .alert)
         

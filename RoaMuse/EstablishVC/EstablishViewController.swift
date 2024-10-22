@@ -318,7 +318,7 @@ class EstablishViewController: UIViewController {
             make.height.equalTo(130)
         }
 
-        radiusLabel.text = "範圍半徑：\(searchRadius) 公尺"
+        radiusLabel.text = "範圍半徑：\(Int(searchRadius)) 公尺"
         radiusLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         radiusLabel.textAlignment = .left
         popupView.addSubview(radiusLabel)
