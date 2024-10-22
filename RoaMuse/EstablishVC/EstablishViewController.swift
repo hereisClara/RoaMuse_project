@@ -359,9 +359,9 @@ class EstablishViewController: UIViewController {
     }
 
     @objc func sliderValueChanged(_ sender: UISlider) {
-        
-        let roundedValue = round(sender.value / 1000) * 1000
-        sender.value = roundedValue
+        var roundedValue = round(sender.value / 1000) * 1000
+        roundedValue = max(roundedValue, 1000) // 確保最小值是 1000
+        sender.value = Float(roundedValue) // 確保以整數形式設定滑桿的值
         
         radiusLabel.text = "範圍半徑：\(Int(roundedValue)) 公尺"
     }

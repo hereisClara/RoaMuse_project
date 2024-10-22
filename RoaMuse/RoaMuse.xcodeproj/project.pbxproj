@@ -40,6 +40,7 @@
 		AC27ACC12C92FF5A00B73485 /* EstablishViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */; };
 		AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */; };
 		AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC42C93006A00B73485 /* UserViewController.swift */; };
+		AC513B262CC7720100DC6302 /* EstablishVCTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC513B252CC7720100DC6302 /* EstablishVCTest.swift */; };
 		AC75D0F02CB267B9005258EA /* MapTripTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */; };
 		AC75D0F22CB27E75005258EA /* IntroductionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */; };
 		AC75D0F42CB28382005258EA /* RegionSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */; };
@@ -108,6 +109,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AC513B202CC7712900DC6302 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ACFCA3452C916C8F00643A2E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ACFCA34C2C916C8F00643A2E;
+			remoteInfo = RoaMuse;
+		};
 		ACFCA3672C916C9000643A2E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = ACFCA3452C916C8F00643A2E /* Project object */;
@@ -153,6 +161,8 @@
 		AC27ACC02C92FF5A00B73485 /* EstablishViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishViewController.swift; sourceTree = "<group>"; };
 		AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsFeedViewController.swift; sourceTree = "<group>"; };
 		AC27ACC42C93006A00B73485 /* UserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewController.swift; sourceTree = "<group>"; };
+		AC513B1C2CC7712900DC6302 /* EstablishVCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EstablishVCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC513B252CC7720100DC6302 /* EstablishVCTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishVCTest.swift; sourceTree = "<group>"; };
 		AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTripTableViewCell.swift; sourceTree = "<group>"; };
 		AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroductionViewController.swift; sourceTree = "<group>"; };
 		AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelectionViewController.swift; sourceTree = "<group>"; };
@@ -222,6 +232,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AC513B192CC7712900DC6302 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ACFCA34A2C916C8F00643A2E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -404,6 +421,7 @@
 				ACFCA34D2C916C8F00643A2E /* RoaMuse.app */,
 				ACFCA3662C916C9000643A2E /* RoaMuseTests.xctest */,
 				ACFCA3702C916C9000643A2E /* RoaMuseUITests.xctest */,
+				AC513B1C2CC7712900DC6302 /* EstablishVCTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -431,6 +449,7 @@
 			isa = PBXGroup;
 			children = (
 				ACFCA36A2C916C9000643A2E /* RoaMuseTests.swift */,
+				AC513B252CC7720100DC6302 /* EstablishVCTest.swift */,
 			);
 			path = RoaMuseTests;
 			sourceTree = "<group>";
@@ -447,6 +466,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AC513B1B2CC7712900DC6302 /* EstablishVCTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC513B242CC7712900DC6302 /* Build configuration list for PBXNativeTarget "EstablishVCTests" */;
+			buildPhases = (
+				AC513B182CC7712900DC6302 /* Sources */,
+				AC513B192CC7712900DC6302 /* Frameworks */,
+				AC513B1A2CC7712900DC6302 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC513B212CC7712900DC6302 /* PBXTargetDependency */,
+			);
+			name = EstablishVCTests;
+			productName = EstablishVCTests;
+			productReference = AC513B1C2CC7712900DC6302 /* EstablishVCTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		ACFCA34C2C916C8F00643A2E /* RoaMuse */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = ACFCA37A2C916C9000643A2E /* Build configuration list for PBXNativeTarget "RoaMuse" */;
@@ -523,6 +560,10 @@
 				LastSwiftUpdateCheck = 1540;
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
+					AC513B1B2CC7712900DC6302 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = ACFCA34C2C916C8F00643A2E;
+					};
 					ACFCA34C2C916C8F00643A2E = {
 						CreatedOnToolsVersion = 15.4;
 					};
@@ -562,11 +603,19 @@
 				ACFCA34C2C916C8F00643A2E /* RoaMuse */,
 				ACFCA3652C916C9000643A2E /* RoaMuseTests */,
 				ACFCA36F2C916C9000643A2E /* RoaMuseUITests */,
+				AC513B1B2CC7712900DC6302 /* EstablishVCTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AC513B1A2CC7712900DC6302 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ACFCA34B2C916C8F00643A2E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -621,6 +670,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AC513B182CC7712900DC6302 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ACFCA3492C916C8F00643A2E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -709,6 +765,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC513B262CC7720100DC6302 /* EstablishVCTest.swift in Sources */,
 				ACFCA36B2C916C9000643A2E /* RoaMuseTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -725,6 +782,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		AC513B212CC7712900DC6302 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ACFCA34C2C916C8F00643A2E /* RoaMuse */;
+			targetProxy = AC513B202CC7712900DC6302 /* PBXContainerItemProxy */;
+		};
 		ACFCA3682C916C9000643A2E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = ACFCA34C2C916C8F00643A2E /* RoaMuse */;
@@ -757,6 +819,44 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		AC513B222CC7712900DC6302 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 893UA9XLV2;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tzuyencheng.EstablishVCTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RoaMuse.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RoaMuse";
+			};
+			name = Debug;
+		};
+		AC513B232CC7712900DC6302 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 893UA9XLV2;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tzuyencheng.EstablishVCTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RoaMuse.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/RoaMuse";
+			};
+			name = Release;
+		};
 		ACFCA3782C916C9000643A2E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AC97756D2CA52A9300EF828A /* Config.xcconfig */;
@@ -1039,6 +1139,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AC513B242CC7712900DC6302 /* Build configuration list for PBXNativeTarget "EstablishVCTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC513B222CC7712900DC6302 /* Debug */,
+				AC513B232CC7712900DC6302 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		ACFCA3482C916C8F00643A2E /* Build configuration list for PBXProject "RoaMuse" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

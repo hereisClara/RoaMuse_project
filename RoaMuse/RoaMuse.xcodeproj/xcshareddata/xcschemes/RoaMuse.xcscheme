@@ -52,6 +52,17 @@
                ReferencedContainer = "container:RoaMuse.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AC513B1B2CC7712900DC6302"
+               BuildableName = "EstablishVCTests.xctest"
+               BlueprintName = "EstablishVCTests"
+               ReferencedContainer = "container:RoaMuse.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
