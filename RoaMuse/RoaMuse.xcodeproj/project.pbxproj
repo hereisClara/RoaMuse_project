@@ -41,6 +41,7 @@
 		AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */; };
 		AC27ACC52C93006A00B73485 /* UserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC27ACC42C93006A00B73485 /* UserViewController.swift */; };
 		AC513B262CC7720100DC6302 /* EstablishVCTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC513B252CC7720100DC6302 /* EstablishVCTest.swift */; };
+		AC513B282CC77B3B00DC6302 /* HomeCollectionVCTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC513B272CC77B3B00DC6302 /* HomeCollectionVCTests.swift */; };
 		AC75D0F02CB267B9005258EA /* MapTripTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */; };
 		AC75D0F22CB27E75005258EA /* IntroductionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */; };
 		AC75D0F42CB28382005258EA /* RegionSelectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */; };
@@ -163,6 +164,7 @@
 		AC27ACC42C93006A00B73485 /* UserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserViewController.swift; sourceTree = "<group>"; };
 		AC513B1C2CC7712900DC6302 /* EstablishVCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EstablishVCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC513B252CC7720100DC6302 /* EstablishVCTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EstablishVCTest.swift; sourceTree = "<group>"; };
+		AC513B272CC77B3B00DC6302 /* HomeCollectionVCTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCollectionVCTests.swift; sourceTree = "<group>"; };
 		AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTripTableViewCell.swift; sourceTree = "<group>"; };
 		AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroductionViewController.swift; sourceTree = "<group>"; };
 		AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionSelectionViewController.swift; sourceTree = "<group>"; };
@@ -450,6 +452,7 @@
 			children = (
 				ACFCA36A2C916C9000643A2E /* RoaMuseTests.swift */,
 				AC513B252CC7720100DC6302 /* EstablishVCTest.swift */,
+				AC513B272CC77B3B00DC6302 /* HomeCollectionVCTests.swift */,
 			);
 			path = RoaMuseTests;
 			sourceTree = "<group>";
@@ -765,6 +768,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC513B282CC77B3B00DC6302 /* HomeCollectionVCTests.swift in Sources */,
 				AC513B262CC7720100DC6302 /* EstablishVCTest.swift in Sources */,
 				ACFCA36B2C916C9000643A2E /* RoaMuseTests.swift in Sources */,
 			);
