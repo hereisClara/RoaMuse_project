@@ -33,20 +33,37 @@ final class EstablishVCTest: XCTestCase {
     }
 
     func testSliderValueChanged() {
-        // 設定滑桿的範圍
+        
         slider.minimumValue = 1000
         slider.maximumValue = 15000
         
-        // 設定 slider 的值
         slider.value = 1000
         
-        // 模擬滑桿值的變化
         viewController.sliderValueChanged(slider)
         
-        // 驗證 slider 的值是否被設為 1000
         XCTAssertEqual(slider.value, 1000, "Slider value should be rounded to 1000")
         
-        // 驗證 label 的文字是否正確
         XCTAssertEqual(radiusLabel.text, "範圍半徑：1000 公尺", "Label text should display '範圍半徑：1000 公尺'")
+    }
+    
+    func testSliderStepIs1000() {
+        viewController.radiusSlider.minimumValue = 1000
+        viewController.radiusSlider.maximumValue = 15000
+        
+        viewController.radiusSlider.value = 1000
+        viewController.sliderValueChanged(viewController.radiusSlider)
+        
+        let stepValue: Float = 1000
+        let originalValue = viewController.radiusSlider.value
+        
+        viewController.radiusSlider.value += stepValue
+        viewController.sliderValueChanged(viewController.radiusSlider)
+        
+        XCTAssertEqual(viewController.radiusSlider.value, originalValue + stepValue, "Slider value should have increased by 1000")
+        
+        viewController.radiusSlider.value -= stepValue
+        viewController.sliderValueChanged(viewController.radiusSlider)
+        
+        XCTAssertEqual(viewController.radiusSlider.value, originalValue, "Slider value should have returned to the original value")
     }
 }

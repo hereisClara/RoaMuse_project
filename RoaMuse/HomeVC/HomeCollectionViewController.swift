@@ -19,8 +19,8 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.white,  // 修改大標題顏色
-                .font: customFont  // 自定義字體
+                .foregroundColor: UIColor.white,
+                .font: customFont 
             ]
         }
         
@@ -33,13 +33,6 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: animated)
-        // 設置 Navigation Bar 透明
-        //        makeNavigationBarTransparent()
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        //        restoreNavigationBarStyle()
     }
     
     func setupUI() {
@@ -55,8 +48,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     }
     
     func addGradientBlurEffectToView() {
-        // 1. 創建 UIVisualEffectView 以實現模糊效果
-        let blurEffect = UIBlurEffect(style: .dark) // 可以根據需要改變為 .dark 或 .extraLight
+        let blurEffect = UIBlurEffect(style: .dark)
         let blurEffectView = UIVisualEffectView(effect: blurEffect)
         
         view.addSubview(blurEffectView)
@@ -67,17 +59,14 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
             make.height.equalTo(view).multipliedBy(0.15)
         }
         
-        // 4. 創建一個漸變遮罩來控制模糊效果的範圍
         let gradientLayer = CAGradientLayer()
-        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.7).cgColor] // 從透明到模糊漸變
-        gradientLayer.locations = [0.0, 1.0] // 從透明到白色的漸變位置
-        gradientLayer.startPoint = CGPoint(x: 0.5, y: 1.0) // 從頂部開始漸變
-        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.05) // 到底部結束漸變
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.withAlphaComponent(0.7).cgColor]
+        gradientLayer.locations = [0.0, 1.0]
+        gradientLayer.startPoint = CGPoint(x: 0.5, y: 1.0)
+        gradientLayer.endPoint = CGPoint(x: 0.5, y: 0.05)
         
-        // 5. 將 gradientLayer 添加到 blurEffectView 並設置遮罩
         blurEffectView.layer.mask = gradientLayer
         
-        // 6. 更新漸變圖層的 frame，當使用 SnapKit 佈局時需要在佈局完成後設置
         blurEffectView.layoutIfNeeded()
         gradientLayer.frame = blurEffectView.bounds
     }
@@ -94,7 +83,6 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     func restoreNavigationBarStyle() {
         guard let navigationBar = navigationController?.navigationBar else { return }
         
-        // 恢復到默認的樣式
         navigationBar.setBackgroundImage(nil, for: .default)
         navigationBar.shadowImage = nil
         navigationBar.isTranslucent = false
@@ -103,9 +91,9 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     func setupCollectionView() {
         let layout = CHTCollectionViewWaterfallLayout()
-        layout.minimumColumnSpacing = 12 // 列之間的間距
-        layout.minimumInteritemSpacing = 12 // 行之間的間距
-        layout.columnCount = 4 // 設置列數，可以根據需要調整
+        layout.minimumColumnSpacing = 12
+        layout.minimumInteritemSpacing = 12
+        layout.columnCount = 4
         
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.delegate = self
@@ -114,9 +102,9 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         collectionView.backgroundColor = .backgroundGray
         collectionView.layer.cornerRadius = 20
         collectionView.layer.masksToBounds = true
-        collectionView.alwaysBounceVertical = true // 總是允許垂直滾動
-        collectionView.showsVerticalScrollIndicator = false // 隱藏垂直滾動條
-        collectionView.showsHorizontalScrollIndicator = false // 隱藏水平滾動條
+        collectionView.alwaysBounceVertical = true
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.showsHorizontalScrollIndicator = false
         collectionView.allowsSelection = true
         
         view.addSubview(collectionView)
@@ -157,7 +145,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     // MARK: - UICollectionView DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return poems.isEmpty ? 0 : numberOfItems // 返回較大的數字模擬無限滾動
+        return poems.isEmpty ? 0 : numberOfItems
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -165,7 +153,7 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
             return UICollectionViewCell()
         }
         
-        let poem = poems[indexPath.item % poems.count] // 重用詩
+        let poem = poems[indexPath.item % poems.count]
         cell.configure(with: poem.title)
         
         return cell
@@ -173,12 +161,11 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if indexPath.item == numberOfItems - 5 && poems.count > 0 {
-                // 更新數據源，動態增加 15 個項目
+                
                 let newItems = numberOfItems + 15
                 let indexPaths = (numberOfItems..<newItems).map { IndexPath(item: $0, section: 0) }
                 numberOfItems = newItems
                 
-                // 使用 performBatchUpdates 插入新項目，避免畫面閃動
                 collectionView.performBatchUpdates({
                     collectionView.insertItems(at: indexPaths)
                 }, completion: nil)
@@ -186,7 +173,6 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // 防止 poems 数组为空导致崩溃
         guard !poems.isEmpty else {
             return
         }

@@ -1,8 +1,6 @@
 import Foundation
 import FirebaseCore
 
-// 定義簡化的 PlaceIdentifier 結構，保存地點的 id 和完成狀態
-
 let notifyType = ["說你的貼文讚", "已回應貼文", "開始追蹤你"]
 
 struct Style {
@@ -44,21 +42,17 @@ struct Poem: Codable {
     let time: Int?
 }
 
-// TODO: 更新資料結構 還有homeVC跟articleTripVC的keyword傳值
-
 struct Trip: Codable {
     let poemId: String
     let id: String
     let placeIds: [String]
     let keywordPlaceIds: [[String: String]]?
     let tag: Int
-    let season: Int?      // 修改为 Int?
-    let weather: Int?     // 修改为 Int?
-    let startTime: Date?  // 保持为 Date?
+    let season: Int?
+    let weather: Int?
+    let startTime: Date?
 }
 
-
-// 定義 Place 結構，存放地點詳細資料
 struct Place: Codable, Hashable {
     var id: String
     let name: String
@@ -71,38 +65,34 @@ struct Json: Codable {
 }
 
 struct User: Codable {
-    var userId: String                // 用戶ID
-    var userName: String              // 用戶名稱
-    var email: String                 // 用戶郵箱
-    var bookmarkPost: [String]        // 收藏的文章IDs
-    var bookmarkTrip: [String]        // 收藏的行程IDs
-    var completedTrip: [String]       // 已完成的行程IDs
-    var completedPlace: [CompletedPlace] // 已完成的地點資料 (依據行程)
+    var userId: String
+    var userName: String
+    var email: String
+    var bookmarkPost: [String]
+    var bookmarkTrip: [String]
+    var completedTrip: [String]
+    var completedPlace: [CompletedPlace]
 
-    // 新增完成的行程
     mutating func completeTrip(tripId: String) {
         if !completedTrip.contains(tripId) {
             completedTrip.append(tripId)
         }
     }
 
-    // 新增行程中已完成的地點
     mutating func completePlace(in tripId: String, placeId: String) {
-        // 檢查是否已經有該行程的記錄
         if let index = completedPlace.firstIndex(where: { $0.tripId == tripId }) {
             if !completedPlace[index].placeIds.contains(placeId) {
                 completedPlace[index].placeIds.append(placeId)
             }
         } else {
-            // 如果尚無該行程的記錄，新增一筆
             completedPlace.append(CompletedPlace(tripId: tripId, placeIds: [placeId]))
         }
     }
 }
 
 struct CompletedPlace: Codable {
-    let tripId: String                // 行程ID
-    var placeIds: [String]            // 行程中完成的地點IDs
+    let tripId: String
+    var placeIds: [String]
 }
 
 struct PlaceTripInfo: Codable {
@@ -137,17 +127,17 @@ struct ChatMessage {
 struct Notification: Codable {
     var to: String
     var from: String
-    var postId: String? // postId 是可選的
+    var postId: String?
     var type: Int
-    var subType: String? // 類型的細分 (可選)
-    var title: String? // 通知的標題
-    var message: String? // 通知的具體內容
-    var actionUrl: String? // 點擊後跳轉的URL
+    var subType: String?
+    var title: String?
+    var message: String?
+    var actionUrl: String?
     var createdAt: Date
-    var isRead: Int = 0 // 默認為未讀
-    var status: String = "pending" // 默認狀態為 pending
-    var priority: Int = 0 // 默認優先級為普通
-    var id: String? // Firestore 自動生成的 ID
+    var isRead: Int = 0
+    var status: String = "pending"
+    var priority: Int = 0
+    var id: String?
 }
 
 extension Notification {
@@ -156,7 +146,7 @@ extension Notification {
             "to": to,
             "from": from,
             "type": type,
-            "createdAt": Timestamp(date: createdAt), // 将 Date 转换为 Timestamp
+            "createdAt": Timestamp(date: createdAt),
             "isRead": isRead,
             "status": status,
             "priority": priority

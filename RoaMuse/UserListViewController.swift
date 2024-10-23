@@ -218,12 +218,11 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
             // 展示 Followers
             followersButton.isSelected = true
             followingButton.isSelected = false
-            loadUserList() // 加载粉丝数据
+            loadUserList()
         } else {
-            // 展示 Following
             followersButton.isSelected = false
             followingButton.isSelected = true
-            loadUserList() // 加载关注数据
+            loadUserList()
         }
     }
     
@@ -244,13 +243,11 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
                     self?.followers = followers
 
                     if followers.isEmpty {
-//                        self?.followersTableView.isHidden = true
                         self?.followersPlaceholderLabel.isHidden = false
                     } else {
-//                        self?.followersTableView.isHidden = false
                         self?.followersPlaceholderLabel.isHidden = true
                     }
-//                    self?.view.layoutIfNeeded()
+                    
                     var followersData: [[String: Any]] = []
 
                     for followerId in followers {
@@ -281,13 +278,11 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
                     self?.following = following
 
                     if following.isEmpty {
-//                        self?.followingTableView.isHidden = true
                         self?.followingPlaceholderLabel.isHidden = false
                     } else {
-//                        self?.followingTableView.isHidden = false
                         self?.followingPlaceholderLabel.isHidden = true
                     }
-//                    self?.view.layoutIfNeeded()
+
                     var followingData: [[String: Any]] = []
 
                     for followingId in following {
@@ -328,7 +323,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         
         let reuseIdentifier = tableView == followersTableView ? "followerCell" : "followingCell"
         
-        // 使用對應的 reuseIdentifier 來 dequeue cell
         guard let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as? FollowerFollowingTableViewCell else {
             return UITableViewCell()
         }
@@ -343,7 +337,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         cell.userNameLabel.text = ""
         cell.avatarImageView.image = UIImage(named: "user-placeholder")
 
-        // 配置 cell 的顯示內容
         cell.userNameLabel.text = userData["userName"] as? String
         if let photoUrlString = userData["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
             cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "user-placeholder"))

@@ -10,16 +10,13 @@ import SnapKit
 
 class AwardTableViewCell: UITableViewCell {
     
-    // 定義一個 Label 來顯示 award 名稱
     let awardLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         label.textColor = .deepBlue
-        //        label.numberOfLines = 1
         return label
     }()
     
-    // 自定義的里程碑進度條
     let milestoneProgressView: MilestoneProgressView = {
         let progressView = MilestoneProgressView()
         progressView.backgroundColor = .clear
@@ -34,7 +31,6 @@ class AwardTableViewCell: UITableViewCell {
         return label
     }()
     
-    // 自定義初始化方法
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupViews()
@@ -45,15 +41,13 @@ class AwardTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // 設置 Cell 中的視圖
     func setupViews() {
         contentView.addSubview(awardLabel)
         contentView.addSubview(milestoneProgressView)
         contentView.addSubview(descriptionLabel)
         
-        let padding: CGFloat = 16 // 邊距縮進
+        let padding: CGFloat = 16
         
-        // 使用 SnapKit 設置 Auto Layout
         awardLabel.snp.makeConstraints { make in
             make.top.equalTo(contentView).offset(10)
             make.leading.equalTo(contentView).offset(padding)
@@ -76,7 +70,6 @@ class AwardTableViewCell: UITableViewCell {
     }
     
     func setupRoundedCorners() {
-        // 設置 contentView 的圓角效果
         contentView.layer.cornerRadius = 15
         contentView.layer.masksToBounds = true
         contentView.backgroundColor = .systemGray6
@@ -84,7 +77,6 @@ class AwardTableViewCell: UITableViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        // 設置 Cell 的邊距內縮
         let inset: CGFloat = 12
         contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: inset, left: inset, bottom: inset, right: inset))
     }
