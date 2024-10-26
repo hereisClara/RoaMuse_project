@@ -46,7 +46,8 @@ class UserProfileViewController: UIViewController {
         checkIfFollowing()
         setupTableView()
         setupHeaderView()
-        setupRefreshControl()
+        setupRefreshControll()
+        setupChatButton()
         guard let userId = userId else { return }
         
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 200)
@@ -169,7 +170,7 @@ class UserProfileViewController: UIViewController {
         updateTableHeaderViewHeight()
     }
     
-    func setupRefreshControl() {
+    func setupRefreshControll() {
         tableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
             self?.reloadAllData()
         })
@@ -563,8 +564,9 @@ extension UserProfileViewController {
                             return
                         }
                         
-                        // 準備新的聊天數據
+                        // 準備新的聊天數據，新增 id 欄位
                         let newChatData: [String: Any] = [
+                            "id": chatId, // 新增 id 欄位
                             "participants": [currentUserId, chatUserId],
                             "lastMessage": "",
                             "lastMessageTime": FieldValue.serverTimestamp(),
@@ -586,7 +588,6 @@ extension UserProfileViewController {
                 }
             }
     }
-    
 }
 
 extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource {

@@ -21,7 +21,7 @@ class ChatMessageCell: UITableViewCell {
         selectionStyle = .none
         backgroundColor = .clear
         
-        messageLabel.numberOfLines = 0  // 允许多行
+        messageLabel.numberOfLines = 0
         messageLabel.font = UIFont.systemFont(ofSize: 16)
         messageBubble.layer.cornerRadius = 16
         messageBubble.clipsToBounds = true
@@ -38,27 +38,25 @@ class ChatMessageCell: UITableViewCell {
         contentView.addSubview(avatarImageView)
         contentView.addSubview(timestampLabel)
         
-        // 配置 messageBubble 的最大宽度
         messageBubble.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(10)
             make.bottom.equalToSuperview().offset(-10)
-            make.width.lessThanOrEqualTo(250) // 设置消息气泡的最大宽度为 250
+            make.width.lessThanOrEqualTo(250)
         }
         
-        // messageLabel 设置与 messageBubble 的边距
         messageLabel.snp.makeConstraints { make in
             make.edges.equalTo(messageBubble).inset(10)
         }
         
-        // 头像的约束设置
         avatarImageView.snp.makeConstraints { make in
             make.width.height.equalTo(40)
             make.bottom.equalTo(messageBubble)
+            make.left.equalToSuperview().offset(16)
         }
         
-        // 时间戳的约束设置
         timestampLabel.snp.makeConstraints { make in
-            make.top.equalTo(messageBubble.snp.bottom).offset(4)
+            make.bottom.equalTo(messageBubble.snp.bottom)
+            make.width.lessThanOrEqualTo(80) // 限制時間標籤的最大寬度
         }
     }
 
@@ -66,12 +64,14 @@ class ChatMessageCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // 根据消息内容设置气泡颜色和位置
     func configure(with message: ChatMessage) {
         messageLabel.text = message.text
         let isFromCurrentUser = message.isFromCurrentUser
         
-        // 根据是否是当前用户调整布局
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "HH:mm"
+        timestampLabel.text = dateFormatter.string(from: message.timestamp)
+
         if isFromCurrentUser {
             messageBubble.backgroundColor = .systemBlue
             messageLabel.textColor = .white
@@ -80,30 +80,37 @@ class ChatMessageCell: UITableViewCell {
                 make.right.equalToSuperview().offset(-16)
                 make.top.equalToSuperview().offset(10)
                 make.bottom.equalToSuperview().offset(-10)
-                make.width.lessThanOrEqualTo(250)  // 设置宽度限制
+                make.width.lessThanOrEqualTo(250)
             }
             
             avatarImageView.isHidden = true
+            
             timestampLabel.snp.remakeConstraints { make in
-                make.top.equalTo(messageBubble.snp.bottom).offset(4)
-                make.right.equalTo(messageBubble.snp.right)
+                make.bottom.equalTo(messageBubble.snp.bottom)
+                make.trailing.equalTo(messageBubble.snp.leading).offset(-8)
             }
         } else {
             messageBubble.backgroundColor = .systemGray5
             messageLabel.textColor = .black
-            avatarImageView.image = UIImage(named: "avatar_placeholder") // 对方的头像
+            avatarImageView.image = UIImage(named: "avatar_placeholder")
             
             messageBubble.snp.remakeConstraints { make in
                 make.left.equalTo(avatarImageView.snp.right).offset(8)
                 make.top.equalToSuperview().offset(10)
                 make.bottom.equalToSuperview().offset(-10)
-                make.width.lessThanOrEqualTo(250)  // 设置宽度限制
+                make.width.lessThanOrEqualTo(250)
             }
             
             avatarImageView.isHidden = false
+            avatarImageView.snp.remakeConstraints { make in
+                make.left.equalToSuperview().offset(16)
+                make.bottom.equalTo(messageBubble)
+                make.width.height.equalTo(40)
+            }
+            
             timestampLabel.snp.remakeConstraints { make in
-                make.top.equalTo(messageBubble.snp.bottom).offset(4)
-                make.left.equalTo(messageBubble.snp.left)
+                make.bottom.equalTo(messageBubble.snp.bottom)
+                make.leading.equalTo(messageBubble.snp.trailing).offset(8)
             }
         }
     }

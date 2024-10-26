@@ -14,20 +14,22 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         view.backgroundColor = .backgroundGray
         navigationItem.backButtonTitle = ""
         self.title = "首頁"
-        navigationController?.navigationBar.prefersLargeTitles = true
-        navigationItem.largeTitleDisplayMode = .always
-        
-        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-            navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.white,
-                .font: customFont 
-            ]
-        }
+//        navigationController?.navigationBar.prefersLargeTitles = true
+//        navigationItem.largeTitleDisplayMode = .always
+//        
+//        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+//            navigationController?.navigationBar.largeTitleTextAttributes = [
+//                .foregroundColor: UIColor.white,
+//                .font: customFont 
+//            ]
+//        }
         
         startAutoScrolling()
         setupCollectionView()
         getPoems()
-        addGradientBlurEffectToView()
+        
+        setupUI()
+//        addGradientBlurEffectToView()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -37,14 +39,38 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
     
     func setupUI() {
         
-        let iconImageView = UIImageView(image: UIImage(named: "homeVC title2"))
+        let iconImageView = UIImageView(image: UIImage(named: "maskImageAtLogin"))
         view.addSubview(iconImageView)
-        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.contentMode = .scaleAspectFill
         iconImageView.snp.makeConstraints { make in
-            make.top.equalTo(view).offset(20)
-            make.width.equalTo(160)
-            make.height.equalTo(400)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(40)
+            make.bottom.equalTo(collectionView.snp.top).offset(-40)
+            make.leading.equalTo(view).offset(10)
+            make.width.equalTo(view.snp.width).multipliedBy(0.5)
         }
+        
+        let chatButton = UIButton(type: .system)
+        view.addSubview(chatButton)
+        chatButton.setImage(UIImage(systemName: "bubble.left.and.bubble.right.fill"), for: .normal)
+        chatButton.tintColor = .accent
+        chatButton.snp.makeConstraints { make in
+            make.trailing.equalTo(collectionView.snp.trailing)
+            make.centerY.equalTo(iconImageView)
+            make.width.height.equalTo(40)
+        }
+        
+        chatButton.addTarget(self, action: #selector(toChatPage), for: .touchUpInside)
+    }
+    
+    @objc func toChatPage() {
+        
+        if self.navigationController == nil {
+            print("This view controller is not inside a navigation controller.")
+        }
+        
+        let chatListVC = ChatListViewController()
+        self.navigationController?.pushViewController(chatListVC, animated: true)
+        
     }
     
     func addGradientBlurEffectToView() {
@@ -110,8 +136,8 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
             make.leading.trailing.equalToSuperview().inset(12)
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
-            make.top.equalTo(view).offset(-30)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).inset(15)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(view.frame.height * 0.1)
         }
     }
     

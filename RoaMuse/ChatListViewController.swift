@@ -18,12 +18,26 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
-        
         self.title = "聊天室"
-        
         setupTableView()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        loadChats()
+        tabBarController?.tabBar.isHidden = true
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         
-        loadChats() // 加載聊天數據
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: animated)
+        tabBarController?.tabBar.isHidden = false
     }
     
     func setupTableView() {
@@ -37,11 +51,9 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.register(ChatListCell.self, forCellReuseIdentifier: "ChatListCell")
     }
     
-    // 從 Firebase 實時加載聊天數據
     func loadChats() {
         let db = Firestore.firestore()
         
-        // 假設聊天數據存儲在名為 "chats" 的集合中
         db.collection("chats").addSnapshotListener { [weak self] (snapshot, error) in
             guard let self = self else { return }
             
@@ -50,24 +62,50 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
                 return
             }
             
-            // 清空原來的聊天數據
             self.chats.removeAll()
             
-            // 解析聊天數據
+            let currentUserId = UserDefaults.standard.string(forKey: "userId")
+            
             if let documents = snapshot?.documents {
                 for document in documents {
                     let data = document.data()
-                    let userName = data["userName"] as? String ?? "無名"
+                    let chatId = document.documentID // 取得 Firestore 的 documentID 作為聊天室的 ID
                     let lastMessage = data["lastMessage"] as? String ?? ""
-                    let profileImage = data["profileImage"] as? String ?? ""
+                    let participants = data["participants"] as? [String] ?? []
+                    let lastMessageTime = (data["lastMessageTime"] as? Timestamp)?.dateValue() ?? Date()
                     
-                    // 創建 Chat 模型
-                    let chat = Chat(userName: userName, lastMessage: lastMessage, profileImage: profileImage)
-                    self.chats.append(chat)
+                    var chat = Chat(id: chatId, userName: "無名", lastMessage: lastMessage, profileImage: "", lastMessageTime: lastMessageTime)
+                    
+                    if let otherUserId = participants.first(where: { $0 != currentUserId }) {
+                        db.collection("users").document(otherUserId).getDocument { (userSnapshot, userError) in
+                            if let userError = userError {
+                                print("加載用戶資料失敗: \(userError)")
+                                return
+                            }
+                            
+                            if let userData = userSnapshot?.data() {
+                                let userName = userData["userName"] as? String ?? "無名"
+                                let profileImage = userData["photo"] as? String ?? ""
+                                
+                                chat = Chat(id: chatId, userName: userName, lastMessage: lastMessage, profileImage: profileImage, lastMessageTime: lastMessageTime)
+                            }
+                            
+                            self.chats.append(chat)
+                            
+                            // 根據 lastMessageTime 進行排序，最新的在最上面
+                            self.chats.sort { $0.lastMessageTime > $1.lastMessageTime }
+                            
+                            self.tableView.reloadData()
+                        }
+                    } else {
+                        self.chats.append(chat)
+                        
+                        // 根據 lastMessageTime 進行排序，最新的在最上面
+                        self.chats.sort { $0.lastMessageTime > $1.lastMessageTime }
+                        
+                        self.tableView.reloadData()
+                    }
                 }
-                
-                // 刷新表格視圖
-                self.tableView.reloadData()
             }
         }
     }
@@ -94,12 +132,11 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        // 獲取選中的聊天
         let selectedChat = chats[indexPath.row]
         
-        // 跳轉到相應的聊天室頁面
         let chatVC = ChatViewController()
-        chatVC.chat = selectedChat  // 將選中的聊天傳遞到聊天室
+        chatVC.chat = selectedChat
+        chatVC.chatId = selectedChat.id
         self.navigationController?.pushViewController(chatVC, animated: true)
     }
     

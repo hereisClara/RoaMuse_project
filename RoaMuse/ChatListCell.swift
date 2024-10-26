@@ -14,6 +14,7 @@ class ChatListCell: UITableViewCell {
     let profileImageView = UIImageView()
     let userNameLabel = UILabel()
     let lastMessageLabel = UILabel()
+    let lastMessageTimeLabel = UILabel() // 新增的時間顯示 Label
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -26,17 +27,15 @@ class ChatListCell: UITableViewCell {
     }
     
     func setupViews() {
-        // 添加子视图
         contentView.addSubview(profileImageView)
         contentView.addSubview(userNameLabel)
         contentView.addSubview(lastMessageLabel)
+        contentView.addSubview(lastMessageTimeLabel) // 添加到視圖中
         
-        // 设置头像为圆形
         profileImageView.layer.cornerRadius = 30
         profileImageView.clipsToBounds = true
         profileImageView.contentMode = .scaleAspectFill
         
-        // 布局
         profileImageView.snp.makeConstraints { make in
             make.leading.equalTo(contentView).offset(10)
             make.centerY.equalTo(contentView)
@@ -57,12 +56,28 @@ class ChatListCell: UITableViewCell {
             make.top.equalTo(userNameLabel.snp.bottom).offset(5)
             make.trailing.equalTo(contentView).offset(-10)
         }
+        
+        lastMessageTimeLabel.font = UIFont.systemFont(ofSize: 12)
+        lastMessageTimeLabel.textColor = .lightGray
+        lastMessageTimeLabel.snp.makeConstraints { make in
+            make.trailing.equalTo(contentView).offset(-10)
+            make.top.equalTo(contentView).offset(15)
+        }
     }
     
-    // 配置 Cell
     func configure(with chat: Chat) {
         userNameLabel.text = chat.userName
         lastMessageLabel.text = chat.lastMessage
-        profileImageView.image = UIImage(named: chat.profileImage)  // 假设用本地图片，实际可用 URL 加载
+        
+        // 格式化時間顯示
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy/MM/dd HH:mm"
+        lastMessageTimeLabel.text = dateFormatter.string(from: chat.lastMessageTime)
+        
+        if let url = URL(string: chat.profileImage) {
+            profileImageView.kf.setImage(with: url)
+        } else {
+            profileImageView.image = UIImage(named: "user-placeholder")
+        }
     }
 }
