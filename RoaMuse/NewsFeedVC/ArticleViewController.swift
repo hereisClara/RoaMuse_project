@@ -46,14 +46,14 @@ class ArticleViewController: UIViewController {
         view.backgroundColor = .white
         navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
-//        let navBarAppearance = UINavigationBarAppearance()
-//            navBarAppearance.configureWithOpaqueBackground() // 确保导航栏不透明
-//            navBarAppearance.backgroundColor = .white // 自定义背景颜色
-//            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
-//
-//            // 只为当前页面的导航项设置外观
-//            self.navigationItem.standardAppearance = navBarAppearance
-//            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.configureWithOpaqueBackground() // 确保导航栏不透明
+            navBarAppearance.backgroundColor = .white // 自定义背景颜色
+            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
+
+            // 只为当前页面的导航项设置外观
+            self.navigationItem.standardAppearance = navBarAppearance
+            self.navigationItem.scrollEdgeAppearance = navBarAppearance
         
         tabBarController?.tabBar.isHidden = true
         self.navigationItem.largeTitleDisplayMode = .never

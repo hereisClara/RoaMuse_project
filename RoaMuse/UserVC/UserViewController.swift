@@ -128,12 +128,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         self.title = "個人"
-        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-            navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, // 修改颜色
-                .font: customFont // 设置字体
-            ]
-        }
+        setupNavigationBarStyle()
         navigationController?.navigationBar.tintColor = .deepBlue
         
         guard let userId = userId else { return }
@@ -209,6 +204,20 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         updateTableHeaderViewHeight()
+    }
+    
+    private func setupNavigationBarStyle() {
+        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
+            let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.largeTitleTextAttributes = [
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
+            ]
+
+            self.navigationItem.standardAppearance = navBarAppearance
+            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        }
     }
     
     @objc func navigateToSettings() {
