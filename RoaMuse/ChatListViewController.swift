@@ -25,6 +25,7 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.navigationBar.tintColor = UIColor.deepBlue
         let navBarAppearance = UINavigationBarAppearance()
         navBarAppearance.configureWithOpaqueBackground()
         navBarAppearance.backgroundColor = .white

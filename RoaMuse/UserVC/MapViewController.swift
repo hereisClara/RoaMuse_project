@@ -50,8 +50,8 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func setupFilterButton() {
         
         let backgroundCircle = UIView()
-        backgroundCircle.backgroundColor = UIColor.white.withAlphaComponent(0.7)  // 半透明白色
-        backgroundCircle.layer.cornerRadius = 35  // 圓形（寬高一樣，半徑為寬/2）
+        backgroundCircle.backgroundColor = UIColor.white.withAlphaComponent(0.7)
+        backgroundCircle.layer.cornerRadius = 35
         view.addSubview(backgroundCircle)
         
         let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小及粗細
@@ -117,7 +117,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 return
             }
 
-            let group = DispatchGroup()  // DispatchGroup 用來同步等待所有請求完成
+            let group = DispatchGroup() 
             var filteredPlaceTripDictionary = [String: PlaceTripInfo]()
 
             for placeEntry in completedPlace {

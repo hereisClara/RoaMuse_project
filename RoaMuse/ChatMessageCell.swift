@@ -25,7 +25,7 @@ class ChatMessageCell: UITableViewCell {
         
         messageLabel.numberOfLines = 0
         messageLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
-        messageBubble.layer.cornerRadius = 16
+        messageBubble.layer.cornerRadius = 12
         messageBubble.clipsToBounds = true
         
         avatarImageView.layer.cornerRadius = 20
