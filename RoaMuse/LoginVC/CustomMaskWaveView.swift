@@ -12,18 +12,18 @@ class CustomMaskWaveView: UIView {
 
     private var displayLink: CADisplayLink!
     private var waveLayer = CAShapeLayer()
-    private var phase: CGFloat = 0  // 波浪相位
-    private let waveHeight: CGFloat = 15  // 波浪的高度
+    private var phase: CGFloat = 0
+    private let waveHeight: CGFloat = 15
 
-    private let staticImageName = "maskImageAtLogin"  // 靜態圖片名稱
-    private let maskImageName = "maskImageAtLogin"     // 遮罩圖片名稱
+    private let staticImageName = "maskImageAtLogin"
+    private let maskImageName = "maskImageAtLogin"
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setupStaticImageView()   // 設置靜態圖片層
-        setupWaveLayer()         // 設置波浪層
-        setupImageMask()         // 設置遮罩
-        startWaveAnimation()     // 開始波浪動畫
+        setupStaticImageView()
+        setupWaveLayer()
+        setupImageMask()
+        startWaveAnimation() 
     }
 
     required init?(coder: NSCoder) {

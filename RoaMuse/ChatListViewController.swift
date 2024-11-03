@@ -8,12 +8,12 @@
 import Foundation
 import UIKit
 import SnapKit
-import FirebaseFirestore // 確保你已經導入 Firebase Firestore
+import FirebaseFirestore
 
 class ChatListViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     let tableView = UITableView()
-    var chats: [Chat] = [] // 存儲聊天數據
+    var chats: [Chat] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,13 +25,22 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
-        loadChats()
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithOpaqueBackground()
+        navBarAppearance.backgroundColor = .white
+        navBarAppearance.titleTextAttributes = [
+            .foregroundColor: UIColor.deepBlue,
+            .font: UIFont(name: "NotoSerifHK-Black", size: 18)
+        ]
+        
+        self.navigationItem.standardAppearance = navBarAppearance
+        self.navigationItem.scrollEdgeAppearance = navBarAppearance
         tabBarController?.tabBar.isHidden = true
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
+        loadChats()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -53,8 +62,9 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
     
     func loadChats() {
         let db = Firestore.firestore()
+        guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
         
-        db.collection("chats").addSnapshotListener { [weak self] (snapshot, error) in
+        db.collection("chats").whereField("participants", arrayContains: currentUserId).addSnapshotListener { [weak self] (snapshot, error) in
             guard let self = self else { return }
             
             if let error = error {
@@ -64,12 +74,10 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
             
             self.chats.removeAll()
             
-            let currentUserId = UserDefaults.standard.string(forKey: "userId")
-            
             if let documents = snapshot?.documents {
                 for document in documents {
                     let data = document.data()
-                    let chatId = document.documentID // 取得 Firestore 的 documentID 作為聊天室的 ID
+                    let chatId = document.documentID
                     let lastMessage = data["lastMessage"] as? String ?? ""
                     let participants = data["participants"] as? [String] ?? []
                     let lastMessageTime = (data["lastMessageTime"] as? Timestamp)?.dateValue() ?? Date()
@@ -91,18 +99,12 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
                             }
                             
                             self.chats.append(chat)
-                            
-                            // 根據 lastMessageTime 進行排序，最新的在最上面
                             self.chats.sort { $0.lastMessageTime > $1.lastMessageTime }
-                            
                             self.tableView.reloadData()
                         }
                     } else {
                         self.chats.append(chat)
-                        
-                        // 根據 lastMessageTime 進行排序，最新的在最上面
                         self.chats.sort { $0.lastMessageTime > $1.lastMessageTime }
-                        
                         self.tableView.reloadData()
                     }
                 }

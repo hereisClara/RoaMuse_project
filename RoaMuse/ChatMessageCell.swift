@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import SnapKit
+import Kingfisher
 
 class ChatMessageCell: UITableViewCell {
     
@@ -22,7 +23,7 @@ class ChatMessageCell: UITableViewCell {
         backgroundColor = .clear
         
         messageLabel.numberOfLines = 0
-        messageLabel.font = UIFont.systemFont(ofSize: 16)
+        messageLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         messageBubble.layer.cornerRadius = 16
         messageBubble.clipsToBounds = true
         
@@ -30,7 +31,7 @@ class ChatMessageCell: UITableViewCell {
         avatarImageView.clipsToBounds = true
         avatarImageView.contentMode = .scaleAspectFill
         
-        timestampLabel.font = UIFont.systemFont(ofSize: 12)
+        timestampLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         timestampLabel.textColor = .lightGray
         
         contentView.addSubview(messageBubble)
@@ -56,7 +57,7 @@ class ChatMessageCell: UITableViewCell {
         
         timestampLabel.snp.makeConstraints { make in
             make.bottom.equalTo(messageBubble.snp.bottom)
-            make.width.lessThanOrEqualTo(80) // 限制時間標籤的最大寬度
+            make.width.lessThanOrEqualTo(80)
         }
     }
 
@@ -64,7 +65,7 @@ class ChatMessageCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(with message: ChatMessage) {
+    func configure(with message: ChatMessage, profileImageUrl: String) {
         messageLabel.text = message.text
         let isFromCurrentUser = message.isFromCurrentUser
         
@@ -73,8 +74,8 @@ class ChatMessageCell: UITableViewCell {
         timestampLabel.text = dateFormatter.string(from: message.timestamp)
 
         if isFromCurrentUser {
-            messageBubble.backgroundColor = .systemBlue
-            messageLabel.textColor = .white
+            messageBubble.backgroundColor = .deepBlue
+            messageLabel.textColor = .backgroundGray
             
             messageBubble.snp.remakeConstraints { make in
                 make.right.equalToSuperview().offset(-16)
@@ -90,9 +91,10 @@ class ChatMessageCell: UITableViewCell {
                 make.trailing.equalTo(messageBubble.snp.leading).offset(-8)
             }
         } else {
-            messageBubble.backgroundColor = .systemGray5
-            messageLabel.textColor = .black
-            avatarImageView.image = UIImage(named: "avatar_placeholder")
+            messageBubble.backgroundColor = .white
+            messageLabel.textColor = .deepBlue
+//            avatarImageView.image = UIImage(named: "user-placeholder")
+            avatarImageView.kf.setImage(with: URL(string: profileImageUrl), placeholder: UIImage(named: "user-placeholder"))
             
             messageBubble.snp.remakeConstraints { make in
                 make.left.equalTo(avatarImageView.snp.right).offset(8)

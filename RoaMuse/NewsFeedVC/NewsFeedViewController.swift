@@ -81,7 +81,7 @@ class NewsFeedViewController: UIViewController {
     private func setupNavigationBarStyle() {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             let navBarAppearance = UINavigationBarAppearance()
-            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.configureWithTransparentBackground()
             navBarAppearance.largeTitleTextAttributes = [
                 .foregroundColor: UIColor.deepBlue,
                 .font: customFont

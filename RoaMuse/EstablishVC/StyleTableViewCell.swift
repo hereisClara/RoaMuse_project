@@ -13,7 +13,7 @@ class StyleTableViewCell: UITableViewCell {
     
     let titleLabel = UILabel()
     let descriptionLabel = UILabel()
-    let containerView = UIView() // 新增一個 containerView 來控制內縮和圓角
+    let containerView = UIView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -37,7 +37,7 @@ class StyleTableViewCell: UITableViewCell {
         contentView.addSubview(containerView)
         
         containerView.snp.makeConstraints { make in
-            make.top.equalTo(contentView).inset(8) // 四周內縮 10 點
+            make.top.equalTo(contentView).inset(8)
             make.width.equalTo(contentView)
             make.centerX.equalTo(contentView)
             make.bottom.equalTo(contentView)
@@ -49,22 +49,22 @@ class StyleTableViewCell: UITableViewCell {
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(containerView).offset(16)
             make.top.equalTo(containerView).offset(15)
-            make.trailing.equalTo(containerView).offset(-16) // 增加右側約束
+            make.trailing.equalTo(containerView).offset(-16)
         }
         
         descriptionLabel.snp.makeConstraints { make in
             make.leading.equalTo(titleLabel)
-            make.top.equalTo(titleLabel.snp.bottom).offset(8) // 改小一點間距
-            make.trailing.equalTo(containerView).offset(-16) // 增加右側約束
-            make.bottom.equalTo(containerView).offset(-16) // 確保與單元格底部有距離
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.trailing.equalTo(containerView).offset(-16)
+            make.bottom.equalTo(containerView).offset(-16)
         }
         
         // 調整字體
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
-        titleLabel.textColor = .deepBlue // 設置標題顏色
+        titleLabel.textColor = .deepBlue
         
         descriptionLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         descriptionLabel.textColor = UIColor.systemGray
-        descriptionLabel.numberOfLines = 0 // 設置自適應行數
+        descriptionLabel.numberOfLines = 0
     }
 }

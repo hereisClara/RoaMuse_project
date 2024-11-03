@@ -78,7 +78,6 @@
 		AC7A2A8B2C9D5E47003FA811 /* CommentTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */; };
 		AC7A2A8E2C9F23B1003FA811 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = AC7A2A8D2C9F23B1003FA811 /* Kingfisher */; };
 		AC9775602CA3004C00EF828A /* UserProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */; };
-		AC9775662CA43B4900EF828A /* TestVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9775652CA43B4900EF828A /* TestVC.swift */; };
 		AC97756C2CA45DE500EF828A /* poemLocationNLP3.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */; };
 		AC97756F2CA5501A00EF828A /* PlaceDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */; };
 		AC9775712CA551CB00EF828A /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC9775702CA551CB00EF828A /* Config.plist */; };
@@ -199,7 +198,6 @@
 		AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentTableViewCell.swift; sourceTree = "<group>"; };
 		AC97755E2CA2472300EF828A /* RoaMuse.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoaMuse.entitlements; sourceTree = "<group>"; };
 		AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewController.swift; sourceTree = "<group>"; };
-		AC9775652CA43B4900EF828A /* TestVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestVC.swift; sourceTree = "<group>"; };
 		AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = poemLocationNLP3.mlmodel; path = ../../../poemLocationNLP3.mlmodel; sourceTree = "<group>"; };
 		AC97756D2CA52A9300EF828A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDataManager.swift; sourceTree = "<group>"; };
@@ -343,7 +341,12 @@
 		AC7A2A642C97C667003FA811 /* UserVC */ = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
+				AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */,
+				AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */,
+				AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */,
 				AC18F8362CAB986A004E8868 /* DropdownMenu.swift */,
+				AC984C0C2CBE6BF6007F47BB /* DropdownMenuCell.swift */,
 				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
 				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
 				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
@@ -361,20 +364,24 @@
 			path = UserVC;
 			sourceTree = "<group>";
 		};
+		AC7AD7DA2CD7A42500BB5249 /* LoginVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC984C052CBBF232007F47BB /* CustomMaskWaveView.swift */,
+				AC7A2A542C9725AE003FA811 /* LoginViewController.swift */,
+				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
+			);
+			path = LoginVC;
+			sourceTree = "<group>";
+		};
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
-				AC984C0C2CBE6BF6007F47BB /* DropdownMenuCell.swift */,
-				AC984C052CBBF232007F47BB /* CustomMaskWaveView.swift */,
-				AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */,
 				AC984C012CB6A689007F47BB /* PoemPostViewController.swift */,
 				AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */,
 				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
-				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
 				AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */,
 				AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */,
-				AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */,
-				AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */,
 				AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */,
 				AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */,
 				AC18F8582CB06031004E8868 /* ChatListViewController.swift */,
@@ -392,18 +399,16 @@
 				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
 				AC9775702CA551CB00EF828A /* Config.plist */,
 				AC97756D2CA52A9300EF828A /* Config.xcconfig */,
-				AC9775652CA43B4900EF828A /* TestVC.swift */,
 				AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */,
-				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
+				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
 				AC7A2A642C97C667003FA811 /* UserVC */,
 				AC7A2A632C97C63D003FA811 /* Manager */,
 				AC7A2A622C97C635003FA811 /* Model */,
 				AC7A2A612C97C610003FA811 /* NewsFeedVC */,
 				AC7A2A602C97C607003FA811 /* EstablishVC */,
-				AC7A2A542C9725AE003FA811 /* LoginViewController.swift */,
 				AC7A2A582C97AF17003FA811 /* Extension+String.swift */,
-				AC7A2A562C97A606003FA811 /* FirstViewController.swift */,
+				AC7AD7DA2CD7A42500BB5249 /* LoginVC */,
 				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
 				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
 				AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */,
@@ -692,7 +697,6 @@
 				AC18F8472CAE9571004E8868 /* PoemMatchingService.swift in Sources */,
 				AC18F85D2CB06167004E8868 /* ChatMessageCell.swift in Sources */,
 				AC27ACBD2C92FB9300B73485 /* CollectionsViewController.swift in Sources */,
-				AC9775662CA43B4900EF828A /* TestVC.swift in Sources */,
 				AC18F8592CB06031004E8868 /* ChatListViewController.swift in Sources */,
 				AC7A2A852C9C4C97003FA811 /* UserTableViewCell.swift in Sources */,
 				AC75D1002CB50060005258EA /* RegionLabelView.swift in Sources */,

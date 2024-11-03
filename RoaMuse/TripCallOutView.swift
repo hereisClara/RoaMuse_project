@@ -45,6 +45,6 @@ class TripCalloutView: UIView, UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedTripId = tripIds[indexPath.row]
-        onTripSelected?(selectedTripId)  // 觸發回調並傳遞選擇的 tripId
+        onTripSelected?(selectedTripId)
     }
 }

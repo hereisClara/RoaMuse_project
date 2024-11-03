@@ -20,7 +20,7 @@ class PlaceDataManager {
            let googlePlacesAPIKey = config["GOOGLE_PLACES_API_KEY"] as? String {
             self.apiKey = googlePlacesAPIKey
         } else {
-            self.apiKey = ""  // 如果金鑰未設置，設置為空字符串（需要處理錯誤情況）
+            self.apiKey = ""
             print("Google Places API Key is missing!")
         }
     }
@@ -30,7 +30,7 @@ class PlaceDataManager {
         var currentLocation = startLocation
         let dispatchGroup = DispatchGroup()
         var hasFoundPlace = false
-        // 遞迴搜尋地點
+        
         func searchNextKeyword(index: Int) {
             if index >= keywords.count {
                 completion(foundPlaces, hasFoundPlace)
@@ -39,11 +39,11 @@ class PlaceDataManager {
             
             var keyword = keywords[index]
             let radius = radius
-            var typeRestrictions = "park|natural_feature"  // 限制搜尋類型為公園或自然景點
+            var typeRestrictions = "park|natural_feature"
             
             if keyword == "山" {
-                keyword = "高山 峰 嶺 步道"  // 使用更具體的關鍵字
-                typeRestrictions = "hiking_trail|mountain|natural_feature"  // 限制搜尋高山或登山步道類型
+                keyword = "高山 峰 嶺 步道"
+                typeRestrictions = "hiking_trail|mountain|natural_feature"
             }
             
             dispatchGroup.enter()
@@ -127,7 +127,6 @@ class PlaceDataManager {
         }.resume()
     }
 
-    // 解析 Google Places API 回應中的地點資料
     func parsePlace(from dictionary: [String: Any]) -> Place? {
         guard let name = dictionary["name"] as? String,
               let geometry = dictionary["geometry"] as? [String: Any],
@@ -140,16 +139,13 @@ class PlaceDataManager {
         
         return Place(id: placeId, name: name, latitude: lat, longitude: lng)
     }
-//    TODO: 處理重複上傳問題
-    // 保存地點到 Firebase
+
     func savePlaceToFirebase(_ place: Place, completion: @escaping (Place?) -> Void) {
         let db = Firestore.firestore()
 
-        // 四捨五入經緯度來限制精度，避免微小的差異導致重複上傳
         let roundedLatitude = round(place.latitude * 10000) / 10000
         let roundedLongitude = round(place.longitude * 10000) / 10000
 
-        // 先檢查 Firebase 中是否已經有相同名稱和相近經緯度的地點
         let placeRef = db.collection("places")
             .whereField("latitude", isEqualTo: roundedLatitude)
             .whereField("longitude", isEqualTo: roundedLongitude)
@@ -162,13 +158,12 @@ class PlaceDataManager {
                 return
             }
             
-            // 如果找到相同的地點，則不進行上傳
             if let snapshot = snapshot, !snapshot.isEmpty {
                 print("Place already exists in Firebase, skipping upload.")
                 if let document = snapshot.documents.first {
                     var placeToUpdate = place
-                    placeToUpdate.id = document.documentID  // Update the id to Firebase's documentID
-                    completion(placeToUpdate)  // Return the updated place
+                    placeToUpdate.id = document.documentID
+                    completion(placeToUpdate) 
                 } else {
                     completion(nil)
                 }

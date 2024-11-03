@@ -93,7 +93,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             button.tag = index
             button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
             
-            // 设置按钮的宽度
             let buttonWidth = max(80, city.size(withAttributes: [.font: button.titleLabel?.font ?? UIFont.systemFont(ofSize: 17)]).width + 20)
             button.frame = CGRect(x: buttonX, y: 5, width: buttonWidth, height: buttonHeight)
             buttonX += buttonWidth + buttonPadding
@@ -103,26 +102,20 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             scrollView.addSubview(button)
         }
         
-        // 更新 scrollView 的 contentSize
         scrollView.contentSize = CGSize(width: buttonX, height: buttonHeight)
         print("ScrollView contentSize: \(scrollView.contentSize)")
     }
     
     @objc func filterButtonTapped(_ sender: UIButton) {
         if selectedButton == sender {
-            // 如果再次點擊同一個按鈕，顏色重設為 .deepBlue 並返回頂部
             sender.setTitleColor(.deepBlue, for: .normal)
             selectedButton = nil
             tableView.setContentOffset(.zero, animated: true)
         } else {
-            // 將之前的按鈕顏色還原為 .deepBlue
             selectedButton?.setTitleColor(.deepBlue, for: .normal)
-            
-            // 將新選中的按鈕設為 .accent 顏色
             sender.setTitleColor(.accent, for: .normal)
             selectedButton = sender
             
-            // 滾動到對應的 section
             let section = sender.tag
             let headerRect = tableView.rectForHeader(inSection: section)
             let safeAreaTopInset = tableView.safeAreaInsets.top
@@ -247,7 +240,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                 } else {
                     DispatchQueue.main.async {
                         cell.likeCountLabel.text = "0"
-                        cell.likeButton.isSelected = false // 如果沒有按讚，設置為未選中
+                        cell.likeButton.isSelected = false
                     }
                 }
             }
@@ -269,14 +262,13 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let city = Array(cityGroupedPoems.keys)[indexPath.section] // 根據 section 取得城市名稱
-        guard let post = cityGroupedPoems[city]?[indexPath.row] else { return } // 從對應城市中取得文章
+        let city = Array(cityGroupedPoems.keys)[indexPath.section]
+        guard let post = cityGroupedPoems[city]?[indexPath.row] else { return }
         
         let articleVC = ArticleViewController()
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
             if let userName = userName {
-                // 配置文章詳情
                 articleVC.articleAuthor = userName
                 articleVC.articleTitle = post["title"] as? String ?? "無標題"
                 articleVC.articleContent = post["content"] as? String ?? "無內容"
@@ -304,30 +296,28 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     // MARK: - UITableViewDelegate
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        // 创建一个 UIView 作为 section 的 header
-        let headerView = UIView()
-        headerView.backgroundColor = .backgroundGray // 设置背景色
         
-        // 创建 UILabel 来显示标题
+        let headerView = UIView()
+        headerView.backgroundColor = .backgroundGray
+        
         let titleLabel = UILabel()
         titleLabel.text = Array(cityGroupedPoems.keys)[section]
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
-        titleLabel.textColor = .deepBlue // 自定义文字颜色
+        titleLabel.textColor = .deepBlue
         
         headerView.addSubview(titleLabel)
         
-        // 使用 Auto Layout 进行布局
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16), // 左边有间距
-            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor) // 垂直居中
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
         ])
         
         return headerView
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 40 // 自定义的 header 高度
+        return 40
     }
     
     // MARK: - 加載數據
@@ -415,16 +405,13 @@ extension PoemPostViewController {
         if let indexPath = tableView.indexPathForRow(at: point),
            let cell = tableView.cellForRow(at: indexPath) as? UserTableViewCell {
             
-            // 取得貼文資料
             let postData = cityGroupedPoems[Array(cityGroupedPoems.keys)[indexPath.section]]?[indexPath.row]
             let postId = postData?["id"] as? String ?? ""
 
             guard let userId = self.currentUserId else { return }
 
-            // 儲存按讚資料
             saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
                 if success {
-                    // 重新載入按讚數據
                     FirebaseManager.shared.loadPosts { posts in
                         let filteredPosts = posts.filter { post in
                             return post["id"] as? String == postId
@@ -432,7 +419,6 @@ extension PoemPostViewController {
                         if let matchedPost = filteredPosts.first,
                            let likesAccount = matchedPost["likesAccount"] as? [String] {
                             
-                            // 在主線程更新 UI
                             DispatchQueue.main.async {
                                 cell.likeCountLabel.text = String(likesAccount.count)
                                 cell.likeButton.isSelected = likesAccount.contains(userId)
@@ -445,7 +431,6 @@ extension PoemPostViewController {
                         }
                     }
                 } else {
-                    // 如果儲存失敗，還原按鈕狀態
                     DispatchQueue.main.async {
                         sender.isSelected.toggle()
                     }
@@ -464,7 +449,6 @@ extension PoemPostViewController {
             var bookmarkAccount = postData?["bookmarkAccount"] as? [String] ?? []
             
             if sender.isSelected {
-                // 取消收藏
                 bookmarkAccount.removeAll { $0 == userId }
                 FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
                     if success {
@@ -476,7 +460,6 @@ extension PoemPostViewController {
                     }
                 }
             } else {
-                // 新增收藏
                 if !bookmarkAccount.contains(userId) {
                     bookmarkAccount.append(userId)
                 }
@@ -491,7 +474,6 @@ extension PoemPostViewController {
                 }
             }
             
-            // 切換按鈕狀態
             sender.isSelected.toggle()
         }
     }
@@ -529,9 +511,9 @@ extension PoemPostViewController {
                                     ) { result in
                                         switch result {
                                         case .success:
-                                            print("通知发送成功")
+                                            print("通知發送成功")
                                         case .failure(let error):
-                                            print("通知发送失败: \(error.localizedDescription)")
+                                            print("通知發送失败: \(error.localizedDescription)")
                                         }
                                     }
                                 case .failure(let error):
@@ -548,7 +530,6 @@ extension PoemPostViewController {
                             print("取消按讚失敗: \(error.localizedDescription)")
                             completion(false)
                         } else {
-                            //                    print("取消按讚成功，已更新資料")
                             completion(true)
                         }
                     }
@@ -563,7 +544,6 @@ extension PoemPostViewController {
         let dispatchGroup = DispatchGroup()
         var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
 
-        // 使用 DispatchGroup 來確保所有圖片都載入完成後再進行顯示
         for (index, urlString) in photoUrls.enumerated() {
             guard let url = URL(string: urlString) else { continue }
 
@@ -582,7 +562,6 @@ extension PoemPostViewController {
             }.resume()
         }
 
-        // 當所有圖片載入完成後，跳轉至全螢幕檢視
         dispatchGroup.notify(queue: .main) {
             fullScreenVC.images = images
             fullScreenVC.startingIndex = startingIndex

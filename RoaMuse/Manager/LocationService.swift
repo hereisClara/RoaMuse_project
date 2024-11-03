@@ -4,7 +4,6 @@ import MapKit
 
 class LocationService {
     
-    // 单例模式
     static let shared = LocationService()
     
     init() {}
@@ -14,16 +13,15 @@ class LocationService {
     var districts: [String] = []
     let searchRadius: Double = 15000
     
-    // 反向地理编码方法
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
             if let error = error {
-                print("反向地理编码失败: \(error.localizedDescription)")
+                print("反向地理編碼失败: \(error.localizedDescription)")
                 completion(nil, nil)
             } else if let placemark = placemarks?.first {
-                let city = placemark.administrativeArea ?? "未知县市"  // 县市
-                let district = placemark.locality ?? placemark.subLocality ?? "未知区"  // 行政区
+                let city = placemark.administrativeArea ?? "未知縣市"
+                let district = placemark.locality ?? placemark.subLocality ?? "未知行政區"
                 completion(city, district)
             } else {
                 completion(nil, nil)
@@ -31,19 +29,17 @@ class LocationService {
         }
     }
 
-    // 计算路径的总时间和详细信息
     func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [MKRoute]?) -> Void) {
         var totalTime: TimeInterval = 0
         var routes = [MKRoute]()
         let dispatchGroup = DispatchGroup()
         
         guard !places.isEmpty else {
-            print("没有地点可供计算")
+            print("没有地點可供計算")
             completion(nil, nil)
             return
         }
         
-        // Step 1: 计算从当前位置到第一个地点的时间
         if let firstPlace = places.first {
             let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
             
@@ -52,13 +48,12 @@ class LocationService {
                 if let travelTime = travelTime, let route = route {
                     totalTime += travelTime
                     routes.append(route)
-                    print("从当前位置到第一个地点的时间：\(travelTime) 秒")
+                    print("從當前位置到第一個地點的時間：\(travelTime) 秒")
                 }
                 dispatchGroup.leave()
             }
         }
         
-        // Step 2: 计算地点之间的时间
         if places.count > 1 {
             for num in 0..<(places.count - 1) {
                 let startLocation = CLLocationCoordinate2D(latitude: places[num].latitude, longitude: places[num].longitude)
@@ -69,21 +64,19 @@ class LocationService {
                     if let travelTime = travelTime, let route = route {
                         totalTime += travelTime
                         routes.append(route)
-                        print("从地点 \(num) 到地点 \(num + 1) 的时间：\(travelTime) 秒")
+                        print("从地點 \(num) 到地點 \(num + 1) 的時間：\(travelTime) 秒")
                     }
                     dispatchGroup.leave()
                 }
             }
         }
         
-        // Step 3: 返回总时间和详细路线
         dispatchGroup.notify(queue: .main) {
-            print("总交通时间：\(totalTime) 秒")
+            print("總交通時間：\(totalTime) 秒")
             completion(totalTime, routes)
         }
     }
 
-    // 计算单条路径
     private func calculateRoute(from startLocation: CLLocationCoordinate2D, to endLocation: CLLocationCoordinate2D, completion: @escaping (TimeInterval?, MKRoute?) -> Void) {
         let request = MKDirections.Request()
         
@@ -93,9 +86,8 @@ class LocationService {
         request.source = MKMapItem(placemark: sourcePlacemark)
         request.destination = MKMapItem(placemark: destinationPlacemark)
         
-        request.transportType = .automobile  // 或者 .walking
+        request.transportType = .automobile
         
-        // 计算路线
         let directions = MKDirections(request: request)
         directions.calculate { response, error in
             if let error = error {
@@ -112,7 +104,6 @@ class LocationService {
         }
     }
 
-    // 处理诗词文本并返回关键字列表
     func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -144,8 +135,8 @@ class LocationService {
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         let dispatchGroup = DispatchGroup()
         var foundValidPlace = false
-        self.city = "" // 清空现有的城市
-        self.districts.removeAll() // 清空现有的行政区
+        self.city = ""
+        self.districts.removeAll()
         self.matchingPlaces.removeAll()
         
         for keyword in keywords {
@@ -154,7 +145,6 @@ class LocationService {
                 if validPlaceFound {
                     foundValidPlace = true
                 }
-                // dispatchGroup.leave() 已在 processKeywordPlaces 内部调用
             }
         }
         
@@ -183,11 +173,8 @@ class LocationService {
             }
 
             if let randomPlace = nearbyPlaces.randomElement() {
-                print("随机选择的地点: \(randomPlace)")
                 if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
-                    print("将地点加入 matchingPlaces: \(randomPlace)")
                     self.matchingPlaces.append((keyword: keyword, place: randomPlace))
-                    print("当前 matchingPlaces: \(self.matchingPlaces)")
                     let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
                     self.reverseGeocodeLocation(placeLocation) { city, district in
                         if let city = city, let district = district {
@@ -206,13 +193,11 @@ class LocationService {
                     dispatchGroup.leave()
                 }
             } else {
-                // 如果没有找到符合条件的地点，搜索并保存
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
-                    print("从 Google API 找到的地点: \(foundPlaces)")
+                    print("從 Google API 找到的地點: \(foundPlaces)")
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
-                                // 确保不重复添加地点
                                 if !self.matchingPlaces.contains(where: { $0.place.id == savedPlace.id }) {
                                     self.matchingPlaces.append((keyword: keyword, place: savedPlace))
                                     print("Matching places after adding: \(self.matchingPlaces)")
@@ -232,7 +217,6 @@ class LocationService {
         }
     }
 
-    // 创建嵌套导航指令数组
     func createNestedRouteInstructions(routesArray: [MKRoute]) -> [[[String: Any]]] {
         var nestedRouteInstructions = [[[String: Any]]]()
         

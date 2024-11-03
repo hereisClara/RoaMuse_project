@@ -14,7 +14,7 @@ protocol RegionSelectionDelegate: AnyObject {
 
 class RegionSelectionViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
-    let regions = ["台北市", "新北市", "桃園市", "台中市", "台南市", "高雄市", "基隆市", "新竹市", "嘉義市"] // 可以根據需要補充
+    let regions = ["台北市", "新北市", "桃園市", "台中市", "台南市", "高雄市", "基隆市", "新竹市", "嘉義市"] 
     let tableView = UITableView()
     weak var delegate: RegionSelectionDelegate?
     

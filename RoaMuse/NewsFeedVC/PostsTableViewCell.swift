@@ -40,10 +40,9 @@ class PostsTableViewCell: UITableViewCell {
         self.addSubview(bookmarkCountLabel)
         self.addSubview(likeCountLabel)
         self.contentView.addSubview(collectButton)
-        self.contentView.addSubview(likeButton) // 加入 likeButton
-        self.contentView.addSubview(commentButton) // 加入 commentButton
+        self.contentView.addSubview(likeButton)
+        self.contentView.addSubview(commentButton) 
         
-        // 設置標題、作者、時間、內容的約束
         titleLabel.snp.makeConstraints { make in
             make.leading.equalTo(self).offset(20)
             make.bottom.equalTo(self.snp.centerY).offset(-20)
@@ -65,21 +64,18 @@ class PostsTableViewCell: UITableViewCell {
             make.top.equalTo(authorLabel.snp.bottom).offset(10)
         }
         
-        // 設置收藏按鈕的約束
         likeButton.snp.makeConstraints { make in
             make.leading.equalTo(titleLabel)
             make.top.equalTo(contentLabel.snp.bottom).offset(20)
             make.width.height.equalTo(35)
         }
         
-        // 設置 likeButton 的約束
         commentButton.snp.makeConstraints { make in
             make.leading.equalTo(likeButton.snp.trailing).offset(60)
             make.centerY.equalTo(likeButton)
             make.width.height.equalTo(30)
         }
         
-        // 設置 commentButton 的約束
         collectButton.snp.makeConstraints { make in
             make.leading.equalTo(commentButton.snp.trailing).offset(60)
             make.centerY.equalTo(likeButton)
@@ -109,7 +105,6 @@ class PostsTableViewCell: UITableViewCell {
         collectButton.setImage(UIImage(systemName: "bookmark.fill"), for: .selected)
         collectButton.tintColor = UIColor.systemPink
         
-        // 其他標題、內容的屬性設定
         titleLabel.font = UIFont.systemFont(ofSize: 20)
         contentLabel.numberOfLines = 0
         titleLabel.numberOfLines = 0
@@ -118,20 +113,14 @@ class PostsTableViewCell: UITableViewCell {
     }
 }
 
-// 儲存文章收藏
 func updateUserCollections(userId: String) {
-    // 獲取 Firestore 的引用
     let db = Firestore.firestore()
-    // 指定用戶文檔的路徑
     let userRef = db.collection("user").document(userId)
-    // 使用 `updateData` 方法只更新 bookmarkPost 字段
     userRef.updateData([
         "bookmarkPost": [""]
     ]) { error in
         if let error = error {
             print("更新收藏數量失敗：\(error.localizedDescription)")
-        } else {
-//            print("收藏數量更新成功！")
         }
     }
 }

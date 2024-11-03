@@ -12,8 +12,8 @@ import SnapKit
 class PhotoCollectionTableViewCell: UITableViewCell {
     
     var collectionView: UICollectionView!
-    var images: [UIImage] = []  // 圖片數據源
-    var collectionViewHeightConstraint: Constraint? // 保存高度约束
+    var images: [UIImage] = []
+    var collectionViewHeightConstraint: Constraint?
     weak var parentViewController: UIViewController?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -27,7 +27,7 @@ class PhotoCollectionTableViewCell: UITableViewCell {
     
     func setupCollectionView() {
         let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical // 垂直滚动
+        layout.scrollDirection = .vertical 
         layout.minimumLineSpacing = 6
         layout.minimumInteritemSpacing = 6
         layout.itemSize = CGSize(width: (UIScreen.main.bounds.width - 60) / 3, height: 100)

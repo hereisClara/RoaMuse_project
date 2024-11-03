@@ -115,14 +115,13 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
                 previousCell?.textLabel?.textColor = .forBronze
             }
             
-            // 設定新的選中項目
             selectedIndex = indexPath
             let selectedCell = tableView.cellForRow(at: indexPath)
             selectedCell?.accessoryType = .checkmark
             selectedCell?.textLabel?.textColor = .accent
         }
         
-        tableView.deselectRow(at: indexPath, animated: true)  // 取消點擊高亮效果
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     // MARK: - UITableViewDelegate
@@ -138,7 +137,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         headerView.addSubview(headerLabel)
         
-        // 使用 SnapKit 設置 Header Label 的位置
         headerLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.leading.equalToSuperview().offset(12)

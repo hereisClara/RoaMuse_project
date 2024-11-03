@@ -224,7 +224,6 @@ class CollectionsViewController: UIViewController {
                 }
             }
             
-            // 处理已完成行程
             parentDispatchGroup.enter()
             FirebaseManager.shared.loadBookmarkedTrips(tripIds: completeTripIds) { [weak self] completeTrips in
                 guard let self = self else { parentDispatchGroup.leave(); return }
@@ -248,7 +247,6 @@ class CollectionsViewController: UIViewController {
                 }
             }
             
-            // 当所有数据加载完成后，刷新表格视图
             parentDispatchGroup.notify(queue: .main) {
                 self.collectionsTableView.reloadData()
                 self.collectionsTableView.mj_header?.endRefreshing()
@@ -276,32 +274,29 @@ class CollectionsViewController: UIViewController {
                     self.collectionsTableView.mj_header?.endRefreshing()
                 }
             } else {
-                print("No posts found in bookmarks.") // Debugging
-                self.collectionsTableView.reloadData() // 確保即使沒有數據也更新 UI
+                print("No posts found in bookmarks.")
+                self.collectionsTableView.reloadData()
                 self.collectionsTableView.mj_header?.endRefreshing()
             }
         }
     }
     
     func setupRefreshControl() {
-        // 使用 MJRefreshNormalHeader，當下拉時觸發的刷新動作
         collectionsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
             guard let self = self else { return }
-            self.loadInitialData() // 在刷新時重新加載數據
+            self.loadInitialData()
         })
     }
     
     func setupFilterButtons() {
-        // 主容器
         view.addSubview(mainContainer)
         mainContainer.snp.makeConstraints { make in
-            make.leading.equalTo(segmentedControl.snp.leading) // 藍色圓底的 leading 和 segmentedControl 的 leading 對齊
-            make.bottom.equalTo(segmentedControl.snp.top).offset(-15) // 底部距離 segmentControl 30
+            make.leading.equalTo(segmentedControl.snp.leading)
+            make.bottom.equalTo(segmentedControl.snp.top).offset(-15)
             make.height.equalTo(50)
             self.mainContainerWidthConstraint = make.width.equalTo(50).constraint
         }
         
-        // 白色背景，開始時隱藏
         buttonsBackground.backgroundColor = .white
         buttonsBackground.layer.cornerRadius = 25
         buttonsBackground.layer.masksToBounds = true
@@ -326,7 +321,6 @@ class CollectionsViewController: UIViewController {
             make.centerY.equalTo(mainContainer)
         }
         
-        // 放大鏡圖標
         let magnifierIcon = UIImageView(image: UIImage(systemName: "magnifyingglass"))
         magnifierIcon.tintColor = .white
         magnifierBackground.addSubview(magnifierIcon)
@@ -349,7 +343,6 @@ class CollectionsViewController: UIViewController {
             make.leading.equalTo(magnifierBackground.snp.trailing).offset(15) // 設定距離藍色圓底15
         }
         
-        // 添加篩選按鈕
         let filterOptions = ["奇險派", "浪漫派", "田園派"]
         
         for (index, title) in filterOptions.enumerated() {
@@ -401,27 +394,23 @@ extension CollectionsViewController {
     
     @objc func toggleFilterButtons() {
         if isExpanded {
-            // 收合動畫
             UIView.animate(withDuration: 0.3, animations: {
                 self.mainContainerWidthConstraint?.update(offset: 50)
-                self.buttonsBackground.alpha = 1 // 淡出動畫
+                self.buttonsBackground.alpha = 1
                 self.view.layoutIfNeeded()
             }) { _ in
-                // 完成動畫後隱藏按鈕背景
                 self.buttonsBackground.isHidden = true
             }
         } else {
-            // 展開動畫
-            buttonsBackground.isHidden = false // 顯示按鈕背景
-            buttonsBackground.alpha = 1 // 從透明開始
+            buttonsBackground.isHidden = false
+            buttonsBackground.alpha = 1
             UIView.animate(withDuration: 0.3, animations: {
-                // 將按鈕背景展開到預定寬度
-                self.mainContainerWidthConstraint?.update(offset: self.segmentedControl.frame.width) // 展開的寬度可以根據需要調整
-                self.buttonsBackground.alpha = 1 // 淡入動畫
+                self.mainContainerWidthConstraint?.update(offset: self.segmentedControl.frame.width)
+                self.buttonsBackground.alpha = 1
                 self.view.layoutIfNeeded()
             })
         }
-        isExpanded.toggle() // 切換展開狀態
+        isExpanded.toggle()
     }
     
     @objc func filterButtonTapped(_ sender: UIButton) {
@@ -429,14 +418,13 @@ extension CollectionsViewController {
         
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         
-        // 檢查是否點擊了相同的篩選按鈕，如果是則重置
         if selectedFilterIndex == index {
             sender.setTitleColor(.deepBlue, for: .normal)
             selectedFilterIndex = nil
             loadTripsData(userId: userId)
             loadPostsData()
         } else {
-            // 重置之前的按鈕顏色
+            
             if let previousIndex = selectedFilterIndex {
                 if previousIndex < filterButtons.count {
                     filterButtons[previousIndex].setTitleColor(.deepBlue, for: .normal)
@@ -445,7 +433,6 @@ extension CollectionsViewController {
             sender.setTitleColor(.accent, for: .normal)
             selectedFilterIndex = index
             
-            // 根據 tag 加載行程
             FirebaseManager.shared.loadTripsByTag(tag: index) { [weak self] trips in
                 guard let self = self else { return }
                 
@@ -458,7 +445,6 @@ extension CollectionsViewController {
                             self.incompleteTripsArray = bookmarkedTrips.filter { !completedTrips.contains($0.id) }
                             self.completeTripsArray = bookmarkedTrips.filter { completedTrips.contains($0.id) }
                             
-                            // 邊界檢查，確保不會訪問越界的數組
                             if !self.incompleteTripsArray.isEmpty {
                                 for (index, trip) in self.incompleteTripsArray.enumerated() {
                                     FirebaseManager.shared.loadPoemById(trip.poemId) { poem in

@@ -44,12 +44,12 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     let milestones: [Float] = [0.3, 0.6, 1.0]
     
         var taskSets: [[TaskSet]] = [
-            [TaskSet(totalTasks: 30, completedTasks: 30)],  // 第 1 个任务集合（cell）
+            [TaskSet(totalTasks: 30, completedTasks: 30)],
             [TaskSet(totalTasks: 50, completedTasks: 50),
              TaskSet(totalTasks: 40, completedTasks: 40),
-             TaskSet(totalTasks: 30, completedTasks: 30)],  // 第 2 个任务集合（cell）
+             TaskSet(totalTasks: 30, completedTasks: 30)],
             [TaskSet(totalTasks: 20, completedTasks: 20),
-             TaskSet(totalTasks: 50, completedTasks: 50)]   // 第 3 个任务集合（cell）
+             TaskSet(totalTasks: 50, completedTasks: 50)]
         ]
     
     override func viewDidLoad() {
@@ -375,16 +375,13 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         cell.selectionStyle = .none
         cell.milestoneProgressView.milestones = milestones
 
-        // 確保 progress 是根據資料正確設置的
         if indexPath.section < dynamicTaskSets.count && indexPath.row < dynamicTaskSets[indexPath.section].count {
             let taskSet = self.dynamicTaskSets[indexPath.section][indexPath.row]
             let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
 
-            // 更新進度條
             cell.milestoneProgressView.progress = progress
             updateAwardTitles(section: indexPath.section, row: indexPath.row, progress: progress)
         } else {
-            // 當無數據時，將進度設置為 0
             cell.milestoneProgressView.progress = 0.0
         }
 
@@ -438,7 +435,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         return headerView
     }
     
-    // 設置 section 表頭的高度
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 50 // 自定義表頭高度
     }
@@ -455,11 +451,9 @@ extension AwardsViewController {
                 let taskSet = self.dynamicTaskSets[section][row]
                 let progress = Float(taskSet.completedTasks) / Float(taskSet.totalTasks)
                 
-                // 根據 section 和 row 從 awardTitles 中取得該 row 的 titles
                 let titlesForRow = awardTitles[section][row]
                 var obtainedTitles: [String] = []
                 
-                // 根據進度決定應該取得哪些 titles
                 if isProgressEqualOrGreater(progress, than: 1.0) {
                     obtainedTitles = titlesForRow
                 } else if isProgressEqualOrGreater(progress, than: 0.6) {
@@ -468,33 +462,27 @@ extension AwardsViewController {
                     obtainedTitles = [titlesForRow[0]]
                 }
                 
-                // 檢查 obtainedTitles 並將 title 的索引位置存入 titlesWithIndexes
                 for title in obtainedTitles {
                     if !currentTitles.contains(title) {
                         currentTitles.append(title)  // 保留舊的 currentTitles
                     }
 
-                    // 找到 title 在 awardTitles 中的 row 索引
                     if let titleRowIndex = titlesForRow.firstIndex(of: title) {
                         titlesWithIndexes.append((title: title, section: section, row: titleRowIndex))
-                        print("---", titlesWithIndexes)
                     }
                 }
             }
         }
         
-        // 更新 dropdownMenu
         dropdownMenu.titlesWithIndexes = titlesWithIndexes
         dropdownMenu.items = currentTitles
     }
     
-    // 保留現有的 isProgressEqualOrGreater 方法
     func isProgressEqualOrGreater(_ progress: Float, than value: Float) -> Bool {
         let epsilon: Float = 0.0001
         return progress > value - epsilon
     }
 
-    // 保留 categorizePlacesByTag 的邏輯
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {
             print("無法獲取 userId")

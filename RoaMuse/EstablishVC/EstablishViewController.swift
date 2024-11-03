@@ -69,7 +69,7 @@ class EstablishViewController: UIViewController {
         if let styleCircleButton = styleCircleView.subviews.first as? UIButton {
             setButtonSelected(styleCircleButton)
         } else {
-            setCellsSelectable(isSelectable: false)  // 預設為不可選擇
+            setCellsSelectable(isSelectable: false)
         }
     }
     
@@ -78,7 +78,7 @@ class EstablishViewController: UIViewController {
         
         UIView.animate(withDuration: 0.3) {
             circleView.backgroundColor = sender.tintColor
-            sender.tintColor = .white  // 或者任何未選中的狀態顏色
+            sender.tintColor = .white
         }
     }
     
@@ -87,7 +87,7 @@ class EstablishViewController: UIViewController {
         
         UIView.animate(withDuration: 0.3) {
             circleView.backgroundColor = .systemGray4
-            sender.tintColor = .deepBlue  // 恢復未選中顏色
+            sender.tintColor = .deepBlue
         }
     }
     
@@ -95,20 +95,19 @@ class EstablishViewController: UIViewController {
         for cell in styleTableView.visibleCells {
             cell.isUserInteractionEnabled = isSelectable
         }
-        styleTableView.reloadData() // 確保狀態及時更新
+        styleTableView.reloadData()
     }
 
     func setupActivityIndicator() {
         
         activityIndicator.snp.makeConstraints { make in
-            make.center.equalTo(view) // 設置指示器在視圖的中央
+            make.center.equalTo(view)
         }
         activityIndicator.isHidden = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        tabBarController?.tabBar.isHidden = false
         setupNavigationBarStyle()
         updateStyleLabel(with: "＃隨機")
     }
@@ -116,7 +115,7 @@ class EstablishViewController: UIViewController {
     private func setupNavigationBarStyle() {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             let navBarAppearance = UINavigationBarAppearance()
-            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.configureWithTransparentBackground()
             navBarAppearance.largeTitleTextAttributes = [
                 .foregroundColor: UIColor.deepBlue,
                 .font: customFont
@@ -230,14 +229,14 @@ class EstablishViewController: UIViewController {
         guard let circleView = sender.superview else { return }
 
         if circleView == styleCircleView {
-            // 点击 styleCircleView 时
+
             if !isStyleButtonSelected {
                 isStyleButtonSelected = true
                 isTimingButtonSelected = false
                 updateUIBasedOnSelection()
             }
         } else if circleView == timingRecommendCircleView {
-            // 点击 timingRecommendCircleView 时
+
             if !isTimingButtonSelected {
                 isTimingButtonSelected = true
                 isStyleButtonSelected = false
@@ -304,7 +303,7 @@ class EstablishViewController: UIViewController {
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         keyWindow.addSubview(backgroundView)
         backgroundView.snp.makeConstraints { make in
-            make.edges.equalTo(keyWindow) // 全屏覆盖
+            make.edges.equalTo(keyWindow)
         }
 
         let popupView = UIView()
@@ -330,7 +329,7 @@ class EstablishViewController: UIViewController {
 
         radiusSlider.minimumValue = 1000
         radiusSlider.maximumValue = 15000
-        radiusSlider.value = Float(searchRadius)  // 初始值为 1000
+        radiusSlider.value = Float(searchRadius)
         popupView.addSubview(radiusSlider)
 
         radiusSlider.snp.makeConstraints { make in
@@ -342,14 +341,14 @@ class EstablishViewController: UIViewController {
         radiusSlider.addTarget(self, action: #selector(sliderValueChanged(_:)), for: .valueChanged)
 
         let closeButton = UIButton(type: .system)
-        let closeImage = UIImage(systemName: "xmark.circle.fill")  // 使用 SF Symbols 的圖示
+        let closeImage = UIImage(systemName: "xmark.circle.fill")
         closeButton.setImage(closeImage, for: .normal)
         closeButton.tintColor = .forBronze
         popupView.addSubview(closeButton)
 
         closeButton.snp.makeConstraints { make in
-            make.top.equalTo(popupView).offset(20)  // 調整 X 標誌的位置
-            make.trailing.equalTo(popupView).offset(-20)  // 靠右上角顯示
+            make.top.equalTo(popupView).offset(20)
+            make.trailing.equalTo(popupView).offset(-20)
         }
 
         closeButton.addTarget(self, action: #selector(dismissPopup), for: .touchUpInside)
@@ -369,7 +368,7 @@ class EstablishViewController: UIViewController {
     @objc func dismissPopup(_ sender: UIButton) {
         searchRadius = CLLocationDistance(radiusSlider.value)
         
-        sender.superview?.superview?.removeFromSuperview() // 移除弹窗
+        sender.superview?.superview?.removeFromSuperview()
     }
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
@@ -408,11 +407,10 @@ extension EstablishViewController {
             self.activityIndicator.isHidden = false
         }
 
-        // 設置一個超時計時器，15秒後顯示警告彈窗
         let timeoutWorkItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             DispatchQueue.main.async {
-                self.showNoPlacesFoundAlert() // 顯示警告彈窗
+                self.showNoPlacesFoundAlert()
                 self.recommendRandomTripView.isUserInteractionEnabled = true
                 self.activityIndicator.stopAnimating()
                 self.activityIndicator.isHidden = true
@@ -421,11 +419,9 @@ extension EstablishViewController {
  
         DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutWorkItem)
 
-        
         PoemCollectionManager.shared.loadPoemIdsFromFirebase(forUserId: userId) {
             DispatchQueue.global(qos: .userInitiated).async {
                 FirebaseManager.shared.loadAllPoems { poems in
-                    // 如果請求成功，取消超時計時器
                     timeoutWorkItem.cancel()
                     let filteredPoems: [Poem]
                     if self.styleTag < 0 {
@@ -620,9 +616,9 @@ extension EstablishViewController {
                             }
                         }
                     }
-                    completion(true) // 标记为成功找到地点
+                    completion(true)
                 } else {
-                    completion(false) // 如果已经存在该地点
+                    completion(false)
                 }
             } else {
                 
@@ -687,10 +683,9 @@ extension EstablishViewController {
     
     func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [[String]]?) -> Void) {
         var totalTime: TimeInterval = 0
-        var nestedInstructions = [[String]]()  // 用來存放每段路線的指令數列
+        var nestedInstructions = [[String]]()
         let dispatchGroup = DispatchGroup()
         
-        // 確保有地點可供計算
         guard !places.isEmpty else {
             
             completion(nil, nil)
@@ -700,7 +695,6 @@ extension EstablishViewController {
         totalTime = 0
         nestedInstructions.removeAll()
         
-        // Step 1: 計算從當前位置到第一個地點的時間
         if let firstPlace = places.first {
             let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
             
@@ -709,19 +703,17 @@ extension EstablishViewController {
                 if let travelTime = travelTime, let route = route {
                     totalTime += travelTime
                     
-                    // 創建導航指令數列
                     var stepInstructions = [String]()
                     for step in route.steps {
                         let instruction = step.instructions
                         stepInstructions.append(instruction)
                     }
-                    nestedInstructions.append(stepInstructions)  // 加入嵌套數列
+                    nestedInstructions.append(stepInstructions)
                 }
                 dispatchGroup.leave()
             }
         }
         
-        // Step 2: 計算地點之間的時間
         if places.count > 1 {
             for num in 0..<(places.count - 1) {
                 let startLocation = CLLocationCoordinate2D(latitude: places[num].latitude, longitude: places[num].longitude)
@@ -737,7 +729,7 @@ extension EstablishViewController {
                             let instruction = step.instructions
                             stepInstructions.append(instruction)
                         }
-                        nestedInstructions.append(stepInstructions)  // 加入嵌套數列
+                        nestedInstructions.append(stepInstructions)
                     }
                     dispatchGroup.leave()
                 }
@@ -773,9 +765,8 @@ extension EstablishViewController {
     func createNestedRouteInstructions(routesArray: [[MKRoute]]) -> [[[String: Any]]] {
         var nestedRouteInstructions = [[[String: Any]]]()
         
-        // 遍歷每一段路線
         for routeArray in routesArray {
-            var stepInstructions = [[String: Any]]()  // 用來保存每一段路線的步驟
+            var stepInstructions = [[String: Any]]()
             
             if let route = routeArray.first {
                 for step in route.steps {
@@ -849,7 +840,7 @@ extension EstablishViewController {
                                     startTime: nil
                                 )
                                 
-                                self.getPoemPlacePair()  // Make sure placePoemPairs is populated
+                                self.getPoemPlacePair() 
                                 self.saveSimplePlacePoemPairsToFirebase(tripId: documentID, simplePairs: self.placePoemPairs) { success in
                                     if success {
                                         print("Successfully saved placePoemPairs to Firebase.")

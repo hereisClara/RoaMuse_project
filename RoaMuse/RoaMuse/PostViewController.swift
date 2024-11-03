@@ -41,8 +41,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         navigationItem.backButtonTitle = ""
         
         let navBarAppearance = UINavigationBarAppearance()
-        navBarAppearance.configureWithOpaqueBackground() // 设置为不透明
-        navBarAppearance.backgroundColor = .backgroundGray // 设置背景色
+        navBarAppearance.configureWithOpaqueBackground()
+        navBarAppearance.backgroundColor = .backgroundGray
         navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
 
         self.navigationItem.standardAppearance = navBarAppearance
@@ -54,7 +54,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         self.navigationItem.largeTitleDisplayMode = .never
         let attributes: [NSAttributedString.Key: Any] = [
             .font: UIFont(name: "NotoSerifHK-Black", size: 18) ?? UIFont.systemFont(ofSize: 18),
-            .foregroundColor: UIColor.deepBlue // 你可以根據需求調整顏色
+            .foregroundColor: UIColor.deepBlue
         ]
         let postButtonItem = UIBarButtonItem(title: "發文", style: .done, target: self, action: #selector(handlePostAction))
         postButtonItem.setTitleTextAttributes(attributes, for: .normal)
@@ -92,18 +92,16 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     }
     
     @objc func handlePostAction() {
-        saveData()          // 執行保存操作
+        saveData()
     }
     
     func addImageToStackView(_ image: UIImage) {
-        // 添加圖片到已選圖片數組
+        
         selectedImages.append(image)
         
-        // 創建一個 UIView 作為圖片和按鈕的容器
         let imageContainer = UIView()
         imagesStackView.addArrangedSubview(imageContainer)
         
-        // 創建縮圖
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
@@ -111,8 +109,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         imageContainer.addSubview(imageView)
         
         imageView.snp.makeConstraints { make in
-            make.edges.equalToSuperview() // 讓 imageView 填滿容器
-            make.width.height.equalTo(60) // 設置固定大小
+            make.edges.equalToSuperview()
+            make.width.height.equalTo(60)
         }
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleImageTap(_:)))
@@ -128,13 +126,13 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         imageContainer.addSubview(removeButton)
         
         removeButton.snp.makeConstraints { make in
-            make.top.equalTo(imageContainer.snp.top).offset(-8)  // 相對於父視圖的右上角
+            make.top.equalTo(imageContainer.snp.top).offset(-8)
             make.trailing.equalTo(imageContainer.snp.trailing).offset(8)
             make.width.height.equalTo(24)
         }
         
         removeButton.addTarget(self, action: #selector(removeSelectedImage(_:)), for: .touchUpInside)
-        removeButton.tag = selectedImages.count - 1  // 標記此按鈕，對應圖片位置
+        removeButton.tag = selectedImages.count - 1
     }
     
     @objc func handleImageTap(_ gesture: UITapGestureRecognizer) {
@@ -144,8 +142,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
         
         let fullScreenVC = FullScreenImageViewController()
-        fullScreenVC.images = selectedImages // 将所有选中的图片传递过去
-        fullScreenVC.startingIndex = tappedIndex // 设置从点击的图片开始展示
+        fullScreenVC.images = selectedImages
+        fullScreenVC.startingIndex = tappedIndex
         
         navigationController?.pushViewController(fullScreenVC, animated: true)
     }
@@ -162,7 +160,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         imagesStackView.distribution = .fillEqually
         
         imagesStackView.snp.makeConstraints { make in
-            make.leading.equalTo(imageButton.snp.trailing).offset(12) // 與 contentTextView 左對齊
+            make.leading.equalTo(imageButton.snp.trailing).offset(12)
             make.centerY.equalTo(imageButton)
             make.height.equalTo(60)
             make.trailing.equalTo(contentTextView)
@@ -247,16 +245,13 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             let imageView = UIImageView(image: selectedImage)
             view.addSubview(imageView)
             imageView.snp.makeConstraints { make in
-                make.top.equalTo(imageButton.snp.bottom).offset(20)  // 距離 imageButton 底部 20 點
-                make.centerX.equalTo(view)  // 水平方向居中
-                make.width.height.equalTo(150)  // 設定圖片的寬度與高度為 150 點
+                make.top.equalTo(imageButton.snp.bottom).offset(20)
+                make.centerX.equalTo(view)
+                make.width.height.equalTo(150)
             }
         }
         
         postButton.setTitle("發文", for: .normal)
-//        postButton.addTarget(self, action: #selector(saveData), for: .touchUpInside)
-//        postButton.addTarget(self, action: #selector(backToLastPage), for: .touchUpInside)
-        
         postButton.isEnabled = false
         
         titleTextField.delegate = self
@@ -276,7 +271,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         }
     }
     
-    // 加載圖片的通用方法
     func loadAvatarImage(from urlString: String) {
         guard let url = URL(string: urlString) else { return }
         
@@ -311,10 +305,8 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         document.setData(data) { error in
             if let error = error {
-                print("发文失败: \(error.localizedDescription)")
                 completion(false)
             } else {
-                print("发文成功")
                 completion(true)
             }
         }
@@ -325,7 +317,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         contentTextView.text = ""
         postButtonAction?()
         navigationController?.popToRootViewController(animated: true)
-//        tabBarController?.tabBar.isHidden = false
     }
     
     @objc func toggleDropdown() {
@@ -534,7 +525,6 @@ extension PostViewController {
         guard let title = titleTextField.text, let content = contentTextView.text else { return }
         
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-        print("开始保存数据")
         uploadImagesToFirebase { [weak self] urls in
             guard let self = self, let urls = urls else {
                 return
@@ -546,8 +536,6 @@ extension PostViewController {
                     DispatchQueue.main.async {
                         self.backToLastPage()
                     }
-                } else {
-                    // 处理保存失败的情况，例如提示用户
                 }
             }
         }

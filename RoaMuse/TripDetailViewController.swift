@@ -328,10 +328,10 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         
         let containerView = UIView()
         containerView.backgroundColor = .clear
-        containerView.isUserInteractionEnabled = true // 确保容器视图可以交互
+        containerView.isUserInteractionEnabled = true
         
         let headerView = createHeaderView(poem: poem)
-        headerView.isUserInteractionEnabled = true // 确保 headerView 可以交互
+        headerView.isUserInteractionEnabled = true
         containerView.addSubview(headerView)
         
         headerView.snp.makeConstraints { make in
@@ -444,7 +444,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let backgroundView = UIView()
         backgroundView.backgroundColor = .systemGray4
         backgroundView.layer.cornerRadius = 25
-        backgroundView.isHidden = true // 初始隐藏
+        backgroundView.isHidden = true
         transportButtonsView.addSubview(backgroundView)
         transportButtonsView.sendSubviewToBack(backgroundView)
         
@@ -470,7 +470,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             let button = UIButton(type: .system)
             button.setImage(UIImage(systemName: icon), for: .normal)
             button.tintColor = .white
-            button.backgroundColor = .clear // 未选中时背景为透明
+            button.backgroundColor = .clear
             button.layer.cornerRadius = 25
             button.tag = index
             button.isUserInteractionEnabled = true
@@ -579,7 +579,7 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         let directionRequest = MKDirections.Request()
         directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate))
         directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate))
-        directionRequest.transportType = selectedTransportType // 根據選擇的交通方式設置
+        directionRequest.transportType = selectedTransportType
 
         let directions = MKDirections(request: directionRequest)
         directions.calculate { [weak self] (response, error) in
@@ -588,7 +588,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             let route = response.routes[0]
             DispatchQueue.main.async {
                 if let cell = self.tableView.cellForRow(at: IndexPath(row: 0, section: self.currentTargetIndex)) as? MapTableViewCell {
-                    // 呼叫 showMap 時傳入起點和終點座標
                     cell.showMap(from: startCoordinate, to: destinationCoordinate, with: route)
                 }
             }
@@ -605,9 +604,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if mapVisibilityState[indexPath.section] ?? false {
-            return 200 // 显示地图的高度
+            return 200
         } else {
-            return 0 // 隐藏cell时高度为0
+            return 0
         }
     }
     
@@ -885,9 +884,9 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
         guard sectionIndex < places.count else { return }
         currentTargetIndex = sectionIndex
         if self.locationButton.isSelected {
-            mapVisibilityState[sectionIndex] = true  // 更新地图可见状态
+            mapVisibilityState[sectionIndex] = true
         }
-        let indexPath = IndexPath(row: 0, section: currentTargetIndex)  // 更新的行
+        let indexPath = IndexPath(row: 0, section: currentTargetIndex)
         self.tableView.reloadRows(at: [IndexPath(row: 0, section: sectionIndex)], with: .fade)
     }
 
@@ -908,7 +907,6 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             if let placeLabel = footerView.subviews.first(where: { $0 is UILabel }) as? UILabel {
                 footerView.backgroundColor = .deepBlue
                 if let poemPair = self.placePoemPairs.first(where: { $0.placeId == place.id }) {
-                    print("-----+ ", self.placePoemPairs)
                     placeLabel.text = poemPair.poemLine
                     placeLabel.textColor = .white
                     if let descriptionLabel = footerView.viewWithTag(100 + sectionIndex) as? UILabel {

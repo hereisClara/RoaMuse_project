@@ -306,12 +306,12 @@ class UserProfileViewController: UIViewController {
         
         postStackView.snp.makeConstraints { make in
             make.centerY.equalTo(fansStackView)
-            make.centerX.equalTo(fansStackView.snp.leading).offset(-80)  // 间距
+            make.centerX.equalTo(fansStackView.snp.leading).offset(-80)
         }
         
         followingStackView.snp.makeConstraints { make in
             make.centerY.equalTo(fansStackView)
-            make.centerX.equalTo(fansStackView.snp.trailing).offset(80)  // 间距
+            make.centerX.equalTo(fansStackView.snp.trailing).offset(80)
         }
         
         regionLabelView.snp.makeConstraints { make in
@@ -439,7 +439,6 @@ extension UserProfileViewController {
                 }
             }
         } else {
-            // 追蹤
             currentUserRef.updateData([
                 "following": FieldValue.arrayUnion([followedUserId])
             ]) { error in
@@ -460,21 +459,21 @@ extension UserProfileViewController {
                                     let userName = data["userName"] as? String ?? ""
                                     
                                     FirebaseManager.shared.saveNotification(
-                                        to: self.userId ?? "",  // 被追蹤者的ID
-                                        from: currentUserId,      // 發起追蹤的當前用戶ID
-                                        postId: nil,       // 追蹤操作與貼文無關，因此這裡是 nil
-                                        type: 2,           // 2 表示追蹤
+                                        to: self.userId ?? "",
+                                        from: currentUserId,
+                                        postId: nil,
+                                        type: 2,
                                         subType: nil,
                                         title: "你有一個新追蹤者！",
                                         message: "\(userName) 開始追蹤你了",
-                                        actionUrl: nil,    // 可選 URL，點擊後跳轉的動作，這裡可以是 profile 頁面
+                                        actionUrl: nil,
                                         priority: 0
                                     ) { result in
                                         switch result {
                                         case .success:
-                                            print("追蹤通知发送成功")
+                                            print("追蹤通知發送成功")
                                         case .failure(let error):
-                                            print("追蹤通知发送失败: \(error.localizedDescription)")
+                                            print("追蹤通知發送失败: \(error.localizedDescription)")
                                         }
                                     }
                                     
@@ -498,7 +497,7 @@ extension UserProfileViewController {
         
         chatButton.snp.makeConstraints { make in
             make.width.height.equalTo(45)
-            make.top.equalTo(followButton).offset(24)  // 調整頂部偏移量
+            make.top.equalTo(followButton).offset(24)
             make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
         }
         
@@ -506,14 +505,12 @@ extension UserProfileViewController {
     }
     
     @objc func toChatPage() {
-        // 获取当前用户的 userId 和被聊天的对象 userId
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId"),
               let chatUserId = userId else { return }
         
-        // 通过现有数据库去检查是否已有聊天会话，若无则创建
         fetchOrCreateChatSession(currentUserId: currentUserId, chatUserId: chatUserId) { chatId in
             let chatVC = ChatViewController()
-            chatVC.chatId = chatId  // 传递聊天会话的 chatId
+            chatVC.chatId = chatId
             chatVC.chatUserId = chatUserId
             self.navigationController?.pushViewController(chatVC, animated: true)
         }
@@ -523,7 +520,6 @@ extension UserProfileViewController {
         let chatRef = Firestore.firestore().collection("chats")
         let userRef = Firestore.firestore().collection("users")
         
-        // Step 1: 檢查是否已經存在聊天會話
         chatRef
             .whereField("participants", arrayContains: currentUserId)
             .getDocuments { (snapshot, error) in
@@ -532,24 +528,19 @@ extension UserProfileViewController {
                     return
                 }
                 
-                // 遍歷所有會話，檢查是否有相同參與者
                 if let documents = snapshot?.documents {
                     for document in documents {
                         let data = document.data()
                         let participants = data["participants"] as? [String] ?? []
                         
                         if participants.contains(chatUserId) {
-                            // 如果會話已經存在，返回 chatId
                             completion(document.documentID)
                             return
                         }
                     }
                 }
                 
-                // Step 2: 如果沒有找到，創建新的會話
-                let chatId = chatRef.document().documentID // 自定義生成的 chatId
-                
-                // 獲取當前用戶和聊天對象的頭像
+                let chatId = chatRef.document().documentID
                 userRef.document(chatUserId).getDocument { (chatUserSnapshot, error) in
                     guard let chatUserData = chatUserSnapshot?.data(),
                           let chatUserAvatar = chatUserData["photo"] as? String else {
@@ -564,23 +555,20 @@ extension UserProfileViewController {
                             return
                         }
                         
-                        // 準備新的聊天數據，新增 id 欄位
                         let newChatData: [String: Any] = [
-                            "id": chatId, // 新增 id 欄位
+                            "id": chatId,
                             "participants": [currentUserId, chatUserId],
                             "lastMessage": "",
                             "lastMessageTime": FieldValue.serverTimestamp(),
-                            "chatUserProfileImage": chatUserAvatar,   // 保存聊天對象頭像
-                            "currentUserProfileImage": currentUserAvatar // 保存當前用戶頭像
+                            "chatUserProfileImage": chatUserAvatar,
+                            "currentUserProfileImage": currentUserAvatar
                         ]
                         
-                        // Step 3: 將聊天數據上傳到 Firestore，指定 chatId
                         chatRef.document(chatId).setData(newChatData) { error in
                             if let error = error {
                                 print("創建新的聊天會話失敗: \(error)")
                             } else {
                                 print("新的聊天會話創建成功，chatId: \(chatId)")
-                                // 返回 chatId
                                 completion(chatId)
                             }
                         }
@@ -656,7 +644,7 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             } else {
                 DispatchQueue.main.async {
                     cell.likeCountLabel.text = "0"
-                    cell.likeButton.isSelected = false // 依據狀態設置未選中
+                    cell.likeButton.isSelected = false
                 }
             }
         }
@@ -697,7 +685,6 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             }
         }
         
-        // 檢查收藏狀態
         FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: postId) { isBookmarked in
             cell.collectButton.isSelected = isBookmarked
         }
@@ -733,10 +720,6 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
             }
         }
     }
-    
-//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-//        return 250
-//    }
     
     func loadUserPosts() {
         guard let userId = userId else { return }
@@ -780,9 +763,9 @@ extension UserProfileViewController: UITableViewDelegate, UITableViewDataSource 
                 ) { result in
                     switch result {
                     case .success:
-                        print("通知发送成功")
+                        print("通知發送成功")
                     case .failure(let error):
-                        print("通知发送失败: \(error.localizedDescription)")
+                        print("通知發送失败: \(error.localizedDescription)")
                     }
                 }
                 case .failure(let error):

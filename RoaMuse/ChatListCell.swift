@@ -42,14 +42,14 @@ class ChatListCell: UITableViewCell {
             make.width.height.equalTo(60)
         }
         
-        userNameLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        userNameLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         userNameLabel.snp.makeConstraints { make in
             make.leading.equalTo(profileImageView.snp.trailing).offset(10)
             make.top.equalTo(contentView).offset(15)
             make.trailing.equalTo(contentView).offset(-10)
         }
         
-        lastMessageLabel.font = UIFont.systemFont(ofSize: 14)
+        lastMessageLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         lastMessageLabel.textColor = .gray
         lastMessageLabel.snp.makeConstraints { make in
             make.leading.equalTo(profileImageView.snp.trailing).offset(10)
@@ -57,7 +57,7 @@ class ChatListCell: UITableViewCell {
             make.trailing.equalTo(contentView).offset(-10)
         }
         
-        lastMessageTimeLabel.font = UIFont.systemFont(ofSize: 12)
+        lastMessageTimeLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 12)
         lastMessageTimeLabel.textColor = .lightGray
         lastMessageTimeLabel.snp.makeConstraints { make in
             make.trailing.equalTo(contentView).offset(-10)
@@ -69,7 +69,6 @@ class ChatListCell: UITableViewCell {
         userNameLabel.text = chat.userName
         lastMessageLabel.text = chat.lastMessage
         
-        // 格式化時間顯示
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy/MM/dd HH:mm"
         lastMessageTimeLabel.text = dateFormatter.string(from: chat.lastMessageTime)

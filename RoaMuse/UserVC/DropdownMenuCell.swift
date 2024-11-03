@@ -25,7 +25,6 @@ class DropdownMenuCell: UITableViewCell {
     private func setupAwardLabelView() {
         contentView.addSubview(awardLabelView)
         awardLabelView.titleLabel.textAlignment = .left
-        
         awardLabelView.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview().inset(6)
             make.leading.equalToSuperview().inset(8)

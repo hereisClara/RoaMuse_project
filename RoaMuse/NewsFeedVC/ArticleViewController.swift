@@ -47,13 +47,12 @@ class ArticleViewController: UIViewController {
         navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.tintColor = UIColor.deepBlue
         let navBarAppearance = UINavigationBarAppearance()
-            navBarAppearance.configureWithOpaqueBackground() // 确保导航栏不透明
-            navBarAppearance.backgroundColor = .white // 自定义背景颜色
-            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
-
-            // 只为当前页面的导航项设置外观
-            self.navigationItem.standardAppearance = navBarAppearance
-            self.navigationItem.scrollEdgeAppearance = navBarAppearance
+        navBarAppearance.configureWithOpaqueBackground()
+        navBarAppearance.backgroundColor = .white
+        navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.deepBlue]
+        
+        self.navigationItem.standardAppearance = navBarAppearance
+        self.navigationItem.scrollEdgeAppearance = navBarAppearance
         
         tabBarController?.tabBar.isHidden = true
         self.navigationItem.largeTitleDisplayMode = .never
@@ -137,7 +136,7 @@ class ArticleViewController: UIViewController {
             string: placeholderText,
             attributes: [
                 .font: UIFont(name: "NotoSerifHK-Black", size: 18) ?? UIFont.systemFont(ofSize: 18),
-                .foregroundColor: UIColor.lightGray // 可選的顏色設定
+                .foregroundColor: UIColor.lightGray
             ]
         )
         
@@ -437,10 +436,10 @@ extension ArticleViewController {
                         let userName = data["userName"] as? String ?? ""
                         
                         FirebaseManager.shared.saveNotification(
-                            to: self.authorId, // 確保這裡有正確的 postOwnerId
+                            to: self.authorId,
                             from: userId,
                             postId: self.postId,
-                            type: 1,  // 1 表示評論
+                            type: 1,
                             subType: nil,
                             title: "你的日記有新的評論！",
                             message: "\(userName) 評論了你的日記： \(commentContent)",

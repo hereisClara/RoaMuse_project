@@ -55,7 +55,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         popUpView.delegate = self
         setupContainerView()
         setupGenerateView()
-        setupLocationManager()
         setupMapView()
         loadPlacesDataAndAnnotateMap()
         checkIfTripBookmarked()
@@ -67,11 +66,11 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             do {
                 self.nlpModel = try poemLocationNLP3(configuration: .init())
                 DispatchQueue.main.async {
-                    self.generateView.isUserInteractionEnabled = true  // 允许用户交互
+                    self.generateView.isUserInteractionEnabled = true
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.generateView.isUserInteractionEnabled = true  // 即使加载失败，也需要避免界面卡死
+                    self.generateView.isUserInteractionEnabled = true
                 }
             }
         }
@@ -85,7 +84,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     func setupActivityIndicator() {
         
         activityIndicator.snp.makeConstraints { make in
-            make.center.equalTo(view) // 設置指示器在視圖的中央
+            make.center.equalTo(view)
         }
         
         activityIndicator.isHidden = true
@@ -167,12 +166,12 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         self.city = ""
         self.districts.removeAll()
         self.matchingPlaces.removeAll()
-        let searchRadius: Double = 10000 // 定义搜索半径
+        let searchRadius: Double = 10000
 
         let maxKeywords = 3
         let limitedKeywords = Array(keywords.prefix(maxKeywords))
         let keywordQueue = DispatchQueue(label: "keywordQueue", attributes: .concurrent)
-        let syncQueue = DispatchQueue(label: "com.yourapp.syncQueue") // Serial queue for synchronization
+        let syncQueue = DispatchQueue(label: "com.yourapp.syncQueue")
 
         for keyword in limitedKeywords {
             dispatchGroup.enter()
@@ -249,7 +248,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                     completion(false)
                 }
             } else {
-                // 调用 PlaceDataManager 搜索
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
@@ -296,7 +294,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             
             guard let model = try? poemLocationNLP3(configuration: .init()) else {
                 DispatchQueue.main.async {
-                    completion([], [:])  // 返回空结果，避免异步链条断裂
+                    completion([], [:])
                 }
                 return
             }
@@ -356,12 +354,6 @@ extension ArticleTripViewController {
         mapView.showsCompass = true
     }
     
-    func setupLocationManager() {
-//            locationManager.requestWhenInUseAuthorization()  // 请求位置使用权限
-//            locationManager.startUpdatingLocation()
-    }
-    
-    // 繪製路線的覆蓋層
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         if let polyline = overlay as? MKPolyline {
             let renderer = MKPolylineRenderer(overlay: polyline)
@@ -372,13 +364,11 @@ extension ArticleTripViewController {
         return MKOverlayRenderer()
     }
     
-    // 自定義地圖標註的視圖
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         let identifier = "PlaceMarker"
         var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKPinAnnotationView
         
         if annotation is MKUserLocation {
-                // 使用系統預設的使用者位置圖標
                 return nil
             }
         
@@ -455,7 +445,7 @@ extension ArticleTripViewController {
     func calculateTotalRouteTimeAndDetails(from currentLocation: CLLocationCoordinate2D, places: [Place], completion: @escaping (TimeInterval?, [String]?) -> Void) {
         var totalTime: TimeInterval = 0
         let dispatchGroup = DispatchGroup()
-        var placeOrder = [String]()  // 存放地點的顺序
+        var placeOrder = [String]()
         
         if let firstPlace = places.first {
             let firstPlaceLocation = CLLocationCoordinate2D(latitude: firstPlace.latitude, longitude: firstPlace.longitude)
@@ -463,18 +453,16 @@ extension ArticleTripViewController {
             calculateRoute(from: currentLocation, to: firstPlaceLocation) { route in
                 if let route = route {
                     totalTime += route.expectedTravelTime
-                    self.mapView.addOverlay(route.polyline)  // 绘制路径
+                    self.mapView.addOverlay(route.polyline)
                     placeOrder.append(firstPlace.name)
                 }
                 dispatchGroup.leave()
             }
         } else {
-            // 如果没有任何地点，直接返回
             completion(nil, nil)
             return
         }
         
-        // Step 2: 计算地点之间的路径
         if places.count >= 2 {
             for index in 0..<(places.count - 1) {
                 let startPlace = places[index]
@@ -497,7 +485,6 @@ extension ArticleTripViewController {
             }
         }
         
-        // Step 3: 返回结果
         dispatchGroup.notify(queue: .main) {
             completion(totalTime, placeOrder)
         }
@@ -709,9 +696,8 @@ extension ArticleTripViewController {
                                     self.updateTransportTimeLabel(totalTime: totalTime)
                                 }
                                 if let placeOrder = placeOrder {
-                                    self.placeNames = placeOrder  // 更新 placeNames
-                                    print("====", self.placeNames)
-                                    self.displayPlacesInLabel()  // 显示地点
+                                    self.placeNames = placeOrder
+                                    self.displayPlacesInLabel()
                                 }
                             }
                         }
@@ -723,7 +709,6 @@ extension ArticleTripViewController {
         }
     }
     
-    // 加載每個 place 的經緯度並在地圖上標註
     func loadPlaceData(placeId: String, completion: @escaping () -> Void) {
         let placeRef = Firestore.firestore().collection("places").document(placeId)
         placeRef.getDocument { (document, error) in

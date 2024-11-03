@@ -43,7 +43,6 @@ class SlidingView: UIView {
         tableView.register(PhotoCollectionTableViewCell.self, forCellReuseIdentifier: "CollectionTableViewCell")
         addSubview(tableView)
         
-        // 使用 SnapKit 設置 tableView 的約束
         tableView.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview().inset(15)
             make.leading.trailing.equalToSuperview().inset(24)
@@ -71,24 +70,12 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             showMoreButton.setTitle("查看更多", for: .normal)
             showMoreButton.addTarget(self, action: #selector(handleShowMoreTapped), for: .touchUpInside)
             
-//            headerView.addSubview(showMoreButton)
             headerView.addSubview(titleLabel)
             
             titleLabel.snp.makeConstraints { make in
                 make.centerY.equalTo(headerView)
                 make.leading.equalTo(headerView).offset(16)
             }
-            
-//            showMoreButton.snp.makeConstraints { make in
-//                make.trailing.equalTo(headerView).offset(-16)
-//                make.centerY.equalTo(headerView)
-//            }
-            
-//            if isExpanded == false {
-//                showMoreButton.isHidden = false
-//            } else {
-//                showMoreButton.isHidden = true
-//            }
             
             return headerView
         } else {
@@ -160,7 +147,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.section == 0 {
-            return 100  // tripId 的 cell 高度
+            return 100
         } else {
             guard !images.isEmpty else {
                 return 0
@@ -208,14 +195,14 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
         tripsRef.getDocument { document, error in
             if let error = error {
                 print("獲取行程資料失敗: \(error.localizedDescription)")
-                completion("無詩名", "無詩句") // 確保即使出錯也能完成
+                completion("無詩名", "無詩句")
                 return
             }
             
             guard let tripData = document?.data(),
                   let poemId = tripData["poemId"] as? String,
                   let placePoemPairs = tripData["placePoemPairs"] as? [[String: Any]] else {
-                completion("無詩名", "無詩句") // 確保資料缺失時完成
+                completion("無詩名", "無詩句")
                 return
             }
 
@@ -224,7 +211,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             poemsRef.getDocument { poemDocument, error in
                 if let error = error {
                     print("獲取詩資料失敗: \(error.localizedDescription)")
-                    completion("無詩名", "無詩句") // 確保出錯時完成
+                    completion("無詩名", "無詩句") 
                     return
                 }
                 

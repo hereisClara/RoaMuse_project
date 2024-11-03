@@ -14,19 +14,17 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     var chat: Chat?
     let tableView = UITableView()
-    let messageTextView = UITextView() // 使用 UITextView 取代 UITextField
+    let messageTextView = UITextView()
     let sendButton = UIButton(type: .system)
-    
     var chatId: String?
     var chatUserId: String?
     var messages: [ChatMessage] = []
     var currentUserId = UserDefaults.standard.string(forKey: "userId") ?? ""
-    
-    var messageTextViewHeightConstraint: Constraint? // 用於調整輸入框高度的約束
+    var messageTextViewHeightConstraint: Constraint?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .backgroundGray
         self.title = chat?.userName
         setupUI()
         
@@ -38,10 +36,19 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(false, animated: animated)
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.configureWithOpaqueBackground()
+        navBarAppearance.backgroundColor = .backgroundGray
+        navBarAppearance.titleTextAttributes = [
+            .foregroundColor: UIColor.deepBlue,
+            .font: UIFont(name: "NotoSerifHK-Black", size: 18)
+        ]
+        
+        self.navigationItem.standardAppearance = navBarAppearance
+        self.navigationItem.scrollEdgeAppearance = navBarAppearance
         tabBarController?.tabBar.isHidden = true
     }
     
-    // 配置界面佈局
     func setupUI() {
         view.addSubview(tableView)
         tableView.delegate = self
@@ -49,11 +56,12 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.register(ChatMessageCell.self, forCellReuseIdentifier: "ChatMessageCell")
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
+        tableView.backgroundColor = .backgroundGray
         
         view.addSubview(messageTextView)
         messageTextView.delegate = self
-        messageTextView.isScrollEnabled = false // 初始禁用滾動，隨內容改變
-        messageTextView.font = UIFont.systemFont(ofSize: 16)
+        messageTextView.isScrollEnabled = false
+        messageTextView.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         messageTextView.layer.cornerRadius = 8
         messageTextView.layer.borderWidth = 1
         messageTextView.layer.borderColor = UIColor.lightGray.cgColor
@@ -63,7 +71,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         sendButton.setTitle("發送", for: .normal)
         sendButton.addTarget(self, action: #selector(sendMessage), for: .touchUpInside)
         
-        // 使用 SnapKit 配置佈局
         tableView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             make.left.right.equalToSuperview()
@@ -83,14 +90,14 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             make.width.equalTo(60)
         }
     }
-    // 當 UITextView 的內容改變時調整高度
+    
     func textViewDidChange(_ textView: UITextView) {
-        // 計算內容高度
+        
         let contentHeight = textView.sizeThatFits(CGSize(width: textView.frame.width, height: CGFloat.greatestFiniteMagnitude)).height
-        let newHeight = min(max(contentHeight, 44), 120) // 限制高度在 44 到 120 之間
+        let newHeight = min(max(contentHeight, 44), 120)
         
         messageTextViewHeightConstraint?.update(offset: newHeight)
-        textView.isScrollEnabled = contentHeight > 120 // 超過 120 時啟用滾動
+        textView.isScrollEnabled = contentHeight > 120 
         view.layoutIfNeeded()
     }
 
@@ -99,7 +106,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         messageRef.addSnapshotListener { querySnapshot, error in
             guard let documents = querySnapshot?.documents else {
-                print("加载消息失败: \(error?.localizedDescription ?? "Unknown error")")
+                print("加載消息失败: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
             
@@ -163,7 +170,8 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ChatMessageCell", for: indexPath) as? ChatMessageCell
         let message = messages[indexPath.row]
-        cell?.configure(with: message)
+        cell?.configure(with: message, profileImageUrl: chat?.profileImage ?? "")
+        
         return cell ?? UITableViewCell()
     }
     

@@ -182,20 +182,18 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         } else if selectedOption == "封鎖名單" {
             let blockVC = BlockedListViewController()
             navigationController?.pushViewController(blockVC, animated: true)
-        } else if selectedOption == "隱私政策" {  // 新增隱私政策選項處理
+        } else if selectedOption == "隱私政策" {
             showPrivacyPolicy()
         }
     }
     
     func showPrivacyPolicy() {
-        if let url = URL(string: "https://www.privacypolicies.com/live/c984b18c-d28e-4bd2-945e-3ee2b23c5375") { // 替換為你的隱私政策URL
+        if let url = URL(string: "https://www.privacypolicies.com/live/c984b18c-d28e-4bd2-945e-3ee2b23c5375") {
             let safariVC = SFSafariViewController(url: url)
             present(safariVC, animated: true, completion: nil)
         }
     }
 
-    
-    // 處理登出邏輯
     func handleLogout() {
         let alert = UIAlertController(title: "登出", message: "你確定要登出嗎？", preferredStyle: .alert)
         
@@ -233,23 +231,19 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         present(alert, animated: true, completion: nil)
     }
     
-    // 軟刪除用戶（將狀態設為 0）
     func softDeleteUser(userId: String) {
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        // 更新 status 為 0，表示用戶帳號不可用
         userRef.updateData(["status": 0]) { error in
             if let error = error {
                 print("無法將用戶設置為不可用: \(error.localizedDescription)")
             } else {
                 print("用戶已成功設置為不可用")
-                // 清空本地使用者資訊並登出
                 self.handleLogout()
             }
         }
     }
     
-    // 導航到登入畫面
     func navigateToLoginScreen() {
         let loginVC = LoginViewController()
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -263,7 +257,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     func loadUserData(userId: String) {
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        // 使用 Firestore 的 addSnapshotListener 來監聽資料變化
         userRef.addSnapshotListener { [weak self] documentSnapshot, error in
             guard let self = self else { return }
             
@@ -277,7 +270,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                 return
             }
             
-            // 從 document 中提取用戶數據
             if let userData = document.data() {
                 if let userName = userData["userName"] as? String {
                     self.userName = userName
@@ -299,7 +291,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                     self.userGender = gender
                 }
                 
-                // 刷新 tableView，顯示更新後的數據
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -322,10 +313,10 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         if let editedImage = info[.editedImage] as? UIImage {
-            avatarImageView.image = editedImage  // 使用編輯後的圖片
+            avatarImageView.image = editedImage
             uploadImageToFirebaseStorage(editedImage)
         } else if let originalImage = info[.originalImage] as? UIImage {
-            avatarImageView.image = originalImage  // 若無編輯則使用原圖
+            avatarImageView.image = originalImage 
             uploadImageToFirebaseStorage(originalImage)
         }
         dismiss(animated: true, completion: nil)

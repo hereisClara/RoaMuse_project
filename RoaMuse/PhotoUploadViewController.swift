@@ -21,11 +21,11 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     var lastScale: CGFloat = 1.0
     var initialCenter: CGPoint = .zero
     var transparentArea: CGRect!
-    let sliderButton = UIButton(type: .system) // 新增的按钮
+    let sliderButton = UIButton(type: .system)
     let sliderBackgroundView = UIView()
     var slider = UISlider()
     var sliderLabel = UILabel()
-    var imageViewConstraints: [Constraint] = [] // 保存 ImageView 的約束
+    var imageViewConstraints: [Constraint] = []
     let minWidthScale: CGFloat = UIScreen.main.bounds.width
     let minHeightScale: CGFloat = UIScreen.main.bounds.height
     var backgroundView = UIView()
@@ -38,7 +38,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         super.viewDidLoad()
         view.backgroundColor = .white
         view.addSubview(templateImageView)
-        templateImageView.image = UIImage(named: "transparent_image")  // 模板图片名称
+        templateImageView.image = UIImage(named: "transparent_image")
         templateImageView.contentMode = .scaleAspectFit
         templateImageView.isUserInteractionEnabled = false
         templateImageView.snp.makeConstraints { make in
@@ -46,8 +46,8 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
         
         imageView.contentMode = .scaleAspectFill
-        imageView.isUserInteractionEnabled = true  // 启用用户交互
-        view.insertSubview(imageView, belowSubview: templateImageView)  // 将图片视图置于模板下面
+        imageView.isUserInteractionEnabled = true
+        view.insertSubview(imageView, belowSubview: templateImageView)
         setupImageViewConstraints()
         setupButtons()
         setupSliderButton()
@@ -61,7 +61,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 隱藏 TabBar
         self.tabBarController?.tabBar.isHidden = true
     }
     
@@ -71,11 +70,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         if imageView.image != nil {
             resetImageViewPositionAndSize()
         }
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-//        self.tabBarController?.tabBar.isHidden = false
     }
     
     func defineTransparentArea() {
@@ -117,7 +111,7 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         slider.minimumValue = min
         slider.maximumValue = max
         slider.minimumTrackTintColor = .deepBlue
-        slider.value = defaultValue  // 設置預設值
+        slider.value = defaultValue
         slider.addTarget(self, action: action, for: .valueChanged)
         stackView.addArrangedSubview(slider)
         
@@ -196,16 +190,13 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
 //        self.slider = slider
     }
     
-    // 调整遮罩透明度
     @objc func adjustMaskOpacity(_ sender: UISlider) {
         let alpha = CGFloat(sender.value)
         maskOpacityValue = sender.value
         templateImageView.alpha = alpha
     }
     
-    // 调整亮度
     @objc func adjustBrightness(_ sender: UISlider) {
-        // 限制为 2% 的步进
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
@@ -214,7 +205,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
 
     @objc func adjustSaturation(_ sender: UISlider) {
-        // 限制为 2% 的步进
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
@@ -223,7 +213,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
 
     @objc func adjustBlur(_ sender: UISlider) {
-        // 限制为 2% 的步进
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
@@ -232,7 +221,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
 
     @objc func sliderValueChanged(_ sender: UISlider) {
-        // 限制为 2% 的步进
         let step: Float = 0.04
         let roundedValue = round(sender.value / step) * step
         sender.value = roundedValue
@@ -245,7 +233,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
             return
         }
 
-        // 如果過去的濾鏡是同一種濾鏡，直接重用
         if currentFilter?.name != name {
             currentFilter = CIFilter(name: name)
             currentFilter?.setDefaults()
@@ -280,17 +267,15 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
     
     func setupButtons() {
-        // 分享按鈕
+        
         shareButton.setImage(UIImage(systemName: "square.and.arrow.up.fill"), for: .normal)
         shareButton.tintColor = .deepBlue
         shareButton.addTarget(self, action: #selector(shareAction), for: .touchUpInside)
         
-        // 上傳圖片按鈕
         uploadButton.setImage(UIImage(systemName: "photo.badge.plus.fill"), for: .normal)
         uploadButton.tintColor = .deepBlue
         uploadButton.addTarget(self, action: #selector(uploadPhoto), for: .touchUpInside)
         
-        // 保存圖片按鈕
         saveButton.setImage(UIImage(systemName: "tray.and.arrow.down.fill"), for: .normal)
         saveButton.tintColor = .accent
         saveButton.addTarget(self, action: #selector(saveToPhotoAlbum), for: .touchUpInside)
@@ -302,39 +287,34 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     
     func setupButtonStackView() {
         
-        stackViewBackgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.8) // 设置半透明白色
-        stackViewBackgroundView.layer.cornerRadius = 25 // 圆角为宽度的一半
+        stackViewBackgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.8)
+        stackViewBackgroundView.layer.cornerRadius = 25
         stackViewBackgroundView.layer.masksToBounds = true
         view.addSubview(stackViewBackgroundView)
         
-        // 设置背景 View 的约束
         stackViewBackgroundView.snp.makeConstraints { make in
             make.trailing.equalTo(view).offset(-20)
             make.bottom.equalTo(view).offset(-50)
-            make.width.equalTo(50) // 宽度与按钮相同
-            make.height.equalTo(280) // 根据按钮数量设置高度
+            make.width.equalTo(50)
+            make.height.equalTo(280)
         }
         
-        // 继续设置垂直的 StackView 来排列按钮
         buttonStackView.axis = .vertical
         buttonStackView.alignment = .fill
         buttonStackView.distribution = .equalSpacing
         buttonStackView.spacing = 20
         
-        // 添加按钮到 StackView
         buttonStackView.addArrangedSubview(shareButton)
         buttonStackView.addArrangedSubview(uploadButton)
-        buttonStackView.addArrangedSubview(cameraButton) // 新增的相机按钮
+        buttonStackView.addArrangedSubview(cameraButton)
         buttonStackView.addArrangedSubview(saveButton)
         
         view.addSubview(buttonStackView)
         
-        // 设置 StackView 的约束，使其位于背景 View 内
         buttonStackView.snp.makeConstraints { make in
-            make.edges.equalTo(stackViewBackgroundView).inset(10) // 让按钮距离背景 View 内边距 10 点
+            make.edges.equalTo(stackViewBackgroundView).inset(10)
         }
         
-        // 设置每个按钮的大小
         [shareButton, uploadButton, cameraButton, saveButton].forEach { button in
             button.snp.makeConstraints { make in
                 make.width.height.equalTo(50)
@@ -371,43 +351,35 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
     }
     
     @objc func shareAction() {
-        // 創建 AlertSheet
+        
         let alertSheet = UIAlertController(title: "分享", message: "選擇分享方式", preferredStyle: .actionSheet)
         
         let shareToExternalAction = UIAlertAction(title: "分享到外部", style: .default) { [weak self] _ in
             self?.shareToExternal()
         }
         
-        // 添加分享到日記選項
         let shareToDiaryAction = UIAlertAction(title: "分享到日記", style: .default) { [weak self] _ in
             self?.shareToDiary()
         }
         
-        // 添加取消選項
         let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
         
-        // 將選項添加到 AlertSheet
         alertSheet.addAction(shareToExternalAction)
         alertSheet.addAction(shareToDiaryAction)
         alertSheet.addAction(cancelAction)
         
-        // 顯示選項表
         present(alertSheet, animated: true, completion: nil)
     }
     
-    // 分享到外部的方法
     func shareToExternal() {
-        // 分享操作，使用 captureScreenshotExcludingViews 捕捉當前畫面
         if let image = captureScreenshotExcludingViews([buttonStackView, stackViewBackgroundView, sliderBackgroundView]) {
             let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
             self.present(activityVC, animated: true, completion: nil)
         }
     }
     
-    // 分享到日記的方法
     func shareToDiary() {
         guard let combinedImage = captureScreenshotExcludingViews([buttonStackView, stackViewBackgroundView, sliderBackgroundView]) else {
-            print("无法捕捉合成后的图片")
             return
         }
         let postVC = PostViewController()
@@ -429,7 +401,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         }
     }
     
-    // 更新 imageView 的约束
     func updateImageViewConstraints(width: CGFloat, height: CGFloat) {
         imageView.snp.remakeConstraints { make in
             make.width.equalTo(width)
@@ -446,21 +417,16 @@ extension PhotoUploadViewController {
         let size = image.size
         let widthRatio  = targetSize.width  / size.width
         let heightRatio = targetSize.height / size.height
-
-        // 確定比例，取最小值
         let ratio = min(widthRatio, heightRatio)
-
-        // 計算新尺寸
         let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
 
-        // 重繪圖片
         UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
         image.draw(in: CGRect(origin: .zero, size: newSize))
 
         let newImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
 
-        return newImage ?? image // 確保即使失敗也返回原圖
+        return newImage ?? image
     }
 
     
@@ -573,8 +539,6 @@ extension PhotoUploadViewController {
         
         let screenHeight = UIScreen.main.bounds.height
         let imageAspectRatio = image.size.width / image.size.height
-        
-        // 設定 imageView 的高度等於螢幕高度
         let newHeight = screenHeight
         let newWidth = newHeight * imageAspectRatio
         

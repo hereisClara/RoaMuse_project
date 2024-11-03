@@ -18,10 +18,10 @@ class LoginViewController: UIViewController {
 //        view.backgroundColor = .black
         let waveView = CustomMaskWaveView(frame: view.bounds)
         view.addSubview(waveView)
-        let backgroundImage = UIImage(named: "backgroundImage") // 使用你圖片的名字
-        let backgroundImageView = UIImageView(frame: UIScreen.main.bounds) // 設置為全螢幕大小
+        let backgroundImage = UIImage(named: "backgroundImage")
+        let backgroundImageView = UIImageView(frame: UIScreen.main.bounds)
         backgroundImageView.image = backgroundImage
-        backgroundImageView.contentMode = .scaleAspectFill // 設置內容模式（讓圖片適應螢幕大小）
+        backgroundImageView.contentMode = .scaleAspectFill
         checkAppleSignInStatus()
         view.insertSubview(backgroundImageView, at: 0)
         checkEULAAgreement()
@@ -31,10 +31,8 @@ class LoginViewController: UIViewController {
     
     func checkAppleSignInStatus() {
         if let appleUserIdentifier = UserDefaults.standard.string(forKey: "userId") {
-            // 已登入過，驗證登入狀態
             verifyAppleSignIn(appleUserIdentifier: appleUserIdentifier)
         } else {
-            // 未登入，顯示登入按鈕
             print("No previous Apple sign-in found.")
         }
     }
@@ -46,12 +44,11 @@ class LoginViewController: UIViewController {
             case .authorized:
                 print("User is still signed in with Apple ID.")
                 DispatchQueue.main.async {
-                    // 跳轉到主頁面
                     self.navigateToHome()
                 }
             case .revoked:
                 print("Apple ID credentials revoked.")
-                self.showLoginUI()  // 顯示登入 UI 以重新登入
+                self.showLoginUI()
             case .notFound:
                 print("Apple ID credentials not found.")
                 self.showLoginUI()
@@ -73,7 +70,7 @@ class LoginViewController: UIViewController {
     func showLoginUI() {
         DispatchQueue.main.async {
             print("Showing login UI.")
-            self.appleSignInButton.isHidden = false // 顯示登入按鈕
+            self.appleSignInButton.isHidden = false
         }
     }
 
@@ -107,10 +104,8 @@ class LoginViewController: UIViewController {
     }
     
     func checkEULAAgreement() {
-        // 檢查是否已同意 EULA
         let isEULAAccepted = UserDefaults.standard.bool(forKey: "EULAAccepted")
         if !isEULAAccepted {
-            // 如果尚未同意，顯示對話框
             showEULAAlert()
         }
     }
@@ -121,13 +116,11 @@ class LoginViewController: UIViewController {
                                                 preferredStyle: .alert)
 
         let acceptAction = UIAlertAction(title: "Accept", style: .default) { _ in
-            // 保存同意狀態
             UserDefaults.standard.set(true, forKey: "EULAAccepted")
             print("User has accepted the EULA.")
         }
         
         let declineAction = UIAlertAction(title: "Decline", style: .destructive) { _ in
-            // 若用戶拒絕條款，關閉應用
             print("User declined the EULA, closing app.")
             exit(0)
         }
@@ -179,14 +172,12 @@ class LoginViewController: UIViewController {
         
         let usersCollection = Firestore.firestore().collection("users")
         
-        // 構建用戶資料
         var userData: [String: Any] = [
             "id": id,
             "identityToken": identityToken ?? "",
             "authorizationCode": authorizationCode ?? ""
         ]
         
-        // 僅在首次登入時更新 userName 和 email
         if let fullName = fullName {
             let name = [fullName.givenName, fullName.familyName].compactMap { $0 }.joined(separator: " ")
             userData["userName"] = name
@@ -200,13 +191,10 @@ class LoginViewController: UIViewController {
             print("Email is nil.")
         }
         
-        // 先檢查用戶是否存在
         usersCollection.document(id).getDocument { documentSnapshot, error in
             if let document = documentSnapshot, document.exists {
                 print("User already exists, not updating userName or email.")
-                // 如果用戶已存在，不覆蓋 userName 和 email
             } else {
-                // 如果是新用戶，則將其資料寫入 Firebase
                 usersCollection.document(id).setData(userData) { error in
                     if let error = error {
                         print("Error saving user data to Firestore: \(error.localizedDescription)")
@@ -219,7 +207,6 @@ class LoginViewController: UIViewController {
         }
     }
     
-    // Example for manual data saving (orange login)
     func saveUserData(userName: String) {
         print("Saving user data with username: \(userName)")
         let usersCollection = Firestore.firestore().collection("users")
@@ -319,7 +306,6 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
             let authorizationCodeString = String(data: authorizationCode, encoding: .utf8)
             let identityTokenString = String(data: identityToken, encoding: .utf8)
             
-            // 儲存資料到 Firestore
             self.saveUserDataToFirestoreWithApple(id: userIdentifier, fullName: fullName, email: email, authorizationCode: authorizationCodeString, identityToken: identityTokenString)
             
             DispatchQueue.main.async {

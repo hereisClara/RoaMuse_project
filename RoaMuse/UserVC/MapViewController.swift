@@ -310,13 +310,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         dispatchGroup.enter()
         slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
             DispatchQueue.main.async {
-                // 你可以在這裡更新相關 UI 或變數
                 print("詩名: \(poemTitle), 詩句: \(poemLine)")
-                dispatchGroup.leave()  // 當詩句資料完成時再呼叫 leave()
+                dispatchGroup.leave()
             }
         }
 
-        // 所有資料獲取完成後顯示 slidingView 並更新 UI
         dispatchGroup.notify(queue: .main) {
             self.slidingView.tableView.reloadData()
             self.centerMapOnAnnotation(annotation: annotation)
@@ -353,7 +351,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
 
     func showSlidingView() {
-        // 添加背景遮罩视图
         print("showSlidingView called")
         slidingView.isHidden = false
 
@@ -372,11 +369,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     @objc func hideSlidingView() {
-        // 下滑隐藏 slidingView
         UIView.animate(withDuration: 0.3, animations: {
             self.slidingView.frame.origin.y = self.view.bounds.height
         }) { _ in
-            // 动画完成后移除遮罩视图
             self.backgroundMaskView.removeFromSuperview()
         }
     }
@@ -397,7 +392,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func fetchTripAndPoemData(for tripId: String, completion: @escaping (String, String) -> Void) {
         let tripsRef = Firestore.firestore().collection("trips").document(tripId)
         
-        // 根據 tripId 查詢對應的 trip 資料
         tripsRef.getDocument { (document, error) in
             if let error = error {
                 print("獲取行程資料失敗: \(error.localizedDescription)")
@@ -409,7 +403,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 return
             }
             
-            // 根據 poemId 查詢詩的名稱與作者
             let poemsRef = Firestore.firestore().collection("poems").document(poemId)
             poemsRef.getDocument { (document, error) in
                 if let error = error {
@@ -420,7 +413,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 let poemTitle = document?.get("title") as? String ?? "未知詩名"
                 let poemAuthor = document?.get("poetry") as? String ?? "未知作者"
                 
-                // 傳回詩的名稱與作者
                 completion(poemTitle, poemAuthor)
             }
         }
@@ -434,7 +426,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
         
         self.view.addSubview(collectionView)
-        self.images = images  // 更新圖片
+        self.images = images
         collectionView.reloadData()
     }
     
@@ -477,7 +469,6 @@ extension MapViewController {
         fullScreenImageView.isUserInteractionEnabled = true
         fullScreenImageView.alpha = 0
         
-        // 添加手勢識別器
         let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeToNextImage))
         swipeLeft.direction = .left
         fullScreenImageView.addGestureRecognizer(swipeLeft)
@@ -493,21 +484,18 @@ extension MapViewController {
     }
     
     @objc func swipeToNextImage() {
-        // 確保我們不會超出圖片陣列的範圍
         if currentImageIndex < images.count - 1 {
-            currentImageIndex += 1  // 更新到下一張圖片
-            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
+            currentImageIndex += 1
+            fullScreenImageView.image = images[currentImageIndex]
         } else {
             print("已經是最後一張圖片")
         }
     }
     
-    // 處理切換到上一張圖片的邏輯
     @objc func swipeToPreviousImage() {
-        // 確保我們不會低於圖片陣列的範圍
         if currentImageIndex > 0 {
-            currentImageIndex -= 1  // 回到上一張圖片
-            fullScreenImageView.image = images[currentImageIndex]  // 更新圖片
+            currentImageIndex -= 1
+            fullScreenImageView.image = images[currentImageIndex]
         } else {
             print("已經是第一張圖片")
         }

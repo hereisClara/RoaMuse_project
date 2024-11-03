@@ -209,7 +209,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     private func setupNavigationBarStyle() {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             let navBarAppearance = UINavigationBarAppearance()
-            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.configureWithTransparentBackground()
             navBarAppearance.largeTitleTextAttributes = [
                 .foregroundColor: UIColor.deepBlue,
                 .font: customFont
@@ -543,12 +543,12 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         }
         postStackView.snp.makeConstraints { make in
             make.centerY.equalTo(fansStackView)
-            make.centerX.equalTo(fansStackView.snp.leading).offset(-80)  // 间距
+            make.centerX.equalTo(fansStackView.snp.leading).offset(-80)
         }
         
         followingStackView.snp.makeConstraints { make in
             make.centerY.equalTo(fansStackView)
-            make.centerX.equalTo(fansStackView.snp.trailing).offset(80)  // 间距
+            make.centerX.equalTo(fansStackView.snp.trailing).offset(80)
         }
         let fansTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFans))
         fansStackView.addGestureRecognizer(fansTapGesture)
@@ -581,7 +581,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
         introductionLabel.setContentHuggingPriority(.required, for: .vertical)
         introductionLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 6 // 設置行間距
+        paragraphStyle.lineSpacing = 6
         let lineHeight = actualLineHeight()
         let attributes: [NSAttributedString.Key: Any] = [
             .font: introductionLabel.font!,
@@ -733,7 +733,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             } else {
                 DispatchQueue.main.async {
                     cell.likeCountLabel.text = "0"
-                    cell.likeButton.isSelected = false // 依據狀態設置未選中
+                    cell.likeButton.isSelected = false
                 }
             }
         }
@@ -825,7 +825,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 self.posts = documents.map { document in
                     var postData = document.data()
-                    postData["id"] = document.documentID // 将文档 ID 保存到 postData
+                    postData["id"] = document.documentID 
                     return postData
                 }
                 

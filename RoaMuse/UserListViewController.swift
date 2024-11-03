@@ -18,12 +18,12 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     var following: [String] = []
     var userId: String?
     var isShowingFollowers: Bool = true
-    let followersButton = UIButton() // 左邊的粉絲按鈕
-    let followingButton = UIButton() // 右邊的關注按鈕
-    let underlineView = UIView() // 底部黑色線條
-    let scrollView = UIScrollView() // 用來左右滑動
-    let followersTableView = UITableView() // 顯示粉絲列表
-    let followingTableView = UITableView() // 顯示關注者列表
+    let followersButton = UIButton()
+    let followingButton = UIButton()
+    let underlineView = UIView()
+    let scrollView = UIScrollView()
+    let followersTableView = UITableView()
+    let followingTableView = UITableView()
     let followersPlaceholderLabel = UILabel()
     let followingPlaceholderLabel = UILabel()
 
@@ -150,15 +150,13 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         followingPlaceholderLabel.textColor = .gray
         followingPlaceholderLabel.font = UIFont.systemFont(ofSize: 18)
         followingPlaceholderLabel.isHidden = true
-        followingTableView.superview?.addSubview(followingPlaceholderLabel) // 加到 TableView 的父視圖上
-
-        // 設定 Placeholder 的約束，使其蓋在 TableView 上
+        followingTableView.superview?.addSubview(followingPlaceholderLabel)
         followersPlaceholderLabel.snp.makeConstraints { make in
-            make.edges.equalTo(followersTableView) // 完全覆蓋在 TableView 上
+            make.edges.equalTo(followersTableView)
         }
 
         followingPlaceholderLabel.snp.makeConstraints { make in
-            make.edges.equalTo(followingTableView) // 完全覆蓋在 TableView 上
+            make.edges.equalTo(followingTableView)
         }
     }
 
@@ -374,7 +372,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         bottomSheetManager.showBottomSheet()
     }
 
-    // 示例：显示檢舉用戶的 alert
     func presentReportUserAlert(for userData: [String: Any]) {
         let userName = userData["userName"] as? String ?? "該用戶"
         let alertController = UIAlertController(title: "檢舉用戶", message: "你確定要檢舉 \(userName) 嗎？", preferredStyle: .alert)
