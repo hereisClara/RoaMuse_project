@@ -122,7 +122,8 @@ struct Chat {
 // 聊天訊息模型
 struct ChatMessage {
     let id: String
-    let text: String
+    var text: String?
+    var imageUrl: String?
     let isFromCurrentUser: Bool
     let timestamp: Date
 }
