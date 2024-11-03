@@ -61,14 +61,17 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         view.addSubview(messageTextView)
         messageTextView.delegate = self
         messageTextView.isScrollEnabled = false
-        messageTextView.font = UIFont(name: "NotoSerifHK-Black", size: 16)
-        messageTextView.layer.cornerRadius = 8
+        messageTextView.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
+        messageTextView.textColor = .deepBlue
+        messageTextView.layer.cornerRadius = 16
         messageTextView.layer.borderWidth = 1
         messageTextView.layer.borderColor = UIColor.lightGray.cgColor
         messageTextView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
         
         view.addSubview(sendButton)
         sendButton.setTitle("發送", for: .normal)
+        sendButton.tintColor = .deepBlue
+        sendButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         sendButton.addTarget(self, action: #selector(sendMessage), for: .touchUpInside)
         
         tableView.snp.makeConstraints { make in
@@ -81,13 +84,13 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             make.left.equalTo(view).offset(16)
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-10)
             make.right.equalTo(sendButton.snp.left).offset(-10)
-            messageTextViewHeightConstraint = make.height.equalTo(44).constraint // 初始高度
+            messageTextViewHeightConstraint = make.height.equalTo(44).constraint
         }
         
         sendButton.snp.makeConstraints { make in
             make.right.equalTo(view).offset(-16)
             make.centerY.equalTo(messageTextView)
-            make.width.equalTo(60)
+            make.width.equalTo(40)
         }
     }
     
