@@ -67,6 +67,7 @@ class NotificationViewController: UIViewController {
         tableView.register(NotificationTableViewCell.self, forCellReuseIdentifier: "NotificationCell")
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.allowsSelection = false
         
         view.addSubview(tableView)
         

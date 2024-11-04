@@ -23,7 +23,7 @@ class UserProfileViewController: UIViewController {
     let followingNumberLabel = UILabel()
     let introductionLabel = UILabel()
     let newView = UIView()
-    
+    let chatButton = UIButton()
     let fansTextLabel = UILabel()
     let followingTextLabel = UILabel()
     let regionLabelView = RegionLabelView(region: nil)
@@ -136,7 +136,6 @@ class UserProfileViewController: UIViewController {
                     self?.fansNumberLabel.text = String(followers.count)
                 }
                 
-                // 顯示 avatar 圖片
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
                 }
@@ -188,7 +187,7 @@ class UserProfileViewController: UIViewController {
                 if let userName = data["userName"] as? String {
                     self?.userNameLabel.text = userName
                 }
-                // 顯示 avatar 圖片
+                
                 if let avatarUrl = data["photo"] as? String {
                     self?.loadAvatarImage(from: avatarUrl)
                 }
@@ -214,10 +213,8 @@ class UserProfileViewController: UIViewController {
             }
         }
         
-        // 重新加載用戶貼文
         loadUserPosts()
         
-        // 結束刷新
         DispatchQueue.main.async {
             self.tableView.mj_header?.endRefreshing()
         }
@@ -271,14 +268,13 @@ class UserProfileViewController: UIViewController {
             make.bottom.equalTo(fansStackView.snp.top).offset(-12)
         }
         
-        followButton.setTitle("追蹤", for: .normal)
-        followButton.setTitle("已追蹤", for: .selected)
-        followButton.setTitleColor(.deepBlue, for: .normal)
-        followButton.backgroundColor = .clear
+        followButton.setImage(UIImage(systemName: "person.fill.badge.plus"), for: .normal)
+        followButton.setImage(UIImage(systemName: "person.fill.checkmark"), for: .selected)
+        followButton.tintColor = .deepBlue
+        followButton.backgroundColor = .white
         followButton.layer.borderColor = UIColor.deepBlue.cgColor
-        followButton.layer.borderWidth = 1
-        followButton.layer.cornerRadius = 10
-        followButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .light)
+        followButton.layer.borderWidth = 1.5
+        followButton.layer.cornerRadius = 22
         followButton.addTarget(self, action: #selector(handleFollowButtonTapped), for: .touchUpInside)
         
         avatarImageView.snp.makeConstraints { make in
@@ -322,9 +318,8 @@ class UserProfileViewController: UIViewController {
         
         followButton.snp.makeConstraints { make in
             make.trailing.equalTo(headerView).offset(-16)
-            make.centerY.equalTo(userNameLabel)
-            make.width.equalTo(60)
-            make.height.equalTo(30)
+            make.top.equalTo(avatarImageView)
+            make.width.height.equalTo(44)
         }
         
         let fansTapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapFans))
@@ -491,14 +486,18 @@ extension UserProfileViewController {
 
 extension UserProfileViewController {
     func setupChatButton() {
-        let chatButton = UIButton()
-        chatButton.setImage(UIImage(systemName: "bubble.left.and.bubble.right"), for: .normal)
-        self.view.addSubview(chatButton)
+        chatButton.setImage(UIImage(systemName: "bubble.fill"), for: .normal)
+        chatButton.layer.cornerRadius = 22
+        chatButton.backgroundColor = .white
+        chatButton.layer.borderColor = UIColor.deepBlue.cgColor
+        chatButton.layer.borderWidth = 1.5
+        chatButton.tintColor = .deepBlue
+        self.headerView.addSubview(chatButton)
         
         chatButton.snp.makeConstraints { make in
-            make.width.height.equalTo(45)
-            make.top.equalTo(followButton).offset(24)
-            make.trailing.equalTo(self.view.safeAreaLayoutGuide).offset(-20)
+            make.width.height.equalTo(44)
+            make.bottom.equalTo(avatarImageView.snp.bottom)
+            make.centerX.equalTo(followButton)
         }
         
         chatButton.addTarget(self, action: #selector(toChatPage), for: .touchUpInside)
@@ -937,6 +936,7 @@ extension UserProfileViewController {
         
         if currentUserId == userId {
             followButton.isHidden = true
+            chatButton.isHidden = true
             return
         }
         
@@ -951,10 +951,9 @@ extension UserProfileViewController {
             }
             
             DispatchQueue.main.async {
-                // 如果當前用戶已經追蹤該用戶，則設置為已選擇狀態
                 self.followButton.isSelected = following.contains(userId)
                 if self.followButton.isSelected {
-                    self.followButton.setTitle("已追蹤", for: .selected)
+                    self.followButton.setImage(UIImage(systemName: "person.fill.checkmark"), for: .selected)
                 }
             }
         }
