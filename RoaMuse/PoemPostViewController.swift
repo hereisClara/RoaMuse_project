@@ -54,6 +54,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        getCityToTrip()
     }
     
     func setupScrollView() {
@@ -75,16 +76,10 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         let buttonPadding: CGFloat = 10
         let buttonHeight: CGFloat = 40
         
-        // 打印 scrollView 的 frame
-        print("------ScrollView frame before adding buttons: \(scrollView.frame)")
-        
-        // 创建按钮并添加到 scrollView
         for (index, city) in cityGroupedPoems.keys.enumerated() {
-            print("/////", cityGroupedPoems.keys)
             let button = UIButton(type: .system)
             button.setTitle(city, for: .normal)
             button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 20)
-            //            button.titleLabel?.textColor = .deepBlue
             button.layer.borderColor = UIColor.deepBlue.cgColor
             button.layer.borderWidth = 1
             button.backgroundColor = .white
@@ -387,7 +382,10 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                         self.cityGroupedPoems = cityGroupedPosts
                         self.updateEmptyState()
                         self.updateScrollViewButtons()
-                        self.tableView.reloadData()
+                        UIView.performWithoutAnimation {
+                            self.tableView.reloadData()
+                            self.tableView.layoutIfNeeded()
+                        }
                     }
                 } else {
                     self.updateEmptyState()
