@@ -23,6 +23,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     var emptyStateLabel: UILabel!
     var scrollView: UIScrollView!
     let currentUserId = UserDefaults.standard.string(forKey: "userId")
+    var sortedCities: [String] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,7 +77,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         let buttonPadding: CGFloat = 10
         let buttonHeight: CGFloat = 40
         
-        for (index, city) in cityGroupedPoems.keys.enumerated() {
+        for (index, city) in sortedCities.enumerated() {
             let button = UIButton(type: .system)
             button.setTitle(city, for: .normal)
             button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 20)
@@ -167,11 +168,11 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     // MARK: - UITableViewDataSource
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return cityGroupedPoems.keys.count
+        return sortedCities.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let city = Array(cityGroupedPoems.keys)[section]
+        let city = sortedCities[section]
         return cityGroupedPoems[city]?.count ?? 0
     }
     
@@ -181,7 +182,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         }
         cell.backgroundColor = .clear
         cell.selectionStyle = .none
-        let city = Array(cityGroupedPoems.keys)[indexPath.section]
+        let city = sortedCities[indexPath.section]
         if let post = cityGroupedPoems[city]?[indexPath.row] {
             cell.configure(with: post)
             
@@ -221,30 +222,27 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                 }
             }
             
-            FirebaseManager.shared.loadPosts { posts in
-                let filteredPosts = posts.filter { filteredPost in
-                    return filteredPost["id"] as? String == post["id"] as? String
-                }
-                if let matchedPost = filteredPosts.first,
-                   let likesAccount = matchedPost["likesAccount"] as? [String] {
-                    
-                    DispatchQueue.main.async {
-                        cell.likeCountLabel.text = String(likesAccount.count)
-                        cell.likeButton.isSelected = likesAccount.contains(self.currentUserId ?? "") // 依據是否按讚來設置狀態
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        cell.likeCountLabel.text = "0"
-                        cell.likeButton.isSelected = false
-                    }
-                }
+            if let likesAccount = post["likesAccount"] as? [String] {
+                cell.likeCountLabel.text = String(likesAccount.count)
+                cell.likeButton.isSelected = likesAccount.contains(self.currentUserId ?? "")
+            } else {
+                cell.likeCountLabel.text = "0"
+                cell.likeButton.isSelected = false
             }
+            
+            if let bookmarkAccount = post["bookmarkAccount"] as? [String] {
+                cell.collectButton.isSelected = bookmarkAccount.contains(self.currentUserId ?? "")
+            } else {
+                cell.collectButton.isSelected = false
+            }
+            
             cell.photoTappedHandler = { [weak self] index in
-                        guard let self = self else { return }
-                        let photoUrls = post["photoUrls"] as? [String] ?? []
-                        self.showFullScreenImages(photoUrls: photoUrls, startingIndex: index)
-                    }
+                guard let self = self else { return }
+                let photoUrls = post["photoUrls"] as? [String] ?? []
+                self.showFullScreenImages(photoUrls: photoUrls, startingIndex: index)
+            }
         }
+        
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         
@@ -257,7 +255,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let city = Array(cityGroupedPoems.keys)[indexPath.section]
+        let city = sortedCities[indexPath.section]
         guard let post = cityGroupedPoems[city]?[indexPath.row] else { return }
         
         let articleVC = ArticleViewController()
@@ -294,9 +292,9 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         
         let headerView = UIView()
         headerView.backgroundColor = .backgroundGray
-        
+        let city = sortedCities[section]
         let titleLabel = UILabel()
-        titleLabel.text = Array(cityGroupedPoems.keys)[section]
+        titleLabel.text = city
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         titleLabel.textColor = .deepBlue
         
@@ -380,6 +378,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     
                     self.loadFilteredPosts(cityToTrips: cityToTrips) { cityGroupedPosts in
                         self.cityGroupedPoems = cityGroupedPosts
+                        self.sortedCities = cityGroupedPosts.keys.sorted()
                         self.updateEmptyState()
                         self.updateScrollViewButtons()
                         UIView.performWithoutAnimation {
@@ -398,16 +397,18 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
 extension PoemPostViewController {
     @objc func didTapLikeButton(_ sender: UIButton) {
         sender.isSelected.toggle()
-
+        
         let point = sender.convert(CGPoint.zero, to: tableView)
         if let indexPath = tableView.indexPathForRow(at: point),
            let cell = tableView.cellForRow(at: indexPath) as? UserTableViewCell {
             
-            let postData = cityGroupedPoems[Array(cityGroupedPoems.keys)[indexPath.section]]?[indexPath.row]
-            let postId = postData?["id"] as? String ?? ""
-
+            let city = sortedCities[indexPath.section]
+            guard var post = cityGroupedPoems[city]?[indexPath.row] else { return }
+            
+            let postId = post["id"] as? String ?? ""
+            
             guard let userId = self.currentUserId else { return }
-
+            
             saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
                 if success {
                     FirebaseManager.shared.loadPosts { posts in
@@ -440,11 +441,13 @@ extension PoemPostViewController {
     @objc func didTapCollectButton(_ sender: UIButton) {
         let point = sender.convert(CGPoint.zero, to: tableView)
         if let indexPath = tableView.indexPathForRow(at: point) {
-            let postData = cityGroupedPoems[Array(cityGroupedPoems.keys)[indexPath.section]]?[indexPath.row]
-            let postId = postData?["id"] as? String ?? ""
+            let city = sortedCities[indexPath.section]
+            guard var post = cityGroupedPoems[city]?[indexPath.row] else { return }
+            
+            let postId = post["id"] as? String ?? ""
             guard let userId = self.currentUserId else { return }
             
-            var bookmarkAccount = postData?["bookmarkAccount"] as? [String] ?? []
+            var bookmarkAccount = post["bookmarkAccount"] as? [String] ?? []
             
             if sender.isSelected {
                 bookmarkAccount.removeAll { $0 == userId }
@@ -541,25 +544,25 @@ extension PoemPostViewController {
         let fullScreenVC = FullScreenImageViewController()
         let dispatchGroup = DispatchGroup()
         var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
-
+        
         for (index, urlString) in photoUrls.enumerated() {
             guard let url = URL(string: urlString) else { continue }
-
+            
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: url) { data, response, error in
                 defer { dispatchGroup.leave() }
-
+                
                 if let error = error {
                     print("圖片下載失敗: \(error.localizedDescription)")
                     return
                 }
-
+                
                 if let data = data, let image = UIImage(data: data) {
                     images[index] = image
                 }
             }.resume()
         }
-
+        
         dispatchGroup.notify(queue: .main) {
             fullScreenVC.images = images
             fullScreenVC.startingIndex = startingIndex

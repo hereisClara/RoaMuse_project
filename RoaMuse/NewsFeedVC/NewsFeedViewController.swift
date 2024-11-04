@@ -32,8 +32,8 @@ class NewsFeedViewController: UIViewController {
         self.title = "動態"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, 
-                .font: customFont
+                .foregroundColor: UIColor.deepBlue,
+                    .font: customFont
             ]
         }
         
@@ -63,7 +63,7 @@ class NewsFeedViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        loadPostsForCurrentUserAndFollowing()
+        loadPostsForCurrentUserAndFollowing()
         setupNavigationBarStyle()
         notificationButton.isHidden = false
     }
@@ -86,7 +86,7 @@ class NewsFeedViewController: UIViewController {
                 .foregroundColor: UIColor.deepBlue,
                 .font: customFont
             ]
-
+            
             self.navigationItem.standardAppearance = navBarAppearance
             self.navigationItem.scrollEdgeAppearance = navBarAppearance
         }
@@ -291,36 +291,34 @@ class NewsFeedViewController: UIViewController {
     }
     
     @objc func didTapLikeButton(_ sender: UIButton) {
-        sender.isSelected.toggle()
-        
+        // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: postsTableView)
-        
         if let indexPath = postsTableView.indexPathForRow(at: point) {
-            let postData = postsArray[indexPath.row]
+            var postData = postsArray[indexPath.row]
             let postId = postData["id"] as? String ?? ""
-            
             guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-            saveLikeData(postId: postId, userId: userId, isLiked: sender.isSelected) { success in
+            
+            var likesAccount = postData["likesAccount"] as? [String] ?? []
+            if sender.isSelected {
+                likesAccount.removeAll { $0 == userId }
+            } else {
+                likesAccount.append(userId)
+            }
+            postData["likesAccount"] = likesAccount
+            postsArray[indexPath.row] = postData
+            
+            saveLikeData(postId: postId, userId: userId, isLiked: !sender.isSelected) { success in
                 if success {
-                    
-                    FirebaseManager.shared.loadPosts { posts in
-                        let filteredPosts = posts.filter { post in
-                            return post["id"] as? String == postId
-                        }
-                        if let matchedPost = filteredPosts.first,
-                           let likesAccount = matchedPost["likesAccount"] as? [String] {
-                            
-                            self.likeCount = String(likesAccount.count)
-                            self.likeButtonIsSelected = likesAccount.contains(userId)
-                        } else {
-                            
-                            self.likeCount = "0"
-                            self.likeButtonIsSelected = false
+                    DispatchQueue.main.async {
+                        if let cell = self.postsTableView.cellForRow(at: indexPath) as? UserTableViewCell {
+                            cell.likeCountLabel.text = String(likesAccount.count)
+                            cell.likeButton.isSelected = likesAccount.contains(userId)
                         }
                     }
-                    
                 } else {
-                    sender.isSelected.toggle()
+                    DispatchQueue.main.async {
+                        sender.isSelected.toggle()
+                    }
                 }
             }
         }
@@ -348,23 +346,23 @@ class NewsFeedViewController: UIViewController {
                             FirebaseManager.shared.fetchUserData(userId: userId) { result in
                                 switch result {
                                 case .success(let data):
-                                let userName = data["userName"] as? String ?? ""
-                                FirebaseManager.shared.saveNotification(
-                                    to: postOwnerId,
-                                    from: userId,
-                                    postId: postId,
-                                    type: 0,
-                                    subType: nil, title: "你的日記被按讚了！",
-                                    message: "\(userName) 按讚了你的日記",
-                                    actionUrl: nil, priority: 0
-                                ) { result in
-                                    switch result {
-                                    case .success:
-                                        print("通知发送成功")
-                                    case .failure(let error):
-                                        print("通知发送失败: \(error.localizedDescription)")
+                                    let userName = data["userName"] as? String ?? ""
+                                    FirebaseManager.shared.saveNotification(
+                                        to: postOwnerId,
+                                        from: userId,
+                                        postId: postId,
+                                        type: 0,
+                                        subType: nil, title: "你的日記被按讚了！",
+                                        message: "\(userName) 按讚了你的日記",
+                                        actionUrl: nil, priority: 0
+                                    ) { result in
+                                        switch result {
+                                        case .success:
+                                            print("通知发送成功")
+                                        case .failure(let error):
+                                            print("通知发送失败: \(error.localizedDescription)")
+                                        }
                                     }
-                                }
                                 case .failure(let error):
                                     print("加載貼文發布者大頭貼失敗: \(error.localizedDescription)")
                                 }
@@ -386,61 +384,49 @@ class NewsFeedViewController: UIViewController {
         }
         
     }
-        @objc func didTapCollectButton(_ sender: UIButton) {
-            // 獲取按鈕點擊所在的行
-            let point = sender.convert(CGPoint.zero, to: postsTableView)
+    @objc func didTapCollectButton(_ sender: UIButton) {
+        let point = sender.convert(CGPoint.zero, to: postsTableView)
+        
+        if let indexPath = postsTableView.indexPathForRow(at: point) {
+            var postData = postsArray[indexPath.row]
+            let postId = postData["id"] as? String ?? ""
+            guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
             
-            if let indexPath = postsTableView.indexPathForRow(at: point) {
-                let postData = postsArray[indexPath.row]
-                let postId = postData["id"] as? String ?? ""
-                guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-                
-                // 獲取當前的 bookmarkAccount
-                var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
-                
-                if sender.isSelected {
-                    // 如果按鈕已選中，取消收藏並移除 userId
-                    bookmarkAccount.removeAll { $0 == userId }
-                    
-                    FirebaseManager.shared.removePostBookmark(forUserId: userId, postId: postId) { success in
-                        if success {
-                            // 更新 Firestore 中的 bookmarkAccount 字段
-                            self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
-                                if let error = error {
-                                    print("Failed to update bookmarkAccount: \(error)")
-                                } else {
-                                    // 成功取消收藏
-                                }
-                            }
-                        } else {
-                        }
+            var bookmarkAccount = postData["bookmarkAccount"] as? [String] ?? []
+            
+            if sender.isSelected {
+                bookmarkAccount.removeAll { $0 == userId }
+            } else {
+                if !bookmarkAccount.contains(userId) {
+                    bookmarkAccount.append(userId)
+                }
+            }
+            
+            postData["bookmarkAccount"] = bookmarkAccount
+            postsArray[indexPath.row] = postData
+            
+            self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
+                if let error = error {
+                    print("Failed to update bookmarkAccount: \(error)")
+                    DispatchQueue.main.async {
+                        sender.isSelected.toggle()
                     }
                 } else {
-                    if !bookmarkAccount.contains(userId) {
-                        bookmarkAccount.append(userId)
-                    }
-                    
-                    FirebaseManager.shared.updateUserCollections(userId: userId, id: postId) { success in
-                        if success {
-                            // 更新 Firestore 中的 bookmarkAccount 字段
-                            self.db.collection("posts").document(postId).updateData(["bookmarkAccount": bookmarkAccount]) { error in
-                                if let error = error {
-                                    print("Failed to update bookmarkAccount: \(error)")
-                                } else {
-                                    // 成功添加收藏
-                                }
-                            }
-                        } else {
-                            print("收藏失敗")
+                    DispatchQueue.main.async {
+                        // 更新 Cell 的 UI
+                        if let cell = self.postsTableView.cellForRow(at: indexPath) as? UserTableViewCell {
+                            cell.collectButton.isSelected = bookmarkAccount.contains(userId)
                         }
                     }
                 }
-                // 更新按鈕選中狀態
-                sender.isSelected.toggle()
             }
+            
+            sender.isSelected.toggle()
         }
     }
     
+}
+
 extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
     
     func setupPostsTableView() {
@@ -464,23 +450,23 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         postsTableView.backgroundColor = .white
     }
     
-//    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-//        let offsetY = scrollView.contentOffset.y
-//        let contentHeight = scrollView.contentSize.height
-//        let scrollHeight = scrollView.frame.size.height
-//        
-//        guard contentHeight > scrollHeight else { return }
-//        
-//        let maxOffsetY = contentHeight - scrollHeight
-//        let minOffsetY: CGFloat = 0
-//        
-//        if offsetY < minOffsetY {
-//            scrollView.contentOffset.y = minOffsetY
-//        } else if offsetY > maxOffsetY {
-//            scrollView.contentOffset.y = maxOffsetY
-//        }
-//    }
-
+    //    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    //        let offsetY = scrollView.contentOffset.y
+    //        let contentHeight = scrollView.contentSize.height
+    //        let scrollHeight = scrollView.frame.size.height
+    //
+    //        guard contentHeight > scrollHeight else { return }
+    //
+    //        let maxOffsetY = contentHeight - scrollHeight
+    //        let minOffsetY: CGFloat = 0
+    //
+    //        if offsetY < minOffsetY {
+    //            scrollView.contentOffset.y = minOffsetY
+    //        } else if offsetY > maxOffsetY {
+    //            scrollView.contentOffset.y = maxOffsetY
+    //        }
+    //    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         postsArray.count
     }
@@ -559,23 +545,12 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             }
         }
         
-        FirebaseManager.shared.loadPosts { posts in
-            let filteredPosts = posts.filter { post in
-                return post["id"] as? String == postData["id"] as? String
-            }
-            if let matchedPost = filteredPosts.first,
-               let likesAccount = matchedPost["likesAccount"] as? [String] {
-                
-                DispatchQueue.main.async {
-                    cell.likeCountLabel.text = String(likesAccount.count)
-                    cell.likeButton.isSelected = likesAccount.contains(currentUserId) // 依據是否按讚來設置狀態
-                }
-            } else {
-                DispatchQueue.main.async {
-                    cell.likeCountLabel.text = "0"
-                    cell.likeButton.isSelected = false // 如果沒有按讚，設置為未選中
-                }
-            }
+        if let likesAccount = postData["likesAccount"] as? [String] {
+            cell.likeCountLabel.text = String(likesAccount.count)
+            cell.likeButton.isSelected = likesAccount.contains(currentUserId)
+        } else {
+            cell.likeCountLabel.text = "0"
+            cell.likeButton.isSelected = false
         }
         
         cell.photoTappedHandler = { [weak self] index in
@@ -585,7 +560,7 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         cell.collectButton.addTarget(self, action: #selector(self.didTapCollectButton(_:)), for: .touchUpInside)
-
+        
         return cell
     }
     
@@ -623,22 +598,20 @@ extension NewsFeedViewController {
     
     private func loadPostsForCurrentUserAndFollowing() {
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
-
-        // 從 Firestore 讀取當前用戶的資料，取得追蹤清單和封鎖清單
+        
         let userRef = Firestore.firestore().collection("users").document(currentUserId)
         userRef.getDocument { [weak self] snapshot, error in
             guard let self = self, let data = snapshot?.data() else {
                 print("無法獲取追蹤或封鎖清單")
                 return
             }
-
-            // 取得追蹤和封鎖清單
+            
             let followingUsers = data["following"] as? [String] ?? []
             let blockedUsers = data["blockedUsers"] as? [String] ?? []
-
+            
             var validUserIds = followingUsers
             validUserIds.append(currentUserId)
-
+            
             FirebaseManager.shared.loadPosts { postsArray in
                 let filteredPosts = postsArray.filter { post in
                     if let userId = post["userId"] as? String {
@@ -646,11 +619,14 @@ extension NewsFeedViewController {
                     }
                     return false
                 }
-
+                
                 self.postsArray = filteredPosts
                 DispatchQueue.main.async {
                     self.updateEmptyState()
-                    self.postsTableView.reloadData()
+                    UIView.performWithoutAnimation {
+                            self.postsTableView.reloadData()
+                            self.postsTableView.layoutIfNeeded()
+                        }
                 }
             }
         }
@@ -658,27 +634,27 @@ extension NewsFeedViewController {
     
     func getNewData() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
-
+        
         db.collection("users").document(userId).getDocument { [weak self] documentSnapshot, error in
             guard let self = self else { return }
             guard let document = documentSnapshot, let data = document.data() else {
                 print("获取用户数据出错: \(error?.localizedDescription ?? "未知错误")")
                 return
             }
-
+            
             let followingArray = data["following"] as? [String] ?? []
             let blockedUsers = data["blockedUsers"] as? [String] ?? []
-
+            
             var postsArray = [Dictionary<String, Any>]()
             let dispatchGroup = DispatchGroup()
-
+            
             let allUsersToFetch = followingArray + [userId]
-
+            
             for userIdToFetch in allUsersToFetch {
                 if blockedUsers.contains(userIdToFetch) {
                     continue
                 }
-
+                
                 dispatchGroup.enter()
                 db.collection("posts").whereField("userId", isEqualTo: userIdToFetch)
                     .getDocuments { querySnapshot, error in
@@ -694,7 +670,7 @@ extension NewsFeedViewController {
                         dispatchGroup.leave()
                     }
             }
-
+            
             // 当所有数据获取完成后，更新界面
             dispatchGroup.notify(queue: .main) {
                 self.postsArray = postsArray.sorted(by: { (post1, post2) -> Bool in
@@ -704,7 +680,7 @@ extension NewsFeedViewController {
                     }
                     return false
                 })
-
+                
                 // 更新 UI 并停止刷新动画
                 self.postsTableView.reloadData()
                 self.updateEmptyState()
@@ -712,7 +688,7 @@ extension NewsFeedViewController {
             }
         }
     }
-
+    
     func setupRefreshControl() {
         postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
             guard let self = self else { return }
@@ -743,26 +719,25 @@ extension NewsFeedViewController {
         let fullScreenVC = FullScreenImageViewController()
         let dispatchGroup = DispatchGroup()
         var images: [UIImage] = Array(repeating: UIImage(), count: photoUrls.count)
-
-        // 使用 DispatchGroup 來確保所有圖片都載入完成後再進行顯示
+        
         for (index, urlString) in photoUrls.enumerated() {
             guard let url = URL(string: urlString) else { continue }
-
+            
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: url) { data, response, error in
                 defer { dispatchGroup.leave() }
-
+                
                 if let error = error {
                     print("圖片下載失敗: \(error.localizedDescription)")
                     return
                 }
-
+                
                 if let data = data, let image = UIImage(data: data) {
                     images[index] = image
                 }
             }.resume()
         }
-
+        
         dispatchGroup.notify(queue: .main) {
             fullScreenVC.images = images
             fullScreenVC.startingIndex = startingIndex

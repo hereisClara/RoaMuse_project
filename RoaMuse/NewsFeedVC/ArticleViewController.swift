@@ -57,7 +57,6 @@ class ArticleViewController: UIViewController {
         tabBarController?.tabBar.isHidden = true
         self.navigationItem.largeTitleDisplayMode = .never
         getTripData()
-        observeLikeCountChanges()
         popupView.delegate = self
         setupTableView()
         setupPhotos()
@@ -66,6 +65,7 @@ class ArticleViewController: UIViewController {
         updateBookmarkData()
         setupCommentInput()
         updateLikesData()
+        observeLikeCountChanges()
         setupTripViewAction()
         FirebaseManager.shared.loadAwardTitle(forUserId: authorId) { (result: Result<(String, Int), Error>) in
             switch result {
@@ -295,18 +295,22 @@ class ArticleViewController: UIViewController {
     }
     
     func updateLikesData() {
-        
+        guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }
         FirebaseManager.shared.loadPosts { posts in
             let filteredPosts = posts.filter { post in
                 return post["id"] as? String == self.postId
             }
             if let matchedPost = filteredPosts.first,
                let likesAccount = matchedPost["likesAccount"] as? [String] {
-                self.likeCountLabel.text = String(likesAccount.count)
-                self.likeButton.isSelected = likesAccount.contains(self.authorId)
+                DispatchQueue.main.async {
+                    self.likeCountLabel.text = String(likesAccount.count)
+                    self.likeButton.isSelected = likesAccount.contains(userId)
+                }
             } else {
-                self.likeCountLabel.text = "0"
-                self.likeButton.isSelected = false
+                DispatchQueue.main.async {
+                    self.likeCountLabel.text = "0"
+                    self.likeButton.isSelected = false
+                }
             }
         }
     }
