@@ -63,9 +63,13 @@ class NewsFeedViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadPostsForCurrentUserAndFollowing()
         setupNavigationBarStyle()
         notificationButton.isHidden = false
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        loadPostsForCurrentUserAndFollowing()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
