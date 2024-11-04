@@ -27,7 +27,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     let followersPlaceholderLabel = UILabel()
     let followingPlaceholderLabel = UILabel()
 
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
@@ -37,7 +36,7 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         setupScrollView()
         setupTableViews()
         setupPlaceholders()
-        
+        navigationItem.backButtonTitle = ""
         if isShowingFollowers {
             scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
             updateUnderlinePosition(button: followersButton)
@@ -60,13 +59,15 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     
     func setupButtons() {
         followersButton.setTitle("Followers", for: .normal)
-        followersButton.setTitleColor(.black, for: .selected)
+        followersButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        followersButton.setTitleColor(.deepBlue, for: .selected)
         followersButton.setTitleColor(.gray, for: .normal)
         followersButton.isSelected = true
         followersButton.addTarget(self, action: #selector(followersButtonTapped), for: .touchUpInside)
         
         followingButton.setTitle("Following", for: .normal)
-        followingButton.setTitleColor(.black, for: .selected)
+        followingButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 18)
+        followingButton.setTitleColor(.deepBlue, for: .selected)
         followingButton.setTitleColor(.gray, for: .normal)
         followingButton.addTarget(self, action: #selector(followingButtonTapped), for: .touchUpInside)
         
@@ -108,7 +109,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         scrollView.contentSize = CGSize(width: view.frame.width * 2, height: scrollView.frame.height)
     }
     
-    // 設置兩個 TableViews
     func setupTableViews() {
         followersTableView.delegate = self
         followersTableView.dataSource = self
@@ -136,15 +136,14 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     }
 //    MARK: placeholder
     func setupPlaceholders() {
-        // 粉絲 Placeholder
+
         followersPlaceholderLabel.text = "還沒有粉絲"
         followersPlaceholderLabel.textAlignment = .center
         followersPlaceholderLabel.textColor = .gray
         followersPlaceholderLabel.font = UIFont.systemFont(ofSize: 18)
         followersPlaceholderLabel.isHidden = true
-        followersTableView.superview?.addSubview(followersPlaceholderLabel) // 加到 TableView 的父視圖上
+        followersTableView.superview?.addSubview(followersPlaceholderLabel)
 
-        // 關注者 Placeholder
         followingPlaceholderLabel.text = "還沒有追蹤者"
         followingPlaceholderLabel.textAlignment = .center
         followingPlaceholderLabel.textColor = .gray
@@ -165,15 +164,18 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
         updateUnderlinePosition(button: followersButton)
         loadUserList()
+        followersButton.isSelected = true
+        followingButton.isSelected = false
     }
     
     @objc func followingButtonTapped() {
         scrollView.setContentOffset(CGPoint(x: view.frame.width, y: 0), animated: true)
         updateUnderlinePosition(button: followingButton)
         loadUserList()
+        followersButton.isSelected = false
+        followingButton.isSelected = true
     }
     
-    // 更新黑色線條的位置
     func updateUnderlinePosition(button: UIButton) {
         underlineView.snp.remakeConstraints { make in
             make.top.equalTo(button.snp.bottom)
@@ -182,26 +184,25 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
             make.height.equalTo(3)
         }
         
-        // 動畫過渡效果
         UIView.animate(withDuration: 0.3) {
-            self.view.layoutIfNeeded() // 刷新視圖
+            self.view.layoutIfNeeded()
         }
     }
     
-    // 監聽滑動時的事件
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let offsetX = scrollView.contentOffset.x
+        let offsetY = scrollView.contentOffset.y
         let buttonWidth = view.frame.width / 2
         
-        // 黑色線條的偏移跟隨滑動
+        guard abs(offsetX) > abs(offsetY) else { return }
+        
         underlineView.snp.remakeConstraints { make in
             make.top.equalTo(followersButton.snp.bottom)
-            make.leading.equalTo(view.snp.leading).offset(offsetX / 2) // 重新定義 leading 位置
+            make.leading.equalTo(view.snp.leading).offset(offsetX / 2)
             make.width.equalTo(buttonWidth)
             make.height.equalTo(3)
         }
         
-        // 動態改變按鈕選中狀態
         if offsetX == 0 {
             followersButton.isSelected = true
             followingButton.isSelected = false
@@ -213,7 +214,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         if scrollView.contentOffset.x == 0 {
-            // 展示 Followers
             followersButton.isSelected = true
             followingButton.isSelected = false
             loadUserList()
@@ -226,7 +226,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
     
     func loadUserList() {
         guard let userId = userId else { return }
-        print("start")
         let userRef = Firestore.firestore().collection("users").document(userId)
 
         let isShowingFollowers = scrollView.contentOffset.x == 0

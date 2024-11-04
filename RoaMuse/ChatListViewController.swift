@@ -80,6 +80,9 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
                     let data = document.data()
                     let chatId = document.documentID
                     let lastMessage = data["lastMessage"] as? String ?? ""
+                    
+                    guard !lastMessage.isEmpty else { continue }
+                    
                     let participants = data["participants"] as? [String] ?? []
                     let lastMessageTime = (data["lastMessageTime"] as? Timestamp)?.dateValue() ?? Date()
                     

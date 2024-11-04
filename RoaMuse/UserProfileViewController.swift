@@ -48,6 +48,7 @@ class UserProfileViewController: UIViewController {
         setupHeaderView()
         setupRefreshControll()
         setupChatButton()
+        navigationItem.backButtonTitle = ""
         guard let userId = userId else { return }
         
         bottomSheetManager = BottomSheetManager(parentViewController: self, sheetHeight: 200)
@@ -507,18 +508,20 @@ extension UserProfileViewController {
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId"),
               let chatUserId = userId else { return }
         
-        fetchOrCreateChatSession(currentUserId: currentUserId, chatUserId: chatUserId) { chatId in
+        fetchOrCreateChatSession(currentUserId: currentUserId, chatUserId: chatUserId) { chat in
             let chatVC = ChatViewController()
-            chatVC.chatId = chatId
+            chatVC.chat = chat
+            chatVC.chatId = chat.id
             chatVC.chatUserId = chatUserId
             self.navigationController?.pushViewController(chatVC, animated: true)
         }
     }
     
-    func fetchOrCreateChatSession(currentUserId: String, chatUserId: String, completion: @escaping (String) -> Void) {
+    func fetchOrCreateChatSession(currentUserId: String, chatUserId: String, completion: @escaping (Chat) -> Void) {
         let chatRef = Firestore.firestore().collection("chats")
         let userRef = Firestore.firestore().collection("users")
         
+        // 首先查詢現有的聊天會話
         chatRef
             .whereField("participants", arrayContains: currentUserId)
             .getDocuments { (snapshot, error) in
@@ -533,17 +536,36 @@ extension UserProfileViewController {
                         let participants = data["participants"] as? [String] ?? []
                         
                         if participants.contains(chatUserId) {
-                            completion(document.documentID)
+                            
+                            userRef.document(chatUserId).getDocument { (userSnapshot, userError) in
+                                guard let userData = userSnapshot?.data(),
+                                      let userName = userData["userName"] as? String,
+                                      let profileImage = userData["photo"] as? String else {
+                                    print("無法獲取聊天對象資料")
+                                    return
+                                }
+                                
+                                let chat = Chat(
+                                    id: document.documentID,
+                                    userName: userName,
+                                    lastMessage: data["lastMessage"] as? String ?? "",
+                                    profileImage: profileImage,
+                                    lastMessageTime: (data["lastMessageTime"] as? Timestamp)?.dateValue() ?? Date()
+                                )
+                                completion(chat)
+                            }
                             return
                         }
                     }
                 }
                 
+                // 如果找不到現有的聊天會話，創建新的會話
                 let chatId = chatRef.document().documentID
                 userRef.document(chatUserId).getDocument { (chatUserSnapshot, error) in
                     guard let chatUserData = chatUserSnapshot?.data(),
-                          let chatUserAvatar = chatUserData["photo"] as? String else {
-                        print("無法獲取聊天對象頭像")
+                          let chatUserAvatar = chatUserData["photo"] as? String,
+                          let chatUserName = chatUserData["userName"] as? String else {
+                        print("無法獲取聊天對象頭像和名稱")
                         return
                     }
                     
@@ -568,7 +590,15 @@ extension UserProfileViewController {
                                 print("創建新的聊天會話失敗: \(error)")
                             } else {
                                 print("新的聊天會話創建成功，chatId: \(chatId)")
-                                completion(chatId)
+                                // 使用創建的資料來構建 Chat 實例
+                                let chat = Chat(
+                                    id: chatId,
+                                    userName: chatUserName,
+                                    lastMessage: "",
+                                    profileImage: chatUserAvatar,
+                                    lastMessageTime: Date()
+                                )
+                                completion(chat)
                             }
                         }
                     }

@@ -109,7 +109,11 @@ class EstablishViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         setupNavigationBarStyle()
-        updateStyleLabel(with: "＃隨機")
+        if isStyleButtonSelected {
+            updateStyleLabel(with: "＃隨機")
+        } else {
+            updateStyleLabel(with: "＃時令推薦")
+        }
     }
     
     private func setupNavigationBarStyle() {
