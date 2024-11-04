@@ -39,9 +39,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     let introductionLabel = UILabel()
     let moreButton = UIButton()
     var isExpanded = false
-    var userId: String? {
-        return UserDefaults.standard.string(forKey: "userId")
-    }
+    var userId: String? { return UserDefaults.standard.string(forKey: "userId") }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -118,7 +116,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                 print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-        self.loadUserPosts()
         loadUserDataFromUserDefaults()
     }
     
@@ -190,15 +187,15 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                         dropdownButton: nil
                     )
                 }
-                if let visibleIndexPaths = self.tableView.indexPathsForVisibleRows {
-                    self.tableView.reloadData()
-                    }
-                
             case .failure(let error):
                 print("獲取稱號失敗: \(error.localizedDescription)")
             }
         }
-        //        loadUserPosts()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        loadUserPosts()
     }
     
     override func viewDidLayoutSubviews() {
@@ -329,7 +326,7 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     
     func reloadAllData() {
         guard let userId = userId else {
-            self.tableView.mj_header?.endRefreshing() // 保證刷新結束
+            self.tableView.mj_header?.endRefreshing()
             return
         }
         
@@ -398,8 +395,6 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                         }
                     }
         }
-        
-        
     }
     
     func loadAvatarImage(from urlString: String) {
@@ -719,23 +714,20 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
             cell.dateLabel.text = createdAtString
         }
-        FirebaseManager.shared.loadPosts { posts in
-            let filteredPosts = posts.filter { post in
-                return post["id"] as? String == postId
-            }
-            if let matchedPost = filteredPosts.first,
-               let likesAccount = matchedPost["likesAccount"] as? [String] {
-                
-                DispatchQueue.main.async {
-                    cell.likeCountLabel.text = String(likesAccount.count)
-                    cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "")
-                }
-            } else {
-                DispatchQueue.main.async {
-                    cell.likeCountLabel.text = "0"
-                    cell.likeButton.isSelected = false
-                }
-            }
+        // 在 cellForRowAt 中直接使用 post 中的資料
+        if let likesAccount = post["likesAccount"] as? [String] {
+            cell.likeCountLabel.text = String(likesAccount.count)
+            cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "")
+        } else {
+            cell.likeCountLabel.text = "0"
+            cell.likeButton.isSelected = false
+        }
+
+        // 同樣地，處理收藏按鈕的狀態
+        if let bookmarkAccount = post["bookmarkAccount"] as? [String] {
+            cell.collectButton.isSelected = bookmarkAccount.contains(self.userId ?? "")
+        } else {
+            cell.collectButton.isSelected = false
         }
         
         FirebaseManager.shared.fetchUserData(userId: self.userId ?? "") { result in
@@ -765,10 +757,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             case .failure(let error):
                 print("加載用戶大頭貼失敗: \(error.localizedDescription)")
             }
-        }
-        
-        FirebaseManager.shared.isContentBookmarked(forUserId: userId ?? "", id: postId) { isBookmarked in
-            cell.collectButton.isSelected = isBookmarked
         }
         
         cell.photoTappedHandler = { [weak self] index in
@@ -840,7 +828,10 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                 DispatchQueue.main.async {
                     self.postsCount = self.posts.count
                     self.postsNumberLabel.text = String(self.postsCount)
-                    self.tableView.reloadData()
+                    UIView.performWithoutAnimation {
+                        self.tableView.reloadData()
+                        self.tableView.layoutIfNeeded()
+                    }
                     self.updateEmptyState()
                 }
             }
