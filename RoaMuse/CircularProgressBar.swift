@@ -76,7 +76,7 @@ class CircularProgressBar: UIView {
     
     func setAvatarImage(from url: URL) {
         // 使用 URLSession 加載圖片
-        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
             guard let self = self else { return }
             guard let data = data, error == nil else {
                 print("Failed to load image from URL: \(error?.localizedDescription ?? "Unknown error")")

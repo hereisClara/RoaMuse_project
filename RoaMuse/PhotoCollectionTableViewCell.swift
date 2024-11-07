@@ -46,7 +46,6 @@ class PhotoCollectionTableViewCell: UITableViewCell {
         }
     }
     
-    
     func updateImages(_ images: [UIImage]) {
         self.images = images
         collectionView.reloadData()

@@ -134,7 +134,7 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
             make.height.equalTo(scrollView.snp.height)
         }
     }
-//    MARK: placeholder
+// MARK: placeholder
     func setupPlaceholders() {
 
         followersPlaceholderLabel.text = "還沒有粉絲"

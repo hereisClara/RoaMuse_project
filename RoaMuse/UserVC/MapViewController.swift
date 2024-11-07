@@ -212,7 +212,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         let options = PHImageRequestOptions()
         options.isSynchronous = true
         
-        assets.enumerateObjects { asset, index, stop in
+        assets.enumerateObjects { asset, _, _ in
             if let assetLocation = asset.location {
                 let distance = assetLocation.distance(from: location)
                 if distance <= radius {
@@ -328,7 +328,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         mapView.setRegion(coordinateRegion, animated: true)
     }
     
-//    MARK: map center
+// MARK: map center
     func centerMapOnAnnotation(annotation: MKAnnotation) {
         let regionRadius: CLLocationDistance = 5000
         let fixedScreenPoint = CGPoint(x: view.frame.width * 0.5, y: view.frame.height * 0.225)

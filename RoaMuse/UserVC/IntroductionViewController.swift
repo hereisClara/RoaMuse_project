@@ -32,10 +32,6 @@ class IntroductionViewController: UIViewController {
         
         textView.text = currentBio
     }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-    }
 
     func setupTextView() {
         view.addSubview(textView)

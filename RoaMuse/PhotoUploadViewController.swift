@@ -389,9 +389,6 @@ class PhotoUploadViewController: UIViewController, UIImagePickerControllerDelega
         self.navigationController?.pushViewController(postVC, animated: true)
     }
     
-    
-
-    
     func setupImageViewConstraints() {
         imageViewConstraints = []
         imageView.snp.makeConstraints { make in
@@ -428,7 +425,6 @@ extension PhotoUploadViewController {
 
         return newImage ?? image
     }
-
     
     @objc func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
         guard let view = gesture.view else { return }
@@ -455,7 +451,6 @@ extension PhotoUploadViewController {
         
         ensureImageViewWithinBounds()
     }
-    
     
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
@@ -500,7 +495,7 @@ extension PhotoUploadViewController {
         excludedViews.forEach { $0.isHidden = true }
         
         let renderer = UIGraphicsImageRenderer(size: view.bounds.size)
-        let screenshot = renderer.image { context in
+        let screenshot = renderer.image { _ in
             view.drawHierarchy(in: view.bounds, afterScreenUpdates: true)
         }
         
@@ -510,7 +505,7 @@ extension PhotoUploadViewController {
     }
     
     @objc func saveToPhotoAlbum() {
-        if let screenshot = captureScreenshotExcludingViews([uploadButton, saveButton,cameraButton, shareButton, stackViewBackgroundView, sliderBackgroundView]) {
+        if let screenshot = captureScreenshotExcludingViews([uploadButton, saveButton, cameraButton, shareButton, stackViewBackgroundView, sliderBackgroundView]) {
             UIImageWriteToSavedPhotosAlbum(screenshot, self, #selector(imageSaved(_:didFinishSavingWithError:contextInfo:)), nil)
         }
     }
@@ -523,7 +518,7 @@ extension PhotoUploadViewController {
         }
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         if let selectedImage = info[.originalImage] as? UIImage {
             dismiss(animated: true, completion: {
                 let resizedImage = self.resizeImage(image: selectedImage, targetSize: CGSize(width: 1000, height: 1000))

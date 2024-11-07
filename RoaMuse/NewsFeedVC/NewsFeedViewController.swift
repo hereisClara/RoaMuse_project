@@ -273,7 +273,6 @@ class NewsFeedViewController: UIViewController {
         }
     }
     
-    
     func setupPostButton() {
         
         view.addSubview(postButton)
@@ -604,7 +603,7 @@ extension NewsFeedViewController {
         guard let currentUserId = UserDefaults.standard.string(forKey: "userId") else { return }
         
         let userRef = Firestore.firestore().collection("users").document(currentUserId)
-        userRef.getDocument { [weak self] snapshot, error in
+        userRef.getDocument { [weak self] snapshot, _ in
             guard let self = self, let data = snapshot?.data() else {
                 print("無法獲取追蹤或封鎖清單")
                 return
@@ -649,7 +648,7 @@ extension NewsFeedViewController {
             let followingArray = data["following"] as? [String] ?? []
             let blockedUsers = data["blockedUsers"] as? [String] ?? []
             
-            var postsArray = [Dictionary<String, Any>]()
+            var postsArray = [[String: Any]]()
             let dispatchGroup = DispatchGroup()
             
             let allUsersToFetch = followingArray + [userId]
@@ -728,7 +727,7 @@ extension NewsFeedViewController {
             guard let url = URL(string: urlString) else { continue }
             
             dispatchGroup.enter()
-            URLSession.shared.dataTask(with: url) { data, response, error in
+            URLSession.shared.dataTask(with: url) { data, _, error in
                 defer { dispatchGroup.leave() }
                 
                 if let error = error {

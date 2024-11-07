@@ -193,7 +193,7 @@ class LocationService {
                     dispatchGroup.leave()
                 }
             } else {
-                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, _  in
                     print("從 Google API 找到的地點: \(foundPlaces)")
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in

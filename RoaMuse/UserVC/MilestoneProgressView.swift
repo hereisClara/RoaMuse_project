@@ -49,7 +49,7 @@ class MilestoneProgressView: UIView {
         let cornerRadius = progressHeight / 2 // 圓角半徑等於進度條高度的一半
         let adjustedWidth = rect.width - 12
         // 繪製圓角背景
-        let backgroundPath = UIBezierPath(roundedRect: CGRect(x: 0, y: progressY, width: adjustedWidth , height: progressHeight), cornerRadius: cornerRadius)
+        let backgroundPath = UIBezierPath(roundedRect: CGRect(x: 0, y: progressY, width: adjustedWidth, height: progressHeight), cornerRadius: cornerRadius)
         context.setFillColor(UIColor.systemGray5.cgColor)
         context.addPath(backgroundPath.cgPath)
         context.fillPath()

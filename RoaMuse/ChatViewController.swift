@@ -202,7 +202,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         return UITableView.automaticDimension
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         if let selectedImage = info[.originalImage] as? UIImage {
             uploadImage(selectedImage) { [weak self] imageUrl in
                 guard let self = self, let chatId = self.chatId else { return }
@@ -242,7 +242,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             return
         }
         
-        storageRef.putData(imageData, metadata: nil) { (metadata, error) in
+        storageRef.putData(imageData, metadata: nil) { (_, error) in
             if let error = error {
                 print("圖片上傳失敗: \(error.localizedDescription)")
                 completion(nil)

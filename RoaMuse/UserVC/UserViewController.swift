@@ -387,8 +387,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
                             self.awardLabelView.updateTitle(title)
                             DispatchQueue.main.async {
                                 AwardStyleManager.updateTitleContainerStyle(
-                                    forTitle: awardTitle,item: item,titleContainerView: self.awardLabelView,
-                                    titleLabel: self.awardLabelView.titleLabel,dropdownButton: nil)
+                                    forTitle: awardTitle, item: item, titleContainerView: self.awardLabelView,
+                                    titleLabel: self.awardLabelView.titleLabel, dropdownButton: nil)
                             }
                         case .failure(let error):
                             print("獲取稱號失敗: \(error.localizedDescription)")
@@ -747,8 +747,8 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
                         cell.awardLabelView.updateTitle(awardTitle)
                         DispatchQueue.main.async {
                             AwardStyleManager.updateTitleContainerStyle(
-                                forTitle: awardTitle,item: item,titleContainerView: cell.awardLabelView,
-                                titleLabel: cell.awardLabelView.titleLabel,dropdownButton: nil)
+                                forTitle: awardTitle, item: item, titleContainerView: cell.awardLabelView,
+                                titleLabel: cell.awardLabelView.titleLabel, dropdownButton: nil)
                         }
                     case .failure(let error):
                         print("獲取稱號失敗: \(error.localizedDescription)")
@@ -968,7 +968,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             guard let url = URL(string: urlString) else { continue }
             
             dispatchGroup.enter()
-            URLSession.shared.dataTask(with: url) { data, response, error in
+            URLSession.shared.dataTask(with: url) { data, _, error in
                 defer { dispatchGroup.leave() }
                 if let error = error { return }
                 if let data = data, let image = UIImage(data: data) {

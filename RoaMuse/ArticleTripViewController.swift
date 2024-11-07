@@ -10,7 +10,7 @@ import UIKit
 import MapKit
 import FirebaseFirestore
 
-class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate  {
+class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate {
     
     var nlpModel: poemLocationNLP3?
     
@@ -28,7 +28,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     var locationManager = LocationManager()
     var userLocation: CLLocationCoordinate2D?
     let activityIndicator = GradientActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-
+    
     var containerView = UIView()
     let generateView = UIView()
     let generateTitleLabel = UILabel()
@@ -98,14 +98,14 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         
         activityIndicator.startAnimating()
         activityIndicator.isHidden = false
-
+        
         locationManager.onLocationUpdate = { [weak self] currentLocation in
             guard let self = self else { return }
             self.locationManager.stopUpdatingLocation()
             self.locationManager.onLocationUpdate = nil
             self.processWithCurrentLocation(currentLocation)
         }
-
+        
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             locationManager.requestLocation()
@@ -126,13 +126,13 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 }
                 return
             }
-
+            
             self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                 self.keywordToLineMap = keywordToLineMap
                 self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
                     if let trip = trip {
                         let places = self.matchingPlaces.map { $0.place }
-                        self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, placeOrder in
+                        self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { _, _ in
                             DispatchQueue.main.async {
                                 self.popUpView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                                 self.trip = trip
@@ -142,10 +142,10 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                             }
                             FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: poem.id, city: self.city) { error in
                                 if let error = error {
-                                        print("Error saving data: \(error.localizedDescription)")
-                                    } else {
-                                        print("Data saved successfully")
-                                    }
+                                    print("Error saving data: \(error.localizedDescription)")
+                                } else {
+                                    print("Data saved successfully")
+                                }
                             }
                         }
                     } else {
@@ -159,7 +159,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             }
         }
     }
-
+    
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
         let dispatchGroup = DispatchGroup()
         var foundValidPlace = false
@@ -167,12 +167,12 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         self.districts.removeAll()
         self.matchingPlaces.removeAll()
         let searchRadius: Double = 10000
-
+        
         let maxKeywords = 3
         let limitedKeywords = Array(keywords.prefix(maxKeywords))
         let keywordQueue = DispatchQueue(label: "keywordQueue", attributes: .concurrent)
         let syncQueue = DispatchQueue(label: "com.yourapp.syncQueue")
-
+        
         for keyword in limitedKeywords {
             dispatchGroup.enter()
             keywordQueue.async {
@@ -186,7 +186,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 }
             }
         }
-
+        
         dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
             if foundValidPlace, self.matchingPlaces.count >= 1 {
                 FirebaseManager.shared.saveTripToFirebase(poem: poem, matchingPlaces: self.matchingPlaces) { trip in
@@ -194,9 +194,9 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                         DispatchQueue.main.async { completion(nil) }
                         return
                     }
-
+                    
                     self.getPoemPlacePair()
-
+                    
                     self.saveSimplePlacePoemPairsToFirebase(tripId: trip.id, simplePairs: self.placePoemPairs) { success in
                         if success {
                             print("Successfully saved placePoemPairs to Firebase.")
@@ -213,7 +213,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             }
         }
     }
-
+    
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, syncQueue: DispatchQueue, completion: @escaping (Bool) -> Void) {
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
             let nearbyPlaces = places.filter { place in
@@ -221,7 +221,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 let distance = currentLocation.distance(from: placeLocation)
                 return distance <= searchRadius
             }
-
+            
             if !nearbyPlaces.isEmpty {
                 if let randomPlace = nearbyPlaces.randomElement() {
                     syncQueue.async {
@@ -229,7 +229,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                             self.matchingPlaces.append((keyword: keyword, place: randomPlace))
                         }
                     }
-
+                    
                     let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
                     self.reverseGeocodeLocation(placeLocation) { (city, district) in
                         if let city = city, let district = district {
@@ -248,7 +248,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                     completion(false)
                 }
             } else {
-                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, _  in
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
@@ -267,10 +267,10 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             }
         }
     }
-
+    
     func reverseGeocodeLocation(_ location: CLLocation, completion: @escaping (String?, String?) -> Void) {
         let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+        geocoder.reverseGeocodeLocation(location) { placemarks, _ in
             if let placemark = placemarks?.first {
                 let city = placemark.administrativeArea
                 let cityName = cityCodeMapping[city ?? ""]
@@ -317,7 +317,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             }
         }
     }
-
+    
     @objc func didTapCollectButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return
@@ -369,8 +369,8 @@ extension ArticleTripViewController {
         var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKPinAnnotationView
         
         if annotation is MKUserLocation {
-                return nil
-            }
+            return nil
+        }
         
         if annotationView == nil {
             annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: identifier)
@@ -391,7 +391,7 @@ extension ArticleTripViewController {
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         
-        userRef.getDocument { [weak self] (document, error) in
+        userRef.getDocument { [weak self] (document, _) in
             guard let self = self else { return }
             if let document = document, document.exists {
                 DispatchQueue.main.async {
@@ -433,7 +433,7 @@ extension ArticleTripViewController {
         request.transportType = transportType
         
         let directions = MKDirections(request: request)
-        directions.calculate { response, error in
+        directions.calculate { response, _ in
             if let route = response?.routes.first {
                 completion(route)
             } else {
@@ -503,18 +503,18 @@ extension ArticleTripViewController {
             }
         }
     }
-
+    
     private func saveSimplePlacePoemPairsToFirebase(tripId: String, simplePairs: [PlacePoemPair], completion: @escaping (Bool) -> Void) {
         let db = Firestore.firestore()
         let tripRef = db.collection("trips").document(tripId)
-
+        
         let placePoemData = simplePairs.map { pair in
             return [
                 "placeId": pair.placeId,
                 "poemLine": pair.poemLine
             ] as [String: Any]
         }
-
+        
         tripRef.updateData([
             "placePoemPairs": placePoemData
         ]) { error in
@@ -640,12 +640,9 @@ extension ArticleTripViewController: PopupViewDelegate {
         
         FirebaseManager.shared.loadPlacesByIds(placeIds: postTrip.placeIds) { [weak self] places in
             guard let self = self else { return }
-            print("starrrrt")
             if let currentLocation = self.userLocation {
-                print("location")
                 LocationService.shared.calculateTotalRouteTimeAndDetails(from: currentLocation, places: places) { totalTravelTime, routes in
                     if let totalTravelTime = totalTravelTime, let routes = routes {
-                        print("stsrstsr")
                         tripDetailVC.totalTravelTime = totalTravelTime
                         var nestedInstructions = [[String]]()
                         for route in routes {
@@ -659,20 +656,20 @@ extension ArticleTripViewController: PopupViewDelegate {
                     } else {
                         print("Failed to calculate routes or totalTravelTime.")
                     }
-
+                    
                     self.navigationController?.pushViewController(tripDetailVC, animated: true)
                 }
             }
         }
     }
-
+    
 }
 
 extension ArticleTripViewController {
     
     func loadPlacesDataAndAnnotateMap() {
         let tripRef = Firestore.firestore().collection("trips").document(tripId)
-        tripRef.getDocument { (document, error) in
+        tripRef.getDocument { (document, _) in
             if let document = document, document.exists {
                 if let placeIds = document.data()?["placeIds"] as? [String] {
                     print("Place IDs: \(placeIds)")
@@ -711,7 +708,7 @@ extension ArticleTripViewController {
     
     func loadPlaceData(placeId: String, completion: @escaping () -> Void) {
         let placeRef = Firestore.firestore().collection("places").document(placeId)
-        placeRef.getDocument { (document, error) in
+        placeRef.getDocument { (document, _) in
             if let document = document, document.exists {
                 if let latitude = document.data()?["latitude"] as? Double,
                    let longitude = document.data()?["longitude"] as? Double,

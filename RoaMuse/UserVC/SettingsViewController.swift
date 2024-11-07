@@ -74,7 +74,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.dataSource = self
     }
     
-    
     func setupTableHeader() {
         let headerView = UIView()
         headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 120)
@@ -297,7 +296,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             }
         }
     }
-
     
     func loadAvatarImage(from urlString: String) {
         guard let url = URL(string: urlString) else { return }
@@ -326,7 +324,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         guard let imageData = image.jpegData(compressionQuality: 0.75) else { return }
         
         let storageRef = Storage.storage().reference().child("avatars/\(UUID().uuidString).jpg")
-        storageRef.putData(imageData, metadata: nil) { metadata, error in
+        storageRef.putData(imageData, metadata: nil) { _, error in
             if let error = error {
                 print("上傳圖片失敗: \(error.localizedDescription)")
                 return

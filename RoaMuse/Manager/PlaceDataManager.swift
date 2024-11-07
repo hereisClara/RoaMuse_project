@@ -88,7 +88,7 @@ class PlaceDataManager {
             return
         }
         
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
                 print("Error fetching places: \(error)")
                 completion(nil)
@@ -178,7 +178,7 @@ class PlaceDataManager {
                 "longitude": roundedLongitude
             ]
 
-            var documentRef: DocumentReference? = nil
+            var documentRef: DocumentReference?
 
             // 保存 place 到 Firebase
             documentRef = db.collection("places").addDocument(data: placeData) { error in
@@ -212,4 +212,3 @@ class PlaceDataManager {
     }
 
 }
-

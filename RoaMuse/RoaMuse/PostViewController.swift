@@ -301,7 +301,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
             "bookmarkAccount": [String](),
             "likesAccount": [String](),
             "tripId": tripId
-        ] as [String : Any]
+        ] as [String: Any]
         
         document.setData(data) { error in
             if let error = error {
@@ -362,7 +362,7 @@ extension PostViewController {
         present(imagePicker, animated: true, completion: nil)
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         
         if let image = info[.originalImage] as? UIImage {
             // 檢查是否已經有 4 張圖片
@@ -454,7 +454,7 @@ extension PostViewController {
         let storageRef = Storage.storage().reference()
         let imageRef = storageRef.child("postImages/\(UUID().uuidString).jpg")
         
-        imageRef.putData(imageData, metadata: nil) { metadata, error in
+        imageRef.putData(imageData, metadata: nil) { _, error in
             if let error = error {
                 completion(nil)
             } else {
@@ -476,7 +476,7 @@ extension PostViewController {
         
         // 上傳圖片到指定的路徑
         let imageRef = storageRef.child("postImages/\(UUID().uuidString).jpg")
-        imageRef.putData(imageData, metadata: nil) { metadata, error in
+        imageRef.putData(imageData, metadata: nil) { _, error in
             if let error = error {
                 print("上傳圖片失敗: \(error.localizedDescription)")
                 completion(nil)

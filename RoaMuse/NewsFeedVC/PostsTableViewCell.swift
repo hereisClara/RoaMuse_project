@@ -97,7 +97,6 @@ class PostsTableViewCell: UITableViewCell {
         likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
         likeButton.tintColor = UIColor.systemBlue
         
-        
         commentButton.setImage(UIImage(systemName: "message"), for: .normal)
         commentButton.tintColor = UIColor.systemGreen
         

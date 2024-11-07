@@ -36,7 +36,7 @@ class TabBarController: UITabBarController {
         tabBar.tintColor = UIColor(resource: .deepBlue)
         tabBar.unselectedItemTintColor = UIColor.lightGray
         
-//        MARK: HomeVC change
+// MARK: HomeVC change
         let homeVC = HomeCollectionViewController()
         let homeNavController = UINavigationController(rootViewController: homeVC)
         homeVC.tabBarItem = UITabBarItem(title: "", image: UIImage(systemName: "house"), tag: 0)

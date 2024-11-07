@@ -537,7 +537,7 @@ extension UserProfileViewController {
                         
                         if participants.contains(chatUserId) {
                             
-                            userRef.document(chatUserId).getDocument { (userSnapshot, userError) in
+                            userRef.document(chatUserId).getDocument { (userSnapshot, _) in
                                 guard let userData = userSnapshot?.data(),
                                       let userName = userData["userName"] as? String,
                                       let profileImage = userData["photo"] as? String else {

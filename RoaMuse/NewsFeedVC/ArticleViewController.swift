@@ -165,7 +165,6 @@ class ArticleViewController: UIViewController {
             make.width.equalTo(50)
         }
     }
-
     
     func checkBookmarkStatus() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }

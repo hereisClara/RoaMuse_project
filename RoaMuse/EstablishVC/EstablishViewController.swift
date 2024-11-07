@@ -443,7 +443,7 @@ extension EstablishViewController {
                             self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
                                 if let trip = trip {
                                     let places = self.matchingPlaces.map { $0.place }
-                                    self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                    self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { _, _ in
                                         DispatchQueue.main.async {
                                             self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts)
                                             self.trip = trip
@@ -492,7 +492,7 @@ extension EstablishViewController {
                             if let trip = trip {
                                 print("成功生成 trip：\(trip)")
                                 let places = self.matchingPlaces.map { $0.place }
-                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { _, _ in
                                     DispatchQueue.main.async {
                                         self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
                                         self.trip = trip
@@ -628,7 +628,7 @@ extension EstablishViewController {
                 
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation, radius: self.searchRadius) { foundPlaces, hasFoundPlace  in
                     
-                    if hasFoundPlace == false{
+                    if hasFoundPlace == false {
                         DispatchQueue.main.async {
                             self.showNoPlacesFoundAlert()
                         }
@@ -802,7 +802,6 @@ extension EstablishViewController {
             "tag": poem.tag
         ]
         
-        
         FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
             if exists, let existingTripId = existingTripId {
                 let existingTrip = Trip(
@@ -818,7 +817,7 @@ extension EstablishViewController {
                 completion(existingTrip)
             } else {
                 let db = Firestore.firestore()
-                var documentRef: DocumentReference? = nil
+                var documentRef: DocumentReference?
                 documentRef = db.collection("trips").addDocument(data: tripData) { error in
                     if let error = error {
                         completion(nil)
@@ -959,7 +958,7 @@ extension EstablishViewController {
             return [
                 "placeId": pair.placeId,
                 "poemLine": pair.poemLine
-            ] as [String : Any]
+            ] as [String: Any]
         }
         
         tripRef.updateData([

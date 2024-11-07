@@ -174,7 +174,7 @@ class HomeViewController: UIViewController {
         navigationController?.pushViewController(notificationVC, animated: true)
     }
     
-//    MARK: chat
+// MARK: chat
     func setupChatButton() {
         let chatButton = UIButton()
         chatButton.setImage(UIImage(systemName: "bubble.left.and.bubble.right"), for: .normal)
@@ -313,8 +313,6 @@ class HomeViewController: UIViewController {
             }
         }
     }
-
-    
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
         randomTripEntryButtonDidTapped()
@@ -374,7 +372,7 @@ class HomeViewController: UIViewController {
                             if let trip = trip {
                                 print("成功生成 trip：\(trip)")
                                 let places = self.matchingPlaces.map { $0.place }
-                                self.locationService.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { totalTravelTime, routes in
+                                self.locationService.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { _, _ in
                                     DispatchQueue.main.async {
                                         self.popupView.showPopup(on: self.view, with: trip, city: self.city, districts: self.districts, matchingScore: matchedScore)
                                         self.trip = trip
@@ -842,7 +840,7 @@ extension HomeViewController {
                         dispatchGroup.leave()
                     }
                 } else {
-                    PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces,hasFoundPlace  in
+                    PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, _  in
                         if let newPlace = foundPlaces.first {
                             PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                                 if let savedPlace = savedPlace {
@@ -904,7 +902,7 @@ extension HomeViewController {
                 }
             } else {
                 let db = Firestore.firestore()
-                var documentRef: DocumentReference? = nil
+                var documentRef: DocumentReference?
                 documentRef = db.collection("trips").addDocument(data: tripData) { error in
                     if let error = error {
                         completion(nil)
@@ -967,7 +965,7 @@ extension HomeViewController {
             return [
                 "placeId": pair.placeId,
                 "poemLine": pair.poemLine
-            ] as [String : Any]
+            ] as [String: Any]
         }
         
         tripRef.updateData([

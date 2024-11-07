@@ -59,7 +59,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
             make.width.equalTo(40)
         }
     }
-
     
     @objc func confirmSelection() {
         if let index = selectedIndex {

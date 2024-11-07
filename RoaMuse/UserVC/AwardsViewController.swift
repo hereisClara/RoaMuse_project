@@ -160,7 +160,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         }
     }
-
     
     func setupTableView() {
         view.addSubview(tableView)
@@ -353,7 +352,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         }
     }
 
-
     func numberOfSections(in tableView: UITableView) -> Int {
         return dynamicTaskSets.count
     }
@@ -442,7 +440,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
 }
 
 extension AwardsViewController {
-//    MARK: containerStyle
+// MARK: containerStyle
     func calculateTitlesAndUpdateDropDown() {
         titlesWithIndexes.removeAll()  // 清空舊資料，避免重複
         

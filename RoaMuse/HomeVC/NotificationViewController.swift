@@ -128,7 +128,7 @@ extension NotificationViewController: UITableViewDataSource, UITableViewDelegate
     func fetchUserAvatar(userId: String, completion: @escaping (URL?) -> Void) {
         let db = Firestore.firestore()
         
-        db.collection("users").document(userId).getDocument { (document, error) in
+        db.collection("users").document(userId).getDocument { (document, _) in
             if let document = document, document.exists {
                 if let data = document.data(), let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
                     completion(photoUrl)

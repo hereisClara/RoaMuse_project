@@ -39,7 +39,7 @@ class LoginViewController: UIViewController {
 
     func verifyAppleSignIn(appleUserIdentifier: String) {
         let appleIDProvider = ASAuthorizationAppleIDProvider()
-        appleIDProvider.getCredentialState(forUserID: appleUserIdentifier) { (credentialState, error) in
+        appleIDProvider.getCredentialState(forUserID: appleUserIdentifier) { (credentialState, _) in
             switch credentialState {
             case .authorized:
                 print("User is still signed in with Apple ID.")
@@ -73,7 +73,6 @@ class LoginViewController: UIViewController {
             self.appleSignInButton.isHidden = false
         }
     }
-
     
     func configureAppleSignInButton() {
         if #available(iOS 13.0, *) {
@@ -130,7 +129,6 @@ class LoginViewController: UIViewController {
 
         self.present(alertController, animated: true, completion: nil)
     }
-
     
     func setupUI() {
         view.addSubview(appleSignInButton)

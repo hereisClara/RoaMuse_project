@@ -9,7 +9,6 @@ import Foundation
 import UIKit
 import FirebaseFirestore
 
-
 class ViewController: UIViewController {
 
     let db = Firestore.firestore() // 初始化 Firestore
@@ -70,4 +69,3 @@ class ViewController: UIViewController {
         }
     }
 }
-

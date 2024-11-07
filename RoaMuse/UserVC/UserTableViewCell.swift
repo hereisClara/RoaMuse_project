@@ -64,7 +64,6 @@ class UserTableViewCell: UITableViewCell {
             bookmarkCountLabel, likeCountLabel, collectButton,
             likeButton, commentButton, scrollView
         ].forEach { containerView.addSubview($0) }
-
         
         setupLabel()
         userNameLabel.text = "UserName"
@@ -121,8 +120,8 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(titleLabel.snp.bottom).offset(12)
             make.leading.equalTo(titleLabel)
             make.trailing.equalTo(containerView).offset(-16)
-            //make.height.equalTo(30)
-            //make.bottom.equalTo(photoStackView.snp.top).offset(-10)
+            // make.height.equalTo(30)
+            // make.bottom.equalTo(photoStackView.snp.top).offset(-10)
         }
         
         dateLabel.snp.makeConstraints { make in
@@ -314,7 +313,6 @@ class UserTableViewCell: UITableViewCell {
                 
             }
         }
-        
         
         if let title = post["title"] as? String {
             titleLabel.text = title

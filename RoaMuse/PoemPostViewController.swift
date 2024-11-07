@@ -246,8 +246,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         cell.likeButton.addTarget(self, action: #selector(didTapLikeButton(_:)), for: .touchUpInside)
         cell.collectButton.addTarget(self, action: #selector(didTapCollectButton(_:)), for: .touchUpInside)
         
-        
-        
         cell.containerView.layer.borderColor = UIColor.deepBlue.cgColor
         cell.containerView.layer.borderWidth = 2
         
@@ -549,7 +547,7 @@ extension PoemPostViewController {
             guard let url = URL(string: urlString) else { continue }
             
             dispatchGroup.enter()
-            URLSession.shared.dataTask(with: url) { data, response, error in
+            URLSession.shared.dataTask(with: url) { data, _, error in
                 defer { dispatchGroup.leave() }
                 
                 if let error = error {

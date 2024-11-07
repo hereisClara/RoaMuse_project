@@ -69,11 +69,6 @@ class CollectionsViewController: UIViewController {
         setupNavigationBarStyle()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-//        loadInitialData()
-    }
-    
     private func setupNavigationBarStyle() {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             let navBarAppearance = UINavigationBarAppearance()

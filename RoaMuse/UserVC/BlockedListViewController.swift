@@ -109,7 +109,6 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
         
         return cell
     }
-
     
     @objc func unblockUser(_ sender: UIButton) {
         let blockedUserId = blockedUsers[sender.tag]
