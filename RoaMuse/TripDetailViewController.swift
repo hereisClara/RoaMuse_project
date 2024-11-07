@@ -291,7 +291,6 @@ class TripDetailViewController: UIViewController {
     
     func checkDistanceForCurrentTarget(from currentLocation: CLLocation) {
         guard currentTargetIndex < places.count else {
-            print("所有地点都已完成")
             self.locationManager.stopUpdatingLocation()
             return
         }
@@ -303,7 +302,7 @@ class TripDetailViewController: UIViewController {
         let place = places[currentTargetIndex]
         let targetLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
         let distance = currentLocation.distance(from: targetLocation)
-        print("距离 \(place.name): \(distance) 米")
+        print("距離 \(place.name): \(distance) 米")
         
         let isWithinThreshold = distance <= distanceThreshold
         
