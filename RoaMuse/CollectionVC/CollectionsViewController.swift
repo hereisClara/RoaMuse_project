@@ -51,8 +51,8 @@ class CollectionsViewController: UIViewController {
         self.title = "收藏"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, // 修改顏色
-                .font: customFont // 設置字體
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
             ]
         }
         popupView.delegate = self
@@ -66,14 +66,18 @@ class CollectionsViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadInitialData()
         setupNavigationBarStyle()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+//        loadInitialData()
     }
     
     private func setupNavigationBarStyle() {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             let navBarAppearance = UINavigationBarAppearance()
-            navBarAppearance.configureWithTransparentBackground() // 或根据需要设置
+            navBarAppearance.configureWithTransparentBackground()
             navBarAppearance.largeTitleTextAttributes = [
                 .foregroundColor: UIColor.deepBlue,
                 .font: customFont
@@ -254,7 +258,6 @@ class CollectionsViewController: UIViewController {
         }
     }
 
-    // 加載收藏的文章
     func loadPostsData() {
 
         guard let userId = UserDefaults.standard.string(forKey: "userId") else { return }

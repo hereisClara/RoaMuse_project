@@ -168,8 +168,8 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
                 print("發送消息失敗: \(error.localizedDescription)")
             } else {
                 print("消息發送成功")
-                self.messageTextView.text = "" // 清空輸入框
-                self.textViewDidChange(self.messageTextView) // 重置高度
+                self.messageTextView.text = ""
+                self.textViewDidChange(self.messageTextView)
                 
                 Firestore.firestore().collection("chats").document(chatId).updateData([
                     "lastMessage": text,
@@ -186,7 +186,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         present(imagePickerController, animated: true, completion: nil)
     }
     
-    // UITableViewDataSource
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return messages.count
     }
@@ -199,7 +198,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         return cell ?? UITableViewCell()
     }
     
-    // UITableViewDelegate
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
