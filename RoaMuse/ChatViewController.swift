@@ -28,7 +28,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
         self.title = chat?.userName
-        print(chat?.userName)
         setupUI()
         
         if let chatId = chatId {

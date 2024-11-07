@@ -111,15 +111,13 @@ struct PlacePoemPair {
 }
 
 struct Chat {
-    let id: String            // 新增的屬性，用於存儲聊天室的 ID
+    let id: String
     let userName: String
     let lastMessage: String
     let profileImage: String
     let lastMessageTime: Date
 }
 
-
-// 聊天訊息模型
 struct ChatMessage {
     let id: String
     var text: String?
