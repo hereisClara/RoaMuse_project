@@ -627,7 +627,7 @@ extension EstablishViewController {
             } else {
                 
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation, radius: self.searchRadius) { foundPlaces, hasFoundPlace  in
-                    
+                    //MARK: no place alert called when everything is okay.
                     if hasFoundPlace == false {
                         DispatchQueue.main.async {
                             self.showNoPlacesFoundAlert()
@@ -755,11 +755,7 @@ extension EstablishViewController {
                 let city = placemark.administrativeArea
                 let cityName = cityCodeMapping[city ?? ""]
                 let district = placemark.subLocality
-                
-                if let cityName = cityName {
-                    completion(cityName, district)
-                    print("cityName: \(cityName)")
-                }
+                completion(city, district)
             } else {
                 completion(nil, nil)
             }
