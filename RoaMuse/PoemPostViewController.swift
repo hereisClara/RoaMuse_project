@@ -78,6 +78,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         let buttonHeight: CGFloat = 40
         
         for (index, city) in sortedCities.enumerated() {
+            guard !city.isEmpty else { continue }
             let button = UIButton(type: .system)
             button.setTitle(city, for: .normal)
             button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 20)
@@ -350,12 +351,15 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
     
     func getCityToTrip() {
         if let selectedPoem = selectedPoem {
+            
+            cityGroupedPoems.removeAll()
+            sortedCities.removeAll()
+            
             FirebaseManager.shared.getCityToTrip(poemId: selectedPoem.id) { poemsArray, error in
                 if let error = error {
                     print("Error retrieving data: \(error.localizedDescription)")
                     return
                 } else if let poemsArray = poemsArray {
-                    print("++++++    ", poemsArray)
                     
                     var cityToTrips: [String: [String]] = [:]
                     
@@ -377,6 +381,8 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
                     self.loadFilteredPosts(cityToTrips: cityToTrips) { cityGroupedPosts in
                         self.cityGroupedPoems = cityGroupedPosts
                         self.sortedCities = cityGroupedPosts.keys.sorted()
+                        print("---- ", self.sortedCities)
+                        print("==== ", cityGroupedPosts.keys.sorted())
                         self.updateEmptyState()
                         self.updateScrollViewButtons()
                         UIView.performWithoutAnimation {

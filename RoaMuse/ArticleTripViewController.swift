@@ -143,9 +143,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 print("Timeout Work Item cancelled: \(timeoutWorkItem.isCancelled)")
                 self.keywordToLineMap = keywordToLineMap
                 self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
-                    print("genarate begin")
                     if let trip = trip {
-                        print("have trip")
                         let places = self.matchingPlaces.map { $0.place }
                         self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { _, _ in
                             DispatchQueue.main.async {
@@ -155,6 +153,8 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                                 self.activityIndicator.stopAnimating()
                                 self.activityIndicator.isHidden = true
                             }
+                            //MARK: city is nil
+                            print("!!!!!   ", self.city)
                             FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: poem.id, city: self.city) { error in
                                 if let error = error {
                                     print("Error saving data: \(error.localizedDescription)")
@@ -164,7 +164,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                             }
                         }
                     } else {
-                        print("none trip")
                         DispatchQueue.main.async {
                             self.generateView.isUserInteractionEnabled = true
                             self.activityIndicator.stopAnimating()
@@ -189,14 +188,13 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             for keyword in keywords {
                 dispatchGroup.enter()
                 self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation) { validPlaceFound in
-                    print("processKeywordPlaces")
                     if validPlaceFound {
                         foundValidPlace = true
                     }
                     dispatchGroup.leave()
                 }
             }
-
+            print("~~~ ", self.city)
             dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
                 if foundValidPlace, self.matchingPlaces.count >= 1 {
                     self.saveTripToFirebase(poem: poem) { trip in
@@ -274,8 +272,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 let city = placemark.administrativeArea
                 let cityName = cityCodeMapping[city ?? ""]
                 let district = placemark.subLocality
-                
-                completion(cityName, district)
+                completion(city, district)
             } else {
                 completion(nil, nil)
             }
