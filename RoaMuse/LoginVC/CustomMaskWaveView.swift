@@ -14,7 +14,6 @@ class CustomMaskWaveView: UIView {
     private var waveLayer = CAShapeLayer()
     private var phase: CGFloat = 0
     private let waveHeight: CGFloat = 15
-
     private let staticImageName = "maskImageAtLogin"
     private let maskImageName = "maskImageAtLogin"
 
@@ -34,7 +33,6 @@ class CustomMaskWaveView: UIView {
         startWaveAnimation()
     }
 
-    // MARK: - 設置靜態圖片層
     private func setupStaticImageView() {
         guard let staticImage = UIImage(named: staticImageName) else {
             print("無法載入靜態圖片：\(staticImageName)")
@@ -45,16 +43,14 @@ class CustomMaskWaveView: UIView {
         staticImageView.contentMode = .scaleAspectFit
         staticImageView.frame = bounds
         addSubview(staticImageView)
-        sendSubviewToBack(staticImageView)  // 將靜態圖片放在底層
+        sendSubviewToBack(staticImageView)
     }
 
-    // MARK: - 設置波浪層
     private func setupWaveLayer() {
-        waveLayer.fillColor = UIColor.deepBlue.cgColor  // 設置波浪顏色
-        layer.addSublayer(waveLayer)  // 將波浪層添加到視圖
+        waveLayer.fillColor = UIColor.deepBlue.cgColor
+        layer.addSublayer(waveLayer)
     }
 
-    // MARK: - 設置圖片遮罩
     private func setupImageMask() {
         guard let maskImage = UIImage(named: maskImageName) else {
             print("無法載入遮罩圖片：\(maskImageName)")
@@ -66,17 +62,16 @@ class CustomMaskWaveView: UIView {
         maskLayer.frame = bounds
         maskLayer.contentsGravity = .resizeAspect
 
-        waveLayer.mask = maskLayer  // 將遮罩應用於波浪層
+        waveLayer.mask = maskLayer
     }
 
-    // MARK: - 開始波浪動畫
     private func startWaveAnimation() {
         displayLink = CADisplayLink(target: self, selector: #selector(updateWave))
         displayLink.add(to: .main, forMode: .common)
     }
 
     @objc private func updateWave() {
-        phase += 0.02  // 控制波浪流動速度
+        phase += 0.02
         waveLayer.path = createWavePath().cgPath
     }
 
@@ -84,7 +79,7 @@ class CustomMaskWaveView: UIView {
     private func createWavePath() -> UIBezierPath {
         let path = UIBezierPath()
         let width = bounds.width * 1.5
-        let midY = bounds.height / 2  // 波浪中心的 Y 軸位置
+        let midY = bounds.height / 2
 
         path.move(to: CGPoint(x: 0, y: midY))
 

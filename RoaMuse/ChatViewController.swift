@@ -12,7 +12,8 @@ import FirebaseFirestore
 import FirebaseStorage
 
 class ChatViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextViewDelegate, UIImagePickerControllerDelegate & UINavigationControllerDelegate {
-
+    
+    var tripsArray = [Trip]()
     var chat: Chat?
     let tableView = UITableView()
     let messageTextView = UITextView()
@@ -23,6 +24,11 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     var messages: [ChatMessage] = []
     var currentUserId = UserDefaults.standard.string(forKey: "userId") ?? ""
     var messageTextViewHeightConstraint: Constraint?
+    let sharePhotoButton = UIButton(type: .system)
+    let shareTripButton = UIButton(type: .system)
+    var stackView = UIStackView()
+    var bottomOffsetConstraint: Constraint?
+    var isShareOptionsVisible = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -60,7 +66,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
         tableView.backgroundColor = .backgroundGray
-        
+
         view.addSubview(messageTextView)
         messageTextView.delegate = self
         messageTextView.isScrollEnabled = false
@@ -70,42 +76,84 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         messageTextView.layer.borderWidth = 1
         messageTextView.layer.borderColor = UIColor.lightGray.cgColor
         messageTextView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
-        
+
         view.addSubview(sendButton)
         sendButton.setTitle("發送", for: .normal)
         sendButton.tintColor = .deepBlue
         sendButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         sendButton.addTarget(self, action: #selector(sendMessage), for: .touchUpInside)
-        
+
         view.addSubview(photoButton)
         photoButton.tintColor = .deepBlue
-        photoButton.setImage(UIImage(systemName: "photo.badge.plus.fill"), for: .normal)
+        photoButton.setImage(UIImage(systemName: "plus"), for: .normal)
         photoButton.addTarget(self, action: #selector(selectImage), for: .touchUpInside)
-        
+
+        // Setup share buttons
+        sharePhotoButton.setTitle("分享照片", for: .normal)
+        sharePhotoButton.tintColor = .deepBlue
+        sharePhotoButton.setImage(UIImage(systemName: "photo"), for: .normal)
+        sharePhotoButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+        sharePhotoButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -5, bottom: 0, right: 5)
+        sharePhotoButton.titleEdgeInsets = UIEdgeInsets(top: 0, left: 5, bottom: 0, right: -5)
+        sharePhotoButton.addTarget(self, action: #selector(sharePhoto), for: .touchUpInside)
+
+        shareTripButton.setTitle("分享行程", for: .normal)
+        shareTripButton.tintColor = .deepBlue
+        shareTripButton.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
+
+        shareTripButton.addTarget(self, action: #selector(shareTrip), for: .touchUpInside)
+
+        stackView = UIStackView(arrangedSubviews: [sharePhotoButton, shareTripButton])
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = 12
+        stackView.isHidden = true
+        view.addSubview(stackView)
+
+        // Constraints for stack view
+        stackView.snp.makeConstraints { make in
+            make.leading.equalTo(view).offset(16)
+            make.trailing.equalTo(view).offset(-16)
+            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-15)
+            make.height.equalTo(54)
+        }
+
         photoButton.snp.makeConstraints { make in
             make.leading.equalTo(view).offset(16)
             make.centerY.equalTo(messageTextView)
             make.width.height.equalTo(30)
         }
-        
+
         tableView.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             make.left.right.equalToSuperview()
             make.bottom.equalTo(messageTextView.snp.top).offset(-10)
         }
-        
+
         messageTextView.snp.makeConstraints { make in
             make.leading.equalTo(photoButton.snp.trailing).offset(16)
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-10)
             make.right.equalTo(sendButton.snp.left).offset(-10)
+            bottomOffsetConstraint = make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-10).constraint
             messageTextViewHeightConstraint = make.height.equalTo(44).constraint
         }
-        
+
         sendButton.snp.makeConstraints { make in
             make.right.equalTo(view).offset(-16)
             make.centerY.equalTo(messageTextView)
             make.width.equalTo(40)
         }
+    }
+    
+    @objc func sharePhoto() {
+        let imagePickerController = UIImagePickerController()
+        imagePickerController.delegate = self
+        imagePickerController.sourceType = .photoLibrary
+        present(imagePickerController, animated: true, completion: nil)
+    }
+//MARK: work here
+    @objc func shareTrip() {
+        // Your logic to share a trip
     }
     
     func textViewDidChange(_ textView: UITextView) {
@@ -180,10 +228,24 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func selectImage() {
-        let imagePickerController = UIImagePickerController()
-        imagePickerController.delegate = self
-        imagePickerController.sourceType = .photoLibrary
-        present(imagePickerController, animated: true, completion: nil)
+        // Toggle the state
+        isShareOptionsVisible.toggle()
+
+        // Update the icon and stack view visibility
+        if isShareOptionsVisible {
+            bottomOffsetConstraint?.update(offset: -90)
+            stackView.isHidden = false // Show the stack view
+            photoButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        } else {
+            bottomOffsetConstraint?.update(offset: -10)
+            stackView.isHidden = true // Hide the stack view
+            photoButton.setImage(UIImage(systemName: "plus"), for: .normal)
+        }
+
+        // Animate the layout change
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -261,3 +323,25 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
 
 }
+
+//extension ChatViewController {
+//    
+//    func loadTripsData(userId: String) {
+//        self.tripsArray.removeAll()
+//        
+//        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
+//            guard let self = self else { return }
+//            
+//            if !tripIds.isEmpty {
+//                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
+//                    self.tripsArray = filteredTrips
+//                    self.dropdownTableView.reloadData()
+//                }
+//            } else {
+//                self.dropdownTableView.reloadData()
+//            }
+//        }
+//    }
+//    
+//    
+//}

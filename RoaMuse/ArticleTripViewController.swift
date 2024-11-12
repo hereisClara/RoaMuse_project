@@ -289,7 +289,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     }
     
     func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
-        print("process poem")
         DispatchQueue.global(qos: .userInitiated).async {
             let maxSegments = 5
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines)

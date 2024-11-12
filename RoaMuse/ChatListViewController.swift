@@ -127,6 +127,10 @@ class ChatListViewController: UIViewController, UITableViewDelegate, UITableView
             return UITableViewCell()
         }
         
+        if indexPath.row >= chats.count {
+            return UITableViewCell()
+        }
+        
         let chat = chats[indexPath.row]
         cell.configure(with: chat)
         

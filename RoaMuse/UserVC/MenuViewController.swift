@@ -42,20 +42,18 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     func setupConfirmButton() {
         view.addSubview(confirmButton)
 
-        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小和粗細
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)
         let iconImage = UIImage(named: "right-arrow")
 
-        confirmButton.setImage(iconImage, for: .normal)  // 將按鈕圖標設置為 arrow.right
-        confirmButton.tintColor = .systemGray6  // 設定圖標顏色
-        confirmButton.backgroundColor = .clear  // 移除按鈕背景色
+        confirmButton.setImage(iconImage, for: .normal)
+        confirmButton.tintColor = .systemGray6
+        confirmButton.backgroundColor = .clear
         confirmButton.addTarget(self, action: #selector(confirmSelection), for: .touchUpInside)
 
-        // 使用 SnapKit 設置按鈕的約束
         confirmButton.snp.makeConstraints { make in
-            make.leading.equalToSuperview().offset(180)  // 距離左邊 160 點
-//            make.trailing.equalToSuperview().offset(-16)  // 距離右邊 16 點
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-30)  // 距離底部 20 點
-            make.height.equalTo(20)  // 按鈕高度 50
+            make.leading.equalToSuperview().offset(180)
+            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-30)
+            make.height.equalTo(20)
             make.width.equalTo(40)
         }
     }
@@ -123,8 +121,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
-    // MARK: - UITableViewDelegate
-    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
         headerView.backgroundColor = .clear
@@ -145,6 +141,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 85  // 設置 Header 高度
+        return 85
     }
 }
