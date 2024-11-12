@@ -20,7 +20,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     var poemTitleLabel = UILabel()
     let transportTimeLabel = UILabel()
     var placeLabel = UILabel()
-    
+    var searchRadius: CLLocationDistance = 15000
     var mapView = MKMapView()
     let db = Firestore.firestore()
     var annotations = [MKPointAnnotation]()
@@ -91,20 +91,11 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
     }
     
     @objc func didTapGenerateView() {
-        
         guard let _ = self.nlpModel else { return }
-        
         generateView.isUserInteractionEnabled = false
         
         activityIndicator.startAnimating()
         activityIndicator.isHidden = false
-        
-        locationManager.onLocationUpdate = { [weak self] currentLocation in
-            guard let self = self else { return }
-            self.locationManager.stopUpdatingLocation()
-            self.locationManager.onLocationUpdate = nil
-            self.processWithCurrentLocation(currentLocation)
-        }
         
         let authorizationStatus = CLLocationManager.authorizationStatus()
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
@@ -116,21 +107,45 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             activityIndicator.stopAnimating()
             activityIndicator.isHidden = true
         }
+        
+        locationManager.onLocationUpdate = { [weak self] currentLocation in
+                    guard let self = self else { return }
+                    self.locationManager.stopUpdatingLocation()
+                    self.locationManager.onLocationUpdate = nil
+                    self.processWithCurrentLocation(currentLocation)
+                }
     }
     
     func processWithCurrentLocation(_ currentLocation: CLLocation) {
+        print("process")
         FirebaseManager.shared.loadPoemById(self.poemId) { poem in
             if poem.content.isEmpty {
+                print("content empty")
                 DispatchQueue.main.async {
                     self.generateView.isUserInteractionEnabled = true
                 }
                 return
             }
-            
+            print("content not empty")
+            let timeoutWorkItem = DispatchWorkItem { [weak self] in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    self.showNoPlacesFoundAlert()
+                    self.generateView.isUserInteractionEnabled = true
+                    self.activityIndicator.stopAnimating()
+                    self.activityIndicator.isHidden = true
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutWorkItem)
+
             self.processPoemText(poem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
+                timeoutWorkItem.cancel()
+                print("Timeout Work Item cancelled: \(timeoutWorkItem.isCancelled)")
                 self.keywordToLineMap = keywordToLineMap
                 self.generateTripFromKeywords(keywords, poem: poem, startingFrom: currentLocation) { trip in
+                    print("genarate begin")
                     if let trip = trip {
+                        print("have trip")
                         let places = self.matchingPlaces.map { $0.place }
                         self.calculateTotalRouteTimeAndDetails(from: currentLocation.coordinate, places: places) { _, _ in
                             DispatchQueue.main.async {
@@ -149,6 +164,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                             }
                         }
                     } else {
+                        print("none trip")
                         DispatchQueue.main.async {
                             self.generateView.isUserInteractionEnabled = true
                             self.activityIndicator.stopAnimating()
@@ -159,100 +175,83 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             }
         }
     }
+
     
     func generateTripFromKeywords(_ keywords: [String], poem: Poem, startingFrom currentLocation: CLLocation, completion: @escaping (Trip?) -> Void) {
-        let dispatchGroup = DispatchGroup()
-        var foundValidPlace = false
-        self.city = ""
-        self.districts.removeAll()
-        self.matchingPlaces.removeAll()
-        let searchRadius: Double = 10000
-        
-        let maxKeywords = 3
-        let limitedKeywords = Array(keywords.prefix(maxKeywords))
-        let keywordQueue = DispatchQueue(label: "keywordQueue", attributes: .concurrent)
-        let syncQueue = DispatchQueue(label: "com.yourapp.syncQueue")
-        
-        for keyword in limitedKeywords {
-            dispatchGroup.enter()
-            keywordQueue.async {
-                self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation, searchRadius: searchRadius, syncQueue: syncQueue) { validPlaceFound in
+        DispatchQueue.global(qos: .userInitiated).async {
+            let dispatchGroup = DispatchGroup()
+            var foundValidPlace = false
+            self.city = ""
+            self.districts.removeAll()
+            self.matchingPlaces.removeAll()
+            let searchRadius: Double = 10000
+
+            for keyword in keywords {
+                dispatchGroup.enter()
+                self.processKeywordPlaces(keyword: keyword, currentLocation: currentLocation) { validPlaceFound in
+                    print("processKeywordPlaces")
                     if validPlaceFound {
-                        syncQueue.async {
-                            foundValidPlace = true
-                        }
+                        foundValidPlace = true
                     }
                     dispatchGroup.leave()
                 }
             }
-        }
-        
-        dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
-            if foundValidPlace, self.matchingPlaces.count >= 1 {
-                FirebaseManager.shared.saveTripToFirebase(poem: poem, matchingPlaces: self.matchingPlaces) { trip in
-                    guard let trip = trip else {
-                        DispatchQueue.main.async { completion(nil) }
-                        return
-                    }
-                    
-                    self.getPoemPlacePair()
-                    
-                    self.saveSimplePlacePoemPairsToFirebase(tripId: trip.id, simplePairs: self.placePoemPairs) { success in
-                        if success {
-                            print("Successfully saved placePoemPairs to Firebase.")
-                        } else {
-                            print("Failed to save placePoemPairs to Firebase.")
-                        }
+
+            dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
+                if foundValidPlace, self.matchingPlaces.count >= 1 {
+                    self.saveTripToFirebase(poem: poem) { trip in
+                        print("saveTripToFirebase")
                         DispatchQueue.main.async {
                             completion(trip)
                         }
                     }
+                } else {
+                    DispatchQueue.main.async {
+                        completion(nil)
+                    }
                 }
-            } else {
-                DispatchQueue.main.async { completion(nil) }
             }
         }
     }
-    
-    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, searchRadius: Double, syncQueue: DispatchQueue, completion: @escaping (Bool) -> Void) {
+
+    func processKeywordPlaces(keyword: String, currentLocation: CLLocation, completion: @escaping (Bool) -> Void) {
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
             let nearbyPlaces = places.filter { place in
                 let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
                 let distance = currentLocation.distance(from: placeLocation)
-                return distance <= searchRadius
+                return distance <= self.searchRadius
             }
-            
-            if !nearbyPlaces.isEmpty {
-                if let randomPlace = nearbyPlaces.randomElement() {
-                    syncQueue.async {
-                        if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
-                            self.matchingPlaces.append((keyword: keyword, place: randomPlace))
+
+            if let randomPlace = nearbyPlaces.randomElement() {
+                if !self.matchingPlaces.contains(where: { $0.place.id == randomPlace.id }) {
+                    self.matchingPlaces.append((keyword: keyword, place: randomPlace))
+                }
+
+                let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
+                self.reverseGeocodeLocation(placeLocation) { city, district in
+                    if let city = city, let district = district {
+                        if self.city.isEmpty {
+                            self.city = city
+                        }
+                        if !self.districts.contains(district) {
+                            self.districts.append(district)
                         }
                     }
-                    
-                    let placeLocation = CLLocation(latitude: randomPlace.latitude, longitude: randomPlace.longitude)
-                    self.reverseGeocodeLocation(placeLocation) { (city, district) in
-                        if let city = city, let district = district {
-                            syncQueue.async {
-                                if self.city.isEmpty {
-                                    self.city = city
-                                }
-                                if !self.districts.contains(district) {
-                                    self.districts.append(district)
-                                }
-                            }
-                        }
-                        completion(true)
-                    }
-                } else {
-                    completion(false)
+                    completion(true)
                 }
             } else {
-                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, _  in
+                // 使用 PlaceDataManager 搜索地點
+                PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, hasFoundPlace in
+                    if hasFoundPlace == false {
+                        DispatchQueue.main.async {
+                            self.showNoPlacesFoundAlert()
+                        }
+                    }
+
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
-                                syncQueue.async {
+                                if !self.matchingPlaces.contains(where: { $0.place.id == savedPlace.id }) {
                                     self.matchingPlaces.append((keyword: keyword, place: savedPlace))
                                 }
                                 completion(true)
@@ -276,16 +275,21 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 let cityName = cityCodeMapping[city ?? ""]
                 let district = placemark.subLocality
                 
-                if let cityName = cityName {
-                    completion(cityName, district)
-                }
+                completion(cityName, district)
             } else {
                 completion(nil, nil)
             }
         }
     }
     
+    func showNoPlacesFoundAlert() {
+        let alert = UIAlertController(title: "提示", message: "未找到符合條件的地點", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "確定", style: .default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
+    }
+    
     func processPoemText(_ inputText: String, completion: @escaping ([String], [String: String]) -> Void) {
+        print("process poem")
         DispatchQueue.global(qos: .userInitiated).async {
             let maxSegments = 5
             let textSegments = inputText.components(separatedBy: CharacterSet.newlines)
@@ -307,8 +311,9 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                     let landscape = prediction.label
                     allResults.append(landscape)
                     keywordToLineMap[landscape] = segment
+                    print(allResults)
                 } catch {
-                    print("分析失败：\(error.localizedDescription)")
+                    print("分析失敗：\(error.localizedDescription)")
                 }
             }
             
@@ -318,6 +323,78 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
         }
     }
     
+    func saveTripToFirebase(poem: Poem, completion: @escaping (Trip?) -> Void) {
+        
+        let keywordPlaceIds = self.matchingPlaces.map { ["keyword": $0.keyword, "placeId": $0.place.id] }
+        
+        let tripData: [String: Any] = [
+            "poemId": poem.id,
+            "placeIds": self.matchingPlaces.map { $0.place.id },
+            "keywordPlaceIds": keywordPlaceIds,
+            "tag": poem.tag
+        ]
+        
+        FirebaseManager.shared.checkTripExists(tripData) { exists, existingTripId in
+            if exists, let existingTripId = existingTripId {
+                let existingTrip = Trip(
+                    poemId: poem.id,
+                    id: existingTripId,
+                    placeIds: self.matchingPlaces.map { $0.place.id },
+                    keywordPlaceIds: nil,
+                    tag: poem.tag,
+                    season: nil,
+                    weather: nil,
+                    startTime: nil
+                )
+                completion(existingTrip)
+            } else {
+                let db = Firestore.firestore()
+                var documentRef: DocumentReference?
+                documentRef = db.collection("trips").addDocument(data: tripData) { error in
+                    if let error = error {
+                        completion(nil)
+                    } else {
+                        guard let documentID = documentRef?.documentID else {
+                            completion(nil)
+                            return
+                        }
+                        
+                        documentRef?.updateData(["id": documentID]) { error in
+                            if let error = error {
+                                
+                                completion(nil)
+                            } else {
+                                let trip = Trip(
+                                    poemId: poem.id,
+                                    id: documentID,
+                                    placeIds: self.matchingPlaces.map { $0.place.id },
+                                    keywordPlaceIds: nil,
+                                    tag: poem.tag,
+                                    season: nil,
+                                    weather: nil,
+                                    startTime: nil
+                                )
+                                
+                                self.getPoemPlacePair()
+                                self.saveSimplePlacePoemPairsToFirebase(tripId: documentID, simplePairs: self.placePoemPairs) { success in
+                                    if success {
+                                        print("Successfully saved placePoemPairs to Firebase.")
+                                    } else {
+                                        print("Failed to save placePoemPairs to Firebase.")
+                                    }
+                                    completion(trip)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+}
+
+extension ArticleTripViewController {
     @objc func didTapCollectButton() {
         guard let userId = UserDefaults.standard.string(forKey: "userId") else {
             return
@@ -334,7 +411,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
             self.popUpView.showPopup(on: self.view, with: postTrip, city: nil, districts: nil)
         }
     }
-    
 }
 
 extension ArticleTripViewController {

@@ -597,7 +597,7 @@ extension EstablishViewController {
     
     func processKeywordPlaces(keyword: String, currentLocation: CLLocation, dispatchGroup: DispatchGroup, completion: @escaping (Bool) -> Void) {
         FirebaseManager.shared.loadPlacesByKeyword(keyword: keyword) { places in
-            // 找到所有附近的地点
+            
             let nearbyPlaces = places.filter { place in
                 let placeLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
                 let distance = currentLocation.distance(from: placeLocation)

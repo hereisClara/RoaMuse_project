@@ -180,7 +180,6 @@ class PlaceDataManager {
 
             var documentRef: DocumentReference?
 
-            // 保存 place 到 Firebase
             documentRef = db.collection("places").addDocument(data: placeData) { error in
                 if let error = error {
                     print("Error saving place to Firebase: \(error)")
@@ -188,22 +187,19 @@ class PlaceDataManager {
                 } else {
                     print("Successfully saved place: \(place.name)")
 
-                    // 使用 Firebase 自動生成的 documentID 更新 place 的 id
                     guard let documentID = documentRef?.documentID else {
                         completion(nil)
                         return
                     }
 
-                    // 更新 documentID 到 Firebase 中的 id 字段
                     documentRef?.updateData(["id": documentID]) { error in
                         if let error = error {
                             print("Error updating place id: \(error)")
                             completion(nil)
                         } else {
-                            // 更新 place 對象的 id
                             placeToUpdate.id = documentID
                             print("Updated place ID: \(placeToUpdate.id)")
-                            completion(placeToUpdate)  // 返回更新後的 place
+                            completion(placeToUpdate) 
                         }
                     }
                 }

@@ -57,17 +57,17 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         if let location = locations.first {
             print("位置更新：\(location.coordinate.latitude), \(location.coordinate.longitude)")
             self.currentLocation = location
-            onLocationUpdate?(location)  // 确保调用闭包
+            onLocationUpdate?(location)
         } else {
-            print("未获取到有效位置数据")
+            print("未獲取到有效位置數據")
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("位置获取失败: \(error.localizedDescription)")
+        print("位置獲取失敗: \(error.localizedDescription)")
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-            onHeadingUpdate?(newHeading)  // 使用新的方向數據
+            onHeadingUpdate?(newHeading) 
         }
 }
