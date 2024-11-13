@@ -33,7 +33,9 @@ class PlaceDataManager {
         
         func searchNextKeyword(index: Int) {
             if index >= keywords.count {
-                completion(foundPlaces, hasFoundPlace)
+                dispatchGroup.notify(queue: .main) {
+                                completion(foundPlaces, hasFoundPlace)
+                            }
                 return
             }
             
@@ -61,6 +63,7 @@ class PlaceDataManager {
                         if !foundPlaces.contains(where: { $0.id == place.id }) {
                             foundPlaces.append(place)
                             currentLocation = CLLocation(latitude: place.latitude, longitude: place.longitude)
+                            hasFoundPlace = true
                         } else {
                             print("Place with ID \(place.id) already exists, skipping.")
                         }
@@ -114,7 +117,7 @@ class PlaceDataManager {
                         let place = self.parsePlace(from: firstPlace)
                         completion(place)
                     } else {
-                        print("未找到符合條件的地點")
+                        print("未找到符合條件的地點MANAGER")
                         completion(nil)
                     }
                 } else {

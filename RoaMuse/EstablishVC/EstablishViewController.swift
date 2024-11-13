@@ -429,15 +429,17 @@ extension EstablishViewController {
                     timeoutWorkItem.cancel()
                     let filteredPoems: [Poem]
                     if self.styleTag < 0 {
-                        filteredPoems = poems.filter { poem in
-                            return !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
-                        }
+//                        filteredPoems = poems.filter { poem in
+//                            return !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
+//                        }
+                        filteredPoems = poems
                     } else {
                         filteredPoems = poems.filter { poem in
-                            return poem.tag == self.styleTag && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
+                            return poem.tag == self.styleTag/* && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)*/
                         }
                     }
                     if let randomPoem = filteredPoems.randomElement() {
+//                        print(randomPoem.title)
                         self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                             self.keywordToLineMap = keywordToLineMap
                             self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in
@@ -630,9 +632,10 @@ extension EstablishViewController {
                     //MARK: no place alert called when everything is okay.
                     if hasFoundPlace == false {
                         DispatchQueue.main.async {
-                            self.showNoPlacesFoundAlert()
+//                            self.showNoPlacesFoundAlert()
                         }
                     }
+                    
                     if let newPlace = foundPlaces.first {
                         PlaceDataManager.shared.savePlaceToFirebase(newPlace) { savedPlace in
                             if let savedPlace = savedPlace {
