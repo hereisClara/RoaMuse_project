@@ -32,6 +32,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     var isShareOptionsVisible = false
     let popUpView = PopUpView()
     var selectedTrip: Trip?
+    var tripTitle = [String: String]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -212,7 +213,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         messageRef.addSnapshotListener { querySnapshot, error in
             guard let documents = querySnapshot?.documents else {
-                print("加載消息失败: \(error?.localizedDescription ?? "Unknown error")")
+                print("加載消息失敗: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
             
@@ -222,10 +223,21 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
                 let imageUrl = data["imageUrl"] as? String ?? nil
                 let senderId = data["senderId"] as? String ?? ""
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                let trip = data["tripId"] as? String ?? ""
+                let tripId = data["tripId"] as? String ?? ""
                 let messageId = document.documentID
                 
-                return ChatMessage(id: messageId, text: text, imageUrl: imageUrl, isFromCurrentUser: senderId == self.currentUserId, timestamp: timestamp, tripId: trip)
+                // Check if the message contains a tripId and load the trip data
+                if !tripId.isEmpty {
+                    FirebaseManager.shared.loadTripById(tripId) { trip in
+                        guard let trip = trip else { return }
+                        FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                            self.tripTitle[tripId] = poem.title
+                            self.tableView.reloadData() // Reload the table when data is loaded
+                        }
+                    }
+                }
+                
+                return ChatMessage(id: messageId, text: text, imageUrl: imageUrl, isFromCurrentUser: senderId == self.currentUserId, timestamp: timestamp, tripId: tripId)
             }
             self.tableView.reloadData()
             self.scrollToBottom()
@@ -297,13 +309,14 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             if let tripId = message.tripId, tripId != "" {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "TripMessageCell", for: indexPath) as? TripMessageCell
                 
-                FirebaseManager.shared.loadTripById(tripId) { trip in
-                    guard let trip = trip else { return }
-                    cell?.configure(with: trip, isFromCurrentUser: message.isFromCurrentUser)
-                    FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
-                        cell?.titleLabel.text = poem.title
-                    }
-                }
+                cell?.configure(isFromCurrentUser: message.isFromCurrentUser) // Configure the cell
+                        
+                        if let poemTitle = tripTitle[tripId] {
+                            cell?.titleLabel.text = poemTitle
+                        } else {
+                            cell?.titleLabel.text = "載入中..." // Placeholder text while loading
+                        }
+                
                 cell?.moreInfoButton.tag = indexPath.row
                 cell?.moreInfoButton.addTarget(self, action: #selector(didTapMoreInfoButton), for: .touchUpInside)
                 

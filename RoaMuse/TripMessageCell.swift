@@ -61,26 +61,26 @@ class TripMessageCell: UITableViewCell {
             make.width.lessThanOrEqualTo(250)
         }
         
-        titleLabel.snp.makeConstraints { make in
+        titleLabel.snp.remakeConstraints { make in
             make.top.leading.equalTo(messageBubble).offset(10)
-            make.trailing.equalTo(messageBubble).offset(-10)
+            make.trailing.equalTo(moreInfoButton).offset(-12)
         }
         
-        moreInfoButton.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+        moreInfoButton.snp.remakeConstraints { make in
+            make.centerY.equalTo(titleLabel)
             make.trailing.equalTo(messageBubble).offset(-10)
             make.bottom.equalTo(messageBubble).offset(-10)
         }
     }
     
-    func configure(with trip: Trip, isFromCurrentUser: Bool) {
+    func configure(isFromCurrentUser: Bool) {
         
-        FirebaseManager.shared.loadTripById(trip.id) { trip in
-            guard let trip = trip else { return }
-            FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
-                self.titleLabel.text = poem.title
-            }
-        }
+//        FirebaseManager.shared.loadTripById(trip.id) { trip in
+//            guard let trip = trip else { return }
+//            FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+//                self.titleLabel.text = poem.title
+//            }
+//        }
         
         if isFromCurrentUser {
             messageBubble.backgroundColor = .forBronze
