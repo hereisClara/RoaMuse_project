@@ -96,6 +96,8 @@
 		AC984C092CBCF741007F47BB /* SideMenu in Frameworks */ = {isa = PBXBuildFile; productRef = AC984C082CBCF741007F47BB /* SideMenu */; };
 		AC984C0B2CBCF7D6007F47BB /* MenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */; };
 		AC984C0D2CBE6BF6007F47BB /* DropdownMenuCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC984C0C2CBE6BF6007F47BB /* DropdownMenuCell.swift */; };
+		ACBC1E542CE5BBCA00592052 /* SharingTripViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBC1E532CE5BBCA00592052 /* SharingTripViewController.swift */; };
+		ACBC1E562CE5CA2F00592052 /* TripMessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBC1E552CE5CA2F00592052 /* TripMessageCell.swift */; };
 		ACFCA3512C916C8F00643A2E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3502C916C8F00643A2E /* AppDelegate.swift */; };
 		ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */; };
 		ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFCA3542C916C8F00643A2E /* HomeViewController.swift */; };
@@ -215,6 +217,8 @@
 		AC984C052CBBF232007F47BB /* CustomMaskWaveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMaskWaveView.swift; sourceTree = "<group>"; };
 		AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuViewController.swift; sourceTree = "<group>"; };
 		AC984C0C2CBE6BF6007F47BB /* DropdownMenuCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropdownMenuCell.swift; sourceTree = "<group>"; };
+		ACBC1E532CE5BBCA00592052 /* SharingTripViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingTripViewController.swift; sourceTree = "<group>"; };
+		ACBC1E552CE5CA2F00592052 /* TripMessageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripMessageCell.swift; sourceTree = "<group>"; };
 		ACFCA34D2C916C8F00643A2E /* RoaMuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoaMuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFCA3502C916C8F00643A2E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -377,6 +381,8 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
+				ACBC1E552CE5CA2F00592052 /* TripMessageCell.swift */,
+				ACBC1E532CE5BBCA00592052 /* SharingTripViewController.swift */,
 				AC984C012CB6A689007F47BB /* PoemPostViewController.swift */,
 				AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */,
 				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
@@ -735,6 +741,7 @@
 				AC7A2A6A2C9821E6003FA811 /* CollectionsTableViewCell.swift in Sources */,
 				AC984C062CBBF232007F47BB /* CustomMaskWaveView.swift in Sources */,
 				AC18F8552CB02D01004E8868 /* PoemCollectionManager.swift in Sources */,
+				ACBC1E562CE5CA2F00592052 /* TripMessageCell.swift in Sources */,
 				AC18F8372CAB986A004E8868 /* DropdownMenu.swift in Sources */,
 				ACFCA3552C916C8F00643A2E /* HomeViewController.swift in Sources */,
 				AC7A2A782C9A6ACE003FA811 /* TestFile.swift in Sources */,
@@ -761,6 +768,7 @@
 				AC7A2A552C9725AE003FA811 /* LoginViewController.swift in Sources */,
 				AC984C0B2CBCF7D6007F47BB /* MenuViewController.swift in Sources */,
 				ACFCA3532C916C8F00643A2E /* SceneDelegate.swift in Sources */,
+				ACBC1E542CE5BBCA00592052 /* SharingTripViewController.swift in Sources */,
 				AC27ACC32C93004C00B73485 /* NewsFeedViewController.swift in Sources */,
 				AC984C0D2CBE6BF6007F47BB /* DropdownMenuCell.swift in Sources */,
 				AC9775752CA7E22100EF828A /* MapViewController.swift in Sources */,

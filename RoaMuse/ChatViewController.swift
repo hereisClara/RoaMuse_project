@@ -88,7 +88,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         photoButton.setImage(UIImage(systemName: "plus"), for: .normal)
         photoButton.addTarget(self, action: #selector(selectImage), for: .touchUpInside)
 
-        // Setup share buttons
         sharePhotoButton.setTitle("分享照片", for: .normal)
         sharePhotoButton.tintColor = .deepBlue
         sharePhotoButton.setImage(UIImage(systemName: "photo"), for: .normal)
@@ -110,7 +109,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         stackView.isHidden = true
         view.addSubview(stackView)
 
-        // Constraints for stack view
         stackView.snp.makeConstraints { make in
             make.leading.equalTo(view).offset(16)
             make.trailing.equalTo(view).offset(-16)
@@ -153,7 +151,13 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
 //MARK: work here
     @objc func shareTrip() {
-        // Your logic to share a trip
+        let sharingTripVC = SharingTripViewController()
+        let navController = UINavigationController(rootViewController: sharingTripVC)
+        present(navController, animated: true, completion: nil)
+    }
+    
+    func sendTrip(trip: Trip) {
+        
     }
     
     func textViewDidChange(_ textView: UITextView) {
@@ -228,21 +232,18 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func selectImage() {
-        // Toggle the state
         isShareOptionsVisible.toggle()
 
-        // Update the icon and stack view visibility
         if isShareOptionsVisible {
             bottomOffsetConstraint?.update(offset: -90)
-            stackView.isHidden = false // Show the stack view
+            stackView.isHidden = false
             photoButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
         } else {
             bottomOffsetConstraint?.update(offset: -10)
-            stackView.isHidden = true // Hide the stack view
+            stackView.isHidden = true
             photoButton.setImage(UIImage(systemName: "plus"), for: .normal)
         }
 
-        // Animate the layout change
         UIView.animate(withDuration: 0.3) {
             self.view.layoutIfNeeded()
         }
