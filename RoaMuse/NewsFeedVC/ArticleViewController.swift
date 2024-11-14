@@ -806,7 +806,8 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
             let fullScreenVC = FullScreenImageViewController()
             fullScreenVC.images = uiImages
             fullScreenVC.startingIndex = index
-            self.navigationController?.pushViewController(fullScreenVC, animated: true)
+            fullScreenVC.modalPresentationStyle = .fullScreen
+            self.present(fullScreenVC, animated: true, completion: nil)
         }
     }
     
