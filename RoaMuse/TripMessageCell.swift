@@ -83,7 +83,7 @@ class TripMessageCell: UITableViewCell {
 //        }
         
         if isFromCurrentUser {
-            messageBubble.backgroundColor = .forBronze
+            messageBubble.backgroundColor = .accent
             titleLabel.textColor = .white
             
             avatarImageView.isHidden = true
@@ -105,7 +105,7 @@ class TripMessageCell: UITableViewCell {
                 make.bottom.equalTo(messageBubble).offset(-10)
             }
         } else {
-            messageBubble.backgroundColor = .forBronze
+            messageBubble.backgroundColor = .accent
             titleLabel.textColor = .white
             
             avatarImageView.isHidden = false

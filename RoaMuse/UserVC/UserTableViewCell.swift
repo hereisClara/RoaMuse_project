@@ -15,8 +15,8 @@ class UserTableViewCell: UITableViewCell {
     
     let containerView = UIView()
     let collectButton = UIButton()
-    let likeButton = UIButton() // 新增的 likeButton
-    let commentButton = UIButton() // 新增的 commentButton
+    let likeButton = UIButton()
+    let commentButton = UIButton() 
     let titleLabel = UILabel()
     let likeCountLabel = UILabel()
     let bookmarkCountLabel = UILabel()
@@ -27,7 +27,7 @@ class UserTableViewCell: UITableViewCell {
     let userNameLabel = UILabel()
     let moreButton = UIButton()
     var photoStackViewHeightConstraint: Constraint?
-    let photoStackView = UIStackView() // 新增的 StackView 用於顯示圖片
+    let photoStackView = UIStackView()
     let scrollView = UIScrollView()
     var photoTappedHandler: ((Int) -> Void)?
     var moreButtonAction: (() -> Void)?
@@ -260,11 +260,10 @@ class UserTableViewCell: UITableViewCell {
                     )
                 }
                 
-                // 添加點擊手勢
                 imageView.isUserInteractionEnabled = true
                 let tapGesture = UITapGestureRecognizer(target: self, action: #selector(photoTapped(_:)))
                 imageView.addGestureRecognizer(tapGesture)
-                imageView.tag = index  // 將照片索引設置為標籤
+                imageView.tag = index
                 
                 photoStackView.addArrangedSubview(imageView)
                 
@@ -290,8 +289,8 @@ class UserTableViewCell: UITableViewCell {
 
     @objc func photoTapped(_ gesture: UITapGestureRecognizer) {
         if let imageView = gesture.view as? UIImageView {
-            let index = imageView.tag  // 獲取被點擊照片的索引
-            photoTappedHandler?(index)  // 呼叫處理程序並傳遞索引
+            let index = imageView.tag
+            photoTappedHandler?(index)
         }
     }
     
@@ -318,7 +317,6 @@ class UserTableViewCell: UITableViewCell {
             titleLabel.text = title
         }
         
-        // 設置內容
         if let content = post["content"] as? String {
             contentLabel.text = content
         }

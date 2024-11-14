@@ -17,6 +17,7 @@ class ChatMessageCell: UITableViewCell {
     let avatarImageView = UIImageView()
     let timestampLabel = UILabel()
     let messageImageView = UIImageView()
+    var imageUrlString: String?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -86,6 +87,7 @@ class ChatMessageCell: UITableViewCell {
             
             messageBubble.backgroundColor = .clear
             messageLabel.textColor = .black
+        imageUrlString = nil
         }
     
     func configure(with message: ChatMessage, profileImageUrl: String) {
@@ -104,10 +106,14 @@ class ChatMessageCell: UITableViewCell {
         timestampLabel.text = dateFormatter.string(from: message.timestamp)
 
         if let imageUrl = message.imageUrl {
-            print("Loading image from: \(imageUrl)")
+            imageUrlString = imageUrl
             messageImageView.isHidden = false
             messageLabel.isHidden = true
             messageImageView.kf.setImage(with: URL(string: imageUrl), placeholder: UIImage(named: "photo-placeholder"))
+            
+            messageImageView.isUserInteractionEnabled = true
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(photoTapped(_:)))
+            messageImageView.addGestureRecognizer(tapGesture)
             
             messageImageView.snp.remakeConstraints { make in
                 make.top.equalToSuperview().offset(10)
@@ -185,4 +191,31 @@ class ChatMessageCell: UITableViewCell {
             }
         }
     }
+    
+    @objc func photoTapped(_ gesture: UITapGestureRecognizer) {
+            guard let imageUrlString = imageUrlString else { return }
+            showFullScreenImage(photoUrl: imageUrlString)
+        }
+    
+    func showFullScreenImage(photoUrl: String) {
+        let fullScreenVC = FullScreenImageViewController()
+        
+        guard let url = URL(string: photoUrl) else { return }
+        
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            if let error = error {
+                print("圖片下載失敗: \(error.localizedDescription)")
+                return
+            }
+            
+            if let data = data, let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    fullScreenVC.images.append(image)
+                    fullScreenVC.modalPresentationStyle = .fullScreen
+                    self.window?.rootViewController?.present(fullScreenVC, animated: true, completion: nil)
+                }
+            }
+        }.resume()
+    }
+
 }

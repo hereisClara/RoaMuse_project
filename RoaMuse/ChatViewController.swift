@@ -226,13 +226,12 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
                 let tripId = data["tripId"] as? String ?? ""
                 let messageId = document.documentID
                 
-                // Check if the message contains a tripId and load the trip data
                 if !tripId.isEmpty {
                     FirebaseManager.shared.loadTripById(tripId) { trip in
                         guard let trip = trip else { return }
                         FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
                             self.tripTitle[tripId] = poem.title
-                            self.tableView.reloadData() // Reload the table when data is loaded
+                            self.tableView.reloadData()
                         }
                     }
                 }
@@ -309,21 +308,29 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             if let tripId = message.tripId, tripId != "" {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "TripMessageCell", for: indexPath) as? TripMessageCell
                 
-                cell?.configure(isFromCurrentUser: message.isFromCurrentUser) // Configure the cell
+                cell?.configure(isFromCurrentUser: message.isFromCurrentUser)
                         
                         if let poemTitle = tripTitle[tripId] {
                             cell?.titleLabel.text = poemTitle
                         } else {
-                            cell?.titleLabel.text = "載入中..." // Placeholder text while loading
+                            cell?.titleLabel.text = "載入中..."
                         }
                 
                 cell?.moreInfoButton.tag = indexPath.row
                 cell?.moreInfoButton.addTarget(self, action: #selector(didTapMoreInfoButton), for: .touchUpInside)
                 
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(avatarTapped(_:)))
+                        cell?.avatarImageView.addGestureRecognizer(tapGesture)
+                        cell?.avatarImageView.isUserInteractionEnabled = true
+                
                 return cell ?? UITableViewCell()
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "ChatMessageCell", for: indexPath) as? ChatMessageCell
                 cell?.configure(with: message, profileImageUrl: chat?.profileImage ?? "")
+                
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(avatarTapped(_:)))
+                        cell?.avatarImageView.addGestureRecognizer(tapGesture)
+                        cell?.avatarImageView.isUserInteractionEnabled = true
                 return cell ?? UITableViewCell()
             }
         }
@@ -402,6 +409,23 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             }
         }
     }
+    
+    @objc func avatarTapped(_ sender: UITapGestureRecognizer) {
+        print("tap")
+        guard let chatId = chatId else { return }
+        FirebaseManager.shared.fetchChatParticipant(from: chatId) { userId in
+            if let userId = userId {
+                print(userId)
+                self.navigateToUserProfile(userId: userId)
+            }
+        }
+    }
+    
+    func navigateToUserProfile(userId: String) {
+        let userProfileVC = UserProfileViewController()
+        userProfileVC.userId = userId
+        navigationController?.pushViewController(userProfileVC, animated: true)
+    }
 }
 
 extension ChatViewController: PopupViewDelegate {
@@ -419,25 +443,3 @@ extension ChatViewController: PopupViewDelegate {
         
     }
 }
-
-//extension ChatViewController {
-//    
-//    func loadTripsData(userId: String) {
-//        self.tripsArray.removeAll()
-//        
-//        FirebaseManager.shared.loadBookmarkTripIDs(forUserId: userId) { [weak self] tripIds in
-//            guard let self = self else { return }
-//            
-//            if !tripIds.isEmpty {
-//                FirebaseManager.shared.loadBookmarkedTrips(tripIds: tripIds) { filteredTrips in
-//                    self.tripsArray = filteredTrips
-//                    self.dropdownTableView.reloadData()
-//                }
-//            } else {
-//                self.dropdownTableView.reloadData()
-//            }
-//        }
-//    }
-//    
-//    
-//}
