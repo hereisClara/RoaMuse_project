@@ -13,6 +13,7 @@ import FirebaseStorage
 
 class ChatViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextViewDelegate, UIImagePickerControllerDelegate & UINavigationControllerDelegate {
     
+    let locationManager = LocationManager()
     var tripsArray = [Trip]()
     var chat: Chat?
     let tableView = UITableView()
@@ -29,16 +30,21 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     var stackView = UIStackView()
     var bottomOffsetConstraint: Constraint?
     var isShareOptionsVisible = false
+    let popUpView = PopUpView()
+    var selectedTrip: Trip?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
         self.title = chat?.userName
         setupUI()
-        
+        popUpView.delegate = self
         if let chatId = chatId {
             loadMessages(chatId: chatId)
         }
+        
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -63,6 +69,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.delegate = self
         tableView.dataSource = self
         tableView.register(ChatMessageCell.self, forCellReuseIdentifier: "ChatMessageCell")
+        tableView.register(TripMessageCell.self, forCellReuseIdentifier: "TripMessageCell")
         tableView.separatorStyle = .none
         tableView.allowsSelection = false
         tableView.backgroundColor = .backgroundGray
@@ -149,15 +156,45 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         imagePickerController.sourceType = .photoLibrary
         present(imagePickerController, animated: true, completion: nil)
     }
-//MARK: work here
+    //MARK: work here
     @objc func shareTrip() {
         let sharingTripVC = SharingTripViewController()
+        
+        sharingTripVC.onTripSelected = { [weak self] selectedTrip in
+            guard let self = self else { return }
+            self.sendTrip(trip: selectedTrip) // 调用 sendTrip 方法
+            self.dismiss(animated: true, completion: nil) // 关闭 SharingTripViewController
+        }
+        
         let navController = UINavigationController(rootViewController: sharingTripVC)
         present(navController, animated: true, completion: nil)
     }
     
     func sendTrip(trip: Trip) {
+        guard let chatId = chatId else { return }
         
+        let messageRef = Firestore.firestore().collection("chats").document(chatId).collection("messages").document()
+        let messageId = messageRef.documentID
+        
+        let messageData: [String: Any] = [
+            "id": messageId,
+            "senderId": currentUserId,
+            "tripId": trip.id,
+            "timestamp": FieldValue.serverTimestamp(),
+            "isRead": false
+        ]
+        
+        messageRef.setData(messageData) { error in
+            if let error = error {
+                print("發送trip消息失敗: \(error.localizedDescription)")
+            } else {
+                print("trip消息發送成功")
+                Firestore.firestore().collection("chats").document(chatId).updateData([
+                    "lastMessage": "傳送了一則行程",
+                    "lastMessageTime": FieldValue.serverTimestamp()
+                ])
+            }
+        }
     }
     
     func textViewDidChange(_ textView: UITextView) {
@@ -185,9 +222,10 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
                 let imageUrl = data["imageUrl"] as? String ?? nil
                 let senderId = data["senderId"] as? String ?? ""
                 let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let trip = data["tripId"] as? String ?? ""
                 let messageId = document.documentID
                 
-                return ChatMessage(id: messageId, text: text, imageUrl: imageUrl, isFromCurrentUser: senderId == self.currentUserId, timestamp: timestamp)
+                return ChatMessage(id: messageId, text: text, imageUrl: imageUrl, isFromCurrentUser: senderId == self.currentUserId, timestamp: timestamp, tripId: trip)
             }
             self.tableView.reloadData()
             self.scrollToBottom()
@@ -254,12 +292,28 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ChatMessageCell", for: indexPath) as? ChatMessageCell
-        let message = messages[indexPath.row]
-        cell?.configure(with: message, profileImageUrl: chat?.profileImage ?? "")
-        
-        return cell ?? UITableViewCell()
-    }
+            let message = messages[indexPath.row]
+            
+            if let tripId = message.tripId, tripId != "" {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "TripMessageCell", for: indexPath) as? TripMessageCell
+                
+                FirebaseManager.shared.loadTripById(tripId) { trip in
+                    guard let trip = trip else { return }
+                    cell?.configure(with: trip, isFromCurrentUser: message.isFromCurrentUser)
+                    FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                        cell?.titleLabel.text = poem.title
+                    }
+                }
+                cell?.moreInfoButton.tag = indexPath.row
+                cell?.moreInfoButton.addTarget(self, action: #selector(didTapMoreInfoButton), for: .touchUpInside)
+                
+                return cell ?? UITableViewCell()
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "ChatMessageCell", for: indexPath) as? ChatMessageCell
+                cell?.configure(with: message, profileImageUrl: chat?.profileImage ?? "")
+                return cell ?? UITableViewCell()
+            }
+        }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
@@ -322,7 +376,35 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             }
         }
     }
+    
+    @objc func didTapMoreInfoButton(_ sender: UIButton) {
+        let index = sender.tag
+        let message = messages[index]
+        
+        if let tripId = message.tripId, !tripId.isEmpty {
+            FirebaseManager.shared.loadTripById(tripId) { [weak self] trip in
+                guard let self = self, let trip = trip else { return }
+                self.selectedTrip = trip
+                self.popUpView.showPopup(on: self.view, with: trip, city: nil, districts: nil)
+            }
+        }
+    }
+}
 
+extension ChatViewController: PopupViewDelegate {
+    
+    func navigateToTripDetailPage() {
+        
+        guard let selectedTrip = self.selectedTrip else {
+            print("Error: Trip is nil!")
+            return
+        }
+        
+        let tripDetailVC = TripDetailViewController()
+        tripDetailVC.trip = selectedTrip
+        self.navigationController?.pushViewController(tripDetailVC, animated: true)
+        
+    }
 }
 
 //extension ChatViewController {

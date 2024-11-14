@@ -124,6 +124,7 @@ struct ChatMessage {
     var imageUrl: String?
     let isFromCurrentUser: Bool
     let timestamp: Date
+    var tripId: String?
 }
 
 struct Notification: Codable {

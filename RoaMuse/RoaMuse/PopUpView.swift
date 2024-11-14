@@ -113,7 +113,6 @@ class PopUpView {
                     placeLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
                     self.placesStackView.addArrangedSubview(placeLabel)
 
-                    // 進行反向編碼
                     let location = CLLocation(latitude: place.latitude, longitude: place.longitude)
                     self.reverseGeocodeLocation(location) { city, district in
                         if let city = city, let district = district {
@@ -222,7 +221,6 @@ class PopUpView {
         tripStyleLabel.textColor = .backgroundGray
         cityLabel.textColor = .backgroundGray
         
-//        startButton.setImage(UIImage(systemName: "play"), for: .disabled)
         startButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
         startButton.tintColor = .accent
         startButton.isEnabled = true
@@ -244,7 +242,6 @@ class PopUpView {
             self.popupView.alpha = 0
             self.backgroundView.alpha = 0
         }) { _ in
-            // 完成動畫後移除 popupView 和 backgroundView
             self.popupView.removeFromSuperview()
             self.backgroundView.removeFromSuperview()
         }
@@ -370,7 +367,6 @@ class PopUpView {
             self?.popupView.removeFromSuperview()
             self?.backgroundView.removeFromSuperview()
             
-            // 通知委派導向詳細頁面
             self?.delegate?.navigateToTripDetailPage()
         }
     }

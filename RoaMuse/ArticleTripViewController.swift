@@ -194,7 +194,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                     dispatchGroup.leave()
                 }
             }
-            print("~~~ ", self.city)
+            
             dispatchGroup.notify(queue: .global(qos: .userInitiated)) {
                 if foundValidPlace, self.matchingPlaces.count >= 1 {
                     self.saveTripToFirebase(poem: poem) { trip in

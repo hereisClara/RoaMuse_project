@@ -206,7 +206,6 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
                 return
             }
 
-            // 查找詩名
             let poemsRef = Firestore.firestore().collection("poems").document(poemId)
             poemsRef.getDocument { poemDocument, error in
                 if let error = error {

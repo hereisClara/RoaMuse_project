@@ -11,8 +11,10 @@ import SnapKit
 
 class TripMessageCell: UITableViewCell {
     
+    let messageBubble = UIView()
     let titleLabel = UILabel()
     let moreInfoButton = UIButton(type: .system)
+    let avatarImageView = UIImageView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -24,35 +26,112 @@ class TripMessageCell: UITableViewCell {
     }
     
     func setupUI() {
-        contentView.backgroundColor = .deepBlue
+        selectionStyle = .none
+        backgroundColor = .clear
+        
+        messageBubble.layer.cornerRadius = 12
+        messageBubble.clipsToBounds = true
+        messageBubble.backgroundColor = .forBronze
+        contentView.addSubview(messageBubble)
         
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
         titleLabel.textColor = .white
-        contentView.addSubview(titleLabel)
+        titleLabel.numberOfLines = 0
+        messageBubble.addSubview(titleLabel)
         
-        moreInfoButton.setTitle("More Info", for: .normal)
-        moreInfoButton.setTitleColor(.white, for: .normal)
-        contentView.addSubview(moreInfoButton)
+        moreInfoButton.setImage(UIImage(systemName: "info.circle.fill"), for: .normal)
+        moreInfoButton.tintColor = .white
+        messageBubble.addSubview(moreInfoButton)
+        
+        avatarImageView.layer.cornerRadius = 20
+        avatarImageView.clipsToBounds = true
+        avatarImageView.contentMode = .scaleAspectFill
+        contentView.addSubview(avatarImageView)
+        
+        avatarImageView.snp.makeConstraints { make in
+            make.width.height.equalTo(40)
+            make.bottom.equalTo(messageBubble)
+            make.left.equalToSuperview().offset(16)
+        }
+        
+        messageBubble.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(10)
+            make.bottom.equalToSuperview().offset(-10)
+            make.left.equalTo(avatarImageView.snp.right).offset(8)
+            make.width.lessThanOrEqualTo(250)
+        }
         
         titleLabel.snp.makeConstraints { make in
-            make.leading.top.equalTo(contentView).offset(16)
-            make.trailing.equalTo(contentView).offset(-16)
+            make.top.leading.equalTo(messageBubble).offset(10)
+            make.trailing.equalTo(messageBubble).offset(-10)
         }
         
         moreInfoButton.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.trailing.equalTo(contentView).offset(-16)
-            make.bottom.equalTo(contentView).offset(-16)
+            make.trailing.equalTo(messageBubble).offset(-10)
+            make.bottom.equalTo(messageBubble).offset(-10)
         }
     }
     
-    func configure(with trip: Trip) {
+    func configure(with trip: Trip, isFromCurrentUser: Bool) {
         
-        FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
-            self.titleLabel.text = poem.title
+        FirebaseManager.shared.loadTripById(trip.id) { trip in
+            guard let trip = trip else { return }
+            FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
+                self.titleLabel.text = poem.title
+            }
         }
         
-        // Add target for the button if needed
-        // moreInfoButton.addTarget(self, action: #selector(yourMethod), for: .touchUpInside)
+        if isFromCurrentUser {
+            messageBubble.backgroundColor = .forBronze
+            titleLabel.textColor = .white
+            
+            avatarImageView.isHidden = true
+            messageBubble.snp.remakeConstraints { make in
+                make.top.equalToSuperview().offset(10)
+                make.bottom.equalToSuperview().offset(-10)
+                make.right.equalToSuperview().offset(-16)
+                make.width.lessThanOrEqualTo(250)
+            }
+            
+            titleLabel.snp.remakeConstraints { make in
+                make.top.leading.equalTo(messageBubble).offset(10)
+                make.trailing.equalTo(moreInfoButton.snp.leading).offset(-12)
+            }
+            
+            moreInfoButton.snp.remakeConstraints { make in
+                make.centerY.equalTo(titleLabel)
+                make.trailing.equalTo(messageBubble).offset(-10)
+                make.bottom.equalTo(messageBubble).offset(-10)
+            }
+        } else {
+            messageBubble.backgroundColor = .forBronze
+            titleLabel.textColor = .white
+            
+            avatarImageView.isHidden = false
+            avatarImageView.snp.remakeConstraints { make in
+                make.width.height.equalTo(40)
+                make.bottom.equalTo(messageBubble)
+                make.left.equalToSuperview().offset(16)
+            }
+            
+            messageBubble.snp.remakeConstraints { make in
+                make.top.equalToSuperview().offset(10)
+                make.bottom.equalToSuperview().offset(-10)
+                make.left.equalTo(avatarImageView.snp.right).offset(8)
+                make.width.lessThanOrEqualTo(250)
+            }
+            
+            titleLabel.snp.remakeConstraints { make in
+                make.top.leading.equalTo(messageBubble).offset(10)
+                make.trailing.equalTo(moreInfoButton).offset(-12)
+            }
+            
+            moreInfoButton.snp.remakeConstraints { make in
+                make.centerY.equalTo(titleLabel)
+                make.trailing.equalTo(messageBubble).offset(-10)
+                make.bottom.equalTo(messageBubble).offset(-10)
+            }
+        }
     }
 }
