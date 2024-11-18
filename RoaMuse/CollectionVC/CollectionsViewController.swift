@@ -338,7 +338,7 @@ class CollectionsViewController: UIViewController {
         
         buttonContainer.snp.makeConstraints { make in
             make.edges.equalTo(buttonsBackground).inset(10)
-            make.leading.equalTo(magnifierBackground.snp.trailing).offset(15) // 設定距離藍色圓底15
+            make.leading.equalTo(magnifierBackground.snp.trailing).offset(15)
         }
         
         let filterOptions = ["奇險派", "浪漫派", "田園派"]
@@ -349,6 +349,7 @@ class CollectionsViewController: UIViewController {
             button.tag = index
             button.setTitleColor(.deepBlue, for: .normal)
             button.backgroundColor = .clear
+            button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
             buttonContainer.addArrangedSubview(button)
             filterButtons.append(button)

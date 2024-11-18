@@ -54,11 +54,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         backgroundCircle.layer.cornerRadius = 35
         view.addSubview(backgroundCircle)
         
-        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小及粗細
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)
         let iconImage = UIImage(systemName: "slider.horizontal.3", withConfiguration: imageConfig)
         filterButton.setImage(iconImage, for: .normal)
-        filterButton.tintColor = .deepBlue  // 設定圖標顏色
-        filterButton.backgroundColor = .clear  // 清除按鈕背景色
+        filterButton.tintColor = .deepBlue
+        filterButton.backgroundColor = .clear
         filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
         view.addSubview(filterButton)
 
@@ -86,12 +86,34 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tabBarController?.tabBar.isHidden = true
-        
+        let transparentAppearance = UINavigationBarAppearance()
+            transparentAppearance.configureWithTransparentBackground()
+            transparentAppearance.titleTextAttributes = [
+                .foregroundColor: UIColor.white,
+                .font: UIFont.systemFont(ofSize: 18)
+            ]
+            
+            navigationController?.navigationBar.standardAppearance = transparentAppearance
+            navigationController?.navigationBar.scrollEdgeAppearance = transparentAppearance
+            navigationController?.navigationBar.compactAppearance = transparentAppearance
+            navigationController?.navigationBar.tintColor = .deepBlue
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         tabBarController?.tabBar.isHidden = false
+        let defaultAppearance = UINavigationBarAppearance()
+            defaultAppearance.configureWithOpaqueBackground()
+            defaultAppearance.backgroundColor = .white
+            defaultAppearance.titleTextAttributes = [
+                .foregroundColor: UIColor.black,
+                .font: UIFont.systemFont(ofSize: 18)
+            ]
+            
+            navigationController?.navigationBar.standardAppearance = defaultAppearance
+            navigationController?.navigationBar.scrollEdgeAppearance = defaultAppearance
+            navigationController?.navigationBar.compactAppearance = defaultAppearance
+            navigationController?.navigationBar.tintColor = .black
     }
     
     func setupSlidingView() {
@@ -107,13 +129,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
 
         userRef.getDocument { documentSnapshot, error in
             if let error = error {
-                print("獲取 user completedPlace 失敗: \(error.localizedDescription)")
                 return
             }
 
             guard let document = documentSnapshot, let data = document.data(),
                   let completedPlace = data["completedPlace"] as? [[String: Any]] else {
-                print("錯誤: 無法解析 completedPlace 資料")
                 return
             }
 
@@ -130,7 +150,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                             defer { group.leave() }
 
                             if let error = error {
-                                print("獲取 trip 失敗: \(error.localizedDescription)")
                                 return
                             }
 
@@ -150,10 +169,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             }
             
             group.notify(queue: .main) {
-                self.placeTripDictionary = filteredPlaceTripDictionary  // 設定整理後的資料
-                print("完成的地點: ", self.placeTripDictionary.keys)
-                
-                // 呼叫 fetchPlaces 來標註地點
+                self.placeTripDictionary = filteredPlaceTripDictionary
                 self.fetchPlaces(for: Array(filteredPlaceTripDictionary.keys))
             }
         }
@@ -169,10 +185,9 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             dispatchGroup.enter()
 
             placesRef.document(placeId).getDocument { documentSnapshot, error in
-                defer { dispatchGroup.leave() }  // 確保每次請求結束都會呼叫 leave()
+                defer { dispatchGroup.leave() }
 
                 if let error = error {
-                    print("獲取地點失敗: \(error.localizedDescription)")
                     return
                 }
 
@@ -180,12 +195,10 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                       let latitude = data["latitude"] as? Double,
                       let longitude = data["longitude"] as? Double,
                       let placeName = data["name"] as? String else {
-                    print("解析地點資料失敗")
                     return
                 }
 
                 let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                print("加入地點: \(placeName), ID: \(placeId)")
 
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = location
@@ -260,12 +273,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             
             annotationView.clusteringIdentifier = "clusterID"
             
-//            annotationView.canShowCallout = true
             annotationView.glyphImage = UIImage(systemName: "flag.circle.fill")
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
             
-            annotationView.markerTintColor = .red // 設定大頭針的顏色
+            annotationView.markerTintColor = .red
             
             return annotationView
         }
@@ -276,14 +288,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         guard let annotation = view.annotation,
               let placeId = annotation.subtitle ?? annotation.title else {
-            print("No valid annotation selected")
             return
         }
 
         slidingView.currentPlaceId = placeId
 
         guard let placeTripInfo = placeTripDictionary[placeId ?? ""] else {
-            print("No matching tripIds found for placeId: \(placeId)")
             return
         }
 
@@ -301,7 +311,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     dispatchGroup.leave()
                 }
             } else {
-                print("Photo library permissions denied")
                 dispatchGroup.leave()
             }
         }
@@ -310,7 +319,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         dispatchGroup.enter()
         slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
             DispatchQueue.main.async {
-                print("詩名: \(poemTitle), 詩句: \(poemLine)")
                 dispatchGroup.leave()
             }
         }
@@ -351,15 +359,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
 
     func showSlidingView() {
-        print("showSlidingView called")
         slidingView.isHidden = false
 
         backgroundMaskView = UIView(frame: view.bounds)
         backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         view.insertSubview(backgroundMaskView, belowSubview: slidingView)
-        print("SlidingView frame:", slidingView.frame)
-        print("SlidingView hidden:", slidingView.isHidden)
-
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideSlidingView))
         backgroundMaskView.addGestureRecognizer(tapGesture)
         
@@ -394,19 +399,16 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         
         tripsRef.getDocument { (document, error) in
             if let error = error {
-                print("獲取行程資料失敗: \(error.localizedDescription)")
                 return
             }
             
             guard let tripData = document?.data(), let poemId = tripData["poemId"] as? String else {
-                print("找不到相關行程資料或詩的ID")
                 return
             }
             
             let poemsRef = Firestore.firestore().collection("poems").document(poemId)
             poemsRef.getDocument { (document, error) in
                 if let error = error {
-                    print("獲取詩資料失敗: \(error.localizedDescription)")
                     return
                 }
                 
@@ -488,7 +490,7 @@ extension MapViewController {
             currentImageIndex += 1
             fullScreenImageView.image = images[currentImageIndex]
         } else {
-            print("已經是最後一張圖片")
+            print("最後一張圖片")
         }
     }
     
@@ -497,7 +499,7 @@ extension MapViewController {
             currentImageIndex -= 1
             fullScreenImageView.image = images[currentImageIndex]
         } else {
-            print("已經是第一張圖片")
+            print("第一張圖片")
         }
     }
     
