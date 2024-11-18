@@ -188,7 +188,7 @@ class NewsFeedViewController: UIViewController {
         avatarImageView.snp.makeConstraints { make in
             make.centerY.equalTo(postView)
             make.leading.equalTo(postView).offset(6)
-            make.width.height.equalTo(50) // 設置為圓形
+            make.width.height.equalTo(50)
         }
         
         let postLabel = UILabel()
@@ -204,25 +204,21 @@ class NewsFeedViewController: UIViewController {
         }
     }
     
-    // 點擊手勢的動作處理
     @objc func didTapPostView() {
         navigationController?.pushViewController(postViewController, animated: true)
     }
     
     func setupBottomSheet() {
-        // 初始化背景蒙層
         backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         backgroundView.frame = self.view.bounds
         backgroundView.alpha = 0
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissBottomSheet))
         backgroundView.addGestureRecognizer(tapGesture)
         
-        // 初始化底部選單視圖
         bottomSheetView.backgroundColor = .white
         bottomSheetView.layer.cornerRadius = 15
         bottomSheetView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         
-        // 設置初始位置在螢幕下方
         bottomSheetView.frame = CGRect(x: 0, y: view.frame.height, width: view.frame.width, height: sheetHeight)
         
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -258,7 +254,6 @@ class NewsFeedViewController: UIViewController {
         return button
     }
     
-    // 顯示彈窗
     func showBottomSheet() {
         UIView.animate(withDuration: 0.3) {
             self.bottomSheetView.frame = CGRect(x: 0, y: self.view.frame.height - self.sheetHeight, width: self.view.frame.width, height: self.sheetHeight)
@@ -294,7 +289,6 @@ class NewsFeedViewController: UIViewController {
     }
     
     @objc func didTapLikeButton(_ sender: UIButton) {
-        // 獲取按鈕點擊所在的行
         let point = sender.convert(CGPoint.zero, to: postsTableView)
         if let indexPath = postsTableView.indexPathForRow(at: point) {
             var postData = postsArray[indexPath.row]
@@ -416,7 +410,6 @@ class NewsFeedViewController: UIViewController {
                     }
                 } else {
                     DispatchQueue.main.async {
-                        // 更新 Cell 的 UI
                         if let cell = self.postsTableView.cellForRow(at: indexPath) as? UserTableViewCell {
                             cell.collectButton.isSelected = bookmarkAccount.contains(userId)
                         }
@@ -452,23 +445,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         postsTableView.allowsSelection = true
         postsTableView.backgroundColor = .white
     }
-    
-    //    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-    //        let offsetY = scrollView.contentOffset.y
-    //        let contentHeight = scrollView.contentSize.height
-    //        let scrollHeight = scrollView.frame.size.height
-    //
-    //        guard contentHeight > scrollHeight else { return }
-    //
-    //        let maxOffsetY = contentHeight - scrollHeight
-    //        let minOffsetY: CGFloat = 0
-    //
-    //        if offsetY < minOffsetY {
-    //            scrollView.contentOffset.y = minOffsetY
-    //        } else if offsetY > maxOffsetY {
-    //            scrollView.contentOffset.y = maxOffsetY
-    //        }
-    //    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         postsArray.count
@@ -516,7 +492,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
             switch result {
             case .success(let data):
                 if let photoUrlString = data["photo"] as? String, let photoUrl = URL(string: photoUrlString) {
-                    // 使用 Kingfisher 加載圖片到 avatarImageView
                     DispatchQueue.main.async {
                         cell.avatarImageView.kf.setImage(with: photoUrl, placeholder: UIImage(named: "user-placeholder"))
                     }
@@ -571,8 +546,6 @@ extension NewsFeedViewController: UITableViewDelegate, UITableViewDataSource {
         let post = postsArray[indexPath.row]
         
         let articleVC = ArticleViewController()
-        
-        // 傳遞貼文的資料
         
         FirebaseManager.shared.fetchUserNameByUserId(userId: post["userId"] as? String ?? "") { userName in
             if let userName = userName {
@@ -674,7 +647,6 @@ extension NewsFeedViewController {
                     }
             }
             
-            // 当所有数据获取完成后，更新界面
             dispatchGroup.notify(queue: .main) {
                 self.postsArray = postsArray.sorted(by: { (post1, post2) -> Bool in
                     if let createdAt1 = post1["createdAt"] as? Timestamp,
@@ -684,7 +656,6 @@ extension NewsFeedViewController {
                     return false
                 })
                 
-                // 更新 UI 并停止刷新动画
                 self.postsTableView.reloadData()
                 self.updateEmptyState()
                 self.postsTableView.mj_header?.endRefreshing()
@@ -695,7 +666,7 @@ extension NewsFeedViewController {
     func setupRefreshControl() {
         postsTableView.mj_header = MJRefreshNormalHeader(refreshingBlock: { [weak self] in
             guard let self = self else { return }
-            self.getNewData() // 在刷新時重新加載數據
+            self.getNewData()
         })
     }
     
@@ -704,7 +675,7 @@ extension NewsFeedViewController {
         emptyStateLabel.textColor = .lightGray
         emptyStateLabel.font = UIFont(name: "NotoSerifHK-Black", size: 20)
         emptyStateLabel.textAlignment = .center
-        emptyStateLabel.isHidden = true  // 預設隱藏
+        emptyStateLabel.isHidden = true 
         view.addSubview(emptyStateLabel)
         
         emptyStateLabel.snp.makeConstraints { make in

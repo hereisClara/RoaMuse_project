@@ -46,8 +46,6 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
         }
     }
     
-    // MARK: - UITableViewDataSource 和 UITableViewDelegate
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return items.count
     }
@@ -82,9 +80,8 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedItem = items[indexPath.row]
-//        onItemSelected?(selectedItem) // 傳遞選中的項目
         self.hide { [weak self] in
-                self?.onItemSelected?(selectedItem) // 傳遞選中的項目
+                self?.onItemSelected?(selectedItem)
             }
     }
     
@@ -109,7 +106,7 @@ class DropdownMenu: UIView, UITableViewDelegate, UITableViewDataSource {
             self.alpha = 0
         }) { _ in
             self.removeFromSuperview()
-            completion?()  // 在隱藏動畫完成後執行 completion block
+            completion?()
         }
     }
 }

@@ -240,7 +240,6 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         
         imageButton.addTarget(self, action: #selector(selectImage), for: .touchUpInside)
         
-        // 如果選擇了圖片，則顯示圖片
         if let selectedImage = selectedImage {
             let imageView = UIImageView(image: selectedImage)
             view.addSubview(imageView)
@@ -320,7 +319,7 @@ class PostViewController: UIViewController, UIImagePickerControllerDelegate, UIN
     }
     
     @objc func toggleDropdown() {
-        isDropdownVisible.toggle() // 切換下拉選單的狀態
+        isDropdownVisible.toggle()
         
         if isDropdownVisible {
             dropdownTableView.isHidden = false
@@ -364,20 +363,16 @@ extension PostViewController {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
         
         if let image = info[.originalImage] as? UIImage {
-            // 檢查是否已經有 4 張圖片
             if selectedImages.count >= 4 {
                 picker.dismiss(animated: true, completion: nil)
                 return
             }
             
-            // 添加圖片到已選圖片數組
             selectedImages.append(image)
             
-            // 創建一個 UIView 作為圖片和按鈕的容器
             let imageContainer = UIView()
             imagesStackView.addArrangedSubview(imageContainer)
             
-            // 創建縮圖
             let imageView = UIImageView(image: image)
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
@@ -385,11 +380,10 @@ extension PostViewController {
             imageContainer.addSubview(imageView)
             
             imageView.snp.makeConstraints { make in
-                make.edges.equalToSuperview() // 讓 imageView 填滿容器
-                make.width.height.equalTo(60) // 設置固定大小
+                make.edges.equalToSuperview()
+                make.width.height.equalTo(60)
             }
             
-            // 創建一個 "叉叉" 按鈕
             let removeButton = UIButton(type: .custom)
             removeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
             removeButton.tintColor = .gray
@@ -399,27 +393,21 @@ extension PostViewController {
             imageContainer.addSubview(removeButton)
             
             removeButton.snp.makeConstraints { make in
-                make.top.equalTo(imageContainer.snp.top).offset(-8)  // 相對於父視圖的右上角
+                make.top.equalTo(imageContainer.snp.top).offset(-8)
                 make.trailing.equalTo(imageContainer.snp.trailing).offset(8)
                 make.width.height.equalTo(24)
             }
             
-            // 設置按鈕的點擊事件來移除圖片
             removeButton.addTarget(self, action: #selector(removeSelectedImage(_:)), for: .touchUpInside)
-            removeButton.tag = selectedImages.count - 1  // 標記此按鈕，對應圖片位置
-            
-            // 將圖片轉換成 JPEG 格式的 Data
+            removeButton.tag = selectedImages.count - 1
             guard let imageData = image.jpegData(compressionQuality: 0.75) else {
                 picker.dismiss(animated: true, completion: nil)
                 return
             }
             
-            // 開始上傳圖片
             uploadImageToFirebase(imageData) { [weak self] imageUrl in
                 if let imageUrl = imageUrl {
-                    // 儲存每張圖片的下載 URL 到陣列或處理邏輯中
                     self?.imageUrl = imageUrl
-                } else {
                 }
             }
         }
@@ -430,13 +418,10 @@ extension PostViewController {
     @objc func removeSelectedImage(_ sender: UIButton) {
         let index = sender.tag
         
-        // 移除選中的圖片
         selectedImages.remove(at: index)
         
-        // 移除對應的 ImageView
         imagesStackView.arrangedSubviews[index].removeFromSuperview()
         
-        // 更新剩餘圖片的標籤，以確保正確對應
         for (num, subview) in imagesStackView.arrangedSubviews.enumerated() {
             if let button = subview.subviews.compactMap({ $0 as? UIButton }).first {
                 button.tag = num
@@ -470,10 +455,8 @@ extension PostViewController {
     }
     
     func uploadImageToFirebase(_ imageData: Data, completion: @escaping (String?) -> Void) {
-        // 初始化 storageRef
-        let storageRef = Storage.storage().reference()  // 修正：確保每次上傳前正確初始化
         
-        // 上傳圖片到指定的路徑
+        let storageRef = Storage.storage().reference()
         let imageRef = storageRef.child("postImages/\(UUID().uuidString).jpg")
         imageRef.putData(imageData, metadata: nil) { _, error in
             if let error = error {
@@ -493,9 +476,8 @@ extension PostViewController {
         }
     }
     
-    // 上傳多張圖片到 Firebase 並返回 URLs
     func uploadImagesToFirebase(completion: @escaping ([String]?) -> Void) {
-        let group = DispatchGroup() // 使用 DispatchGroup 來確保所有圖片都上傳完畢
+        let group = DispatchGroup()
         var uploadedUrls = [String]()
         
         for image in selectedImages {
@@ -505,13 +487,13 @@ extension PostViewController {
                 return
             }
             
-            group.enter() // 開始上傳圖片
+            group.enter()
             uploadImageToFirebase(imageData) { imageUrl in
                 if let imageUrl = imageUrl {
                     uploadedUrls.append(imageUrl)
                 } else {
                 }
-                group.leave() // 圖片上傳結束
+                group.leave()
             }
         }
         

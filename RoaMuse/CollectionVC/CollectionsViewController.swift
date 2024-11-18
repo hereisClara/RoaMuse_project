@@ -461,7 +461,6 @@ extension CollectionsViewController {
                                 for (index, trip) in self.completeTripsArray.enumerated() {
                                     FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
                                         DispatchQueue.main.async {
-                                            // 檢查 index 是否在邊界內
                                             if index < self.completeTripsArray.count {
                                                 self.completesPoemTitleArray[index] = poem.title
                                                 self.collectionsTableView.reloadData()
@@ -501,7 +500,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if segmentIndex == 0 {
             let headerView = UIView()
-            headerView.backgroundColor = UIColor.backgroundGray // 設定背景色
+            headerView.backgroundColor = UIColor.backgroundGray
             let label = UILabel()
             headerView.addSubview(label)
             label.font = UIFont(name: "NotoSerifHK-Black", size: 22)
@@ -554,7 +553,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
             if indexPath.section == 0 {
                 guard indexPath.row < incompleteTripsArray.count,
                                   indexPath.row < incompletesPoemTitleArray.count else {
-                                return UITableViewCell() // 如果數據尚未加載，返回一個空的 UITableViewCell
+                                return UITableViewCell()
                             }
                 let trip = incompleteTripsArray[indexPath.row]
                 let poemTitle = incompletesPoemTitleArray[indexPath.row]
@@ -567,7 +566,7 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
             } else {
                 guard indexPath.row < completeTripsArray.count,
                                   indexPath.row < completesPoemTitleArray.count else {
-                                return UITableViewCell() // 如果數據尚未加載，返回一個空的 UITableViewCell
+                                return UITableViewCell()
                             }
                 let trip = completeTripsArray[indexPath.row]
                 let poemTitle = completesPoemTitleArray[indexPath.row]
@@ -619,7 +618,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                     }
                 }
                 dispatchGroup.notify(queue: .main) {
-                    // 確保 places 不為空
                     if places.isEmpty {
                         print("未找到有效的地點數據，無法計算路徑時間。")
                         return
@@ -628,11 +626,9 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                         let tripDetailVC = TripDetailViewController()
                         tripDetailVC.trip = trip
                         
-                        // 設置總路徑時間
                         if let totalTravelTime = totalTravelTime, let routes = routes {
                             tripDetailVC.totalTravelTime = totalTravelTime
                             
-                            // 創建導航指令數列
                             var nestedInstructions = [[String]]()
                             for route in routes {
                                 var stepInstructions = [String]()
@@ -644,7 +640,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                             tripDetailVC.nestedInstructions = nestedInstructions
                         }
                         
-                        // 跳轉到行程詳情頁
                         self.navigationController?.pushViewController(tripDetailVC, animated: true)
                     }
                 }
@@ -652,7 +647,6 @@ extension CollectionsViewController: UITableViewDelegate, UITableViewDataSource 
                 print("無法獲取當前位置")
             }
         } else {
-            // 處理文章的選擇
             let post = postsArray[indexPath.row]
             let articleVC = ArticleViewController()
             

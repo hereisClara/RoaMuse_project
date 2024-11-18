@@ -11,12 +11,11 @@ import FirebaseFirestore
 
 class ViewController: UIViewController {
 
-    let db = Firestore.firestore() // 初始化 Firestore
+    let db = Firestore.firestore()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // 準備要上傳的資料
         let db = Firestore.firestore()
         let tripData: [String: Any] = [
             "poem": [

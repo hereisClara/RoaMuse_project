@@ -46,11 +46,11 @@ class TripDetailViewController: UIViewController {
     
     var tableView = UITableView()
     
-    let progressView = UIView() // The vertical progress view container
-    let progressBar = UIProgressView(progressViewStyle: .bar) // The actual progress bar
+    let progressView = UIView()
+    let progressBar = UIProgressView(progressViewStyle: .bar)
     var progressDots = [UIView]()
     
-    var totalTravelTime: TimeInterval? // 用來存儲總交通時間
+    var totalTravelTime: TimeInterval?
     var routesArray: [[MKRoute]]?
     var nestedInstructions: [[String]]?
     
@@ -137,7 +137,6 @@ class TripDetailViewController: UIViewController {
             }
             
             DispatchQueue.main.async {
-                // 遍歷所有 section 並設置已完成的地點
                 for (index, place) in self.places.enumerated() {
                     if self.completedPlaceIds.contains(place.id), let footerView = self.footerViews[index] {
                         self.setupCompletedFooterView(footerView: footerView, sectionIndex: index)
@@ -175,7 +174,7 @@ class TripDetailViewController: UIViewController {
     func updateProgress(for placeIndex: Int) {
         if placeIndex < progressDots.count {
             let dot = progressDots[placeIndex]
-            dot.backgroundColor = .blue // Change color to indicate completion
+            dot.backgroundColor = .blue
         }
     }
     
@@ -707,18 +706,16 @@ extension TripDetailViewController: UITableViewDelegate, UITableViewDataSource {
             guard let startCoordinate = locationManager.currentLocation?.coordinate else { return cell }
             let destinationCoordinate = CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
 
-            // 建立路徑請求
             let directionRequest = MKDirections.Request()
             directionRequest.source = MKMapItem(placemark: MKPlacemark(coordinate: startCoordinate))
             directionRequest.destination = MKMapItem(placemark: MKPlacemark(coordinate: destinationCoordinate))
             directionRequest.transportType = selectedTransportType
 
-            // 計算路徑
             let directions = MKDirections(request: directionRequest)
             directions.calculate { response, error in
                 guard let response = response, error == nil else { return }
 
-                let route = response.routes.first  // 取得第一條路徑
+                let route = response.routes.first
                 DispatchQueue.main.async {
                     cell.showMap(from: startCoordinate, to: destinationCoordinate, with: route!)
                 }

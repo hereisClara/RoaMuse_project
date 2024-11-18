@@ -14,22 +14,10 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         view.backgroundColor = .backgroundGray
         navigationItem.backButtonTitle = ""
         self.title = "首頁"
-//        navigationController?.navigationBar.prefersLargeTitles = true
-//        navigationItem.largeTitleDisplayMode = .always
-//        
-//        if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
-//            navigationController?.navigationBar.largeTitleTextAttributes = [
-//                .foregroundColor: UIColor.white,
-//                .font: customFont 
-//            ]
-//        }
-        
         startAutoScrolling()
         setupCollectionView()
         getPoems()
-        
         setupUI()
-//        addGradientBlurEffectToView()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -170,7 +158,6 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         }
     }
     
-    // MARK: - UICollectionView DataSource
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return poems.isEmpty ? 0 : numberOfItems
     }
@@ -218,16 +205,15 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         navigationController?.pushViewController(poemPostVC, animated: true)
     }
     
-    // MARK: - CHTCollectionViewDelegateWaterfallLayout
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let poem = poems[indexPath.item % poems.count]
         let height = calculateHeight(for: poem.title)
-        return CGSize(width: (collectionView.bounds.width / 2) - 30, height: height) // 每個 item 的寬度為 2 列，並根據內容動態調整高度
+        return CGSize(width: (collectionView.bounds.width / 2) - 30, height: height)
     }
     
     func calculateHeight(for text: String) -> CGFloat {
-        let baseHeight: CGFloat = 50 // 基礎高度，保證最短的 cell 也有一定高度
-        let additionalHeight = CGFloat(text.count) * 70 // 根據每個字增加高度，調整以適合視覺效果
+        let baseHeight: CGFloat = 50
+        let additionalHeight = CGFloat(text.count) * 70
         return baseHeight + additionalHeight
     }
 }
@@ -247,18 +233,18 @@ class PoemCell: UICollectionViewCell {
     }
     
     func setupViews() {
-        contentView.backgroundColor = .deepBlue // 深藍色背景
+        contentView.backgroundColor = .deepBlue
         contentView.layer.cornerRadius = 20
         
-        titleLabel.numberOfLines = 0 // 允許多行顯示
+        titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
-        titleLabel.textColor = .forBronze // 白色文字
-        titleLabel.lineBreakMode = .byCharWrapping // 按字符換行，模仿中文直式排列
+        titleLabel.textColor = .forBronze
+        titleLabel.lineBreakMode = .byCharWrapping
         
         contentView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(10) // 設置內部 padding
+            make.edges.equalToSuperview().inset(10)
         }
     }
     

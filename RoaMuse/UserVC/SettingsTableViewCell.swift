@@ -10,7 +10,6 @@ import UIKit
 
 class SettingsTableViewCell: UITableViewCell {
 
-    // 初始化 cell 的標題
     let titleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
@@ -28,10 +27,9 @@ class SettingsTableViewCell: UITableViewCell {
     }
 
     private func setupViews() {
-        // 添加標題標籤到 cell
+        
         contentView.addSubview(titleLabel)
         
-        // 設置標題標籤的約束
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -39,7 +37,6 @@ class SettingsTableViewCell: UITableViewCell {
         ])
     }
 
-    // 設置 cell 的標題
     func configure(with title: String) {
         titleLabel.text = title
     }

@@ -521,7 +521,6 @@ extension UserProfileViewController {
         let chatRef = Firestore.firestore().collection("chats")
         let userRef = Firestore.firestore().collection("users")
         
-        // 首先查詢現有的聊天會話
         chatRef
             .whereField("participants", arrayContains: currentUserId)
             .getDocuments { (snapshot, error) in
@@ -559,7 +558,6 @@ extension UserProfileViewController {
                     }
                 }
                 
-                // 如果找不到現有的聊天會話，創建新的會話
                 let chatId = chatRef.document().documentID
                 userRef.document(chatUserId).getDocument { (chatUserSnapshot, error) in
                     guard let chatUserData = chatUserSnapshot?.data(),
@@ -590,7 +588,6 @@ extension UserProfileViewController {
                                 print("創建新的聊天會話失敗: \(error)")
                             } else {
                                 print("新的聊天會話創建成功，chatId: \(chatId)")
-                                // 使用創建的資料來構建 Chat 實例
                                 let chat = Chat(
                                     id: chatId,
                                     userName: chatUserName,

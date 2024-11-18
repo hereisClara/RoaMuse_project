@@ -14,7 +14,7 @@ class ChatListCell: UITableViewCell {
     let profileImageView = UIImageView()
     let userNameLabel = UILabel()
     let lastMessageLabel = UILabel()
-    let lastMessageTimeLabel = UILabel() // 新增的時間顯示 Label
+    let lastMessageTimeLabel = UILabel()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -30,7 +30,7 @@ class ChatListCell: UITableViewCell {
         contentView.addSubview(profileImageView)
         contentView.addSubview(userNameLabel)
         contentView.addSubview(lastMessageLabel)
-        contentView.addSubview(lastMessageTimeLabel) // 添加到視圖中
+        contentView.addSubview(lastMessageTimeLabel) 
         
         profileImageView.layer.cornerRadius = 30
         profileImageView.clipsToBounds = true

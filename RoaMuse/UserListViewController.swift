@@ -134,7 +134,7 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
             make.height.equalTo(scrollView.snp.height)
         }
     }
-// MARK: placeholder
+
     func setupPlaceholders() {
 
         followersPlaceholderLabel.text = "還沒有粉絲"
@@ -159,7 +159,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
 
-    // MARK: - Button actions
     @objc func followersButtonTapped() {
         scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
         updateUnderlinePosition(button: followersButton)
@@ -307,7 +306,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         70
     }
     
-    // MARK: - UITableViewDataSource 和 UITableViewDelegate
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if tableView == followersTableView {
             return followers.count
@@ -359,7 +357,6 @@ class UserListViewController: UIViewController, UITableViewDelegate, UITableView
         let bottomSheetManager = BottomSheetManager(parentViewController: self)
         
         bottomSheetManager.addActionButton(title: "檢舉用戶", textColor: .red) {
-            // 檢舉用戶邏輯
             self.presentReportUserAlert(for: userData)
         }
         

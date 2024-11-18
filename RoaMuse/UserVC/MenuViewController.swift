@@ -67,8 +67,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         
     }
     
-    // MARK: - UITableViewDataSource
-    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
@@ -99,13 +97,11 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath == selectedIndex {
-            // 如果再次選擇相同的 row，則取消選取並清空 selectedIndex
             let selectedCell = tableView.cellForRow(at: indexPath)
             selectedCell?.accessoryType = .none
             selectedCell?.textLabel?.textColor = .forBronze
             selectedIndex = nil
         } else {
-            // 取消先前選中的項目
             if let previousIndex = selectedIndex {
                 let previousCell = tableView.cellForRow(at: previousIndex)
                 previousCell?.accessoryType = .none

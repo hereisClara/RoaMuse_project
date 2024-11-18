@@ -32,7 +32,7 @@ class PopUpView {
     let placesStackView = UIStackView()
     
     let startButton = UIButton()
-    let cityLabel = UILabel()   // 用来显示城市
+    let cityLabel = UILabel()
     let districtsStackView = UIStackView()
     
     var tapCollectButton: (() -> Void)?
@@ -148,15 +148,15 @@ class PopUpView {
         popupView.addSubview(placesStackView)
         
         popupView.addSubview(startButton)
-        popupView.addSubview(cityLabel)   // 添加城市标签
+        popupView.addSubview(cityLabel)
         popupView.addSubview(districtsStackView)
         popupView.addSubview(matchingScoreLabel)
         
         matchingScoreLabel.snp.makeConstraints { make in
             make.trailing.equalTo(popupView).offset(-20)
             make.bottom.equalTo(popupView).offset(-60)
-            make.width.equalTo(160)  // 設置寬度
-            make.height.equalTo(60)  // 設置高度
+            make.width.equalTo(160)
+            make.height.equalTo(60) 
         }
         
         matchingScoreLabel.textColor = .accent

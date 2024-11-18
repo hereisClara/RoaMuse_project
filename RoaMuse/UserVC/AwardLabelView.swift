@@ -10,31 +10,23 @@ import UIKit
 
 class AwardLabelView: UIView {
     
-    // 定義一個 UILabel
-    let titleLabel = UILabel()  // 讓 titleLabel 成為 public
-    
-    // 點擊手勢的回調
+    let titleLabel = UILabel()
     var onTap: (() -> Void)?
     
-    // 初始化方法
     init(title: String, backgroundColor: UIColor = .systemGray) {
         super.init(frame: .zero)
         
-        // 設置背景顏色
         self.backgroundColor = backgroundColor
         self.layer.cornerRadius = 6
         self.clipsToBounds = true
         
-        // 配置 titleLabel
         titleLabel.text = title
         titleLabel.textAlignment = .center
         titleLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         titleLabel.textColor = .white
         
-        // 將 titleLabel 加入到視圖中
         addSubview(titleLabel)
         
-        // 設置 titleLabel 的 Auto Layout
         titleLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(8)
             make.trailing.equalToSuperview().offset(-8)
@@ -42,7 +34,6 @@ class AwardLabelView: UIView {
             make.height.equalTo(16)
         }
         
-        // 添加點擊手勢
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
         self.addGestureRecognizer(tapGesture)
     }
@@ -51,18 +42,15 @@ class AwardLabelView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // 點擊手勢處理方法
     @objc private func handleTap() {
-        onTap?()  // 呼叫回調
+        onTap?()
     }
     
-    // 更新標題文字
     func updateTitle(_ title: String) {
         print("Updating title with: \(title)")
         titleLabel.text = title
     }
     
-    // 新增方法來更新樣式
     func updateStyle(backgroundColor: UIColor, textColor: UIColor) {
         self.backgroundColor = backgroundColor
         titleLabel.textColor = textColor

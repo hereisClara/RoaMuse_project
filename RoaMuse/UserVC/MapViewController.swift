@@ -330,7 +330,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func centerMapOnUserLocation(userLocation: CLLocation) {
-        let regionRadius: CLLocationDistance = 50000  // 50公里
+        let regionRadius: CLLocationDistance = 50000 
         let coordinateRegion = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
         mapView.setRegion(coordinateRegion, animated: true)
     }

@@ -9,14 +9,12 @@ import Foundation
 import UIKit
 extension UIStackView {
     
-    // 移除所有 arrangedSubviews
     func removeAllArrangedSubviews() {
-        // 從 stackView 中移除 arrangedSubviews
         let arrangedSubviews = self.arrangedSubviews
         
         for view in arrangedSubviews {
             self.removeArrangedSubview(view)
-            view.removeFromSuperview()  // 從視圖層次結構中移除
+            view.removeFromSuperview() 
         }
     }
 }

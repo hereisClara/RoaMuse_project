@@ -38,30 +38,25 @@ class GradientActivityIndicatorView: UIView {
     }
     
     private func setupBackgroundView() {
-        // 半透明模糊背景
         backgroundView.backgroundColor = UIColor.white.withAlphaComponent(0.3)
         backgroundView.layer.cornerRadius = 20
         backgroundView.clipsToBounds = true
         addSubview(backgroundView)
         
-        // 添加模糊效果
         backgroundView.addSubview(blurBackgroundView)
-        
-        // 設定背景與模糊 view 的約束
         backgroundView.snp.makeConstraints { make in
             make.center.equalToSuperview()
-            make.width.height.equalTo(120) // 背景大小
+            make.width.height.equalTo(120)
         }
         
         blurBackgroundView.snp.makeConstraints { make in
-            make.edges.equalToSuperview() // 模糊效果與背景邊界對齊
+            make.edges.equalToSuperview()
         }
     }
     
     private func setupCircleLayer() {
-        // 設定圓圈 path
         let circleRadius: CGFloat = 40
-        let circleCenter = CGPoint(x: 60, y: 60) // 背景 view 的中心
+        let circleCenter = CGPoint(x: 60, y: 60)
         let circlePath = UIBezierPath(arcCenter: circleCenter, radius: circleRadius, startAngle: 0, endAngle: 2 * CGFloat.pi, clockwise: true)
         
         shapeLayer.path = circlePath.cgPath
@@ -82,7 +77,6 @@ class GradientActivityIndicatorView: UIView {
         
         backgroundView.layer.addSublayer(gradientLayer)
         
-        // 設定 gradientLayer 的大小
         gradientLayer.frame = CGRect(x: 0, y: 0, width: 120, height: 120)
     }
     
@@ -92,7 +86,7 @@ class GradientActivityIndicatorView: UIView {
             rotationAnimation.toValue = NSNumber(value: 2 * Double.pi)
             rotationAnimation.duration = 1.5
             rotationAnimation.repeatCount = .infinity
-            rotationAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut) // 平滑的動畫效果
+            rotationAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut) 
             gradientLayer.add(rotationAnimation, forKey: animationKey)
         }
     }

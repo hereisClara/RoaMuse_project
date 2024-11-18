@@ -51,7 +51,7 @@ class TripDetailWithPlaceTableViewCell: UITableViewCell {
             make.top.equalTo(verseLabel.snp.bottom).offset(70)
             make.width.equalTo(self).multipliedBy(0.9)
             make.centerX.equalTo(self)
-            make.bottom.equalTo(self).offset(-15) // 確保與底部有間距
+            make.bottom.equalTo(self).offset(-15) 
         }
         
         moreInfoLabel.numberOfLines = 0

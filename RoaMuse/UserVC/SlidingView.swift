@@ -13,8 +13,8 @@ class SlidingView: UIView {
     
     weak var parentViewController: UIViewController?
 
-    var tripIds: [String] = []  // tripId 數據源
-    var images: [UIImage] = []  // 圖片數據源
+    var tripIds: [String] = []
+    var images: [UIImage] = []
     var tableView: UITableView!
     var currentPlaceId: String?
     var isExpanded: Bool = false
@@ -139,7 +139,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
             
             let cell = tableView.dequeueReusableCell(withIdentifier: "CollectionTableViewCell", for: indexPath) as? PhotoCollectionTableViewCell
             cell?.backgroundColor = .clear
-            cell?.updateImages(images)  // 更新圖片
+            cell?.updateImages(images)
             cell?.parentViewController = self.parentViewController
             return cell ?? UITableViewCell()
         }
@@ -226,7 +226,7 @@ extension SlidingView: UITableViewDataSource, UITableViewDelegate {
                     }
                 }
                 
-                completion(poemTitle, matchingPoemLine) // 完成後調用 closure
+                completion(poemTitle, matchingPoemLine) 
             }
         }
     }
