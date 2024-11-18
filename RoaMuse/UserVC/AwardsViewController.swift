@@ -56,12 +56,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         super.viewDidLoad()
         view.backgroundColor = .backgroundGray
         navigationItem.backButtonTitle = ""
-        navigationController?.navigationBar.barTintColor = UIColor.deepBlue
-        navigationController?.navigationBar.tintColor = UIColor.white
-        navigationController?.navigationBar.titleTextAttributes = [
-            NSAttributedString.Key.foregroundColor: UIColor.white,
-            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
-        ]
         self.title = "成就"
         
         setupTableView()
@@ -72,7 +66,18 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         super.viewWillAppear(animated)
         fetchUserData()
         tabBarController?.tabBar.isHidden = true
-        navigationController?.navigationBar.isTranslucent = true
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.deepBlue
+        appearance.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont(name: "NotoSerifHK-Black", size: 18)!
+        ]
+        
+        navigationController?.navigationBar.tintColor = .white
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
         
         dropdownMenu.onItemSelected = { [weak self] selectedItem in
             guard let self = self else { return }
@@ -87,13 +92,11 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        navigationController?.navigationBar.barTintColor = UIColor.backgroundGray
-        navigationController?.navigationBar.tintColor = UIColor.deepBlue
-        navigationController?.navigationBar.titleTextAttributes = [
-            NSAttributedString.Key.foregroundColor: UIColor.white,
-            NSAttributedString.Key.font: UIFont(name: "NotoSerifHK-Black", size: 18)
-        ]
         tabBarController?.tabBar.isHidden = false
+    }
+    
+    @objc func handleBackButton() {
+        navigationController?.popViewController(animated: true)
     }
     
     func findIndexesForTitle(_ title: String) -> (Int, Int, Int)? {

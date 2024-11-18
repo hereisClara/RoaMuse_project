@@ -261,7 +261,7 @@ class CollectionsViewController: UIViewController {
         FirebaseManager.shared.loadBookmarkPostIDs(forUserId: userId) { [weak self] postIds in
             guard let self = self else { return }
             self.bookmarkPostIdArray = postIds
-            print("Bookmarked Post IDs: \(postIds)") // Debugging
+            print("Bookmarked Post IDs: \(postIds)")
             
             if !postIds.isEmpty {
 
@@ -349,6 +349,7 @@ class CollectionsViewController: UIViewController {
             button.tag = index
             button.setTitleColor(.deepBlue, for: .normal)
             button.backgroundColor = .clear
+            button.titleLabel?.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             button.addTarget(self, action: #selector(filterButtonTapped(_:)), for: .touchUpInside)
             buttonContainer.addArrangedSubview(button)
             filterButtons.append(button)

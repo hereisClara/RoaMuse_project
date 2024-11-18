@@ -47,6 +47,23 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         setupSlidingView()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+        
+        let transparentAppearance = UINavigationBarAppearance()
+        transparentAppearance.configureWithTransparentBackground()
+        transparentAppearance.titleTextAttributes = [
+            .foregroundColor: UIColor.white,
+            .font: UIFont.systemFont(ofSize: 18)
+        ]
+        
+        navigationController?.navigationBar.standardAppearance = transparentAppearance
+        navigationController?.navigationBar.scrollEdgeAppearance = transparentAppearance
+        navigationController?.navigationBar.compactAppearance = transparentAppearance
+        navigationController?.navigationBar.tintColor = .white
+    }
+    
     func setupFilterButton() {
         
         let backgroundCircle = UIView()
@@ -54,11 +71,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         backgroundCircle.layer.cornerRadius = 35
         view.addSubview(backgroundCircle)
         
-        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)  // 圖標大小及粗細
+        let imageConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)
         let iconImage = UIImage(systemName: "slider.horizontal.3", withConfiguration: imageConfig)
         filterButton.setImage(iconImage, for: .normal)
-        filterButton.tintColor = .deepBlue  // 設定圖標顏色
-        filterButton.backgroundColor = .clear  // 清除按鈕背景色
+        filterButton.tintColor = .deepBlue
+        filterButton.backgroundColor = .clear
         filterButton.addTarget(self, action: #selector(toggleSlidingView), for: .touchUpInside)
         view.addSubview(filterButton)
 
@@ -83,12 +100,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         }
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        tabBarController?.tabBar.isHidden = true
-        
-    }
-    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         tabBarController?.tabBar.isHidden = false
@@ -107,13 +118,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
 
         userRef.getDocument { documentSnapshot, error in
             if let error = error {
-                print("獲取 user completedPlace 失敗: \(error.localizedDescription)")
                 return
             }
 
             guard let document = documentSnapshot, let data = document.data(),
                   let completedPlace = data["completedPlace"] as? [[String: Any]] else {
-                print("錯誤: 無法解析 completedPlace 資料")
                 return
             }
 
@@ -130,7 +139,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                             defer { group.leave() }
 
                             if let error = error {
-                                print("獲取 trip 失敗: \(error.localizedDescription)")
                                 return
                             }
 
@@ -150,10 +158,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             }
             
             group.notify(queue: .main) {
-                self.placeTripDictionary = filteredPlaceTripDictionary  // 設定整理後的資料
-                print("完成的地點: ", self.placeTripDictionary.keys)
-                
-                // 呼叫 fetchPlaces 來標註地點
+                self.placeTripDictionary = filteredPlaceTripDictionary
                 self.fetchPlaces(for: Array(filteredPlaceTripDictionary.keys))
             }
         }
@@ -169,7 +174,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             dispatchGroup.enter()
 
             placesRef.document(placeId).getDocument { documentSnapshot, error in
-                defer { dispatchGroup.leave() }  // 確保每次請求結束都會呼叫 leave()
+                defer { dispatchGroup.leave() }
 
                 if let error = error {
                     print("獲取地點失敗: \(error.localizedDescription)")
@@ -180,7 +185,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                       let latitude = data["latitude"] as? Double,
                       let longitude = data["longitude"] as? Double,
                       let placeName = data["name"] as? String else {
-                    print("解析地點資料失敗")
                     return
                 }
 
@@ -306,7 +310,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             }
         }
 
-        // 詩句資料請求
         dispatchGroup.enter()
         slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
             DispatchQueue.main.async {

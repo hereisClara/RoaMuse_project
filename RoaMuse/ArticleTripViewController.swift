@@ -242,7 +242,7 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, hasFoundPlace in
                     if hasFoundPlace == false {
                         DispatchQueue.main.async {
-                            self.showNoPlacesFoundAlert()
+//                            self.showNoPlacesFoundAlert()
                         }
                     }
 
