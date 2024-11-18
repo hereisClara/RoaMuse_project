@@ -420,7 +420,6 @@ extension EstablishViewController {
                 self.activityIndicator.isHidden = true
             }
         }
- 
         DispatchQueue.main.asyncAfter(deadline: .now() + 15, execute: timeoutWorkItem)
 
         PoemCollectionManager.shared.loadPoemIdsFromFirebase(forUserId: userId) {

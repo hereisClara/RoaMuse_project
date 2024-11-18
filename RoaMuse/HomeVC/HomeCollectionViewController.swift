@@ -128,11 +128,12 @@ class HomeCollectionViewController: UIViewController, UICollectionViewDelegate, 
         collectionView.backgroundColor = .backgroundGray
         collectionView.layer.cornerRadius = 20
         collectionView.layer.masksToBounds = true
+
         collectionView.alwaysBounceVertical = true
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.allowsSelection = true
-        
+
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
             make.leading.trailing.equalToSuperview().inset(12)
