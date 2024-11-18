@@ -66,18 +66,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         super.viewWillAppear(animated)
         fetchUserData()
         tabBarController?.tabBar.isHidden = true
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.deepBlue
-        appearance.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont(name: "NotoSerifHK-Black", size: 18)!
-        ]
-        
-        navigationController?.navigationBar.tintColor = .white
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.compactAppearance = appearance
         
         dropdownMenu.onItemSelected = { [weak self] selectedItem in
             guard let self = self else { return }
@@ -85,13 +73,37 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             if let (section, row, item) = self.findIndexesForTitle(selectedItem) {
                 self.updateTitleContainerStyle(forProgressAt: section, row: row, item: item)
                 self.saveSelectedIndexesToFirebase(section: section, row: row, item: item)
-//                print("已保存的索引: section = \(section), row = \(row), item = \(item)")
             }
         }
+        
+        let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor.deepBlue
+            appearance.titleTextAttributes = [
+                .foregroundColor: UIColor.white,
+                .font: UIFont(name: "NotoSerifHK-Black", size: 18)!
+            ]
+
+            navigationController?.navigationBar.tintColor = .white 
+            navigationController?.navigationBar.standardAppearance = appearance
+            navigationController?.navigationBar.scrollEdgeAppearance = appearance
+            navigationController?.navigationBar.compactAppearance = appearance
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        let defaultAppearance = UINavigationBarAppearance()
+            defaultAppearance.configureWithOpaqueBackground()
+            defaultAppearance.backgroundColor = .white
+            defaultAppearance.titleTextAttributes = [
+                .foregroundColor: UIColor.black,
+                .font: UIFont.systemFont(ofSize: 18)
+            ]
+            
+            navigationController?.navigationBar.tintColor = .black
+            navigationController?.navigationBar.standardAppearance = defaultAppearance
+            navigationController?.navigationBar.scrollEdgeAppearance = defaultAppearance
+            navigationController?.navigationBar.compactAppearance = defaultAppearance
         tabBarController?.tabBar.isHidden = false
     }
     
@@ -123,7 +135,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             if let error = error {
                 print("保存到 Firebase 時出錯: \(error.localizedDescription)")
             } else {
-                print("成功保存到 Firebase: \(indexArray)")
                 let selectedTitle = self.awardTitles[section][row][item]
                 NotificationCenter.default.post(name: NSNotification.Name("awardUpdated"), object: nil, userInfo: ["title": selectedTitle])
             }
@@ -149,7 +160,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             dropdownButton.tintColor = .deepBlue
             
         case 2:
-            // 進度點 3
             titleContainerView.backgroundColor = UIColor.accent // 底色為 .accent
             titleContainerView.layer.borderWidth = 0.0 // 沒有邊框
             titleLabel.textColor = .white
@@ -157,7 +167,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
             dropdownButton.tintColor = .white
             
         default:
-            // 預設情況，無邊框及默認顏色
             titleContainerView.backgroundColor = UIColor.systemBackground
             titleContainerView.layer.borderWidth = 0.0
             titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
@@ -187,7 +196,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
 
         let completedTasks = currentTitles.count
         let totalTasks = 15
-        circularProgressBar.progress = Float(completedTasks) / Float(totalTasks) // 設置進度
+        circularProgressBar.progress = Float(completedTasks) / Float(totalTasks)
         headerView.addSubview(circularProgressBar)
 
         headerLabel.text = userName
@@ -219,27 +228,23 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         
         titleContainerView.layer.cornerRadius = 15
 
-        // titleLabel 的佈局
         titleLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(12)
             make.centerY.equalToSuperview()
         }
 
-        // dropdownButton 的佈局，緊靠 titleLabel 並且距離右邊有 -12 的偏移
         dropdownButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-12)
             make.centerY.equalToSuperview()
             make.width.height.equalTo(24)
         }
 
-        // circularProgressBar 的佈局
         circularProgressBar.snp.makeConstraints { make in
             make.centerY.equalToSuperview().offset(30)
             make.width.height.equalTo(160)
             make.leading.equalToSuperview().offset(20)
         }
 
-        // 設置背景延伸到 NavigationBar 區域
         let extendedHeaderView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 200))
         extendedHeaderView.backgroundColor = UIColor.clear
         extendedHeaderView.addSubview(headerView)
@@ -271,15 +276,9 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         let userRef = Firestore.firestore().collection("users").document(userId)
         
         userRef.addSnapshotListener { (documentSnapshot, error) in
-            if let error = error {
-                print("獲取用戶數據時出錯: \(error.localizedDescription)")
-                return
-            }
+            if let error = error { return }
             
-            guard let document = documentSnapshot, let data = document.data() else {
-                print("無法解析用戶數據")
-                return
-            }
+            guard let document = documentSnapshot, let data = document.data() else { return }
             
             self.userName = data["userName"] as? String ?? "使用者"
             let avatarImageUrl = data["photo"] as? String ?? ""
@@ -291,7 +290,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                         }
                     }
             
-            // 加載用戶的當前選擇的 title
             FirebaseManager.shared.loadAwardTitle(forUserId: userId) { result in
                 switch result {
                 case .success(let awardTitle):
@@ -316,15 +314,12 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 }
             }
             
-            // 如果没有 completedPlace 数据，进度为 0
             let totalPlacesCompleted = (data["completedPlace"] as? [[String: Any]])?.reduce(0) { acc, placeEntry in
                 acc + ((placeEntry["placeIds"] as? [String])?.count ?? 0)
             } ?? 0
             
-            // 如果没有 completedTrip 数据，进度为 0
             let totalTripsCompleted = (data["completedTrip"] as? [String])?.count ?? 0
             
-            // 初始化动态的任务集合
             self.dynamicTaskSets = [
                 [TaskSet(totalTasks: 20, completedTasks: totalPlacesCompleted)],
                 [TaskSet(totalTasks: 10, completedTasks: 0),
@@ -333,7 +328,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 [TaskSet(totalTasks: 6, completedTasks: totalTripsCompleted)]
             ]
             
-            // 分类地点并更新进度
             self.categorizePlacesByTag { categorizedPlaces in
                 let tagZeroPlacesAmount = categorizedPlaces[0]?.count ?? 0
                 self.dynamicTaskSets[1][0] = TaskSet(totalTasks: 10, completedTasks: tagZeroPlacesAmount)
@@ -344,7 +338,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
                 let tagTwoPlacesAmount = categorizedPlaces[2]?.count ?? 0
                 self.dynamicTaskSets[1][2] = TaskSet(totalTasks: 10, completedTasks: tagTwoPlacesAmount)
                 
-                // 计算所有称号的进度，并直接更新下拉菜单
                 self.calculateTitlesAndUpdateDropDown()
                 
                 DispatchQueue.main.async {
@@ -410,13 +403,10 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         dropdownMenu.items = currentTitles
     }
     
-    // MARK: - UITableViewDelegate
-    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 180 // 自定義行高度
+        return 180
     }
     
-    // 添加 section 的表頭
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
         headerView.backgroundColor = .white
@@ -429,23 +419,22 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         headerView.addSubview(headerLabel)
         
         headerLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()  // 垂直居中
-            make.leading.equalToSuperview().offset(16)  // 與左邊距離 16 點
+            make.centerY.equalToSuperview()
+            make.leading.equalToSuperview().offset(16)
         }
         
         return headerView
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 50 // 自定義表頭高度
+        return 50
     }
-    
 }
 
 extension AwardsViewController {
 // MARK: containerStyle
     func calculateTitlesAndUpdateDropDown() {
-        titlesWithIndexes.removeAll()  // 清空舊資料，避免重複
+        titlesWithIndexes.removeAll()
         
         for section in 0..<self.dynamicTaskSets.count {
             for row in 0..<self.dynamicTaskSets[section].count {
@@ -465,7 +454,7 @@ extension AwardsViewController {
                 
                 for title in obtainedTitles {
                     if !currentTitles.contains(title) {
-                        currentTitles.append(title)  // 保留舊的 currentTitles
+                        currentTitles.append(title)
                     }
 
                     if let titleRowIndex = titlesForRow.firstIndex(of: title) {
@@ -486,21 +475,18 @@ extension AwardsViewController {
 
     func categorizePlacesByTag(completion: @escaping ([Int: [String]]) -> Void) {
         guard let userId = userId else {
-            print("無法獲取 userId")
             return
         }
         
         let userRef = Firestore.firestore().collection("users").document(userId)
         userRef.getDocument { (documentSnapshot, error) in
             if let error = error {
-                print("獲取用戶數據時出錯: \(error.localizedDescription)")
                 completion([:])
                 return
             }
             
             guard let document = documentSnapshot, let data = document.data(),
                   let completedPlace = data["completedPlace"] as? [[String: Any]] else {
-                print("無法解析 completedPlace 資料")
                 completion([:])
                 return
             }
@@ -517,14 +503,12 @@ extension AwardsViewController {
                     
                     Firestore.firestore().collection("trips").document(tripId).getDocument { (tripSnapshot, error) in
                         if let error = error {
-                            print("獲取 trip 資料時出錯: \(error.localizedDescription)")
                             dispatchGroup.leave()
                             return
                         }
                         
                         guard let tripData = tripSnapshot?.data(),
                               let tag = tripData["tag"] as? Int else {
-                            print("無法解析 trip 資料")
                             dispatchGroup.leave()
                             return
                         }

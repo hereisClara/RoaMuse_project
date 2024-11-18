@@ -338,7 +338,7 @@ class CollectionsViewController: UIViewController {
         
         buttonContainer.snp.makeConstraints { make in
             make.edges.equalTo(buttonsBackground).inset(10)
-            make.leading.equalTo(magnifierBackground.snp.trailing).offset(15) // 設定距離藍色圓底15
+            make.leading.equalTo(magnifierBackground.snp.trailing).offset(15)
         }
         
         let filterOptions = ["奇險派", "浪漫派", "田園派"]

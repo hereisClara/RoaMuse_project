@@ -47,23 +47,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         setupSlidingView()
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        tabBarController?.tabBar.isHidden = true
-        
-        let transparentAppearance = UINavigationBarAppearance()
-        transparentAppearance.configureWithTransparentBackground()
-        transparentAppearance.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont.systemFont(ofSize: 18)
-        ]
-        
-        navigationController?.navigationBar.standardAppearance = transparentAppearance
-        navigationController?.navigationBar.scrollEdgeAppearance = transparentAppearance
-        navigationController?.navigationBar.compactAppearance = transparentAppearance
-        navigationController?.navigationBar.tintColor = .white
-    }
-    
     func setupFilterButton() {
         
         let backgroundCircle = UIView()
@@ -99,10 +82,38 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             self.slidingView.isHidden = !self.isSlidingViewVisible
         }
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tabBarController?.tabBar.isHidden = true
+        let transparentAppearance = UINavigationBarAppearance()
+            transparentAppearance.configureWithTransparentBackground()
+            transparentAppearance.titleTextAttributes = [
+                .foregroundColor: UIColor.white,
+                .font: UIFont.systemFont(ofSize: 18)
+            ]
+            
+            navigationController?.navigationBar.standardAppearance = transparentAppearance
+            navigationController?.navigationBar.scrollEdgeAppearance = transparentAppearance
+            navigationController?.navigationBar.compactAppearance = transparentAppearance
+            navigationController?.navigationBar.tintColor = .deepBlue
+    }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         tabBarController?.tabBar.isHidden = false
+        let defaultAppearance = UINavigationBarAppearance()
+            defaultAppearance.configureWithOpaqueBackground()
+            defaultAppearance.backgroundColor = .white
+            defaultAppearance.titleTextAttributes = [
+                .foregroundColor: UIColor.black,
+                .font: UIFont.systemFont(ofSize: 18)
+            ]
+            
+            navigationController?.navigationBar.standardAppearance = defaultAppearance
+            navigationController?.navigationBar.scrollEdgeAppearance = defaultAppearance
+            navigationController?.navigationBar.compactAppearance = defaultAppearance
+            navigationController?.navigationBar.tintColor = .black
     }
     
     func setupSlidingView() {
@@ -177,7 +188,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 defer { dispatchGroup.leave() }
 
                 if let error = error {
-                    print("獲取地點失敗: \(error.localizedDescription)")
                     return
                 }
 
@@ -189,7 +199,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                 }
 
                 let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-                print("加入地點: \(placeName), ID: \(placeId)")
 
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = location
@@ -264,12 +273,11 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             
             annotationView.clusteringIdentifier = "clusterID"
             
-//            annotationView.canShowCallout = true
             annotationView.glyphImage = UIImage(systemName: "flag.circle.fill")
             let infoButton = UIButton(type: .detailDisclosure)
             annotationView.rightCalloutAccessoryView = infoButton
             
-            annotationView.markerTintColor = .red // 設定大頭針的顏色
+            annotationView.markerTintColor = .red
             
             return annotationView
         }
@@ -280,14 +288,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         guard let annotation = view.annotation,
               let placeId = annotation.subtitle ?? annotation.title else {
-            print("No valid annotation selected")
             return
         }
 
         slidingView.currentPlaceId = placeId
 
         guard let placeTripInfo = placeTripDictionary[placeId ?? ""] else {
-            print("No matching tripIds found for placeId: \(placeId)")
             return
         }
 
@@ -305,7 +311,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
                     dispatchGroup.leave()
                 }
             } else {
-                print("Photo library permissions denied")
                 dispatchGroup.leave()
             }
         }
@@ -313,7 +318,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         dispatchGroup.enter()
         slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
             DispatchQueue.main.async {
-                print("詩名: \(poemTitle), 詩句: \(poemLine)")
                 dispatchGroup.leave()
             }
         }
@@ -354,15 +358,12 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
 
     func showSlidingView() {
-        print("showSlidingView called")
         slidingView.isHidden = false
 
         backgroundMaskView = UIView(frame: view.bounds)
         backgroundMaskView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
         view.insertSubview(backgroundMaskView, belowSubview: slidingView)
-        print("SlidingView frame:", slidingView.frame)
-        print("SlidingView hidden:", slidingView.isHidden)
-
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideSlidingView))
         backgroundMaskView.addGestureRecognizer(tapGesture)
         
@@ -397,19 +398,16 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
         
         tripsRef.getDocument { (document, error) in
             if let error = error {
-                print("獲取行程資料失敗: \(error.localizedDescription)")
                 return
             }
             
             guard let tripData = document?.data(), let poemId = tripData["poemId"] as? String else {
-                print("找不到相關行程資料或詩的ID")
                 return
             }
             
             let poemsRef = Firestore.firestore().collection("poems").document(poemId)
             poemsRef.getDocument { (document, error) in
                 if let error = error {
-                    print("獲取詩資料失敗: \(error.localizedDescription)")
                     return
                 }
                 
@@ -491,7 +489,7 @@ extension MapViewController {
             currentImageIndex += 1
             fullScreenImageView.image = images[currentImageIndex]
         } else {
-            print("已經是最後一張圖片")
+            print("最後一張圖片")
         }
     }
     
@@ -500,7 +498,7 @@ extension MapViewController {
             currentImageIndex -= 1
             fullScreenImageView.image = images[currentImageIndex]
         } else {
-            print("已經是第一張圖片")
+            print("第一張圖片")
         }
     }
     
