@@ -42,11 +42,10 @@ class SettingDetailCell: UITableViewCell {
         
         detailLabel.lineBreakMode = .byWordWrapping
         
-        // 使用 SnapKit 進行佈局
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(10)
             make.leading.equalToSuperview().offset(16)
-            make.width.equalTo(100) // 固定寬度
+            make.width.equalTo(100) 
             make.bottom.equalToSuperview().offset(-10)
         }
         
