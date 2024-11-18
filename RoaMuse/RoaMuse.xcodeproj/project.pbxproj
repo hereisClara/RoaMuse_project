@@ -277,9 +277,106 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AC35F4322CEBB7FF002F5432 /* MapVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */,
+				AC18F8522CB01F69004E8868 /* PhotoCollectionTableViewCell.swift */,
+				AC9775742CA7E22100EF828A /* MapViewController.swift */,
+				AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */,
+				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
+				AC18F8502CB00FDC004E8868 /* SlidingView.swift */,
+			);
+			path = MapVC;
+			sourceTree = "<group>";
+		};
+		AC35F4332CEBB81C002F5432 /* AwardsVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */,
+				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
+				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
+				AC18F8602CB12298004E8868 /* AwardStyleManager.swift */,
+				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
+			);
+			path = AwardsVC;
+			sourceTree = "<group>";
+		};
+		AC35F4342CEBB849002F5432 /* FollowerFollowingVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
+				AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */,
+			);
+			path = FollowerFollowingVC;
+			sourceTree = "<group>";
+		};
+		AC35F4352CEBB8CA002F5432 /* SettingVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */,
+				AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */,
+				AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */,
+				AC18F8482CAECE3D004E8868 /* SettingsViewController.swift */,
+				AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */,
+			);
+			path = SettingVC;
+			sourceTree = "<group>";
+		};
+		AC35F4362CEBB8FD002F5432 /* ChatVC */ = {
+			isa = PBXGroup;
+			children = (
+				ACBC1E552CE5CA2F00592052 /* TripMessageCell.swift */,
+				AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */,
+				AC18F8562CB05E9C004E8868 /* ChatViewController.swift */,
+				AC18F8582CB06031004E8868 /* ChatListViewController.swift */,
+				AC18F85A2CB06057004E8868 /* ChatListCell.swift */,
+				ACBC1E532CE5BBCA00592052 /* SharingTripViewController.swift */,
+			);
+			path = ChatVC;
+			sourceTree = "<group>";
+		};
+		AC35F4372CEBB90E002F5432 /* Extension */ = {
+			isa = PBXGroup;
+			children = (
+				AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */,
+				AC7A2A582C97AF17003FA811 /* Extension+String.swift */,
+				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
+			);
+			path = Extension;
+			sourceTree = "<group>";
+		};
+		AC35F4382CEBBA0D002F5432 /* Shared Components */ = {
+			isa = PBXGroup;
+			children = (
+				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
+				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
+				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
+				AC18F8362CAB986A004E8868 /* DropdownMenu.swift */,
+				AC9775762CA9831C00EF828A /* TripCallOutView.swift */,
+				AC984C0C2CBE6BF6007F47BB /* DropdownMenuCell.swift */,
+				AC18F8642CB25E2E004E8868 /* ImageViewController.swift */,
+				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
+				AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */,
+				AC18F8622CB25DEB004E8868 /* FullScreenImageViewController.swift */,
+			);
+			path = "Shared Components";
+			sourceTree = "<group>";
+		};
+		AC35F4392CEBBA79002F5432 /* TripDetailVC */ = {
+			isa = PBXGroup;
+			children = (
+				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
+				AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */,
+				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
+			);
+			path = TripDetailVC;
+			sourceTree = "<group>";
+		};
 		AC7A2A5D2C97C5A7003FA811 /* HomeVC */ = {
 			isa = PBXGroup;
 			children = (
+				AC984C012CB6A689007F47BB /* PoemPostViewController.swift */,
 				ACFCA3542C916C8F00643A2E /* HomeViewController.swift */,
 				AC984BFA2CB68A5C007F47BB /* HomeCollectionViewController.swift */,
 				AC75D0F92CB3C316005258EA /* NotificationViewController.swift */,
@@ -311,6 +408,8 @@
 			children = (
 				AC27ACC22C93004C00B73485 /* NewsFeedViewController.swift */,
 				AC7A2A652C97D28E003FA811 /* PostsTableViewCell.swift */,
+				AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */,
+				AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */,
 				AC7A2A752C9A6857003FA811 /* ArticleViewController.swift */,
 				AC7A2A8A2C9D5E47003FA811 /* CommentTableViewCell.swift */,
 			);
@@ -330,7 +429,9 @@
 			children = (
 				AC18F8462CAE9571004E8868 /* PoemMatchingService.swift */,
 				AC75D0FD2CB41C85005258EA /* OpenAIManager.swift */,
+				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
 				AC97756E2CA5501A00EF828A /* PlaceDataManager.swift */,
+				AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */,
 				AC7A2A882C9D1C92003FA811 /* DateManager.swift */,
 				AC18F83A2CABDA28004E8868 /* LocationService.swift */,
 				AC7A2A6B2C984853003FA811 /* firebaseManager.swift */,
@@ -345,25 +446,14 @@
 		AC7A2A642C97C667003FA811 /* UserVC */ = {
 			isa = PBXGroup;
 			children = (
+				AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */,
+				AC35F4352CEBB8CA002F5432 /* SettingVC */,
+				AC35F4342CEBB849002F5432 /* FollowerFollowingVC */,
+				AC35F4332CEBB81C002F5432 /* AwardsVC */,
+				AC35F4322CEBB7FF002F5432 /* MapVC */,
 				AC7A2A842C9C4C97003FA811 /* UserTableViewCell.swift */,
-				AC984C032CB94E3A007F47BB /* FollowerFollowingTableViewCell.swift */,
-				AC75D0EF2CB267B9005258EA /* MapTripTableViewCell.swift */,
-				AC75D0F32CB28382005258EA /* RegionSelectionViewController.swift */,
-				AC18F8362CAB986A004E8868 /* DropdownMenu.swift */,
-				AC984C0C2CBE6BF6007F47BB /* DropdownMenuCell.swift */,
-				AC97757C2CA98F5F00EF828A /* MilestoneProgressView.swift */,
-				AC97757A2CA9899200EF828A /* AwardTableViewCell.swift */,
-				AC9775782CA987F900EF828A /* AwardsViewController.swift */,
-				AC18F8602CB12298004E8868 /* AwardStyleManager.swift */,
-				AC18F8382CABA42D004E8868 /* AwardLabelView.swift */,
 				AC27ACC42C93006A00B73485 /* UserViewController.swift */,
-				AC18F8482CAECE3D004E8868 /* SettingsViewController.swift */,
-				AC75D0F12CB27E75005258EA /* IntroductionViewController.swift */,
-				AC18F84E2CAFD871004E8868 /* BlockedListViewController.swift */,
 				AC18F84A2CAECF31004E8868 /* SettingsTableViewCell.swift */,
-				AC9775742CA7E22100EF828A /* MapViewController.swift */,
-				AC984C0A2CBCF7D6007F47BB /* MenuViewController.swift */,
-				AC18F8502CB00FDC004E8868 /* SlidingView.swift */,
 			);
 			path = UserVC;
 			sourceTree = "<group>";
@@ -381,46 +471,10 @@
 		ACFCA3442C916C8F00643A2E = {
 			isa = PBXGroup;
 			children = (
-				ACBC1E552CE5CA2F00592052 /* TripMessageCell.swift */,
-				ACBC1E532CE5BBCA00592052 /* SharingTripViewController.swift */,
-				AC984C012CB6A689007F47BB /* PoemPostViewController.swift */,
-				AC984BFF2CB6A4EC007F47BB /* GradientBlurView.swift */,
-				AC75D1012CB5F72B005258EA /* GradientActivityIndicatorViewViewController.swift */,
-				AC75D0F72CB2C977005258EA /* Extension+UILabel.swift */,
-				AC75D0F52CB285FC005258EA /* SettingDetailCell.swift */,
-				AC18F85E2CB10DAC004E8868 /* CircularProgressBar.swift */,
-				AC18F85C2CB06167004E8868 /* ChatMessageCell.swift */,
-				AC18F8582CB06031004E8868 /* ChatListViewController.swift */,
-				AC18F85A2CB06057004E8868 /* ChatListCell.swift */,
-				AC18F8562CB05E9C004E8868 /* ChatViewController.swift */,
-				AC18F8542CB02D01004E8868 /* PoemCollectionManager.swift */,
-				AC18F8522CB01F69004E8868 /* PhotoCollectionTableViewCell.swift */,
-				AC18F8622CB25DEB004E8868 /* FullScreenImageViewController.swift */,
-				AC18F8642CB25E2E004E8868 /* ImageViewController.swift */,
-				AC18F84C2CAFD114004E8868 /* UserListViewController.swift */,
-				AC18F8442CAE93B8004E8868 /* BottomSheetManager.swift */,
-				AC18F8402CAD11FF004E8868 /* ArticleTripViewController.swift */,
-				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
-				AC9775762CA9831C00EF828A /* TripCallOutView.swift */,
-				AC9775722CA6F08A00EF828A /* PhotoUploadViewController.swift */,
 				AC9775702CA551CB00EF828A /* Config.plist */,
 				AC97756D2CA52A9300EF828A /* Config.xcconfig */,
-				AC97755F2CA3004C00EF828A /* UserProfileViewController.swift */,
-				AC75D0FF2CB50060005258EA /* RegionLabelView.swift */,
+				AC18F83C2CABE203004E8868 /* NotoSerifHK-VariableFont_wght.ttf */,
 				ACFCA35C2C916C9000643A2E /* Assets.xcassets */,
-				AC7A2A642C97C667003FA811 /* UserVC */,
-				AC7A2A632C97C63D003FA811 /* Manager */,
-				AC7A2A622C97C635003FA811 /* Model */,
-				AC7A2A612C97C610003FA811 /* NewsFeedVC */,
-				AC7A2A602C97C607003FA811 /* EstablishVC */,
-				AC7A2A582C97AF17003FA811 /* Extension+String.swift */,
-				AC7AD7DA2CD7A42500BB5249 /* LoginVC */,
-				AC7A2A822C9AE4C3003FA811 /* TripDetailWithPlaceTableViewCell.swift */,
-				AC7A2A522C9587F9003FA811 /* TripDetailViewController.swift */,
-				AC18F8422CAD6C61004E8868 /* MapTableViewCell.swift */,
-				AC7A2A502C957F87003FA811 /* Extension+UIStackView.swift */,
-				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
-				AC7A2A5D2C97C5A7003FA811 /* HomeVC */,
 				ACFCA34F2C916C8F00643A2E /* RoaMuse */,
 				ACFCA3692C916C9000643A2E /* RoaMuseTests */,
 				ACFCA3732C916C9000643A2E /* RoaMuseUITests */,
@@ -442,13 +496,23 @@
 		ACFCA34F2C916C8F00643A2E /* RoaMuse */ = {
 			isa = PBXGroup;
 			children = (
+				AC7A2A622C97C635003FA811 /* Model */,
+				AC7A2A5D2C97C5A7003FA811 /* HomeVC */,
+				AC7A2A5F2C97C5E9003FA811 /* CollectionVC */,
+				AC7AD7DA2CD7A42500BB5249 /* LoginVC */,
+				AC7A2A602C97C607003FA811 /* EstablishVC */,
+				AC7A2A612C97C610003FA811 /* NewsFeedVC */,
+				AC7A2A632C97C63D003FA811 /* Manager */,
+				AC7A2A642C97C667003FA811 /* UserVC */,
+				AC35F4392CEBBA79002F5432 /* TripDetailVC */,
+				AC35F4372CEBB90E002F5432 /* Extension */,
+				AC35F4382CEBBA0D002F5432 /* Shared Components */,
+				AC35F4362CEBB8FD002F5432 /* ChatVC */,
 				AC97755E2CA2472300EF828A /* RoaMuse.entitlements */,
 				AC97756B2CA45DE400EF828A /* poemLocationNLP3.mlmodel */,
-				AC7A2A4E2C949386003FA811 /* PopUpView.swift */,
 				ACFCA3502C916C8F00643A2E /* AppDelegate.swift */,
 				ACFCA3522C916C8F00643A2E /* SceneDelegate.swift */,
 				AC27ACBA2C92FB2E00B73485 /* TabBarController.swift */,
-				AC7A2A5B2C97C59A003FA811 /* PostViewController.swift */,
 				AC75D1052CB6656B005258EA /* GoogleService-Info.plist */,
 				ACFCA3562C916C8F00643A2E /* Main.storyboard */,
 				ACFCA35E2C916C9000643A2E /* LaunchScreen.storyboard */,
@@ -1022,7 +1086,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.3;
+				MARKETING_VERSION = 1.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tzuyencheng.RoaMuse;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1061,7 +1125,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.3;
+				MARKETING_VERSION = 1.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tzuyencheng.RoaMuse;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
