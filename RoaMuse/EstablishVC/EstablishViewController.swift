@@ -50,8 +50,8 @@ class EstablishViewController: UIViewController {
         self.title = "建立"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, // 修改顏色
-                .font: customFont // 設置字體
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
             ]
         }
         view.backgroundColor = UIColor(resource: .backgroundGray)
@@ -429,17 +429,13 @@ extension EstablishViewController {
                     timeoutWorkItem.cancel()
                     let filteredPoems: [Poem]
                     if self.styleTag < 0 {
-//                        filteredPoems = poems.filter { poem in
-//                            return !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)
-//                        }
                         filteredPoems = poems
                     } else {
                         filteredPoems = poems.filter { poem in
-                            return poem.tag == self.styleTag/* && !PoemCollectionManager.shared.isPoemAlreadyInCollection(poem.id)*/
+                            return poem.tag == self.styleTag
                         }
                     }
                     if let randomPoem = filteredPoems.randomElement() {
-//                        print(randomPoem.title)
                         self.processPoemText(randomPoem.content.joined(separator: "\n")) { keywords, keywordToLineMap in
                             self.keywordToLineMap = keywordToLineMap
                             self.generateTripFromKeywords(keywords, poem: randomPoem, startingFrom: currentLocation) { trip in

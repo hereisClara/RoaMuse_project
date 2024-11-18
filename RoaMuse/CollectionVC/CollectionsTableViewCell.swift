@@ -11,7 +11,7 @@ import SnapKit
 
 class CollectionsTableViewCell: UITableViewCell {
     
-    let containerView = UIView() // 容納所有內容的父視圖
+    let containerView = UIView()
     let titleLabel = UILabel()
     let collectButton = UIButton()
     
@@ -25,11 +25,10 @@ class CollectionsTableViewCell: UITableViewCell {
     }
     
     func setupUI() {
-        // 設置 containerView 的外觀
         contentView.addSubview(containerView)
         
         containerView.backgroundColor = .white
-        containerView.layer.cornerRadius = 25 // 圓角半徑
+        containerView.layer.cornerRadius = 25
         containerView.layer.masksToBounds = false
         
         containerView.snp.makeConstraints { make in
@@ -56,7 +55,7 @@ class CollectionsTableViewCell: UITableViewCell {
         collectButton.snp.makeConstraints { make in
             make.trailing.equalTo(containerView).offset(-20)
             make.centerY.equalTo(containerView)
-            make.width.height.equalTo(25) // 設置按鈕大小
+            make.width.height.equalTo(25) 
         }
         
         collectButton.setImage(UIImage(systemName: "bookmark"), for: .normal)

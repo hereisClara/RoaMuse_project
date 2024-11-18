@@ -25,7 +25,6 @@ class StyleTableViewCell: UITableViewCell {
     }
     
     func setupUI() {
-        // 設置背景顏色
         backgroundColor = UIColor.clear
         contentView.backgroundColor = UIColor.clear
         
@@ -59,7 +58,6 @@ class StyleTableViewCell: UITableViewCell {
             make.bottom.equalTo(containerView).offset(-16)
         }
         
-        // 調整字體
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 24)
         titleLabel.textColor = .deepBlue
         

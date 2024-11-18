@@ -75,13 +75,6 @@ class TripMessageCell: UITableViewCell {
     
     func configure(isFromCurrentUser: Bool) {
         
-//        FirebaseManager.shared.loadTripById(trip.id) { trip in
-//            guard let trip = trip else { return }
-//            FirebaseManager.shared.loadPoemById(trip.poemId) { poem in
-//                self.titleLabel.text = poem.title
-//            }
-//        }
-        
         if isFromCurrentUser {
             messageBubble.backgroundColor = .accent
             titleLabel.textColor = .white

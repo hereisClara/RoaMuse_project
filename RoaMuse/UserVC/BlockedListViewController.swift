@@ -43,7 +43,6 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
         ])
     }
     
-    // 從 Firebase 加載封鎖的用戶
     func loadBlockedUsers() {
         guard let userId = userId else { return }
         
@@ -62,8 +61,6 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
         }
     }
     
-    // MARK: - UITableViewDataSource
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return blockedUsers.count
     }
@@ -72,7 +69,6 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
         let cell = tableView.dequeueReusableCell(withIdentifier: "blockedCell", for: indexPath)
         let blockedUserId = blockedUsers[indexPath.row]
         
-        // 從 Firebase 獲取被封鎖用戶的名稱
         let userRef = Firestore.firestore().collection("users").document(blockedUserId)
         userRef.getDocument { document, error in
             if let error = error {
@@ -84,14 +80,12 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
             }
         }
         
-        // 確保每次都移除舊的按鈕，避免重複顯示
         for subview in cell.contentView.subviews {
             if subview is UIButton {
                 subview.removeFromSuperview()
             }
         }
         
-        // 增加解除封鎖按鈕
         let unblockButton = UIButton(type: .system)
         unblockButton.setTitle("解除封鎖", for: .normal)
         unblockButton.setTitleColor(.systemRed, for: .normal)
@@ -99,7 +93,6 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
         unblockButton.tag = indexPath.row
         cell.contentView.addSubview(unblockButton)
         
-        // 使用 SnapKit 設置按鈕的約束
         unblockButton.snp.makeConstraints { make in
             make.centerY.equalTo(cell.contentView)
             make.trailing.equalTo(cell.contentView).offset(-16)
@@ -113,21 +106,17 @@ class BlockedListViewController: UIViewController, UITableViewDelegate, UITableV
     @objc func unblockUser(_ sender: UIButton) {
         let blockedUserId = blockedUsers[sender.tag]
         
-        // 彈出一個確認對話框
         let alert = UIAlertController(title: "解除封鎖", message: "你確定要解除這個用戶的封鎖嗎？", preferredStyle: .alert)
         
-        // 添加取消動作
         let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
         alert.addAction(cancelAction)
         
-        // 添加確定解除封鎖動作
         let confirmAction = UIAlertAction(title: "確定", style: .destructive) { [weak self] _ in
             guard let self = self else { return }
             self.confirmUnblockUser(userId: blockedUserId, index: sender.tag)
         }
         alert.addAction(confirmAction)
         
-        // 顯示 alert
         present(alert, animated: true, completion: nil)
     }
 

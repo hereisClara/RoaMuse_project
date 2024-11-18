@@ -863,18 +863,18 @@ extension ArticleViewController: UITableViewDelegate, UITableViewDataSource {
                         }
                         
                         let poem = Poem(
-                            id: poemData["id"] as? String ?? "",  // 加入 poem 的 ID
+                            id: poemData["id"] as? String ?? "",
                             title: title,
                             poetry: poetry,
-                            content: original, // 假設 content 是來自 original
+                            content: original,
                             tag: tag,
-                            season: poemData["season"] as? Int,  // 加入 season
-                            weather: poemData["weather"] as? Int, // 加入 weather
-                            time: poemData["time"] as? Int // 加入 time
+                            season: poemData["season"] as? Int,
+                            weather: poemData["weather"] as? Int,
+                            time: poemData["time"] as? Int
                         )
                         
                         let trip = Trip(
-                            poemId: poem.id,  // 使用 poemId
+                            poemId: poem.id, 
                             id: self.tripId,
                             placeIds: places,
                             keywordPlaceIds: nil,

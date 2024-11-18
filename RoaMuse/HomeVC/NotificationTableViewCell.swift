@@ -28,30 +28,25 @@ class NotificationTableViewCell: UITableViewCell {
     }
     
     func setupUI() {
-        // 配置頭像
         avatarImageView.layer.cornerRadius = 25
         avatarImageView.layer.masksToBounds = true
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.image = UIImage(named: "avatar_placeholder")
         contentView.addSubview(avatarImageView)
         
-        // 配置標題
         titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 18)
         titleLabel.textColor = .deepBlue
         contentView.addSubview(titleLabel)
         
-        // 配置訊息
         messageLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
         messageLabel.textColor = .darkGray
         messageLabel.numberOfLines = 2
         contentView.addSubview(messageLabel)
         
-        // 配置時間
         dateLabel.font = UIFont(name: "NotoSerifHK-Bold", size: 14)
         dateLabel.textColor = .gray
         contentView.addSubview(dateLabel)
         
-        // 使用 SnapKit 佈局
         avatarImageView.snp.makeConstraints { make in
             make.width.height.equalTo(50)
             make.leading.equalTo(contentView).offset(16)
@@ -81,7 +76,6 @@ class NotificationTableViewCell: UITableViewCell {
         titleLabel.text = notification.title ?? "通知"
         messageLabel.text = notification.message ?? "你有一則新通知"
         
-        // 使用 DateManager 格式化日期
         dateLabel.text = DateManager.shared.formatDate(notification.createdAt)
         
         // 設置頭像

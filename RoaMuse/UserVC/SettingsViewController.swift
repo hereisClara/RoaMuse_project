@@ -78,7 +78,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         let headerView = UIView()
         headerView.frame = CGRect(x: 0, y: 0, width: view.frame.width, height: 120)
         
-        // 設置 avatarImageView
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.clipsToBounds = true
         avatarImageView.isUserInteractionEnabled = true
@@ -86,7 +85,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         avatarImageView.layer.cornerRadius = 45
         headerView.addSubview(avatarImageView)
         
-        // 設置相機圖示
         let cameraIcon = UIImageView(image: UIImage(systemName: "camera.circle"))
         cameraIcon.tintColor = .deepBlue
         cameraIcon.backgroundColor = .white
@@ -111,8 +109,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         
         tableView.tableHeaderView = headerView
     }
-    
-    // MARK: - UITableViewDataSource
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return max(UITableView.automaticDimension, 60)
@@ -151,8 +147,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         }
         return cell
     }
-    
-    // MARK: - UITableViewDelegate
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
@@ -218,7 +212,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         
         alert.addAction(UIAlertAction(title: "取消", style: .cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "刪除", style: .destructive, handler: { _ in
-            // 獲取當前用戶 ID
             guard let userId = self.userId else {
                 print("無法獲取用戶ID")
                 return
@@ -252,7 +245,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    // MARK: - 用戶資料加載
     func loadUserData(userId: String) {
         let userRef = Firestore.firestore().collection("users").document(userId)
         
@@ -302,7 +294,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         avatarImageView.kf.setImage(with: url, placeholder: UIImage(named: "placeholder"))
     }
     
-    // 開啟相片庫
     @objc func openPhotoLibrary() {
         imagePicker.sourceType = .photoLibrary
         imagePicker.allowsEditing = true
@@ -343,7 +334,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    // 將圖片 URL 保存到 Firestore
     func saveImageUrlToFirestore(_ urlString: String) {
         guard let userId = userId else { return }
         let userRef = Firestore.firestore().collection("users").document(userId)
@@ -357,7 +347,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    // 編輯用戶名稱
     @objc func editUserName() {
         let alertController = UIAlertController(title: "編輯使用者名稱", message: "請輸入新的名稱", preferredStyle: .alert)
         alertController.addTextField { textField in
@@ -375,7 +364,6 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         present(alertController, animated: true, completion: nil)
     }
     
-    // 更新 Firestore 中的用戶名稱
     func updateUserNameInFirestore(_ newUserName: String) {
         guard let userId = userId else { return }
         let userRef = Firestore.firestore().collection("users").document(userId)
@@ -471,7 +459,6 @@ extension SettingsViewController: IntroductionViewControllerDelegate {
 extension SettingsViewController: RegionSelectionDelegate {
     
     func didSelectRegion(_ region: String) {
-        // 保存到 Firebase Firestore
         guard let userId = userId else { return }
         let userRef = Firestore.firestore().collection("users").document(userId)
         

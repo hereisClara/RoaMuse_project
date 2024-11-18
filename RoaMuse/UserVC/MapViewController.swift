@@ -315,7 +315,6 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
             }
         }
 
-        // 詩句資料請求
         dispatchGroup.enter()
         slidingView.fetchPoemTitleAndPoemLine(tripId: placeTripInfo.tripIds.first ?? "") { poemTitle, poemLine in
             DispatchQueue.main.async {
@@ -331,7 +330,7 @@ class MapViewController: UIViewController, MKMapViewDelegate, UICollectionViewDa
     }
     
     func centerMapOnUserLocation(userLocation: CLLocation) {
-        let regionRadius: CLLocationDistance = 50000  // 50公里
+        let regionRadius: CLLocationDistance = 50000 
         let coordinateRegion = MKCoordinateRegion(center: userLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
         mapView.setRegion(coordinateRegion, animated: true)
     }

@@ -25,14 +25,12 @@ class BottomSheetManager {
         self.backgroundView = UIView()
     }
     
-    // 添加按鈕方法
     func addActionButton(title: String, textColor: UIColor = .black, action: @escaping () -> Void) {
         let button = createButton(title: title, textColor: textColor)
         button.addAction(UIAction { _ in action() }, for: .touchUpInside)
-        actionButtons.append(button)  // 將按鈕添加到陣列
+        actionButtons.append(button)
     }
     
-    // 設置 bottom sheet
     func setupBottomSheet() {
         guard let parentView = parentViewController?.view else { return }
 
@@ -70,7 +68,6 @@ class BottomSheetManager {
         }
     }
     
-    // 創建按鈕方法
     private func createButton(title: String, textColor: UIColor = .black) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
@@ -80,7 +77,6 @@ class BottomSheetManager {
         return button
     }
     
-    // 顯示 bottom sheet
     func showBottomSheet() {
         guard let parentView = parentViewController?.view else { return }
         UIView.animate(withDuration: 0.3) {
@@ -89,7 +85,6 @@ class BottomSheetManager {
         }
     }
     
-    // 隱藏 bottom sheet
     @objc func dismissBottomSheet() {
         guard let parentView = parentViewController?.view else { return }
         UIView.animate(withDuration: 0.3) {
@@ -98,7 +93,6 @@ class BottomSheetManager {
         }
     }
     
-    // 檢舉按鈕操作
     @objc func didTapImpeachButton() {
         guard let parentVC = parentViewController else { return }
         

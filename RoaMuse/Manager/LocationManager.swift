@@ -40,20 +40,18 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
     
     func startUpdatingHeading() {
-            locationManager.startUpdatingHeading()  // 啟動方向更新
+            locationManager.startUpdatingHeading()
         }
 
         func stopUpdatingHeading() {
-            locationManager.stopUpdatingHeading()  // 停止方向更新
+            locationManager.stopUpdatingHeading()
         }
 
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        print("授权状态发生变化：\(status.rawValue)")
         onAuthorizationChange?(status)
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        print("locationManager(_:didUpdateLocations:) called")
         if let location = locations.first {
             print("位置更新：\(location.coordinate.latitude), \(location.coordinate.longitude)")
             self.currentLocation = location

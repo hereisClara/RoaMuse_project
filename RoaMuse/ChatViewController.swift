@@ -163,8 +163,8 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         sharingTripVC.onTripSelected = { [weak self] selectedTrip in
             guard let self = self else { return }
-            self.sendTrip(trip: selectedTrip) // 调用 sendTrip 方法
-            self.dismiss(animated: true, completion: nil) // 关闭 SharingTripViewController
+            self.sendTrip(trip: selectedTrip) 
+            self.dismiss(animated: true, completion: nil) 
         }
         
         let navController = UINavigationController(rootViewController: sharingTripVC)

@@ -75,7 +75,6 @@ class CustomMaskWaveView: UIView {
         waveLayer.path = createWavePath().cgPath
     }
 
-    // MARK: - 創建波浪路徑
     private func createWavePath() -> UIBezierPath {
         let path = UIBezierPath()
         let width = bounds.width * 1.5

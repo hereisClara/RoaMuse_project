@@ -11,7 +11,6 @@ import SnapKit
 
 class CommentTableViewCell: UITableViewCell {
     
-    // 定義 username, content 和 createdAt 的 UILabel
     let usernameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "NotoSerifHK-Black", size: 20)
@@ -23,7 +22,7 @@ class CommentTableViewCell: UITableViewCell {
     let contentLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "NotoSerifHK-Bold", size: 16)
-        label.numberOfLines = 0  // 支援多行
+        label.numberOfLines = 0
         label.lineSpacing = 3
         label.lineBreakMode = .byWordWrapping
         label.textColor = .darkGray
@@ -53,7 +52,6 @@ class CommentTableViewCell: UITableViewCell {
         contentView.addSubview(createdAtLabel)
         contentView.addSubview(avatarImageView)
         
-        // 使用 SnapKit 設置約束條件
         usernameLabel.snp.makeConstraints { make in
             make.top.equalTo(contentView).offset(8)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
@@ -70,7 +68,7 @@ class CommentTableViewCell: UITableViewCell {
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.equalTo(avatarImageView.snp.trailing).offset(8)
             make.trailing.equalTo(contentView).offset(-16)
-            make.bottom.equalTo(contentView).offset(-12) // 確保自適應
+            make.bottom.equalTo(contentView).offset(-12) 
         }
         
         avatarImageView.snp.makeConstraints { make in

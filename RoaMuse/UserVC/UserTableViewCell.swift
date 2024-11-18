@@ -34,10 +34,7 @@ class UserTableViewCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-//        contentView.layoutMargins = UIEdgeInsets(top: 9, left: 0, bottom: 6, right: 0)
-//        contentView.preservesSuperviewLayoutMargins = false
         setupCell()
-//        addActions()
         setupRoundedCorners()
         moreButton.addTarget(self, action: #selector(didTapMoreButton), for: .touchUpInside)
     }
@@ -78,7 +75,7 @@ class UserTableViewCell: UITableViewCell {
         scrollView.snp.makeConstraints { make in
             make.top.equalTo(contentLabel.snp.bottom).offset(12)
             make.leading.trailing.equalTo(contentLabel)
-            make.height.equalTo(0)  // 初始高度為 0
+            make.height.equalTo(0)
         }
         
         userNameLabel.snp.makeConstraints { make in
@@ -112,7 +109,6 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(awardLabelView.snp.bottom).offset(16)
             make.leading.equalTo(avatarImageView)
             make.trailing.equalTo(containerView).offset(-16)
-//            make.bottom.equalTo(contentLabel.snp.top).offset(-12)
         }
         
         contentLabel.numberOfLines = 0
@@ -120,14 +116,11 @@ class UserTableViewCell: UITableViewCell {
             make.top.equalTo(titleLabel.snp.bottom).offset(12)
             make.leading.equalTo(titleLabel)
             make.trailing.equalTo(containerView).offset(-16)
-            // make.height.equalTo(30)
-            // make.bottom.equalTo(photoStackView.snp.top).offset(-10)
         }
         
         dateLabel.snp.makeConstraints { make in
             make.top.equalTo(photoStackView.snp.bottom).offset(12)
             make.leading.equalTo(contentLabel)
-//            make.bottom.equalTo(likeButton.snp.top).offset(-12)
         }
         
         likeButton.snp.makeConstraints { make in
@@ -202,10 +195,8 @@ class UserTableViewCell: UITableViewCell {
     }
     
     func setupRoundedCorners() {
-
         containerView.layer.cornerRadius = 15
         containerView.layer.masksToBounds = true
-//        contentView.backgroundColor = .white
     }
     
     func setupButtonStyle() {

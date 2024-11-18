@@ -22,9 +22,9 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     }
     
     let awards = [
-        ["踩點之路"], // 第 1 個 section
-        ["浪漫大師", "奇險大師", "田園大師"],    // 第 2 個 section
-        ["走到終點"]                   // 第 3 個 section
+        ["踩點之路"],
+        ["浪漫大師", "奇險大師", "田園大師"],
+        ["走到終點"]
     ]
     
     let awardsDescription: [[String]] = [
@@ -118,7 +118,7 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
         for section in 0..<awardTitles.count {
             for row in 0..<awardTitles[section].count {
                 if let itemIndex = awardTitles[section][row].firstIndex(of: title) {
-                    return (section, row, itemIndex)  // 返回 section, row 和 item 索引
+                    return (section, row, itemIndex)
                 }
             }
         }
@@ -147,24 +147,22 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
     func updateTitleContainerStyle(forProgressAt section: Int, row: Int, item: Int) {
         switch item {
         case 0:
-            // 進度點 1
             titleContainerView.backgroundColor = UIColor.forBronze
             titleLabel.textColor = .white
             titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .white
             
         case 1:
-            // 進度點 2
             titleContainerView.backgroundColor = UIColor.systemBackground
-            titleContainerView.layer.borderColor = UIColor.deepBlue.cgColor // 編框 .deepBlue
-            titleContainerView.layer.borderWidth = 2.0 // 設置邊框寬度
+            titleContainerView.layer.borderColor = UIColor.deepBlue.cgColor
+            titleContainerView.layer.borderWidth = 2.0
             titleLabel.textColor = .deepBlue
             titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .deepBlue
             
         case 2:
-            titleContainerView.backgroundColor = UIColor.accent // 底色為 .accent
-            titleContainerView.layer.borderWidth = 0.0 // 沒有邊框
+            titleContainerView.backgroundColor = UIColor.accent
+            titleContainerView.layer.borderWidth = 0.0
             titleLabel.textColor = .white
             titleLabel.font = UIFont(name: "NotoSerifHK-Black", size: 16)
             dropdownButton.tintColor = .white
@@ -435,7 +433,6 @@ class AwardsViewController: UIViewController, UITableViewDataSource, UITableView
 }
 
 extension AwardsViewController {
-// MARK: containerStyle
     func calculateTitlesAndUpdateDropDown() {
         titlesWithIndexes.removeAll()
         

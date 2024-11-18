@@ -50,8 +50,8 @@ class UserViewController: UIViewController, UIImagePickerControllerDelegate, UIN
         self.title = "個人"
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 40) {
             navigationController?.navigationBar.largeTitleTextAttributes = [
-                .foregroundColor: UIColor.deepBlue, // 修改顏色
-                .font: customFont // 設置字體
+                .foregroundColor: UIColor.deepBlue,
+                .font: customFont
             ]
         }
         navigationController?.navigationBar.tintColor = .deepBlue
@@ -714,7 +714,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             let createdAtString = DateManager.shared.formatDate(createdAtTimestamp)
             cell.dateLabel.text = createdAtString
         }
-        // 在 cellForRowAt 中直接使用 post 中的資料
+        
         if let likesAccount = post["likesAccount"] as? [String] {
             cell.likeCountLabel.text = String(likesAccount.count)
             cell.likeButton.isSelected = likesAccount.contains(self.userId ?? "")
@@ -723,7 +723,6 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
             cell.likeButton.isSelected = false
         }
 
-        // 同樣地，處理收藏按鈕的狀態
         if let bookmarkAccount = post["bookmarkAccount"] as? [String] {
             cell.collectButton.isSelected = bookmarkAccount.contains(self.userId ?? "")
         } else {
@@ -956,7 +955,7 @@ extension UserViewController: UITableViewDelegate, UITableViewDataSource {
     
     func updateEmptyState() {
         let hasPosts = !posts.isEmpty
-        emptyStateLabel.isHidden = hasPosts  // 有貼文就隱藏，沒有就顯示
+        emptyStateLabel.isHidden = hasPosts 
     }
     
     func showFullScreenImages(photoUrls: [String], startingIndex: Int) {

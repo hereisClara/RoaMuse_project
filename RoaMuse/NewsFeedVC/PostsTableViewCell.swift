@@ -17,8 +17,8 @@ class PostsTableViewCell: UITableViewCell {
     var timeLabel = UILabel()
     var contentLabel = UILabel()
     let collectButton = UIButton(type: .system)
-    let likeButton = UIButton(type: .system) // 新增的 likeButton
-    let commentButton = UIButton(type: .system) // 新增的 commentButton
+    let likeButton = UIButton(type: .system)
+    let commentButton = UIButton(type: .system)
     
     let likeCountLabel = UILabel()
     let bookmarkCountLabel = UILabel()
@@ -92,7 +92,6 @@ class PostsTableViewCell: UITableViewCell {
             make.centerY.equalTo(likeButton)
         }
         
-        // 設置按鈕圖片
         likeButton.setImage(UIImage(systemName: "hand.thumbsup"), for: .normal)
         likeButton.setImage(UIImage(systemName: "hand.thumbsup.fill"), for: .selected)
         likeButton.tintColor = UIColor.systemBlue

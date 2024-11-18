@@ -69,7 +69,7 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             make.height.equalTo(50)
         }
         
-        updateScrollViewButtons() // 動態生成按鈕
+        updateScrollViewButtons()
     }
     
     func updateScrollViewButtons() {
@@ -144,8 +144,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.isHidden = !hasData
     }
     
-    // MARK: - TableView 設置
-    
     func setupTableView() {
         tableView = UITableView()
         tableView.delegate = self
@@ -165,8 +163,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-15)
         }
     }
-    
-    // MARK: - UITableViewDataSource
     
     func numberOfSections(in tableView: UITableView) -> Int {
         return sortedCities.count
@@ -285,8 +281,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
-    // MARK: - UITableViewDelegate
-    
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         
         let headerView = UIView()
@@ -312,7 +306,6 @@ class PoemPostViewController: UIViewController, UITableViewDelegate, UITableView
         return 40
     }
     
-    // MARK: - 加載數據
     func loadFilteredPosts(cityToTrips: [String: [String]], completion: @escaping ([String: [[String: Any]]]) -> Void) {
         FirebaseManager.shared.loadPosts { [weak self] postsArray in
             guard let self = self else { return }

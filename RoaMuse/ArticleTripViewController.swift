@@ -153,8 +153,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                                 self.activityIndicator.stopAnimating()
                                 self.activityIndicator.isHidden = true
                             }
-                            //MARK: city is nil
-                            print("!!!!!   ", self.city)
                             FirebaseManager.shared.saveCityToTrip(tripId: trip.id, poemId: poem.id, city: self.city) { error in
                                 if let error = error {
                                     print("Error saving data: \(error.localizedDescription)")
@@ -238,7 +236,6 @@ class ArticleTripViewController: UIViewController, MKMapViewDelegate, CLLocation
                     completion(true)
                 }
             } else {
-                // 使用 PlaceDataManager 搜索地點
                 PlaceDataManager.shared.searchPlaces(withKeywords: [keyword], startingFrom: currentLocation) { foundPlaces, hasFoundPlace in
                     if hasFoundPlace == false {
                         DispatchQueue.main.async {
@@ -429,7 +426,7 @@ extension ArticleTripViewController {
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         if let polyline = overlay as? MKPolyline {
             let renderer = MKPolylineRenderer(overlay: polyline)
-            renderer.strokeColor = .blue  // 路線顏色
+            renderer.strokeColor = .blue  
             renderer.lineWidth = 4
             return renderer
         }

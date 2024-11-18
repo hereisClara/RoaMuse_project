@@ -30,7 +30,7 @@ class NotificationViewController: UIViewController {
         if let customFont = UIFont(name: "NotoSerifHK-Black", size: 18) {
             navBarAppearance.titleTextAttributes = [
                 .font: customFont,
-                .foregroundColor: UIColor.deepBlue // 自定义颜色
+                .foregroundColor: UIColor.deepBlue
             ]
         }
         
@@ -44,8 +44,8 @@ class NotificationViewController: UIViewController {
         let clearButton = UIBarButtonItem(title: "清除", style: .plain, target: self, action: #selector(clearAllNotifications))
         
         let buttonAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont(name: "NotoSerifHK-Black", size: 16)!,  // 替换成你想要的字体和大小
-            .foregroundColor: UIColor.forBronze  // 自定义颜色
+            .font: UIFont(name: "NotoSerifHK-Black", size: 16)!,
+            .foregroundColor: UIColor.forBronze
         ]
         clearButton.setTitleTextAttributes(buttonAttributes, for: .normal)
         
@@ -62,7 +62,6 @@ class NotificationViewController: UIViewController {
         tabBarController?.tabBar.isHidden = false
     }
     
-    // 設置 tableView
     func setupTableView() {
         tableView.register(NotificationTableViewCell.self, forCellReuseIdentifier: "NotificationCell")
         tableView.dataSource = self
@@ -92,10 +91,8 @@ class NotificationViewController: UIViewController {
     }
 }
 
-// MARK: - UITableViewDataSource, UITableViewDelegate
 extension NotificationViewController: UITableViewDataSource, UITableViewDelegate {
     
-    // 設置通知的行數
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return notifications.count
     }
@@ -124,7 +121,6 @@ extension NotificationViewController: UITableViewDataSource, UITableViewDelegate
         
     }
     
-    // 從 Firestore 加載用戶的頭像 URL
     func fetchUserAvatar(userId: String, completion: @escaping (URL?) -> Void) {
         let db = Firestore.firestore()
         

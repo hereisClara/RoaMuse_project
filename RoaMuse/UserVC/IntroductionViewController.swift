@@ -48,14 +48,12 @@ class IntroductionViewController: UIViewController {
         }
     }
 
-    // 設置導航欄按鈕
     func setupNavigationBar() {
         navigationItem.title = "個人簡介"
         let saveButton = UIBarButtonItem(title: "保存", style: .done, target: self, action: #selector(saveBio))
         navigationItem.rightBarButtonItem = saveButton
     }
 
-    // 保存個人簡介
     @objc func saveBio() {
         let bioText = textView.text ?? ""
         delegate?.introductionViewControllerDidSave(bioText)

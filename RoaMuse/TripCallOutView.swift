@@ -13,7 +13,7 @@ class TripCalloutView: UIView, UITableViewDelegate, UITableViewDataSource {
     var tripIds: [String] = []
     var tableView: UITableView!
 
-    var onTripSelected: ((String) -> Void)?  // 當選擇某個 tripId 時的回調
+    var onTripSelected: ((String) -> Void)? 
     
     override init(frame: CGRect) {
         super.init(frame: frame)

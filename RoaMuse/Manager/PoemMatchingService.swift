@@ -118,7 +118,6 @@ class PoemMatchingService {
             var seasonText = ""
             var timeText = ""
             
-            // 根據季節設置文本
             switch currentSeason {
             case 1:
                 seasonText = "春日"
@@ -132,7 +131,6 @@ class PoemMatchingService {
                 seasonText = ""
             }
             
-            // 根據時間設置文本
             switch currentTimeOfDay {
             case 1:
                 timeText = "日頭正好"
@@ -144,10 +142,8 @@ class PoemMatchingService {
                 timeText = ""
             }
             
-            // 組合最終顯示的文字
             let finalText = "\(seasonText)、\(timeText)"
             
-            // 回调返回組合的文本
             completion(finalText)
         }
 }
